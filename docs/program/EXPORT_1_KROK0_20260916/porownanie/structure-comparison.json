@@ -1,0 +1,471 @@
+{
+  "generatedAt": "2026-09-16T11:07:23Z",
+  "contractVersion": "export-structure-v0",
+  "comparisons": [
+    {
+      "id": "frozen-drd-b2de5832-docx",
+      "note": "Real HTTP application export versus accepted client-final report mockup.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-drd-route-current.docx",
+        "bytes": 161676,
+        "fonts": [
+          "Calibri",
+          "Calibri Light"
+        ],
+        "crimsonHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 2
+        },
+        "kind": "docx",
+        "sections": 1,
+        "headings": 150,
+        "tables": 18,
+        "tocFields": 0,
+        "headers": 0,
+        "footers": 2
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/client-final-report.docx",
+        "bytes": 18920,
+        "fonts": [
+          "Arial"
+        ],
+        "crimsonHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": true,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "docx",
+        "sections": 2,
+        "headings": 16,
+        "tables": 11,
+        "tocFields": 0,
+        "headers": 1,
+        "footers": 2
+      },
+      "numeric": {
+        "sections": {
+          "app": 1,
+          "mock": 2,
+          "delta": -1
+        },
+        "tables": {
+          "app": 18,
+          "mock": 11,
+          "delta": 7
+        },
+        "headings": {
+          "app": 150,
+          "mock": 16,
+          "delta": 134
+        }
+      },
+      "requirements": {
+        "aptosAndArialFallback": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroCrimsonFilewide": true
+      }
+    },
+    {
+      "id": "steering-deck",
+      "note": "Engine probe is structurally renderable, but the real HTTP route is blocked by P1 quality gate; see northwind-steering-route-422.json.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-steering-current.pptx",
+        "bytes": 125042,
+        "fonts": [
+          "Angsana New",
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Cordia New",
+          "DaunPenh",
+          "DokChampa",
+          "Ebrima",
+          "Estrangelo Edessa",
+          "Euphemia",
+          "Gautami",
+          "Inter",
+          "Iskoola Pota",
+          "Javanese Text",
+          "Kalinga",
+          "Kartika",
+          "Latha",
+          "Leelawadee UI",
+          "MV Boli",
+          "Mangal",
+          "Microsoft Himalaya",
+          "Microsoft JhengHei",
+          "Microsoft New Tai Lue",
+          "Microsoft Tai Le",
+          "Microsoft Uighur",
+          "Microsoft Yi Baiti",
+          "Mongolian Baiti",
+          "MoolBoran",
+          "Myanmar Text",
+          "Nirmala UI",
+          "Nyala",
+          "Phagspa",
+          "Plantagenet Cherokee",
+          "Raavi",
+          "Segoe UI",
+          "Shruti",
+          "Sylfaen",
+          "Times New Roman",
+          "Tunga",
+          "Vrinda",
+          "新細明體",
+          "游ゴシック",
+          "游ゴシック Light",
+          "等线",
+          "等线 Light",
+          "맑은 고딕"
+        ],
+        "crimsonHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 1
+        },
+        "kind": "pptx",
+        "slides": 6,
+        "masters": 1,
+        "layouts": 4,
+        "charts": 0,
+        "tables": 0
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/deck-board.pptx",
+        "bytes": 250779,
+        "fonts": [
+          "Angsana New",
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Cordia New",
+          "DaunPenh",
+          "DokChampa",
+          "Ebrima",
+          "Estrangelo Edessa",
+          "Euphemia",
+          "Gautami",
+          "Iskoola Pota",
+          "Javanese Text",
+          "Kalinga",
+          "Kartika",
+          "Latha",
+          "Leelawadee UI",
+          "MV Boli",
+          "Mangal",
+          "Microsoft Himalaya",
+          "Microsoft JhengHei",
+          "Microsoft New Tai Lue",
+          "Microsoft Tai Le",
+          "Microsoft Uighur",
+          "Microsoft Yi Baiti",
+          "Mongolian Baiti",
+          "MoolBoran",
+          "Myanmar Text",
+          "Nirmala UI",
+          "Nyala",
+          "Phagspa",
+          "Plantagenet Cherokee",
+          "Raavi",
+          "Segoe UI",
+          "Shruti",
+          "Sylfaen",
+          "Times New Roman",
+          "Tunga",
+          "Vrinda",
+          "新細明體",
+          "游ゴシック",
+          "游ゴシック Light",
+          "等线",
+          "等线 Light",
+          "맑은 고딕"
+        ],
+        "crimsonHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": true,
+          "northwind": true,
+          "clientLogoRefs": 1
+        },
+        "kind": "pptx",
+        "slides": 8,
+        "masters": 1,
+        "layouts": 1,
+        "charts": 1,
+        "tables": 1
+      },
+      "numeric": {
+        "slides": {
+          "app": 6,
+          "mock": 8,
+          "delta": -2
+        },
+        "layouts": {
+          "app": 4,
+          "mock": 1,
+          "delta": 3
+        },
+        "charts": {
+          "app": 0,
+          "mock": 1,
+          "delta": -1
+        },
+        "tables": {
+          "app": 0,
+          "mock": 1,
+          "delta": -1
+        }
+      },
+      "requirements": {
+        "aptosAndArialFallback": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroCrimsonFilewide": true
+      }
+    },
+    {
+      "id": "supplier-scorecard",
+      "note": "The restored Northwind dump contains no supplier scorecard; nearest live workbook is measured separately and no success is fabricated.",
+      "app": {
+        "exists": false,
+        "file": "/Users/piotrwisniewski/Developer/codex-wt/export-1-krok0-20260916/docs/program/EXPORT_1_KROK0_20260916/pliki-app/MISSING-supplier-scorecard.xlsx"
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/supplier-scorecard.xlsx",
+        "bytes": 10471,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "DaunPenh",
+          "DokChampa",
+          "Estrangelo Edessa",
+          "Euphemia",
+          "Gautami",
+          "Iskoola Pota",
+          "Kalinga",
+          "Kartika",
+          "Latha",
+          "MV Boli",
+          "Mangal",
+          "Microsoft Himalaya",
+          "Microsoft Uighur",
+          "Microsoft Yi Baiti",
+          "Mongolian Baiti",
+          "MoolBoran",
+          "Nyala",
+          "Plantagenet Cherokee",
+          "Raavi",
+          "Shruti",
+          "Sylfaen",
+          "Tahoma",
+          "Times New Roman",
+          "Tunga",
+          "Vrinda",
+          "宋体",
+          "新細明體",
+          "맑은 고딕",
+          "ＭＳ Ｐゴシック"
+        ],
+        "crimsonHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 2,
+        "formulas": 28,
+        "frozenPanes": 2,
+        "conditionalFormatting": 3,
+        "autoFilters": 1
+      },
+      "numeric": {
+        "sheets": {
+          "app": null,
+          "mock": 2,
+          "delta": null
+        },
+        "formulas": {
+          "app": null,
+          "mock": 28,
+          "delta": null
+        },
+        "frozenPanes": {
+          "app": null,
+          "mock": 2,
+          "delta": null
+        },
+        "conditionalFormatting": {
+          "app": null,
+          "mock": 3,
+          "delta": null
+        },
+        "autoFilters": {
+          "app": null,
+          "mock": 1,
+          "delta": null
+        }
+      },
+      "requirements": {
+        "aptosAndArialFallback": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroCrimsonFilewide": false
+      }
+    },
+    {
+      "id": "nearest-current-workbook",
+      "note": "Nearest current WorkbookBuilder path, not a semantic parity claim for supplier scorecard.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-scrap-route-current.xlsx",
+        "bytes": 10401,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "DaunPenh",
+          "DokChampa",
+          "Estrangelo Edessa",
+          "Euphemia",
+          "Gautami",
+          "Iskoola Pota",
+          "Kalinga",
+          "Kartika",
+          "Latha",
+          "MV Boli",
+          "Mangal",
+          "Microsoft Himalaya",
+          "Microsoft Uighur",
+          "Microsoft Yi Baiti",
+          "Mongolian Baiti",
+          "MoolBoran",
+          "Nyala",
+          "Plantagenet Cherokee",
+          "Raavi",
+          "Shruti",
+          "Sylfaen",
+          "Tahoma",
+          "Times New Roman",
+          "Tunga",
+          "Vrinda",
+          "宋体",
+          "新細明體",
+          "맑은 고딕",
+          "ＭＳ Ｐゴシック"
+        ],
+        "crimsonHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 3,
+        "formulas": 4,
+        "frozenPanes": 2,
+        "conditionalFormatting": 0,
+        "autoFilters": 2
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/supplier-scorecard.xlsx",
+        "bytes": 10471,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "DaunPenh",
+          "DokChampa",
+          "Estrangelo Edessa",
+          "Euphemia",
+          "Gautami",
+          "Iskoola Pota",
+          "Kalinga",
+          "Kartika",
+          "Latha",
+          "MV Boli",
+          "Mangal",
+          "Microsoft Himalaya",
+          "Microsoft Uighur",
+          "Microsoft Yi Baiti",
+          "Mongolian Baiti",
+          "MoolBoran",
+          "Nyala",
+          "Plantagenet Cherokee",
+          "Raavi",
+          "Shruti",
+          "Sylfaen",
+          "Tahoma",
+          "Times New Roman",
+          "Tunga",
+          "Vrinda",
+          "宋体",
+          "新細明體",
+          "맑은 고딕",
+          "ＭＳ Ｐゴシック"
+        ],
+        "crimsonHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 2,
+        "formulas": 28,
+        "frozenPanes": 2,
+        "conditionalFormatting": 3,
+        "autoFilters": 1
+      },
+      "numeric": {
+        "sheets": {
+          "app": 3,
+          "mock": 2,
+          "delta": 1
+        },
+        "formulas": {
+          "app": 4,
+          "mock": 28,
+          "delta": -24
+        },
+        "frozenPanes": {
+          "app": 2,
+          "mock": 2,
+          "delta": 0
+        },
+        "conditionalFormatting": {
+          "app": 0,
+          "mock": 3,
+          "delta": -3
+        },
+        "autoFilters": {
+          "app": 2,
+          "mock": 1,
+          "delta": 1
+        }
+      },
+      "requirements": {
+        "aptosAndArialFallback": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroCrimsonFilewide": true
+      }
+    }
+  ]
+}

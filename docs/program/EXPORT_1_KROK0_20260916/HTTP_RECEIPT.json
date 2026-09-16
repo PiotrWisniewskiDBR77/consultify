@@ -1,0 +1,22 @@
+{
+  "measuredAt": "2026-09-16T11:06:00Z",
+  "baseSha": "85541745e8226562b75ab318e1efe1f8178b5097",
+  "database": {
+    "source": "local restored dump",
+    "dump": "staging-thomas-przed-wdrozeniem-linii-20260911-2036.dump",
+    "sha256": "85f0d5aafcd479b1b89b25b7fad3e46e3a147937f4f68ea47bbdd1a5c2f61531",
+    "container": "cx-export1-pg",
+    "port": 5293,
+    "tables": 1808
+  },
+  "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+  "routes": [
+    { "name": "report-builder-docx", "url": "/api/report-builder/1d10bf8a-3239-5e2c-b2c4-3900966f8173/export/docx", "status": 409, "result": "REPORT_NOT_READY_FOR_EXPORT", "receipt": "pliki-app/northwind-report-builder-409.json" },
+    { "name": "drd-docx", "url": "/api/assessment-reports/assessment/b2de5832-0a42-5639-8e46-6ecff2db82e5/export/report.docx", "status": 200, "bytes": 161676, "receipt": "pliki-app/northwind-drd-route-current.docx" },
+    { "name": "drd-pptx", "url": "/api/assessment-reports/assessment/b2de5832-0a42-5639-8e46-6ecff2db82e5/export/deck.pptx", "status": 200, "bytes": 362124, "receipt": "pliki-app/northwind-drd-route-current.pptx" },
+    { "name": "drd-pdf", "url": "/api/assessment-reports/assessment/b2de5832-0a42-5639-8e46-6ecff2db82e5/export/deck.pdf", "status": 200, "bytes": 50495, "receipt": "pliki-app/northwind-drd-route-current.pdf" },
+    { "name": "deck-builder-pptx", "url": "/api/presentations/decks/56ba0108-856b-54a6-9a96-76292797342b/download", "status": 422, "result": "BLOCKED_P1", "receipt": "pliki-app/northwind-steering-route-422.json" },
+    { "name": "workbook-xlsx", "url": "/api/workbook/2352986d-4d0a-5f43-afa3-0c721c302a53/download", "status": 200, "bytes": 10401, "receipt": "pliki-app/northwind-scrap-route-current.xlsx" },
+    { "name": "audit-docx", "url": "/api/audits/reports/missing/export.docx", "status": 404, "result": "AUDIT_NOT_FOUND", "receipt": "pliki-app/northwind-audit-404.json" }
+  ]
+}

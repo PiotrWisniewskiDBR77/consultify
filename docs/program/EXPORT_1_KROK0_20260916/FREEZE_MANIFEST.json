@@ -1,0 +1,148 @@
+{
+  "status": "READY FOR CTO REVIEW — STOP",
+  "baseSha": "85541745e8226562b75ab318e1efe1f8178b5097",
+  "branch": "codex/export-1-krok0-20260916",
+  "scope": "EXPORT-1 KROK 0 only; no production implementation",
+  "files": [
+    {
+      "path": "HTTP_RECEIPT.json",
+      "bytes": 1920,
+      "sha256": "3e83740bb8309d6ff3aad1992293fd61297df30e3f70401a9bfd4add1ba93731"
+    },
+    {
+      "path": "INWENTARZ.md",
+      "bytes": 6142,
+      "sha256": "f7f559b763d20b612773b9780fb118aa3e0044992e5c8155beee1efcd6265f8f"
+    },
+    {
+      "path": "KONTRAKT_MODULU.md",
+      "bytes": 5057,
+      "sha256": "cf1f2fdd1fb137a96db7c8ca779bdbf4a417b177c7a8a59b13fdd72643d91b75"
+    },
+    {
+      "path": "RAPORT.md",
+      "bytes": 1365,
+      "sha256": "f880e444a2577653ef723b7d92a7b0c8346879a2235d0c6f0d92060dde5a2386"
+    },
+    {
+      "path": "compare-structure.mjs",
+      "bytes": 5489,
+      "sha256": "ec4c98a69c9d0cbdc0aca41bd01bba387487e700c4cf803561ba4ec438ec07c5"
+    },
+    {
+      "path": "pliki-app/GENERATION_MANIFEST.json",
+      "bytes": 840,
+      "sha256": "d464ef6148f40b53a1254f99c6ff3a5467dae7907820cf7bd040adca4cefc3ea"
+    },
+    {
+      "path": "pliki-app/northwind-audit-404.json",
+      "bytes": 82,
+      "sha256": "3d9006c21462a34aa8d69053dda40793c014ad20411eef409b5c059629221b72"
+    },
+    {
+      "path": "pliki-app/northwind-drd-b2de5832-current.docx",
+      "bytes": 161677,
+      "sha256": "22fee35c07cf13f1838ae10d89eefe3bb08597f06cb0adab6725ea3ab9310f2b"
+    },
+    {
+      "path": "pliki-app/northwind-drd-b2de5832-current.pdf",
+      "bytes": 50495,
+      "sha256": "9a0dd4bd84d9214e1a1c49ef7457fdc7727feda85d93c5353911443026597b80"
+    },
+    {
+      "path": "pliki-app/northwind-drd-b2de5832-current.pptx",
+      "bytes": 362124,
+      "sha256": "e83e1fb658c8a13becb0676e62a72c2c52aabdbc0acb88327f8bf522f4051435"
+    },
+    {
+      "path": "pliki-app/northwind-drd-route-current.docx",
+      "bytes": 161676,
+      "sha256": "4d4ebf472ec147fcc6bf8713b0b251eda14fb6923a12ecc47318aad7e4d9bf3d"
+    },
+    {
+      "path": "pliki-app/northwind-drd-route-current.pdf",
+      "bytes": 50495,
+      "sha256": "3cc4f5af2fd3874e7c378575c859d5283479af1ac79b027f8e7db5caa0767f00"
+    },
+    {
+      "path": "pliki-app/northwind-drd-route-current.pptx",
+      "bytes": 362124,
+      "sha256": "161901347e78510609e7d75e6d313f12f5df36d462701eb7c2cdbe0114252a55"
+    },
+    {
+      "path": "pliki-app/northwind-report-builder-409.json",
+      "bytes": 2091,
+      "sha256": "d3da10111c50c6773889a50e24cdb28e2c9926dc32787abf7bf1abdc309f9eba"
+    },
+    {
+      "path": "pliki-app/northwind-scrap-cost-current.xlsx",
+      "bytes": 10475,
+      "sha256": "a3a94e6d85ccd8afbd0d12ee0a9402a056db61ceeb8f48c9dffa18864e40d11d"
+    },
+    {
+      "path": "pliki-app/northwind-scrap-route-current.xlsx",
+      "bytes": 10401,
+      "sha256": "ecda08b2dad8c6f8083cf3420d47d5f5bce6f51f5ec4476e081002262454f759"
+    },
+    {
+      "path": "pliki-app/northwind-steering-current.pptx",
+      "bytes": 125042,
+      "sha256": "48c90d82df4e2c154563390fc960a791146f80291ec9b11314b5d591eec8d65d"
+    },
+    {
+      "path": "pliki-app/northwind-steering-route-422.json",
+      "bytes": 1292,
+      "sha256": "b7e9b10fa2d30e42a7918f8ce25e7c127e90f00b7dce2e15d8854d7fd29ac232"
+    },
+    {
+      "path": "pliki-makieta/client-final-report.docx",
+      "bytes": 18920,
+      "sha256": "182533c2d24dea4eb7a095b0b07ab129603f12a7e2f582a7741dc4e7135eadb6"
+    },
+    {
+      "path": "pliki-makieta/deck-board.pptx",
+      "bytes": 250779,
+      "sha256": "c726db5b012542afee467d9c7f0f438b4f95abb0eda8e045be5172052bed1419"
+    },
+    {
+      "path": "pliki-makieta/supplier-scorecard.xlsx",
+      "bytes": 10471,
+      "sha256": "506d1ade58e98a31ba2d1e04c495dcddf7398ff51edffb015d11e4730e592b63"
+    },
+    {
+      "path": "porownanie/structure-comparison.json",
+      "bytes": 11444,
+      "sha256": "fb27ad2592bc4ee22fa8370c5acf81cb045e2b880a6e1978a155c274510f6b5e"
+    },
+    {
+      "path": "zrzuty/client-final-report-page1.png",
+      "bytes": 98180,
+      "sha256": "f5943d39cdfa36f50f2e9aedd693ff33721aa51b7ad70972f5b4c9b869f63f97"
+    },
+    {
+      "path": "zrzuty/deck-board-page1.png",
+      "bytes": 51554,
+      "sha256": "dbd0fbccdba6962df9cad0afb22e707cde13eb7fef8be7025ddacb4c7f92c8fa"
+    },
+    {
+      "path": "zrzuty/northwind-drd-route-current-page1.png",
+      "bytes": 126609,
+      "sha256": "92b5627a15e7b6081854f0c4d92129af4b721eb38dce7d15f12a58d5bdc86f9e"
+    },
+    {
+      "path": "zrzuty/northwind-scrap-route-current-page1.png",
+      "bytes": 68913,
+      "sha256": "e873ad91745803710dd17a7810404bfccefe7237cab563de905a8ad89da0c4a1"
+    },
+    {
+      "path": "zrzuty/northwind-steering-current-page1.png",
+      "bytes": 38089,
+      "sha256": "54ab614fe28f49fb733cc83bfbb2b36542cfb9f5b21ea63783ec090f0d11607b"
+    },
+    {
+      "path": "zrzuty/supplier-scorecard-page1.png",
+      "bytes": 98891,
+      "sha256": "22998d3dab5c7b5a9a58403b313484b5d04629ed22696ba1ac257d7f13ba08a2"
+    }
+  ]
+}
