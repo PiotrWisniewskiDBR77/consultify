@@ -1,0 +1,47 @@
+{
+  "docx": {
+    "majorLatin": "Aptos Display",
+    "minorLatin": "Aptos",
+    "literalRunFonts": [],
+    "themeDrivenRunDeclarations": 330,
+    "sectionTitleCount": 8,
+    "checks": {
+      "theme_major_aptos_display": true,
+      "theme_minor_aptos": true,
+      "aptos_alt_name_arial": true,
+      "aptos_display_alt_name_arial": true,
+      "doc_defaults_minor_hansi": true,
+      "no_literal_run_fonts": true,
+      "theme_driven_runs_present": true,
+      "eight_section_titles_present": true
+    },
+    "status": "PASS"
+  },
+  "xlsx": {
+    "majorLatin": "Aptos Display",
+    "minorLatin": "Aptos",
+    "literalCellFonts": [],
+    "sheets": [
+      "Supplier scorecard",
+      "Template fields"
+    ],
+    "formulaCount": 28,
+    "conditionalFormattingRanges": [
+      "H7:H11",
+      "I7:I11",
+      "J7:J12"
+    ],
+    "checks": {
+      "theme_major_aptos_display": true,
+      "theme_minor_aptos": true,
+      "no_literal_cell_fonts": true,
+      "two_sheets": true,
+      "formulas_present": true,
+      "freeze_2_by_6": true,
+      "autofilter_present": true,
+      "three_conditional_format_ranges": true
+    },
+    "status": "PASS"
+  },
+  "status": "PASS"
+}
