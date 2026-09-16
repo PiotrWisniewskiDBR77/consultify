@@ -196,6 +196,10 @@ export const DeckReviewPanel: React.FC<DeckReviewPanelProps> = ({
       }
       data-testid="presentation-review-findings"
     >
+      {/* Embedded in the left rail the tab above already says "Review" — a
+          second identical title would be the old panel's habit of saying the
+          same thing twice. Only the overlay needs its own header + close. */}
+      {displayMode === 'overlay' && (
       <div className="flex shrink-0 items-center justify-between border-b border-c-border-subtle px-4 py-3">
         <h3 className="text-sm font-semibold text-c-text">
           {t('presentations.review.title', 'Review')}
@@ -212,6 +216,7 @@ export const DeckReviewPanel: React.FC<DeckReviewPanelProps> = ({
           </button>
         )}
       </div>
+      )}
 
       {report && !loading && (
         <div className="shrink-0 border-b border-c-border-subtle px-4 py-3">
