@@ -13,10 +13,12 @@ export const MODULES = Object.freeze(
     ['11-materials', '/presentations'],
     ['12-meeting', '/meeting'],
     ['13-organization', '/organization/profile'],
-    ['14-admin', '/admin/people'],
+    ['14-admin', '/admin/people', ['/admin/team/members']],
     ['15-settings', '/settings/profile'],
     ['16-partners', '/partner/dashboard'],
-  ].map(([id, route]) => Object.freeze({ id, route }))
+  ].map(([id, route, canonicalRoutes = []]) =>
+    Object.freeze({ id, route, canonicalRoutes: Object.freeze(canonicalRoutes) })
+  )
 );
 
 export const SURFACE_KINDS = Object.freeze([
@@ -29,14 +31,21 @@ export const SURFACE_KINDS = Object.freeze([
   'ai',
 ]);
 
-// Wpis 89 names three people and Tomek's two materially different roles.
-// Irina and Kasia exercise independent ADMIN sessions in Northwind; Tomek
-// provides the Northwind ADMIN / DBR77 OWNER cross-tenant pair.
+// DEC-579 (W161): scheduled E2E never uses human accounts. The two principals
+// are dedicated, least-privilege service accounts provisioned by CTO.
 export const ACTOR_ORGS = Object.freeze([
-  { actor: 'irina', org: 'northwind', expectedRole: 'ADMIN' },
-  { actor: 'kasia', org: 'northwind', expectedRole: 'ADMIN' },
-  { actor: 'tomek', org: 'northwind', expectedRole: 'ADMIN' },
-  { actor: 'tomek', org: 'dbr77', expectedRole: 'OWNER' },
+  {
+    actor: 'admin-nw',
+    secretPrefix: 'E2E_ADMIN_NW',
+    org: 'northwind',
+    expectedRole: 'ADMIN',
+  },
+  {
+    actor: 'owner-dbr77',
+    secretPrefix: 'E2E_OWNER_DBR77',
+    org: 'dbr77',
+    expectedRole: 'OWNER',
+  },
 ]);
 
 export const LOCALES = Object.freeze(['en', 'pl']);
@@ -76,4 +85,19 @@ export function parseVariant(input) {
   const match = buildVariants().find((variant) => variantKey(variant) === input);
   if (!match) throw new Error(`Unknown E2E-1 variant: ${input}`);
   return match;
+}
+
+export function acceptedModuleRoutes(module) {
+  return [module.route, ...(module.canonicalRoutes || [])];
+}
+
+export function routeMatchesModule(routeAfter, module) {
+  const path =
+    String(routeAfter || '')
+      .split(/[?#]/, 1)[0]
+      .replace(/\/+$/, '') || '/';
+  return acceptedModuleRoutes(module).some((candidate) => {
+    const normalized = String(candidate).replace(/\/+$/, '') || '/';
+    return path === normalized || path.startsWith(`${normalized}/`);
+  });
 }

@@ -29,30 +29,20 @@ jobs:
       max-parallel: 1
       matrix:
         variant:
-          - irina-northwind-admin-en-light
-          - irina-northwind-admin-en-dark
-          - irina-northwind-admin-pl-light
-          - irina-northwind-admin-pl-dark
-          - kasia-northwind-admin-en-light
-          - kasia-northwind-admin-en-dark
-          - kasia-northwind-admin-pl-light
-          - kasia-northwind-admin-pl-dark
-          - tomek-northwind-admin-en-light
-          - tomek-northwind-admin-en-dark
-          - tomek-northwind-admin-pl-light
-          - tomek-northwind-admin-pl-dark
-          - tomek-dbr77-owner-en-light
-          - tomek-dbr77-owner-en-dark
-          - tomek-dbr77-owner-pl-light
-          - tomek-dbr77-owner-pl-dark
+          - admin-nw-northwind-admin-en-light
+          - admin-nw-northwind-admin-en-dark
+          - admin-nw-northwind-admin-pl-light
+          - admin-nw-northwind-admin-pl-dark
+          - owner-dbr77-dbr77-owner-en-light
+          - owner-dbr77-dbr77-owner-en-dark
+          - owner-dbr77-dbr77-owner-pl-light
+          - owner-dbr77-dbr77-owner-pl-dark
     env:
       GH_TOKEN: ${{ github.token }}
-      E2E_IRINA_EMAIL: ${{ secrets.E2E_IRINA_EMAIL }}
-      E2E_IRINA_PASSWORD: ${{ secrets.E2E_IRINA_PASSWORD }}
-      E2E_KASIA_EMAIL: ${{ secrets.E2E_KASIA_EMAIL }}
-      E2E_KASIA_PASSWORD: ${{ secrets.E2E_KASIA_PASSWORD }}
-      E2E_TOMEK_EMAIL: ${{ secrets.E2E_TOMEK_EMAIL }}
-      E2E_TOMEK_PASSWORD: ${{ secrets.E2E_TOMEK_PASSWORD }}
+      E2E_ADMIN_NW_EMAIL: ${{ secrets.E2E_ADMIN_NW_EMAIL }}
+      E2E_ADMIN_NW_PASSWORD: ${{ secrets.E2E_ADMIN_NW_PASSWORD }}
+      E2E_OWNER_DBR77_EMAIL: ${{ secrets.E2E_OWNER_DBR77_EMAIL }}
+      E2E_OWNER_DBR77_PASSWORD: ${{ secrets.E2E_OWNER_DBR77_PASSWORD }}
       E2E_BASE_URL: ${{ inputs.base_url || 'https://staging.consultify.ai' }}
     steps:
       - uses: actions/checkout@v4

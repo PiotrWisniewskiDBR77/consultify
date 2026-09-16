@@ -1,0 +1,80 @@
+{
+  "variantCount": 8,
+  "modulesPerVariant": 16,
+  "moduleRuns": 128,
+  "requiredSurfaceCells": 896,
+  "variantDefinitions": [
+    {
+      "actor": "admin-nw",
+      "secretPrefix": "E2E_ADMIN_NW",
+      "org": "northwind",
+      "expectedRole": "ADMIN",
+      "locale": "en",
+      "theme": "light",
+      "key": "admin-nw-northwind-admin-en-light"
+    },
+    {
+      "actor": "admin-nw",
+      "secretPrefix": "E2E_ADMIN_NW",
+      "org": "northwind",
+      "expectedRole": "ADMIN",
+      "locale": "en",
+      "theme": "dark",
+      "key": "admin-nw-northwind-admin-en-dark"
+    },
+    {
+      "actor": "admin-nw",
+      "secretPrefix": "E2E_ADMIN_NW",
+      "org": "northwind",
+      "expectedRole": "ADMIN",
+      "locale": "pl",
+      "theme": "light",
+      "key": "admin-nw-northwind-admin-pl-light"
+    },
+    {
+      "actor": "admin-nw",
+      "secretPrefix": "E2E_ADMIN_NW",
+      "org": "northwind",
+      "expectedRole": "ADMIN",
+      "locale": "pl",
+      "theme": "dark",
+      "key": "admin-nw-northwind-admin-pl-dark"
+    },
+    {
+      "actor": "owner-dbr77",
+      "secretPrefix": "E2E_OWNER_DBR77",
+      "org": "dbr77",
+      "expectedRole": "OWNER",
+      "locale": "en",
+      "theme": "light",
+      "key": "owner-dbr77-dbr77-owner-en-light"
+    },
+    {
+      "actor": "owner-dbr77",
+      "secretPrefix": "E2E_OWNER_DBR77",
+      "org": "dbr77",
+      "expectedRole": "OWNER",
+      "locale": "en",
+      "theme": "dark",
+      "key": "owner-dbr77-dbr77-owner-en-dark"
+    },
+    {
+      "actor": "owner-dbr77",
+      "secretPrefix": "E2E_OWNER_DBR77",
+      "org": "dbr77",
+      "expectedRole": "OWNER",
+      "locale": "pl",
+      "theme": "light",
+      "key": "owner-dbr77-dbr77-owner-pl-light"
+    },
+    {
+      "actor": "owner-dbr77",
+      "secretPrefix": "E2E_OWNER_DBR77",
+      "org": "dbr77",
+      "expectedRole": "OWNER",
+      "locale": "pl",
+      "theme": "dark",
+      "key": "owner-dbr77-dbr77-owner-pl-dark"
+    }
+  ]
+}

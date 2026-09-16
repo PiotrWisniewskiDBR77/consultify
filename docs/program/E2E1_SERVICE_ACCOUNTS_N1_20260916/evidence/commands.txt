@@ -1,0 +1,14 @@
+node --test scripts/e2e-1-matrix/contract.test.mjs
+# 7/7 PASS
+
+node scripts/e2e-1-matrix/run.mjs --plan
+# 8 variants / 128 module runs / 896 required cells
+
+node scripts/e2e-1-matrix/aggregate.mjs /tmp/e2e1-service-synthetic /tmp/e2e1-service-aggregate
+# PASS: 8/8, 128/128, 896/896
+
+npx prettier --check scripts/e2e-1-matrix/*.mjs .github/workflows/e2e-1-matrix.yml
+# PASS
+
+git diff --check
+# PASS
