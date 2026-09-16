@@ -15,6 +15,21 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const KLUCZE = ['loadFailed', 'backToList', 'notFound'] as const;
+const U30_SECTIONS = [
+  'executive_summary',
+  'scope',
+  'methodology',
+  'limitations',
+  'overall_conclusion',
+  'findings_by_severity',
+  'findings_by_area',
+  'objective_evidence_references',
+  'systemic_conclusions',
+  'corrective_action_plan',
+  'verification_plan',
+  'appendices',
+  'traceability_matrix',
+] as const;
 
 function slownik(lang: 'en' | 'pl'): Record<string, string> {
   const raw = readFileSync(resolve(process.cwd(), `public/locales/${lang}/translation.json`), 'utf8');
@@ -43,6 +58,40 @@ describe('[F5] audit report chrome — i18n (EN first)', () => {
       expect(String(pl[k] ?? '')).not.toBe('');
       // PL nie może być kopią EN — to był ósmy kształt fałszywego „gotowe".
       expect(pl[k]).not.toBe(en[k]);
+    }
+  });
+
+  it('U-30: locale drives chrome and both catalogs cover every audit-report section', () => {
+    const src = readFileSync(
+      resolve(process.cwd(), 'src/components/Audit/method/AuditReportDocumentView.tsx'),
+      'utf8'
+    );
+    expect(src).not.toContain('const isPolish = true');
+    expect(src).toContain('translation.resolvedLanguage');
+    expect(src).toContain('audit.report.viewer.sections.${id}');
+
+    for (const lang of ['en', 'pl'] as const) {
+      const raw = JSON.parse(
+        readFileSync(resolve(process.cwd(), `public/locales/${lang}/translation.json`), 'utf8')
+      );
+      const viewer = raw?.audit?.report?.viewer ?? {};
+      for (const key of [
+        'audits',
+        'reports',
+        'actions',
+        'approve',
+        'publish',
+        'downloadDocx',
+        'downloadPdf',
+        'properties',
+        'property',
+        'value',
+      ]) {
+        expect(String(viewer[key] ?? ''), `${lang}:${key}`).not.toBe('');
+      }
+      for (const section of U30_SECTIONS) {
+        expect(String(viewer.sections?.[section] ?? ''), `${lang}:sections.${section}`).not.toBe('');
+      }
     }
   });
 });
