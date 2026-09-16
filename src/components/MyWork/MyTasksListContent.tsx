@@ -380,7 +380,7 @@ const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
 };
 
 // Categorize task by time
-const categorizeTask = (task: Task): TaskTimeGroup => {
+export const categorizeTask = (task: Task): TaskTimeGroup => {
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
   if (isCompleted) return 'later';
 
@@ -401,6 +401,25 @@ const categorizeTask = (task: Task): TaskTimeGroup => {
   if (dueDate < endOfWeek) return 'week';
   return 'later';
 };
+
+/**
+ * K-31: ktory kubelek czasowy widzi tester przy danym filtrze zakladki.
+ *
+ * Wydzielone jako CZYSTA funkcja, zeby dalo sie o to zapytac bez montowania
+ * calego huba — i zeby nie dalo sie tego cofnac niepostrzezenie.
+ * 'urgent' i 'new' zwezaja liste PRZED grupowaniem, wiec biora caly kubelek
+ * 'all' (juz zwezony); 'overdue'/'today'/'week' biora swoj kubelek.
+ * Zadanie BEZ terminu ma kubelek 'no-date' i nie wpada do zadnego z nich.
+ */
+export function selectTasksForFilter<T>(
+  groups: Record<TaskTimeGroup, T[]>,
+  activeFilter: TaskFilter
+): T[] {
+  if (activeFilter === 'overdue') return groups.overdue;
+  if (activeFilter === 'today') return groups.today;
+  if (activeFilter === 'week') return groups.week;
+  return groups.all;
+}
 
 // Task table column definitions
 const TASK_COLUMNS: ColumnDef[] = [
@@ -1640,6 +1659,21 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const newUntriagedCount = useMemo(() => tasks.filter(isNewTask).length, [tasks, isNewTask]);
 
+  // K-31 (zgloszenia #84 Kasia i #71): „Pojawia sie we wszystkich filtrach
+  // oprocz «Pilne»" / „W zakladkach Zalegle, Dzisiaj i Ten tydzien nie mam
+  // zadnych zadan (stan «0»), a wyswietlaja sie wszystkie".
+  //
+  // PREMISA ZMIERZONA na 258043df9f: `groupedTasks` LICZYLO kubelki czasowe
+  // poprawnie (`categorizeTask` oddaje 'no-date' dla zadania bez terminu) i te
+  // liczby szly do plakietek zakladek — ale TABELA rysowala zawsze
+  // `groupedTasks.all`. Tylko 'urgent' i 'new' zwezaly liste, bo zwezaly ja
+  // PRZED grupowaniem. Stad rozjazd „licznik 0, a wiersze sa" i zadanie bez
+  // terminu widoczne w „Zaleglych" i „Dzisiaj".
+  const tasksForActiveFilter = useMemo(
+    () => selectTasksForFilter(groupedTasks, activeFilter),
+    [groupedTasks, activeFilter]
+  );
+
   useEffect(() => {
     const counts: TaskCounts = {
       total: groupedTasks.all.length,
@@ -1825,8 +1859,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Calculate total visible tasks for select all
   const allVisibleTaskIds = useMemo(() => {
-    return new Set(groupedTasks.all.map((task) => task.id));
-  }, [groupedTasks]);
+    // K-31: „wszystkie" = wszystkie WIDOCZNE przy biezacym filtrze, nie cala
+    // lista — inaczej „zaznacz wszystko" w „Zaleglych" bralo tez zadania,
+    // ktorych tester na ekranie nie ma.
+    return new Set(tasksForActiveFilter.map((task) => task.id));
+  }, [tasksForActiveFilter]);
 
   // Selection helpers
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleTaskIds.size;
@@ -2082,10 +2119,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     t,
   ]);
 
+
   // Flat list of all visible tasks for keyboard navigation
-  const flatTaskList = useMemo(() => {
-    return groupedTasks.all;
-  }, [groupedTasks]);
+  const flatTaskList = useMemo(() => tasksForActiveFilter, [tasksForActiveFilter]);
 
   // Get focused task
   const focusedTask =
@@ -2175,7 +2211,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   });
 
   const allFilteredTasks = useMemo(() => {
-    let result: Task[] = [...groupedTasks.all];
+    let result: Task[] = [...tasksForActiveFilter];
 
     const statusFilter = tableFilters.status as string[] | undefined;
     const priorityFilter = tableFilters.priority as string[] | undefined;
@@ -2230,7 +2266,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
 
     return result;
-  }, [groupedTasks, tableFilters, smartSort, sortConfig]);
+  }, [tasksForActiveFilter, tableFilters, smartSort, sortConfig]);
 
   // CB-04/RB-019: same-title tasks had NO semantic-duplicate grouping or
   // warning — two rows with identical titles rendered as indistinguishable
@@ -2522,9 +2558,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         sortAccessor: (row: any) => taskAssigneeName(row as unknown as Task),
         render: (row: TableRow) => {
           const task = row as unknown as Task;
-          const assigneeName = taskAssigneeName(task) || 'Unassigned';
-          const assigneeInitial =
-            assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
+          // K-31 (zgloszenie #84, Kasia): „w tabeli w kolumnach widnieje
+          // czytelne «Brak terminu» i «Nieprzypisany» — nie puste pole,
+          // mysinik ani slowo null/undefined". Napis byl twardym literalem
+          // angielskim, wiec w polskim UI stalo „Unassigned".
+          const brakPrzypisania = t('myWork.tasksList.unassigned', 'Unassigned');
+          const assigneeRawName = taskAssigneeName(task);
+          const assigneeName = assigneeRawName || brakPrzypisania;
+          const assigneeInitial = assigneeRawName ? assigneeRawName[0].toUpperCase() : '';
           return (
             <div className="flex items-center gap-2">
               {assigneeInitial ? (
@@ -2536,9 +2577,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               )}
               <span
                 className={`text-xs truncate max-w-[120px] ${
-                  assigneeName === 'Unassigned'
-                    ? 'text-c-text-muted italic'
-                    : 'text-c-text-secondary'
+                  assigneeRawName ? 'text-c-text-secondary' : 'text-c-text-muted italic'
                 }`}
               >
                 {assigneeName}

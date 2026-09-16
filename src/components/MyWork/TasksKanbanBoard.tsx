@@ -261,10 +261,14 @@ function toKanbanCardData(task: Task, t: (key: string, fallback: string) => stri
   const overdue = isOverdue(task.dueDate, task.status);
   const dueLabel = formatDueDate(task.dueDate);
   const priorityMeta = getPriorityMeta(task.priority);
-  const assigneeName = task.assignee?.firstName
+  // K-31 (zgloszenie #84, Kasia): brak terminu / brak przypisania mial byc
+  // NAPISANY, a nie pokazany pustym miejscem. Karta kanbanu milczala w obu
+  // przypadkach (`formatDueDate` oddaje null, `assigneeName` undefined).
+  const assigneeRawName = task.assignee?.firstName
     ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
     : undefined;
-  const assigneeInitial = assigneeName ? assigneeName[0].toUpperCase() : undefined;
+  const assigneeName = assigneeRawName || t('myWork.tasksList.unassigned', 'Unassigned');
+  const assigneeInitial = assigneeRawName ? assigneeRawName[0].toUpperCase() : undefined;
 
   const card: StandardKanbanCardData = {
     id: task.id,
@@ -280,7 +284,7 @@ function toKanbanCardData(task: Task, t: (key: string, fallback: string) => stri
       },
     ],
     projectLabel: task.projectName,
-    dueLabel: dueLabel ?? undefined,
+    dueLabel: dueLabel ?? t('myWork.tasksList.noDueDate', 'No due date'),
     dueOverdue: overdue,
     ownerInitials: assigneeInitial,
     ownerAvatarUrl: task.assignee?.avatarUrl,

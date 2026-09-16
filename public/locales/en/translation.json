@@ -6402,7 +6402,8 @@
         "updatePriorityFailed": "Failed to update priority",
         "updateTaskFailed": "Failed to update task"
       },
-      "untitled": "Untitled task"
+      "untitled": "Untitled task",
+      "unassigned": "Unassigned"
     },
     "notificationsContent": {
       "recently": "Recently",

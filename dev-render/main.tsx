@@ -356,6 +356,11 @@ const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work')
 const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
 const Pt15WywiadZalacznikiScreen = React.lazy(() => import('./screens/pt15-wywiad-zalaczniki'));
 const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustawienia-suwaki'));
+const FeedbackK21OrganizacjaScreen = React.lazy(
+  () => import('./screens/feedback-k21-organizacja')
+);
+const FeedbackK20PstryczkiScreen = React.lazy(() => import('./screens/feedback-k20-pstryczki'));
+const FeedbackK31ZadaniaScreen = React.lazy(() => import('./screens/feedback-k31-zadania'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -2157,6 +2162,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
     render: () => <K5PreviewWorkScreen />,
+  },
+  'feedback-k21-organizacja': {
+    label:
+      'K-21 (zgłoszenie #61, Tomek) — REALNY <OrganizationSettings> z JEDNĄ organizacją: wejście „Create Organization" poza gałęzią zero-org. &role=ADMIN|CONSULTANT&lang=en|pl&theme=light|dark',
+    render: () => <FeedbackK21OrganizacjaScreen />,
+  },
+  'feedback-k31-zadania': {
+    label:
+      'K-31 (zgłoszenie #84, Kasia) — REALNY <MyWorkHub initialTab="tasks"> z zadaniem BEZ terminu i BEZ przypisania: czytelne „No due date"/„Unassigned" i filtry czasowe, ktore go nie lapia. &lang=en|pl&theme=light|dark',
+    render: () => <FeedbackK31ZadaniaScreen />,
+  },
+  'feedback-k20-pstryczki': {
+    label:
+      'K-20 (zgłoszenie #60, Tomek) — REALNY <WorkingHoursSettings>, cztery dni ON i trzy OFF na jednym zrzucie: tor pstryczka OFF musi być widoczny w motywie jasnym. &lang=en|pl&theme=light|dark',
+    render: () => <FeedbackK20PstryczkiScreen />,
   },
   'pt06-ustawienia-suwaki': {
     label:
