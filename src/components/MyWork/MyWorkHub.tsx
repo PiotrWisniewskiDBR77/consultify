@@ -507,13 +507,94 @@ function writeStoredMyWorkDocuments(
   }
 }
 
+// K-28 (zgloszenia testerow #71 i #80, Kasia): „po odswiezeniu strona
+// przeskakuje z «Zadania» na «Skrzynka»", „a jak klikne zakladke Zadania, to
+// otwiera sie widok listy, a nie kanban".
+//
+// PREMISA ZMIERZONA na 258043df9f: zakladka startowa wychodzila wylacznie z
+// URL-a (`getInitialMyWorkTab`) i spadala do MY_WORK_FALLBACK_TAB='inbox', a
+// `tasksViewMode` startowal twardym `useState('table')`. Nic z wyboru
+// uzytkownika nie przezywalo przeladowania.
+//
+// Pamiec jest per TOZSAMOSC (org+user), tak jak karty dokumentow wyzej —
+// dwie osoby na jednej przegladarce nie dziedzicza swoich ustawien.
+// localStorage (nie sessionStorage): tester oczekuje, ze wybor przezyje
+// zamkniecie karty, nie tylko odswiezenie.
+const MY_WORK_VIEW_STORAGE_PREFIX = 'moduleHub.view.mywork';
+
+type StoredMyWorkView = { tab: ModuleTab | null; tasksViewMode: TasksViewMode | null };
+
+const EMPTY_STORED_VIEW: StoredMyWorkView = { tab: null, tasksViewMode: null };
+
+const PERSISTED_MY_WORK_TABS: ModuleTab[] = [
+  'ideas',
+  'notebook',
+  'inbox',
+  'calendar',
+  'tasks',
+  'decisions',
+  'vault',
+];
+
+const PERSISTED_TASKS_VIEW_MODES: TasksViewMode[] = ['table', 'kanban', 'calendar'];
+
+function getMyWorkViewStorageKey(
+  userId?: string | null,
+  organizationId?: string | null
+): string | null {
+  if (!userId || !organizationId) return null;
+  return `${MY_WORK_VIEW_STORAGE_PREFIX}.${organizationId}.${userId}`;
+}
+
+function readStoredMyWorkView(
+  userId?: string | null,
+  organizationId?: string | null
+): StoredMyWorkView {
+  if (typeof window === 'undefined') return EMPTY_STORED_VIEW;
+  const storageKey = getMyWorkViewStorageKey(userId, organizationId);
+  if (!storageKey) return EMPTY_STORED_VIEW;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return EMPTY_STORED_VIEW;
+    const parsed = JSON.parse(raw);
+    // Zapisana wartosc jest DANYMI, nie prawda: zakladka spoza biezacej listy
+    // (skasowana powierzchnia, zgadnieta wartosc) nie moze wybrac ekranu.
+    const tab = PERSISTED_MY_WORK_TABS.includes(parsed?.tab) ? (parsed.tab as ModuleTab) : null;
+    const tasksViewMode = PERSISTED_TASKS_VIEW_MODES.includes(parsed?.tasksViewMode)
+      ? (parsed.tasksViewMode as TasksViewMode)
+      : null;
+    return { tab, tasksViewMode };
+  } catch {
+    return EMPTY_STORED_VIEW;
+  }
+}
+
+function writeStoredMyWorkView(
+  userId: string | null | undefined,
+  organizationId: string | null | undefined,
+  state: StoredMyWorkView
+): void {
+  if (typeof window === 'undefined') return;
+  const storageKey = getMyWorkViewStorageKey(userId, organizationId);
+  if (!storageKey) return;
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
+}
+
 // Exported for regression coverage (D1, 2026-08-12): lets tests exercise the
 // org/user-scoped storage key directly instead of rendering the full hub.
 export {
+  getInitialMyWorkTab,
   getMyWorkDocumentsStorageKey,
+  getMyWorkViewStorageKey,
   LEGACY_MYWORK_OPEN_DOCUMENTS_KEY,
   readStoredMyWorkDocuments,
+  readStoredMyWorkView,
   writeStoredMyWorkDocuments,
+  writeStoredMyWorkView,
 };
 
 function getDocumentTab(type: OpenDocument['type']): ModuleTab {
@@ -544,7 +625,13 @@ const OPEN_DOCUMENT_TABS: ModuleTab[] = ['tasks', 'ideas', 'decisions', 'inbox']
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
   canViewManager: boolean,
-  allowIdeas = true
+  allowIdeas = true,
+  /**
+   * K-28: zakladka zapamietana z poprzedniej wizyty. Wchodzi DOPIERO po
+   * wszystkich intencjach z URL-a — gleboki link zawsze wygrywa z pamiecia,
+   * inaczej `?taskId=...` ladowalby na cudzej zakladce.
+   */
+  storedTab: ModuleTab | null = null
 ): ModuleTab {
   if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
@@ -565,6 +652,10 @@ function getInitialMyWorkTab(
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
   // 05.09.2026: Agent poza MVP (decyzja właściciela) — `?tab=agent` nie
   // wybiera już zakładki (dawne AGT-003), spada do domyślnej.
+
+  if (storedTab && !(storedTab === 'ideas' && !allowIdeas)) {
+    if (storedTab !== 'vault' || isClientVaultEnabled()) return storedTab;
+  }
 
   return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
 }
@@ -883,6 +974,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     () => readStoredMyWorkDocuments(myWorkDocumentsUserId, myWorkDocumentsOrgId),
     [myWorkDocumentsUserId, myWorkDocumentsOrgId]
   );
+  // K-28: zapamietana zakladka + widok zadan (lista/kanban/kalendarz).
+  const restoredViewState = useMemo(
+    () => readStoredMyWorkView(myWorkDocumentsUserId, myWorkDocumentsOrgId),
+    [myWorkDocumentsUserId, myWorkDocumentsOrgId]
+  );
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
     const restoredActiveDoc = restoredDocumentState.activeDocumentId
@@ -892,7 +988,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       : null;
     return restoredActiveDoc
       ? getDocumentTab(restoredActiveDoc.type)
-      : getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
+      : getInitialMyWorkTab(
+          searchParams,
+          canViewManager,
+          !isPilotParticipant,
+          restoredViewState.tab
+        );
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -907,7 +1008,21 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
-  const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
+  const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>(
+    () => restoredViewState.tasksViewMode ?? 'table'
+  );
+
+  // K-28: zapisz wybor uzytkownika, zeby przezyl odswiezenie. Zapisujemy tylko
+  // zakladki z listy trwalej — 'home'/'manager'/'agent' to stany przejsciowe
+  // albo wygaszone powierzchnie i nie moga wrocic jako ekran startowy.
+  useEffect(() => {
+    if (!myWorkDocumentsUserId || !myWorkDocumentsOrgId) return;
+    if (!PERSISTED_MY_WORK_TABS.includes(activeTab)) return;
+    writeStoredMyWorkView(myWorkDocumentsUserId, myWorkDocumentsOrgId, {
+      tab: activeTab,
+      tasksViewMode,
+    });
+  }, [activeTab, tasksViewMode, myWorkDocumentsUserId, myWorkDocumentsOrgId]);
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('table');
   const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
