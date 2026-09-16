@@ -1,0 +1,105 @@
+name: E2E-1 staging matrix
+
+on:
+  schedule:
+    - cron: '7 5 * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Staging URL
+        required: false
+        default: https://staging.consultify.ai
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: e2e-1-staging-matrix
+  cancel-in-progress: false
+
+jobs:
+  matrix:
+    name: ${{ matrix.variant }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      # The same staging account must never switch organizations concurrently.
+      max-parallel: 1
+      matrix:
+        variant:
+          - irina-northwind-admin-en-light
+          - irina-northwind-admin-en-dark
+          - irina-northwind-admin-pl-light
+          - irina-northwind-admin-pl-dark
+          - kasia-northwind-admin-en-light
+          - kasia-northwind-admin-en-dark
+          - kasia-northwind-admin-pl-light
+          - kasia-northwind-admin-pl-dark
+          - tomek-northwind-admin-en-light
+          - tomek-northwind-admin-en-dark
+          - tomek-northwind-admin-pl-light
+          - tomek-northwind-admin-pl-dark
+          - tomek-dbr77-owner-en-light
+          - tomek-dbr77-owner-en-dark
+          - tomek-dbr77-owner-pl-light
+          - tomek-dbr77-owner-pl-dark
+    env:
+      GH_TOKEN: ${{ github.token }}
+      E2E_IRINA_EMAIL: ${{ secrets.E2E_IRINA_EMAIL }}
+      E2E_IRINA_PASSWORD: ${{ secrets.E2E_IRINA_PASSWORD }}
+      E2E_KASIA_EMAIL: ${{ secrets.E2E_KASIA_EMAIL }}
+      E2E_KASIA_PASSWORD: ${{ secrets.E2E_KASIA_PASSWORD }}
+      E2E_TOMEK_EMAIL: ${{ secrets.E2E_TOMEK_EMAIL }}
+      E2E_TOMEK_PASSWORD: ${{ secrets.E2E_TOMEK_PASSWORD }}
+      E2E_BASE_URL: ${{ inputs.base_url || 'https://staging.consultify.ai' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Download exact previous variant
+        continue-on-error: true
+        run: |
+          run_id="$(gh run list --workflow e2e-1-matrix.yml --status completed --limit 20 --json databaseId --jq '.[0].databaseId // empty')"
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --name "e2e-1-${{ matrix.variant }}" --dir previous
+          fi
+
+      - name: Exercise staging variant
+        run: node scripts/e2e-1-matrix/run.mjs --variant "${{ matrix.variant }}" --out "test-results/e2e-1-matrix/${{ matrix.variant }}" --previous previous
+
+      - name: Upload variant evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-1-${{ matrix.variant }}
+          path: test-results/e2e-1-matrix/${{ matrix.variant }}/
+          retention-days: 30
+
+  aggregate:
+    name: Aggregate denominator and delta
+    if: always()
+    needs: matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-1-*
+          path: test-results/e2e-1-matrix
+          merge-multiple: false
+      - run: node scripts/e2e-1-matrix/aggregate.mjs test-results/e2e-1-matrix test-results/e2e-1-aggregate
+      - if: always()
+        run: cat test-results/e2e-1-aggregate/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-1-matrix-report
+          path: test-results/e2e-1-aggregate/
+          retention-days: 90

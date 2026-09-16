@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "local-safe-single-variant-baseline",
+  "note": "Captured before the final telemetry/profile classifier tightening; summary preserves measured behavior, while /api/errors is excluded as telemetry in the final runner.",
+  "variant": "irina-northwind-admin-en-light",
+  "base": "https://staging.consultify.ai",
+  "candidateSha": "5202b50c972a9166e6e342571cef7a9a7f098f57",
+  "startedAt": "2026-09-16T21:05:42.429Z",
+  "finishedAt": "2026-09-16T21:26:53.601Z",
+  "principal": {
+    "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "organizationName": "Northwind Manufacturing Ltd.",
+    "role": "ADMIN"
+  },
+  "flags": {
+    "runtime": {},
+    "v8": {
+      "ai_core": true,
+      "chat": true,
+      "finance": false,
+      "lifecycle": true,
+      "multiplayer": true,
+      "outputs": true,
+      "pm_sync": true,
+      "results": true,
+      "workspace": true
+    }
+  },
+  "modules": [
+    {
+      "id": "01-chat",
+      "route": "/chat"
+    },
+    {
+      "id": "02-my-work",
+      "route": "/my-work"
+    },
+    {
+      "id": "03-interview",
+      "route": "/interview"
+    },
+    {
+      "id": "04-tools",
+      "route": "/discovery-tools"
+    },
+    {
+      "id": "05-assessment",
+      "route": "/assessment"
+    },
+    {
+      "id": "06-audits",
+      "route": "/audit-programs"
+    },
+    {
+      "id": "07-initiatives",
+      "route": "/initiatives"
+    },
+    {
+      "id": "08-projects",
+      "route": "/projects"
+    },
+    {
+      "id": "09-execution",
+      "route": "/execution"
+    },
+    {
+      "id": "10-results",
+      "route": "/results/kpi"
+    },
+    {
+      "id": "11-materials",
+      "route": "/presentations"
+    },
+    {
+      "id": "12-meeting",
+      "route": "/meeting"
+    },
+    {
+      "id": "13-organization",
+      "route": "/organization/profile"
+    },
+    {
+      "id": "14-admin",
+      "route": "/admin/people"
+    },
+    {
+      "id": "15-settings",
+      "route": "/settings/profile"
+    },
+    {
+      "id": "16-partners",
+      "route": "/partner/dashboard"
+    }
+  ],
+  "summary": {
+    "modules": 16,
+    "cells": 277,
+    "statuses": {
+      "PASS": 246,
+      "FAIL": 9,
+      "MISSING": 17,
+      "BLOCKED": 5
+    },
+    "hardFailures": 31
+  },
+  "cleanup": {
+    "mode": "entry-surfaces-mutations-blocked-before-network",
+    "verified": true,
+    "principalRestore": {
+      "required": true,
+      "restored": true,
+      "status": 200
+    },
+    "domainMutationAttemptsExcludingTelemetry": [
+      {
+        "module": "01-chat",
+        "method": "POST",
+        "url": "/api/conversations"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "06-audits",
+        "method": "POST",
+        "url": "/api/conclusions/sync"
+      }
+    ]
+  },
+  "nonPassingCells": [
+    {
+      "module": "01-chat",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "01-chat",
+      "kind": "kebab",
+      "control": "unstable-after-reload",
+      "status": "FAIL",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "01-chat",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "01-chat",
+      "kind": "create",
+      "control": "New conversation",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/conversations",
+      "mutationAttempts": [
+        {
+          "module": "01-chat",
+          "method": "POST",
+          "url": "/api/conversations"
+        }
+      ]
+    },
+    {
+      "module": "01-chat",
+      "kind": "ai",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "02-my-work",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "02-my-work",
+      "kind": "menu3",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "02-my-work",
+      "kind": "kebab",
+      "control": "Irina Lebedjuk IL",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ]
+    },
+    {
+      "module": "02-my-work",
+      "kind": "create",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "02-my-work",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ]
+    },
+    {
+      "module": "03-interview",
+      "kind": "create",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "05-assessment",
+      "kind": "create",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Conclusions",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/conclusions/sync",
+      "mutationAttempts": [
+        {
+          "module": "06-audits",
+          "method": "POST",
+          "url": "/api/conclusions/sync"
+        }
+      ]
+    },
+    {
+      "module": "06-audits",
+      "kind": "create",
+      "control": "New audit",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(13)\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" aria-disabled=\"true\" ",
+      "mutationAttempts": []
+    },
+    {
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main [role=\"tab\"]:visible').first()\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" type=\"button\" aria-selected=\"true\" class=\"inline-flex h-9",
+      "mutationAttempts": []
+    },
+    {
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Plan",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main [role=\"tab\"]:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" type=\"button\" aria-selected=\"false\" class=\"inline-flex h-9",
+      "mutationAttempts": []
+    },
+    {
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Load",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main [role=\"tab\"]:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" type=\"button\" aria-selected=\"false\" class=\"inline-flex h-9",
+      "mutationAttempts": []
+    },
+    {
+      "module": "07-initiatives",
+      "kind": "menu3",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "09-execution",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(30)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "mutationAttempts": []
+    },
+    {
+      "module": "13-organization",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "14-admin",
+      "kind": "menu1",
+      "control": "/admin/people",
+      "status": "FAIL",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "14-admin",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/errors",
+      "mutationAttempts": []
+    },
+    {
+      "module": "15-settings",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "15-settings",
+      "kind": "menu3",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "15-settings",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "15-settings",
+      "kind": "create",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "16-partners",
+      "kind": "menu1",
+      "control": "/partner/dashboard",
+      "status": "FAIL",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "16-partners",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "16-partners",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "note": "",
+      "mutationAttempts": []
+    },
+    {
+      "module": "16-partners",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(44)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "mutationAttempts": []
+    }
+  ],
+  "screenshots": "16 landing screenshots stored next to this file"
+}
