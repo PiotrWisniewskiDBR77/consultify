@@ -56,6 +56,8 @@ function inspect(file) {
   const sizeMatch = presentation.match(/<p:sldSz cx="(\d+)" cy="(\d+)"/);
   const slideSize = { cx: Number(sizeMatch?.[1]), cy: Number(sizeMatch?.[2]) };
   const slideSix = slides[5] ? text(file, slides[5]) : '';
+  const slideFour = slides[3] ? text(file, slides[3]) : '';
+  const slideSeven = slides[6] ? text(file, slides[6]) : '';
   const slideEight = slides[7] ? text(file, slides[7]) : '';
   const chartXml = entries
     .filter((name) => /^ppt\/charts\/chart\d+\.xml$/.test(name))
@@ -97,6 +99,11 @@ function inspect(file) {
       tableMaxRowHeight: tableRowHeights.length ? Math.max(...tableRowHeights) : null,
       chartSeries: (chartXml.match(/<c:ser>/g) || []).length,
       chartShowsValues: /<c:showVal val="1"\/>/.test(chartXml),
+      chartDecimalLabels: /formatCode="0\.0"/.test(chartXml),
+      contentBlueSquares: (slideFour.match(/2563EB/g) || []).length >= 4,
+      tableRightAlignedNumbers: /<a:pPr[^>]*algn="r"/.test(slideSix),
+      tableKeepsOneDecimal: slideSix.includes('1.0'),
+      chartTargetLatest: slideSeven.includes('TARGET') && slideSeven.includes('LATEST'),
       decisionFields: ['DECISION OWNER', 'DUE BY', 'LINKED RAID'].filter((label) =>
         slideEight.includes(label)
       ),
@@ -160,7 +167,13 @@ const checks = {
     actualInfo.composition.tableRowHeightVariants > 1 &&
     actualInfo.composition.tableMaxRowHeight < 914400,
   chartComposition:
-    actualInfo.composition.chartSeries === 2 && actualInfo.composition.chartShowsValues,
+    actualInfo.composition.chartSeries === 2 &&
+    actualInfo.composition.chartShowsValues &&
+    actualInfo.composition.chartDecimalLabels &&
+    actualInfo.composition.chartTargetLatest,
+  contentComposition: actualInfo.composition.contentBlueSquares,
+  tableNumberFormatting:
+    actualInfo.composition.tableRightAlignedNumbers && actualInfo.composition.tableKeepsOneDecimal,
   decisionComposition:
     actualInfo.composition.decisionFields.length === 3 &&
     actualInfo.composition.decisionOptionMeta &&

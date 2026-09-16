@@ -22,3 +22,24 @@ decision_owner_due_raid=present
 recommended_option_fill=present
 so_what_label=present
 parity_status=PASS
+
+RED before W144 fix
+work_canvas_sections=9
+work_canvas_content_slides=6
+lost_sections=3
+chart_data_label_format=#,##0
+table_fte_one_decimal=false
+table_numeric_alignment=default
+chart_target_latest_panel=missing
+content_blue_square_bullets=missing
+
+GREEN after W144 fix
+work_canvas_sections=9
+work_canvas_content_slides=9
+total_slides_with_cover_agenda=11
+lost_sections=0
+chart_data_label_format=0.0
+table_fte_one_decimal=true
+table_numeric_alignment=right
+chart_target_latest_panel=present
+content_blue_square_bullets=present

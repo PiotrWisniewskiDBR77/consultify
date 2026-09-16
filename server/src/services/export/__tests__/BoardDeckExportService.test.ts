@@ -42,6 +42,28 @@ describe('BoardDeckExportService production callers', () => {
     expect(result.xml).not.toMatch(/typeface="Arial"/i);
   });
 
+  it('preserves every Work Canvas section beyond the eight-role layout family', async () => {
+    const sections = Array.from({ length: 9 }, (_, index) => ({
+      title: `Section ${index + 1}`,
+      body: `Body ${index + 1}`,
+    }));
+    const result = await inspectPptx(
+      await boardDeckExportService.exportCanvasDeck({
+        title: 'Nine-section canvas',
+        organizationName: 'Northwind Manufacturing Ltd.',
+        sourceId: 'canvas-nine',
+        lifecycle: 'approved',
+        updatedAt: '2026-09-16T12:00:00.000Z',
+        sections,
+      })
+    );
+
+    expect(result.names.filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))).toHaveLength(
+      11
+    );
+    sections.forEach((section) => expect(result.xml).toContain(section.title));
+  });
+
   it('routes the generated partner sales deck through the same family', async () => {
     const file = await generatePartnerToolkitResourceFile({
       fileKey: 'generated:sales_deck',

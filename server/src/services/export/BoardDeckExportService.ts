@@ -21,7 +21,7 @@ export type PartnerBoardDeckInput = {
 class BoardDeckExportService {
   async exportCanvasDeck(input: CanvasBoardDeckInput): Promise<Buffer> {
     const sections = input.sections.length
-      ? input.sections.slice(0, 6)
+      ? input.sections
       : [{ title: input.title, body: 'No slide body available.' }];
 
     return unifiedExportService.exportBoardDeckPptx({
