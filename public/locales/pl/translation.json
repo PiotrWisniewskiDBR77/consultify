@@ -39516,7 +39516,17 @@
       "propertyLabel": "Właściwość",
       "valueLabel": "Wartość",
       "lastSavedLabel": "Dane odczytane z serwera",
-      "panelAriaLabel": "Szczegóły spotkania"
+      "panelAriaLabel": "Szczegóły spotkania",
+      "minutesApproved": "Protokół zatwierdzony",
+      "minutesApproveFailed": "Nie udało się zatwierdzić protokołu",
+      "minutesApproveForbidden": "Protokół może zatwierdzić tylko organizator spotkania albo administrator.",
+      "propCountInMinutes": "{{n}} w protokole, jeszcze niezapisane",
+      "history": "Historia",
+      "historyEmpty": "Nie zapisano jeszcze żadnych zmian protokołu.",
+      "historyProposed": "Propozycja protokołu",
+      "historyApproved": "Protokół zatwierdzony",
+      "historyRejected": "Protokół odrzucony",
+      "historyMaterialized": "Protokół zapisany jako dokument"
     },
     "objectNotFound": {
       "title": "Nie znaleziono spotkania",
@@ -39536,6 +39546,18 @@
     "preview": {
       "propertyLabel": "Właściwość",
       "valueLabel": "Wartość"
+    },
+    "participants": {
+      "roleOrganizer": "Organizator",
+      "roleAttendee": "Uczestnik",
+      "roleOptional": "Opcjonalny",
+      "rsvpAccepted": "Potwierdził",
+      "rsvpDeclined": "Odmówił",
+      "rsvpTentative": "Wstępnie",
+      "rsvpInvited": "Zaproszony",
+      "rsvpNoResponse": "Brak odpowiedzi",
+      "legacyHint": "Tylko lista zaproszeń — dla tego spotkania nie zapisano ról ani odpowiedzi.",
+      "loadFailed": "Nie udało się wczytać listy uczestników."
     }
   },
   "manager": {

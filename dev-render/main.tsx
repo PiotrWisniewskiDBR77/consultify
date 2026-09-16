@@ -34,6 +34,7 @@ const PrototypeHarness = ({
   return <>{legacy}</>;
 };
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
+const Meeting1U51Screen = React.lazy(() => import('./screens/meeting-1-u51'));
 const U19DrdTrzyKolumnyScreen = React.lazy(() => import('./screens/u19-drd-trzy-kolumny'));
 const P12TabelaI18nMenu3EmptyScreen = React.lazy(
   () => import('./screens/p12-tabela-i18n-menu3-empty')
@@ -780,6 +781,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'P6 — REALNY <AppIntroView> (trasa /app-intro), przewodnik "Jak zacząć": 6 kroków kontekst organizacji → wywiad → ocena → inicjatywy → realizacja → wyniki, każdy z linkiem, czasem i wymaganiem. &lang=pl|en &theme=light|dark',
     render: () => <P6PrzewodnikJakZaczacScreen />,
+  },
+  'meeting-1-u51': {
+    label:
+      'MEETING-1 [U-51] — realny MeetingObjectPage w realnej powloce (Menu 2, archetyp B, uczestnicy po nazwisku, licznik z protokolu); &section=details|minutes|decisions &lang=en|pl &theme=light|dark',
+    render: () => <Meeting1U51Screen />,
   },
   'day237-spotkania': {
     label:
