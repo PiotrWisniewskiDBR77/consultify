@@ -26005,6 +26005,7 @@
       "extractionFailedShort": "Could not extract readable text from this file.",
       "filesPartial": "⚠️ {{processed}}/{{total}} attachment(s) processed: {{names}}. Some sources could not be read and will not be referenced. You can retry them or continue.",
       "filesReady": "📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.",
+      "imageUnsupported": "Images are not supported yet. You can attach PDF, DOCX, TXT, MD, CSV, or JSON files.",
       "sizeExceeded": "File \"{{name}}\" exceeds the {{maxMb}} MB limit.",
       "unsupportedType": "File \"{{name}}\" is not supported. Allowed formats: {{types}}.",
       "uploadError": "Error uploading file \"{{name}}\": {{error}}",

@@ -28,6 +28,20 @@ type AttachmentLike = {
   isFolder?: boolean | null;
 };
 
+export function isImageChatAttachment(file: AttachmentLike): boolean {
+  const mimeType = String(file?.type || file?.mimeType || '')
+    .trim()
+    .toLowerCase();
+  const extension = String(file?.name || '')
+    .split('.')
+    .pop()
+    ?.trim()
+    .toLowerCase();
+  return (
+    mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(extension || '')
+  );
+}
+
 export function isSupportedChatAttachment(file: AttachmentLike): boolean {
   if (file?.isFolder) return true;
 

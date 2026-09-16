@@ -42,6 +42,7 @@ describe('organizationGovernedContextApi.ingestDocument', () => {
       '../../../src/services/api'
     );
     localStorage.setItem('token', 'signed-test-token');
+    localStorage.setItem('consultify_current_org_id', 'org-chat-1');
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ success: true, docId: 'doc-1', filename: 'source.txt' }), {
         status: 201,
@@ -55,15 +56,20 @@ describe('organizationGovernedContextApi.ingestDocument', () => {
         'stable-key-1'
       );
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+      expect(init).toMatchObject({
         method: 'POST',
         headers: {
           Authorization: 'Bearer signed-test-token',
           'Idempotency-Key': 'stable-key-1',
+          'X-App-Language': expect.any(String),
+          'x-org-context': 'org-chat-1',
         },
       });
+      expect((init.headers as Record<string, string>)['Content-Type']).toBeUndefined();
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('consultify_current_org_id');
       vi.unstubAllGlobals();
     }
   });
