@@ -68,6 +68,7 @@ const mockGetTableColumns = vi.fn();
 const mockGetInitiativeDetailRead = vi.fn();
 const mockResolveAccessContext = vi.fn();
 const mockRecordDecision = vi.fn();
+const mockResolveTransitionCase = vi.fn();
 const mockEvaluateGateAccess = vi.fn();
 const mockProposeEarly = vi.fn();
 const mockExecuteEarly = vi.fn();
@@ -260,6 +261,7 @@ vi.mock('../initiativeLifecycleGateDecisionService.js', async (importOriginal) =
   return {
     ...actual,
     recordInitiativeLifecycleGateDecision: (...a: unknown[]) => mockRecordDecision(...a),
+    resolveInitiativeTransitionCase: (...a: unknown[]) => mockResolveTransitionCase(...a),
   };
 });
 
@@ -307,6 +309,7 @@ beforeEach(async () => {
   >('../initiativeGovernanceGuard.js');
   mockEvaluateGateAccess.mockImplementation(actualGuard.evaluateInitiativeGateAccess);
   mockResolveAccessContext.mockResolvedValue({ effectiveRoles: ['PMO'] });
+  mockResolveTransitionCase.mockResolvedValue('case-early-1');
   currentUserRole = 'admin';
 });
 

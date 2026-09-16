@@ -162,6 +162,13 @@ import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
 import { PortfolioHealthView } from './PortfolioHealthView';
 import { resolveProjectFilterLabel } from './projectFilterLabel';
+import {
+  PMO_QUEUE_LABELS,
+  PMO_QUEUE_PRIORITY,
+  pmoQueueCounts,
+  pmoQueueForInitiative,
+  type PmoQueueId,
+} from './pmoQueues';
 import { TransitionInboxSurface } from './TransitionInboxSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
@@ -284,6 +291,9 @@ const WORK_REPORT_ENABLED = import.meta.env.VITE_INITIATIVES_WORK_REPORT === 'tr
    flage i zobacz". Przy OFF zakladka nie istnieje ani w Menu 1, ani w zbiorze
    dopuszczonych adresow — parytet z dzisiejszym ekranem jest zupelny. */
 const TRANSITION_INBOX_ENABLED = import.meta.env.VITE_TRANSITION_INBOX === 'true';
+/* PMO-1a (DEC-562..565): governance queues and transition panel. Default OFF;
+   OFF keeps the frozen register columns, filters and network calls unchanged. */
+const PMO_QUEUES_ENABLED = import.meta.env.VITE_PMO_QUEUES === 'true';
 /* Q1 P3 E1 (14.09) — heatmapa obciazenia osoba x tydzien podmienia SRODEK
    istniejacej zakladki `capacity` (zero nowych soczewek w Menu 3 — kanon 3 pigulek).
    Flaga domyslnie OFF: przy OFF `capacity` renderuje CapacityScenarioSurface jak na linii. */
@@ -344,6 +354,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [activePmoQueue, setActivePmoQueue] = useState<PmoQueueId | null>(null);
   const [activeLifecyclePreset, setActiveLifecyclePreset] =
     useState<InitiativeLifecyclePreset | null>(null);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
@@ -726,6 +737,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               if (fourButtonsArchiveScope === 'current' ? archived : !archived) return false;
             }
             if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
+            if (
+              PMO_QUEUES_ENABLED &&
+              activePmoQueue &&
+              pmoQueueForInitiative(initiative) !== activePmoQueue
+            ) {
+              return false;
+            }
             if (activeLifecyclePreset) {
               if (
                 !lifecycleMatchesPreset(
@@ -789,6 +807,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       fourButtonsArchiveScope,
       fourButtonsProjectId,
       activeStatusFilter,
+      activePmoQueue,
       activeLifecyclePreset,
       allowDemoData,
       currentUserDisplayName,
@@ -2367,7 +2386,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             selectedId={previewInitiativeId}
             onSelect={(row) => (row ? handleInitiativeClick(row) : handlePreviewSelection(null))}
             onOpen={handleOpenInitiativeDocument}
-            persistKey="initiatives.canonical-register.v1"
+            persistKey={PMO_QUEUES_ENABLED ? 'initiatives.pmo-register.v1' : 'initiatives.canonical-register.v1'}
+            columnOptions={{ pmoQueuesEnabled: PMO_QUEUES_ENABLED }}
             emptyTitle={t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
             emptyDescription={t(
               'initiatives.hub.noInitiativesFoundDesc',
@@ -2636,6 +2656,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return counts;
   }, [registerCountBase]);
 
+  const pmoCounts = useMemo(() => pmoQueueCounts(registerCountBase), [registerCountBase]);
+
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
   // "N selected · Clear" + framed action buttons (real where wired, disabled
@@ -2774,7 +2796,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
    * Menu 3 to osobny prop `commandRowRightContent` — i tam teraz jest,
    * obok „Pokaż panel", które `StandardModuleBar` dokłada tym samym kanałem.
    */
-  const commandRowContent = (
+  const classicCommandRowContent = (
     <div className="flex items-center gap-2">
       <div className={MENU_3_LEFT_CLASS}>
         <button
@@ -2829,6 +2851,44 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           belongs to the SOURCE (Interview/Tools). */}
     </div>
   );
+
+  const pmoCommandRowContent = (
+    <div className={MENU_3_LEFT_CLASS} data-testid="initiatives-pmo-queues">
+      <button
+        type="button"
+        onClick={() => setActivePmoQueue(null)}
+        className={!activePmoQueue ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+        data-testid="initiatives-pmo-queue-all"
+      >
+        <span className={MENU_3_ALL_DOT_CLASS} />
+        <span>{t('common.all', 'All')}</span>
+        <span className={!activePmoQueue ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+          {registerCountBase.length}
+        </span>
+      </button>
+      {PMO_QUEUE_PRIORITY.slice().reverse().map((queue) => {
+        const active = activePmoQueue === queue;
+        const label = t(`initiatives.pmo.queues.${queue}`, PMO_QUEUE_LABELS[queue].en);
+        return (
+          <button
+            key={queue}
+            type="button"
+            onClick={() => setActivePmoQueue(active ? null : queue)}
+            className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            data-testid={`initiatives-pmo-queue-${queue}`}
+          >
+            <span className="h-2 w-0.5 rounded-full bg-c-border-strong" aria-hidden />
+            <span>{label}</span>
+            <span className={active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+              {pmoCounts[queue]}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const commandRowContent = PMO_QUEUES_ENABLED ? pmoCommandRowContent : classicCommandRowContent;
 
   /**
    * Menu 3 · prawy slot (kanoniczny `commandRowRightContent`). Kanon §A3

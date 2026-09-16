@@ -124,6 +124,28 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
+import { listTransitionProposals } from '@/services/initiativeTransitionInboxApi';
+import {
+  listMyAcceptanceWork,
+  listMyAnalysisDecisions,
+  listMyDefinitionDecisions,
+  listMyHandoffAcceptances,
+  listMyPortfolioDecisions,
+  listMyScheduleDecisions,
+} from '@/services/initiatives-execution/runtimeApi';
+
+import {
+  acceptanceDecisionInboxItems,
+  actorScopedDecisionInboxItem,
+  actorScopedDecisionList,
+  analysisDecisionInboxItem,
+  definitionDecisionInboxItem,
+  inboxPmoQueue,
+  type InboxPmoQueue,
+  transitionProposalInboxItem,
+} from './inboxPmoQueues';
+
+const PMO_QUEUES_ENABLED = import.meta.env.VITE_PMO_QUEUES === 'true';
 
 // duplicateIdentity — CB-04/RB-019/RV-029.
 //
@@ -1153,14 +1175,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
 ];
 
 type InboxResizableColumn =
-  | 'title'
-  | 'status'
-  | 'urgency'
-  | 'type'
-  | 'section'
-  | 'source'
-  | 'received'
-  | 'sla';
+  'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received' | 'sla';
 
 // Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
 type InboxSortField = 'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received';
@@ -2217,6 +2232,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const [pmoQueue, setPmoQueue] = useState<InboxPmoQueue | null>(null);
   const { emitMyWorkEvent } = useAppStore();
   const displayInboxTitle = useCallback(
     (item: InboxItem): string => {
@@ -2441,7 +2457,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               ? 'saved'
               : 'open';
       const v8Status = mapInboxStatusToV8(statusTab);
-      const [res] = await Promise.all([
+      const [
+        res,
+        ,
+        transitionProposals,
+        analysisDecisions,
+        definitionDecisions,
+        portfolioDecisions,
+        scheduleDecisions,
+        handoffAcceptances,
+        acceptanceWork,
+      ] = await Promise.all([
         (async () => {
           try {
             const [tableRes, statsRes] = await Promise.all([
@@ -2468,12 +2494,90 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             return Api.materializeInbox().catch(() => null);
           }
         })(),
+        PMO_QUEUES_ENABLED ? listTransitionProposals('pending').catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyAnalysisDecisions().catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyDefinitionDecisions().catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyPortfolioDecisions().catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyScheduleDecisions().catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyHandoffAcceptances().catch(() => []) : [],
+        PMO_QUEUES_ENABLED ? listMyAcceptanceWork().catch(() => ({})) : {},
       ]);
-      setData(res);
+      const pmoActionReason = t(
+        'initiatives.pmo.inbox.reason'
+      );
+      const pmoDescription = t('initiatives.pmo.inbox.initiative', {
+        id: '{{id}}',
+      });
+      const proposalItems = [
+        ...transitionProposals.map((proposal) =>
+          transitionProposalInboxItem(proposal, {
+            title: t('initiatives.pmo.inbox.stage'),
+            reason: pmoActionReason,
+          })
+        ),
+        ...analysisDecisions.map((decision) =>
+          analysisDecisionInboxItem(decision, {
+            title: t('initiatives.pmo.inbox.analysis'),
+            reason: pmoActionReason,
+            description: pmoDescription.replace('{{id}}', decision.initiativeId),
+          })
+        ),
+        ...definitionDecisions.map((decision) =>
+          definitionDecisionInboxItem(decision, {
+            title: t('initiatives.pmo.inbox.definition'),
+            reason: pmoActionReason,
+            description: pmoDescription.replace('{{id}}', decision.initiativeId),
+          })
+        ),
+        ...actorScopedDecisionList(portfolioDecisions).map((decision) =>
+          actorScopedDecisionInboxItem(
+            decision,
+            {
+              title: t('initiatives.pmo.inbox.portfolio'),
+              reason: pmoActionReason,
+              description: pmoDescription.replace('{{id}}', decision.initiativeId),
+            }
+          )
+        ),
+        ...actorScopedDecisionList(scheduleDecisions).map((decision) =>
+          actorScopedDecisionInboxItem(
+            decision,
+            {
+              title: t('initiatives.pmo.inbox.schedule'),
+              reason: pmoActionReason,
+              description: pmoDescription.replace('{{id}}', decision.initiativeId),
+            }
+          )
+        ),
+        ...actorScopedDecisionList(handoffAcceptances).map((decision) =>
+          actorScopedDecisionInboxItem(
+            decision,
+            {
+              title: t('initiatives.pmo.inbox.handoff'),
+              reason: pmoActionReason,
+              description: pmoDescription.replace('{{id}}', decision.initiativeId),
+            }
+          )
+        ),
+        ...acceptanceDecisionInboxItems(acceptanceWork, {
+          title: t('initiatives.pmo.inbox.acceptance'),
+          reason: pmoActionReason,
+          description: t('initiatives.pmo.inbox.initiativeGeneric'),
+        }),
+      ];
+      const proposalIds = new Set(proposalItems.map((item) => item.id));
+      const merged = {
+        ...res,
+        items: [
+          ...proposalItems,
+          ...(res?.items || []).filter((item) => !proposalIds.has(item.id)),
+        ],
+      };
+      setData(merged);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
-      const items = res?.items || [];
+      const items = merged.items;
       const newToday = items.filter((i) => new Date(i.receivedAt || '') >= todayStart).length;
       const newThisWeek = items.filter((i) => {
         const d = new Date(i.receivedAt || '');
@@ -2538,7 +2642,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [isPolish, onCountsChange, statusTab]);
+  }, [isPolish, onCountsChange, statusTab, t]);
 
   useEffect(() => {
     fetchInbox();
@@ -2618,6 +2722,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         return false;
       });
 
+    if (PMO_QUEUES_ENABLED && pmoQueue) {
+      result = result.filter((item) => inboxPmoQueue(item) === pmoQueue);
+    }
+
     // Per-column sort (canon §5/§27.O) — applied only when a column is active.
     if (sortConfig) {
       const dir = sortConfig.direction === 'asc' ? 1 : -1;
@@ -2625,7 +2733,31 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     }
 
     return result;
-  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly, sortConfig]);
+  }, [
+    items,
+    tableFilters,
+    actionRequiredOnly,
+    aiOnly,
+    criticalOnly,
+    overdueOnly,
+    pmoQueue,
+    sortConfig,
+  ]);
+
+  const pmoQueueCounts = useMemo(() => {
+    const counts: Record<InboxPmoQueue, number> = {
+      review: 0,
+      discuss: 0,
+      approve: 0,
+      blocked: 0,
+      overdue: 0,
+    };
+    items.forEach((item) => {
+      const queue = inboxPmoQueue(item);
+      if (queue) counts[queue] += 1;
+    });
+    return counts;
+  }, [items]);
 
   // ── Deduplicated groups ──
   const groups = useMemo(() => groupItems(filteredItems), [filteredItems]);
@@ -4305,6 +4437,39 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       <div className="relative flex-1 flex min-h-0 gap-1.5" ref={prawyPanelContainerRef}>
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
+          {PMO_QUEUES_ENABLED ? (
+            <div
+              className="mb-3 flex flex-wrap items-center gap-2"
+              data-testid="my-work-pmo-queues"
+            >
+              {(
+                [
+                  ['review', t('initiatives.pmo.queues.review')],
+                  ['discuss', t('initiatives.pmo.queues.discuss')],
+                  ['approve', t('initiatives.pmo.queues.approve')],
+                  ['blocked', t('initiatives.pmo.queues.blocked')],
+                  ['overdue', t('initiatives.pmo.queues.overdue')],
+                ] as Array<[InboxPmoQueue, string]>
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPmoQueue((current) => (current === id ? null : id))}
+                  aria-pressed={pmoQueue === id}
+                  className={
+                    'inline-flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ' +
+                    (pmoQueue === id
+                      ? 'border-c-border-strong bg-c-surface-raised'
+                      : 'border-c-border bg-c-surface hover:bg-c-surface-raised')
+                  }
+                >
+                  <span className="h-3 w-0.5 rounded-full bg-c-border-strong" aria-hidden />
+                  <span>{label}</span>
+                  <span className="tabular-nums text-c-text-secondary">{pmoQueueCounts[id]}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
           {/* K2 (P9/DEC-397): kolejka akceptacji przekazań. Nagłówek NALEŻY DO
               KOMPONENTU — poprzednio Skrzynka rysowała własny „Do akceptacji"
               nad komponentem, który przy pustej kolejce zwraca `null`, więc
@@ -4431,9 +4596,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             rekord={
               previewItem ? (
                 <PreviewPane
-                  title={
-                    previewItem.title || t('myWork.inboxContent.inboxItem', 'Inbox item')
-                  }
+                  title={previewItem.title || t('myWork.inboxContent.inboxItem', 'Inbox item')}
                   item={previewItem}
                   isPolish={isPolish}
                   // P1 DEC-397 BUGFIX (znalezione na żywo 06.09): NIE czyścić

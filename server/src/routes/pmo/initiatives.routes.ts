@@ -45,7 +45,9 @@ import {
 import {
   INITIATIVE_LIFECYCLE_GATE_DOMAINS,
   InitiativeLifecycleGateDecisionError,
+  listInitiativeLifecycleGateDecisions,
   recordInitiativeLifecycleGateDecision,
+  resolveInitiativeTransitionCase,
 } from '../../services/initiative/initiativeLifecycleGateDecisionService.js';
 import {
   createWizardSession,
@@ -3119,25 +3121,29 @@ router.get('/by-status/:statuses', InitiativeController.getInitiativesByStatus);
  * propozycji albo recenzentowi wskazanemu w `reviewer_authority_json`.
  * Odczyt — nie tworzy, nie zatwierdza i nie wykonuje niczego.
  */
-router.get('/lifecycle-transition-proposals', requireOrgRole('user'), async (req: any, res: any) => {
-  const organizationId = String(req.user?.organizationId || '');
-  const viewerUserId = String(req.user?.id || '');
-  if (!organizationId || !viewerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
-  const status = String(req.query?.status || 'pending');
-  if (!['pending', 'approved', 'rejected', 'all'].includes(status))
-    return res.status(400).json({ code: 'INVALID_PROPOSAL_STATUS_FILTER' });
-  try {
-    const proposals = await listEarlyInitiativeTransitionProposals({
-      organizationId,
-      viewerUserId,
-      status: status as 'pending' | 'approved' | 'rejected' | 'all',
-    });
-    return res.json({ proposals });
-  } catch (error) {
-    logger.error('[M13 Initiatives] lifecycle transition proposals inbox failed', error);
-    return res.status(500).json({ code: 'INITIATIVE_LIFECYCLE_PROPOSALS_READ_FAILED' });
+router.get(
+  '/lifecycle-transition-proposals',
+  requireOrgRole('user'),
+  async (req: any, res: any) => {
+    const organizationId = String(req.user?.organizationId || '');
+    const viewerUserId = String(req.user?.id || '');
+    if (!organizationId || !viewerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+    const status = String(req.query?.status || 'pending');
+    if (!['pending', 'approved', 'rejected', 'all'].includes(status))
+      return res.status(400).json({ code: 'INVALID_PROPOSAL_STATUS_FILTER' });
+    try {
+      const proposals = await listEarlyInitiativeTransitionProposals({
+        organizationId,
+        viewerUserId,
+        status: status as 'pending' | 'approved' | 'rejected' | 'all',
+      });
+      return res.json({ proposals });
+    } catch (error) {
+      logger.error('[M13 Initiatives] lifecycle transition proposals inbox failed', error);
+      return res.status(500).json({ code: 'INITIATIVE_LIFECYCLE_PROPOSALS_READ_FAILED' });
+    }
   }
-});
+);
 
 /**
  * GET /api/initiatives/:id
@@ -3160,7 +3166,9 @@ router.put('/:id/profile', requireOrgRole('OWNER', 'ADMIN'), async (req: any, re
     return res.status(result.idempotentReplay ? 200 : 201).json(result);
   } catch (error) {
     if (error instanceof InitiativeProfileError) {
-      return res.status(error.statusCode).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
+      return res
+        .status(error.statusCode)
+        .json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
     }
     throw error;
   }
@@ -3887,7 +3895,6 @@ router.put(
  * humanActorUserId (see above). `initiativeId` comes from the path.
  */
 const EarlyLifecycleProposalSchema = z.object({
-  transformationCaseId: z.string().trim().min(1).max(255),
   reviewerUserId: z.string().trim().min(1).max(255),
   targetStatus: z.enum(['PROMOTED', 'PLANNING', 'SCHEDULED', 'EXECUTING', 'DONE']),
   reason: z.string().trim().min(1).max(2000),
@@ -3934,10 +3941,16 @@ router.post(
     const proposerUserId = String(req.user?.id || '');
     if (!organizationId || !proposerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
     try {
+      const transformationCaseId = await queryHelpers.withPgTransaction((client) =>
+        resolveInitiativeTransitionCase(client, {
+          organizationId,
+          initiativeId: String(req.params.id),
+        })
+      );
       const proposal = await proposeEarlyInitiativeTransition({
         organizationId,
         initiativeId: String(req.params.id),
-        transformationCaseId: req.body.transformationCaseId,
+        transformationCaseId,
         proposerUserId,
         reviewerUserId: req.body.reviewerUserId,
         targetStatus: req.body.targetStatus,
@@ -3946,7 +3959,12 @@ router.post(
       return res.status(201).json({ proposal });
     } catch (error) {
       const code = error instanceof Error ? error.message : 'initiative_lifecycle_proposal_failed';
-      const status = code === 'initiative_lifecycle_self_review_denied' ? 409 : code.includes('authority') ? 403 : 409;
+      const status =
+        code === 'initiative_lifecycle_self_review_denied'
+          ? 409
+          : code.includes('authority')
+            ? 403
+            : 409;
       return res.status(status).json({ code });
     }
   }
@@ -3999,6 +4017,25 @@ const LifecycleGateDecisionSchema = z.object({
   rationale: z.string().trim().min(1).max(4000),
   deadlineAt: z.string().trim().min(1),
   idempotencyKey: z.string().trim().min(1).max(255),
+});
+
+router.get('/:id/lifecycle-gate-decisions', requireOrgRole('user'), async (req: any, res: any) => {
+  const organizationId = String(req.user?.organizationId || '');
+  const initiativeId = String(req.params.id || '');
+  if (!organizationId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+  try {
+    const decisions = await queryHelpers.withPgTransaction((client) =>
+      listInitiativeLifecycleGateDecisions(client, { organizationId, initiativeId })
+    );
+    return res.json({ decisions });
+  } catch (error) {
+    return failInitiative500(
+      res,
+      'Failed to read initiative lifecycle gate decisions',
+      'INITIATIVE_GATE_DECISION_READ_FAILED',
+      error
+    );
+  }
 });
 
 router.post(
@@ -4069,7 +4106,9 @@ router.post(
       });
     } catch (err: any) {
       if (err instanceof InitiativeLifecycleGateDecisionError) {
-        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
+        return res
+          .status(err.statusCode)
+          .json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       return failInitiative500(
         res,

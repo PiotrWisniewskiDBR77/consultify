@@ -43,6 +43,16 @@ export interface TransitionProposal {
 
 export type TransitionProposalStatusFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
+export interface LifecycleGateDecisionLogEntry {
+  decisionId: string;
+  pmoDomain: string;
+  version: number;
+  decisionStatus: 'approved' | 'rejected';
+  rationale: string;
+  decidedAt: string;
+  humanActorName: string | null;
+}
+
 export async function listTransitionProposals(
   status: TransitionProposalStatusFilter = 'pending'
 ): Promise<TransitionProposal[]> {
@@ -60,6 +70,31 @@ export async function listTransitionProposalsForInitiative(
     `/initiatives/${encodeURIComponent(initiativeId)}/lifecycle-transition-proposals?status=${encodeURIComponent(status)}`
   );
   return res?.proposals ?? [];
+}
+
+export async function listLifecycleGateDecisions(
+  initiativeId: string
+): Promise<LifecycleGateDecisionLogEntry[]> {
+  const res = await apiGet<{ decisions?: LifecycleGateDecisionLogEntry[] }>(
+    `/initiatives/${encodeURIComponent(initiativeId)}/lifecycle-gate-decisions`
+  );
+  return res?.decisions ?? [];
+}
+
+export async function requestTransitionDecision(input: {
+  initiativeId: string;
+  reviewerUserId: string;
+  targetStatus: 'PROMOTED' | 'PLANNING' | 'SCHEDULED' | 'EXECUTING' | 'DONE';
+  reason: string;
+}) {
+  return apiPost(
+    `/initiatives/${encodeURIComponent(input.initiativeId)}/lifecycle-transition-proposals`,
+    {
+      reviewerUserId: input.reviewerUserId,
+      targetStatus: input.targetStatus,
+      reason: input.reason,
+    }
+  );
 }
 
 /** Krok 2 — zapis recenzji A05 (jedyny właściciel zatwierdzenia). */

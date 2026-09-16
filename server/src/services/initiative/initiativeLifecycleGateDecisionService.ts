@@ -71,6 +71,10 @@ export interface InitiativeLifecycleGateDecision {
   decidedAt: string;
 }
 
+export interface InitiativeLifecycleGateDecisionLogEntry extends InitiativeLifecycleGateDecision {
+  humanActorName: string | null;
+}
+
 export interface RecordInitiativeLifecycleGateDecisionInput {
   organizationId: string;
   initiativeId: string;
@@ -241,6 +245,56 @@ function fromRow(row: GateDecisionRow): InitiativeLifecycleGateDecision {
     supersedesDecisionId: row.supersedes_decision_id,
     decidedAt: row.decided_at,
   };
+}
+
+/** PMO-1a read model for the immutable decision log already owned by this table. */
+export async function listInitiativeLifecycleGateDecisions(
+  client: PgTransactionClient,
+  input: { organizationId: string; initiativeId: string; limit?: number }
+): Promise<InitiativeLifecycleGateDecisionLogEntry[]> {
+  const organizationId = required(input.organizationId, 'organizationId');
+  const initiativeId = required(input.initiativeId, 'initiativeId');
+  const limit = Math.max(1, Math.min(100, Number(input.limit) || 50));
+  const result = await client.query<GateDecisionRow & { human_actor_name: string | null }>(
+    `SELECT d.*,
+            NULLIF(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))), '')
+              AS human_actor_name
+       FROM initiative_lifecycle_gate_decisions d
+       LEFT JOIN users u ON u.id=d.human_actor_user_id
+      WHERE d.organization_id=? AND d.initiative_id=?
+      ORDER BY d.decided_at DESC,d.version DESC
+      LIMIT ?`,
+    [organizationId, initiativeId, limit]
+  );
+  return result.rows.map((row) => ({ ...fromRow(row), humanActorName: row.human_actor_name }));
+}
+
+/** Tenant-scoped SSOT for proposal lineage; the browser must never guess this id. */
+export async function resolveInitiativeTransitionCase(
+  client: PgTransactionClient,
+  input: { organizationId: string; initiativeId: string }
+): Promise<string> {
+  const organizationId = required(input.organizationId, 'organizationId');
+  const initiativeId = required(input.initiativeId, 'initiativeId');
+  const result = await client.query<{ transformation_case_id: string }>(
+    `SELECT DISTINCT c.transformation_case_id
+       FROM transformation_case_artifact_links l
+       JOIN transformation_cases c
+         ON c.transformation_case_id=l.transformation_case_id
+        AND c.organization_id=l.organization_id
+       JOIN transformation_plans p
+         ON p.plan_id=c.active_plan_id
+        AND p.transformation_case_id=c.transformation_case_id
+        AND p.organization_id=c.organization_id
+      WHERE l.organization_id=? AND l.artifact_type='initiative' AND l.artifact_id=?
+        AND LOWER(c.status) IN ('active','plan_approved')
+      ORDER BY c.transformation_case_id
+      LIMIT 2`,
+    [organizationId, initiativeId]
+  );
+  if (result.rows.length === 0) throw new Error('INITIATIVE_TRANSITION_CASE_REQUIRED');
+  if (result.rows.length > 1) throw new Error('INITIATIVE_TRANSITION_CASE_AMBIGUOUS');
+  return result.rows[0].transformation_case_id;
 }
 
 export function buildInitiativeLifecycleGateDecisionInputDigest(

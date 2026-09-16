@@ -12090,6 +12090,19 @@
     }
   },
   "initiatives": {
+    "pmo": {
+      "queues": {"review": "Do przeglądu", "discuss": "Do omówienia", "approve": "Do akceptacji", "blocked": "Zablokowane", "overdue": "Przeterminowane"},
+      "inbox": {"stage": "Decyzja o etapie inicjatywy", "definition": "Przegląd definicji", "analysis": "Przegląd analizy", "portfolio": "Decyzja portfelowa", "schedule": "Decyzja o harmonogramie", "handoff": "Decyzja o przekazaniu", "acceptance": "Decyzja odbiorowa", "reason": "Ten etap inicjatywy wymaga Twojego działania."},
+      "columns": {"stage": "Etap", "responsible": "Odpowiedzialny", "due": "Termin", "nextStep": "Następny krok"},
+      "stageTransition": "Przejście etapu", "transitionSaved": "Przejście etapu zapisane",
+      "conditionsMet": "Wszystkie warunki kontroli serwera są spełnione", "whoApproves": "Kto zatwierdza",
+      "requestDecision": "Poproś o decyzję", "approveTransition": "Zatwierdź przejście",
+      "requestReason": "Prośba o przejście etapu z karty inicjatywy.", "requested": "Poproszono o decyzję",
+      "requestFailed": "Nie udało się poprosić o decyzję", "requestUnavailable": "Najpierw spełnij warunki i przypisz recenzenta",
+      "noTransition": "Na tym etapie nie ma przejścia dostępnego dla Twojej roli.", "decisionLog": "Dziennik decyzji",
+      "logUnavailable": "Nie udało się wczytać niemutowalnego dziennika decyzji.", "noDecisions": "Brak zapisanych decyzji bramkowych.",
+      "reviewer": "Recenzent", "approved": "Zatwierdzono", "rejected": "Odrzucono"
+    },
     "workload": {
       "aria": "Obciążenie inicjatyw",
       "person": "Członek zespołu",

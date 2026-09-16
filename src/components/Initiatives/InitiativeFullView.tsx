@@ -57,6 +57,8 @@ import { CapabilityGate } from '../shared/CapabilityGate';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { InitiativeSourceLink } from './InitiativeSourceLink';
 
+const PMO_QUEUES_ENABLED = import.meta.env.VITE_PMO_QUEUES === 'true';
+
 // FAZA C (model ról PM): gate → capability z katalogu backendu
 // (effectiveAccessService). Fallback = generyczna zmiana statusu.
 const GATE_CAPABILITIES: Record<string, string> = {
@@ -372,6 +374,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   // Get available actions based on status
   const availableActions = useMemo(() => {
     if (!initiative) return [];
+    // PMO-1a routes governed transitions through InitiativeDocumentView's
+    // server-preflight panel. The legacy PATCH /:id/gate route does not exist.
+    if (PMO_QUEUES_ENABLED) return [];
     const status = initiative.status;
     const actions: {
       id: string;

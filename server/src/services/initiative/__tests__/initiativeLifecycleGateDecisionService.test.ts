@@ -6,8 +6,10 @@ import {
   assertCurrentApprovedInitiativeLifecycleGateDecision,
   buildInitiativeLifecycleGateDecisionInputDigest,
   InitiativeLifecycleGateDecisionError,
+  listInitiativeLifecycleGateDecisions,
   readCurrentInitiativeLifecycleGateDecision,
   recordInitiativeLifecycleGateDecision,
+  resolveInitiativeTransitionCase,
   type RecordInitiativeLifecycleGateDecisionInput,
 } from '../initiativeLifecycleGateDecisionService.js';
 
@@ -67,6 +69,64 @@ function clientWith(query: ReturnType<typeof vi.fn>): PgTransactionClient {
 }
 
 describe('initiativeLifecycleGateDecisionService', () => {
+  it('lists the immutable tenant-scoped log with the human actor name', async () => {
+    const query = vi.fn().mockResolvedValue({
+      rows: [row({ human_actor_name: 'Irina Dubois' })],
+      rowCount: 1,
+    });
+    const log = await listInitiativeLifecycleGateDecisions(clientWith(query), {
+      organizationId: 'org-1',
+      initiativeId: 'initiative-1',
+    });
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('d.organization_id=?'), [
+      'org-1',
+      'initiative-1',
+      50,
+    ]);
+    expect(log[0]).toMatchObject({
+      decisionId: 'gate-decision-1',
+      humanActorName: 'Irina Dubois',
+    });
+  });
+
+  it('resolves exactly one active tenant-scoped transformation case', async () => {
+    const query = vi.fn().mockResolvedValue({
+      rows: [{ transformation_case_id: 'case-1' }],
+      rowCount: 1,
+    });
+    await expect(
+      resolveInitiativeTransitionCase(clientWith(query), {
+        organizationId: 'org-1',
+        initiativeId: 'initiative-1',
+      })
+    ).resolves.toBe('case-1');
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('l.organization_id=?'), [
+      'org-1',
+      'initiative-1',
+    ]);
+  });
+
+  it('fails closed when transition case lineage is missing or ambiguous', async () => {
+    const none = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+    await expect(
+      resolveInitiativeTransitionCase(clientWith(none), {
+        organizationId: 'org-1',
+        initiativeId: 'initiative-1',
+      })
+    ).rejects.toThrow('INITIATIVE_TRANSITION_CASE_REQUIRED');
+
+    const ambiguous = vi.fn().mockResolvedValue({
+      rows: [{ transformation_case_id: 'case-1' }, { transformation_case_id: 'case-2' }],
+      rowCount: 2,
+    });
+    await expect(
+      resolveInitiativeTransitionCase(clientWith(ambiguous), {
+        organizationId: 'org-1',
+        initiativeId: 'initiative-1',
+      })
+    ).rejects.toThrow('INITIATIVE_TRANSITION_CASE_AMBIGUOUS');
+  });
+
   it('exports the exact transaction-scoped lock shared with the transition engine', async () => {
     const query = vi.fn().mockResolvedValue({ rows: [], rowCount: 1 });
     await acquireInitiativeLifecycleGateAdvisoryLock(clientWith(query), {
