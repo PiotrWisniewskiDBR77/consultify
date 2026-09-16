@@ -18,11 +18,13 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { categorizeTask, selectTasksForFilter } from '../MyTasksListContent';
+import { categorizeTask } from '../MyTasksListContent';
+import { countTaskHubFilters, filterTasksForHub, parseTaskHubDate } from '../taskHubFilter';
+
+const NOW = new Date(2026, 8, 16, 12, 0, 0); // Wednesday, local time.
 
 const dzien = (przesuniecie: number): string => {
-  const d = new Date();
-  d.setHours(12, 0, 0, 0);
+  const d = new Date(NOW);
   d.setDate(d.getDate() + przesuniecie);
   return d.toISOString();
 };
@@ -43,40 +45,91 @@ describe('K-31 — zadanie bez terminu nie wpada do kubełków czasowych', () =>
   });
 
   it('kubełki z terminem liczą się nadal poprawnie', () => {
-    expect(categorizeTask(zadanie({ dueDate: dzien(-3) }))).toBe('overdue');
-    expect(categorizeTask(zadanie({ dueDate: dzien(0) }))).toBe('today');
-    expect(categorizeTask(zadanie({ dueDate: dzien(3) }))).toBe('week');
-    expect(categorizeTask(zadanie({ dueDate: dzien(30) }))).toBe('later');
+    expect(categorizeTask(zadanie({ dueDate: dzien(-3) }), NOW)).toBe('overdue');
+    expect(categorizeTask(zadanie({ dueDate: dzien(0) }), NOW)).toBe('today');
+    expect(categorizeTask(zadanie({ dueDate: dzien(3) }), NOW)).toBe('week');
+    expect(categorizeTask(zadanie({ dueDate: dzien(30) }), NOW)).toBe('later');
+  });
+
+  it('„Ten tydzień" kończy się w niedzielę i nie obejmuje kolejnego poniedziałku', () => {
+    expect(categorizeTask(zadanie({ dueDate: dzien(4) }), NOW)).toBe('week');
+    expect(categorizeTask(zadanie({ dueDate: dzien(5) }), NOW)).toBe('later');
+  });
+});
+
+describe('K-31 — terminy DATE pozostają lokalnym dniem', () => {
+  it('nie przesuwa YYYY-MM-DD z Today do Overdue w ujemnej strefie czasowej', () => {
+    const localNoon = new Date(2026, 8, 17, 12, 0, 0);
+    const task = zadanie({ dueDate: '2026-09-17' });
+
+    expect(categorizeTask(task, localNoon)).toBe('today');
+  });
+
+  it('formatuje etykietę YYYY-MM-DD jako ten sam lokalny dzień', () => {
+    const date = parseTaskHubDate('2026-09-17');
+
+    expect(date?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })).toBe('Sep 17');
   });
 });
 
 describe('K-31 — filtr zakładki naprawdę zwęża listę (nie tylko licznik)', () => {
-  const grupy = {
-    all: ['zalegle', 'dzisiaj', 'tydzien', 'pozniej', 'bez-terminu'],
-    overdue: ['zalegle'],
-    today: ['dzisiaj'],
-    week: ['tydzien'],
-    later: ['pozniej'],
-    'no-date': ['bez-terminu'],
-  } as Record<string, string[]>;
+  const zadania = [
+    zadanie({ id: 'zalegle', dueDate: dzien(-2) }),
+    zadanie({ id: 'dzisiaj', dueDate: dzien(0) }),
+    zadanie({ id: 'tydzien', dueDate: dzien(3) }),
+    zadanie({ id: 'pozniej', dueDate: dzien(30) }),
+    zadanie({ id: 'bez-terminu', dueDate: undefined }),
+  ];
 
   it('„Zaległe" pokazuje TYLKO zaległe — zadanie bez terminu tam nie wchodzi', () => {
-    const widoczne = selectTasksForFilter(grupy as any, 'overdue' as any);
-    expect(widoczne).toEqual(['zalegle']);
-    expect(widoczne).not.toContain('bez-terminu');
+    const widoczne = filterTasksForHub(zadania, 'overdue', { now: NOW });
+    expect(widoczne.map((task) => task.id)).toEqual(['zalegle']);
+    expect(widoczne.map((task) => task.id)).not.toContain('bez-terminu');
   });
 
   it('„Dzisiaj" i „Ten tydzień" też zwężają', () => {
-    expect(selectTasksForFilter(grupy as any, 'today' as any)).toEqual(['dzisiaj']);
-    expect(selectTasksForFilter(grupy as any, 'week' as any)).toEqual(['tydzien']);
+    expect(filterTasksForHub(zadania, 'today', { now: NOW }).map((task) => task.id)).toEqual([
+      'dzisiaj',
+    ]);
+    expect(filterTasksForHub(zadania, 'week', { now: NOW }).map((task) => task.id)).toEqual([
+      'tydzien',
+    ]);
   });
 
   it('„Wszystkie" nadal pokazuje wszystko, w tym zadanie bez terminu', () => {
-    expect(selectTasksForFilter(grupy as any, 'all' as any)).toContain('bez-terminu');
+    expect(filterTasksForHub(zadania, 'all').map((task) => task.id)).toContain('bez-terminu');
   });
 
-  it('„Pilne"/„Nowe" biorą kubełek all (zwężony wcześniej po priorytecie)', () => {
-    expect(selectTasksForFilter(grupy as any, 'urgent' as any)).toBe(grupy.all);
-    expect(selectTasksForFilter(grupy as any, 'new' as any)).toBe(grupy.all);
+  it('„Pilne" i „Nowe" używają tego samego predykatu co pozostałe powierzchnie', () => {
+    const pilne = zadanie({ id: 'pilne', priority: 'high' });
+    const nowe = zadanie({ id: 'nowe', createdAt: NOW.toISOString() });
+    expect(filterTasksForHub([...zadania, pilne], 'urgent').map((task) => task.id)).toEqual([
+      'pilne',
+    ]);
+    expect(
+      filterTasksForHub([...zadania, nowe], 'new', { now: NOW }).map((task) => task.id)
+    ).toEqual(['nowe']);
+  });
+
+  it('triage natychmiast usuwa zadanie z New i z kanonicznego licznika', () => {
+    const nowe = zadanie({ id: 'nowe', createdAt: NOW.toISOString() });
+    const przed = countTaskHubFilters([nowe], { now: NOW, triagedTaskIds: new Set() });
+    const po = countTaskHubFilters([nowe], { now: NOW, triagedTaskIds: new Set(['nowe']) });
+
+    expect(przed.newUntriaged).toBe(1);
+    expect(po.newUntriaged).toBe(0);
+    expect(
+      filterTasksForHub([nowe], 'new', { now: NOW, triagedTaskIds: new Set(['nowe']) })
+    ).toEqual([]);
+  });
+
+  it('Today/Week/Urgent mają ten sam kanoniczny wynik i liczniki', () => {
+    const pilne = zadanie({ id: 'pilne', priority: 'critical', dueDate: dzien(30) });
+    const wszystkie = [...zadania, pilne];
+    const counts = countTaskHubFilters(wszystkie, { now: NOW });
+
+    expect(filterTasksForHub(wszystkie, 'today', { now: NOW })).toHaveLength(counts.today);
+    expect(filterTasksForHub(wszystkie, 'week', { now: NOW })).toHaveLength(counts.week);
+    expect(filterTasksForHub(wszystkie, 'urgent', { now: NOW })).toHaveLength(counts.urgent);
   });
 });

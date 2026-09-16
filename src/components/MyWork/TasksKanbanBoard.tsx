@@ -52,7 +52,16 @@ import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { Task, TaskStatus } from '@/types';
 
-type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+import {
+  countTaskHubFilters,
+  filterTasksForHub,
+  isHubTaskOverdue,
+  parseTaskHubDate,
+  readTriagedTaskIds,
+  type TaskHubFilter,
+} from './taskHubFilter';
+
+type TaskFilter = TaskHubFilter;
 
 interface TaskCounts {
   total: number;
@@ -60,6 +69,7 @@ interface TaskCounts {
   today: number;
   week: number;
   urgent: number;
+  newUntriaged: number;
 }
 
 interface TasksKanbanBoardProps {
@@ -227,7 +237,8 @@ const getPriorityMeta = (priority?: string) =>
 const formatDueDate = (dueDate?: string | Date): string | null => {
   if (!dueDate) return null;
   const isPl = i18n.language?.startsWith('pl');
-  const date = new Date(dueDate);
+  const date = parseTaskHubDate(dueDate);
+  if (!date) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -243,14 +254,8 @@ const formatDueDate = (dueDate?: string | Date): string | null => {
   return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
-const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
-  if (!dueDate) return false;
-  if (['done', 'completed', 'validated'].includes(status?.toLowerCase() || '')) return false;
-  const date = new Date(dueDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date < today;
-};
+const isOverdue = (dueDate?: string | Date, status?: string): boolean =>
+  isHubTaskOverdue({ dueDate, status });
 
 /* ═══════════════════════════════════════════════════════════════
  *  Card content (shared between sortable card and drag overlay)
@@ -529,6 +534,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   // DnD state
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [containerItems, setContainerItems] = useState<ContainerItems>({});
+  const triagedTaskIds = useMemo(() => readTriagedTaskIds(), [activeFilter, refreshTrigger]);
   // Track the column a task started in when drag began, so we know if it changed
   const dragStartColumn = useRef<string | null>(null);
 
@@ -550,7 +556,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await Api.getPersonalTasks();
+      const data = await Api.getPersonalTasks({ includeDone: true, limit: 500 });
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -566,48 +572,10 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
   /* ─── Filtering ─── */
 
-  const filteredTasks = useMemo(() => {
-    let result = tasks;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-      );
-    }
-    if (activeFilter === 'urgent') {
-      result = result.filter((t) => {
-        const p = t.priority?.toLowerCase();
-        return p === 'urgent' || p === 'critical' || p === 'high';
-      });
-    }
-    if (activeFilter === 'overdue') {
-      result = result.filter((t) => isOverdue(t.dueDate, t.status));
-    }
-    if (activeFilter === 'today') {
-      result = result.filter((t) => {
-        if (!t.dueDate) return false;
-        const d = new Date(t.dueDate);
-        const now = new Date();
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth() &&
-          d.getDate() === now.getDate()
-        );
-      });
-    }
-    if (activeFilter === 'week') {
-      result = result.filter((t) => {
-        if (!t.dueDate) return false;
-        const d = new Date(t.dueDate);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const end = new Date(now);
-        end.setDate(end.getDate() + 7);
-        return d >= now && d < end;
-      });
-    }
-    return result;
-  }, [tasks, searchQuery, activeFilter]);
+  const filteredTasks = useMemo(
+    () => filterTasksForHub(tasks, activeFilter, { searchQuery, triagedTaskIds }),
+    [tasks, searchQuery, activeFilter, triagedTaskIds]
+  );
 
   // Rebuild containerItems when filtered tasks change (but NOT during an active drag)
   useEffect(() => {
@@ -619,32 +587,8 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   /* ─── Counts reporting ─── */
 
   useEffect(() => {
-    const overdue = tasks.filter((t) => isOverdue(t.dueDate, t.status)).length;
-    const today = tasks.filter((t) => {
-      if (!t.dueDate) return false;
-      const d = new Date(t.dueDate);
-      const now = new Date();
-      return (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      );
-    }).length;
-    const week = tasks.filter((t) => {
-      if (!t.dueDate) return false;
-      const d = new Date(t.dueDate);
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      const end = new Date(now);
-      end.setDate(end.getDate() + 7);
-      return d >= now && d < end;
-    }).length;
-    const urgent = tasks.filter((t) => {
-      const p = t.priority?.toLowerCase();
-      return p === 'urgent' || p === 'critical' || p === 'high';
-    }).length;
-    onCountsChange({ total: tasks.length, overdue, today, week, urgent });
-  }, [tasks, onCountsChange]);
+    onCountsChange(countTaskHubFilters(tasks, { searchQuery, triagedTaskIds }));
+  }, [tasks, searchQuery, triagedTaskIds, onCountsChange]);
 
   /* ═══ Drag & Drop handlers ═══ */
 
@@ -807,7 +751,10 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
             (task.title || '').length > 40
               ? `${(task.title || '').slice(0, 40)}…`
               : task.title || '';
-          const ctx = { title: shortTitle, column: t(targetColDef.labelKey, targetColDef.labelFallback) };
+          const ctx = {
+            title: shortTitle,
+            column: t(targetColDef.labelKey, targetColDef.labelFallback),
+          };
           let message: string;
           if (httpStatus === 404) {
             message = t(
