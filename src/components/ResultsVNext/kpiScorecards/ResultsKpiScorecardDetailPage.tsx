@@ -289,9 +289,9 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   }, [enabled, scorecard, tab]);
 
   /* Okres raportu w nagłówku — ostatnia OPUBLIKOWANA migawka przeglądu, a gdy
-     jej nie ma, okres bieżący wg `reviewFrequency`. 404 z
-     `review-snapshots/published` jest tu stanem OCZEKIWANYM (raport nigdy nie
-     opublikował przeglądu), nie błędem. */
+     jej nie ma, okres bieżący wg `reviewFrequency`. Endpoint zwraca wtedy
+     HTTP 200 z `snapshot: null`, bo raport mógł jeszcze nie opublikować
+     przeglądu i jest to oczekiwany stan danych. */
   useEffect(() => {
     if (!enabled || !scorecard) return;
     let cancelled = false;

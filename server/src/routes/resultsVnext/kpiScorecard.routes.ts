@@ -860,12 +860,12 @@ router.get(
         organizationId: auth.organizationId,
         scorecardId,
       });
-      if (!snapshot) {
-        res
-          .status(404)
-          .json({ error: 'No published review snapshot for this scorecard', code: 'NOT_FOUND' });
-        return;
-      }
+      // A scorecard can legitimately have no published review yet. This read
+      // powers report-period labels across every Results registry tab, so the
+      // absence is data (`snapshot: null`), not a failed HTTP resource read.
+      // `getPublishedSnapshot` applies the visibility scope before returning;
+      // both an inaccessible scorecard and an accessible scorecard without a
+      // publication therefore retain the same non-enumerating response shape.
       res.status(200).json({ snapshot });
     } catch (err) {
       handleScorecardRouteError(res, err, 'getPublishedSnapshot');

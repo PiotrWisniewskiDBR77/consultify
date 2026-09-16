@@ -421,10 +421,11 @@ export async function listKpiScorecardReviewSnapshots(
 
 // ==========================================
 // getPublishedSnapshot — GET .../review-snapshots/published
-// `null` on 404 ("no published review snapshot for this scorecard" — a real,
-// expected state for any scorecard that has never published one, NOT a
-// forbidden/deny case; distinct from `getKpiScorecard`'s 404 handling above,
-// which DOES mean forbidden/not-found. Never conflate the two.)
+// `snapshot: null` means "no published review snapshot for this scorecard" —
+// a real, expected state for any scorecard that has never published one.
+// The legacy 404 fallback remains during rolling deployment, while the current
+// server contract uses HTTP 200 so browsers do not report expected absence as
+// a failed resource read.
 // ==========================================
 
 export async function getPublishedKpiScorecardSnapshot(

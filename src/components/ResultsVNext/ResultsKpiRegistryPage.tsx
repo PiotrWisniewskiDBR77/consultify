@@ -978,9 +978,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
    *    wywołanie na raport, liczone po stronie serwera za filtrem widoczności),
    *  · OKRESU, którego raport dotyczy — to ostatnia OPUBLIKOWANA migawka
    *    przeglądu, a gdy jej nie ma, bieżący okres wg `reviewFrequency`
-   *    (korekta P7K §4). `404` z `review-snapshots/published` jest tu stanem
-   *    OCZEKIWANYM („raport nigdy nie opublikował przeglądu"), nie błędem —
-   *    klient zwraca wtedy `null`.
+   *    (korekta P7K §4). Brak publikacji jest oczekiwanym stanem danych:
+   *    `review-snapshots/published` zwraca HTTP 200 z `snapshot: null`.
    * Dopóki nie wrócą — komórki pokazują „—", nigdy 0.
    */
   const [scorecardDistributions, setScorecardDistributions] = useState<Record<
