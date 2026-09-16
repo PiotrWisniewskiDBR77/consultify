@@ -1,0 +1,13 @@
+{
+  "sheetCount": true,
+  "sheetNames": true,
+  "headers": true,
+  "formats": true,
+  "dataFormulas": true,
+  "totalFormulas": true,
+  "summaryFormulas": true,
+  "freeze": true,
+  "aptos": true,
+  "coBranding": true,
+  "zeroCrimson": true
+}
