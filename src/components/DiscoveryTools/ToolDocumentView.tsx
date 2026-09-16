@@ -598,12 +598,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   }, [isPolish, sessionName, toolMeta.name, toolType]);
 
   const autoExportRanRef = useRef(false);
-  // Identity of the store object created by API hydration. Hydration is not a
-  // user edit and must never arm autosave: doing so caused a read-only reopen
-  // to rewrite persisted answers/progress after two seconds. Store mutations
-  // replace currentSession, so the first genuine edit naturally clears this
-  // identity guard without adding a second dirty-state system.
-  const hydratedSessionObjectRef = useRef<unknown>(null);
+  // [ODMROZENIE 03_TOOLS DEC-575] A persisted zustand session can already have
+  // the same id before the async GET finishes. An id check (and even an object
+  // identity check after hydrate) is therefore not proof that the server read
+  // completed. Keep an explicit per-id hydration gate plus a content snapshot:
+  // navigation may clone currentSession, but unchanged inputData stays read-only.
+  const hydratedSessionIdRef = useRef<string | null>(null);
+  const forwardedInputSnapshotRef = useRef<string | null>(null);
   useEffect(() => {
     if (!autoExportPdf) {
       autoExportRanRef.current = false;
@@ -620,6 +621,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       return;
     }
 
+    hydratedSessionIdRef.current = null;
+    forwardedInputSnapshotRef.current = null;
     setLoading(true);
     try {
       // Server (via toolSync.load) is the single fetch of record truth --
@@ -660,7 +663,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             : sessionData.completionPercent,
         wizardState: (sessionData.wizardState as { currentStep?: string } | null) ?? null,
       });
-      hydratedSessionObjectRef.current = useToolStore.getState().currentSession;
+      const hydratedSession = useToolStore.getState().currentSession;
+      forwardedInputSnapshotRef.current = JSON.stringify(hydratedSession?.inputData ?? {});
+      hydratedSessionIdRef.current = toolSessionId;
 
       const fetchedUsers = await Api.getUsers();
       setUsers(fetchedUsers || []);
@@ -773,29 +778,22 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     if (toolSessionId) void fetchAll();
   }, [fetchAll, toolSessionId]);
 
-  // H3 resume-safety: until fetchAll() hydrates the store from the API,
-  // `currentSession` may still hold a DIFFERENT session persisted from a
-  // previous visit (zustand persist). Auto-saving that stale inputData into
-  // this toolSessionId would silently overwrite the resumed session's answers.
-  // hydrateSessionFromApi sets currentSession.id = toolSessionId, so an id
-  // match is the proof that we are saving the session we actually loaded.
-  const isSessionHydrated = Boolean(
-    currentSession && toolSessionId && currentSession.id === toolSessionId
-  );
-
-  // RB-HTTP-01: forward every genuine local edit into toolSync, which owns
-  // debounce/autosave/offline-retry/409-conflict/recovery-draft from here
-  // on (src/hooks/useToolSessionSync.ts). `hydratedSessionObjectRef` keeps
-  // the same job it always had: a hydration-only store update (not a real
-  // user edit) must not arm autosave.
+  // RB-HTTP-01: forward changed content only after the real GET has hydrated
+  // this exact id. Section/tab navigation changes currentSession identity and
+  // currentStep, but it is a read operation and must never arm a PUT. A real
+  // editor mutation changes inputData, advances the snapshot, and retains the
+  // existing debounce/unmount-flush behavior in useToolSessionSync.
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
-    if (!isSessionHydrated) return;
-    if (currentSession === hydratedSessionObjectRef.current) return;
+    if (hydratedSessionIdRef.current !== toolSessionId) return;
+    if (currentSession.id !== toolSessionId) return;
+    const nextSnapshot = JSON.stringify(currentSession.inputData ?? {});
+    if (nextSnapshot === forwardedInputSnapshotRef.current) return;
+    forwardedInputSnapshotRef.current = nextSnapshot;
     toolSync.setData(currentSession.inputData as Record<string, unknown>);
     // `toolSync.setData` (stable useCallback), not `toolSync` itself.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSession, isSessionHydrated, toolSessionId, toolSync.setData]);
+  }, [currentSession, toolSessionId, toolSync.setData]);
 
   // Keep the header's "last saved" timestamp in step with a successful
   // autosave without waiting for a full reload.
@@ -855,7 +853,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
-    if (!isSessionHydrated) {
+    if (
+      hydratedSessionIdRef.current !== toolSessionId ||
+      currentSession.id !== toolSessionId
+    ) {
       toast.error(
         t('tools.session.notLoadedYet', 'Session is still loading — try again in a moment')
       );
