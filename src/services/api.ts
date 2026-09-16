@@ -1391,7 +1391,7 @@ const invalidateCachedApiByPrefix = (prefix: string): void => {
  * sanitizer, which made titles render literally as `&quot;…` / `&amp;quot;…`.
  * Decoding here yields plain text; React re-escapes safely on render.
  */
-const normalizeIdeaDisplayFields = <T>(idea: T): T => {
+export const normalizeIdeaDisplayFields = <T>(idea: T): T => {
   if (!idea || typeof idea !== 'object') return idea;
   const row = idea as Record<string, unknown>;
   for (const field of ['title', 'body', 'description'] as const) {
@@ -1407,7 +1407,7 @@ const normalizeIdeaDisplayFields = <T>(idea: T): T => {
  * teksty inicjatyw — tylko idee mialy odkodowanie. W Portfolio wychodzilo
  * `organization&#x27;s` i podwojnie zakodowane `Date &amp;amp; Participants`.
  */
-const normalizeInitiativeDisplayFields = <T>(initiative: T): T =>
+export const normalizeInitiativeDisplayFields = <T>(initiative: T): T =>
   decodeDisplayFields(initiative, POLA_TEKSTOWE_INICJATYWY);
 
 const normalizeInitiativeList = (rows: unknown): any[] =>
