@@ -1,0 +1,15 @@
+# Restore target (local PG18 only)
+docker run --name cx-template1c-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=consultify_template1c -p 127.0.0.1:55433:5432 -d pgvector/pgvector:pg18
+docker exec -i cx-template1c-pg pg_restore -U postgres -d consultify_template1c --no-owner --no-privileges --exit-on-error < /Users/piotrwisniewski/Developer/kopie/staging-pre-wdrozenie15-20260916T1344.dump
+
+# Focused tests
+npx vitest run server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts tests/unit/scripts/template1-sheet-snapshot.test.ts src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts --reporter=dot
+# Result: 3 files, 42 tests PASS
+
+# Backend build
+npm run -s build:backend
+# Result: PASS
+
+# Live API proof
+TEMPLATE1C_PROOF_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55433/consultify_template1c' LOG_LEVEL=error npx tsx scripts/dev/template1c-api-proof.ts
+# Result: PASS, HTTP 200

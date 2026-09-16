@@ -29,10 +29,10 @@ import {
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../../utils/DbPromise.js';
-import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
-import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import type {
   TemplateOriginRuntime,
   TemplateOriginSummaryFields,
@@ -458,9 +458,24 @@ interface PresentationTemplateBackfillRow {
   outline_json: string | null;
   is_system: number | null;
   is_active: number | null;
+  lifecycle_state: string | null;
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+interface SheetTemplateBackfillRow {
+  id: string;
+  organization_id: string | null;
+  name: string | null;
+  description: string | null;
+  category: string | null;
+  schema_snapshot: unknown;
+  status: string | null;
+  version: string | null;
+  visibility: string | null;
+  created_by: string | null;
+  created_at: string | null;
 }
 
 /**
@@ -1126,22 +1141,26 @@ async function getArtifactRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactRow | null> {
-  return (await dbGet<ArtifactRow>(
-    `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
-    [artifactId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRow>(
+      `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
+      [artifactId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunRow(
   runId: string,
   organizationId: string
 ): Promise<ArtifactRunRow | null> {
-  return (await dbGet<ArtifactRunRow>(
-    `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
-    [runId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRunRow>(
+      `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
+      [runId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunChildRows(
@@ -1225,7 +1244,8 @@ async function cleanupGhostOutputsByOrigin(params: {
  */
 export async function removeTemplateArtifactByOrigin(params: {
   organizationId: string;
-  originRuntime: 'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
+  originRuntime:
+    'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
   originRecordId: string;
 }): Promise<boolean> {
   const result = await cleanupGhostOutputsByOrigin(params);
@@ -2065,7 +2085,7 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
 async function backfillPresentationTemplatesForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationTemplateBackfillRow>(
     `SELECT t.id, t.organization_id, t.name, t.description, t.deck_type, t.outline_json,
-            t.is_system, t.is_active, t.created_by, t.created_at, t.updated_at
+            t.is_system, t.is_active, t.lifecycle_state, t.created_by, t.created_at, t.updated_at
      FROM presentation_templates t
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = ?
@@ -2102,7 +2122,12 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
               originRuntime: 'presentation_template',
               orphaned: false,
               scope: deriveTemplateScope(row),
-              status: toBool(row.is_active) === false ? 'deprecated' : 'published',
+              status:
+                normalizeTemplateStatus(row.lifecycle_state) !== 'unknown'
+                  ? normalizeTemplateStatus(row.lifecycle_state)
+                  : toBool(row.is_active) === false
+                    ? 'deprecated'
+                    : 'published',
             }),
             description: row.description || '',
             deckType: row.deck_type || 'custom',
@@ -2123,6 +2148,77 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       logger.warn(
         `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
       );
+    }
+  }
+  return inserted;
+}
+
+async function backfillSheetTemplatesForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<SheetTemplateBackfillRow>(
+    `SELECT t.id, t.organization_id, t.name, t.description, t.category, t.schema_snapshot,
+            t.status, t.version, t.visibility, t.created_by, t.created_at
+       FROM tp_base_templates t
+       LEFT JOIN v8_artifact_origin_links l
+         ON l.organization_id = ?
+        AND l.origin_runtime = 'sheet_template'
+        AND l.origin_record_id = t.id::text
+      WHERE (t.visibility IS NULL OR t.visibility <> 'private'
+             OR (t.visibility = 'private' AND t.organization_id = ?))
+        AND (t.organization_id IS NULL OR t.organization_id = ? OR t.organization_id = ?)
+        AND l.link_id IS NULL`,
+    [organizationId, organizationId, organizationId, DOC_STUDIO_SYSTEM_ORG_ID],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    try {
+      const snapshot =
+        row.schema_snapshot && typeof row.schema_snapshot === 'object'
+          ? row.schema_snapshot
+          : safeJsonParse<Record<string, unknown>>(String(row.schema_snapshot || ''), {});
+      const fields = Array.isArray((snapshot as any).fields) ? (snapshot as any).fields : [];
+      const result = await registerArtifactOrigin({
+        organizationId,
+        outputType: 'sheet',
+        artifactFamily: 'template',
+        originRuntime: 'sheet_template',
+        originRecordId: String(row.id),
+        titleSnapshot: row.name || 'Untitled workbook template',
+        ownerUserId: null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            ...buildTemplateOriginSummaryFields({
+              canonicalTemplateId: String(row.id),
+              originRuntime: 'sheet_template',
+              orphaned: false,
+              scope: deriveTemplateScope(row),
+              status: normalizeTemplateStatus(row.status),
+            }),
+            description: row.description || '',
+            category: row.category || 'custom',
+            structureBlueprint: {
+              columns: fields.map((field: any) => ({
+                key: field?.key || field?.name || '',
+                header: field?.header || field?.name || '',
+                type: field?.type || 'text',
+              })),
+            },
+            metadata: {
+              createdBy: row.created_by || FALLBACK_ACTOR,
+              createdAt: row.created_at,
+              version: row.version || null,
+              canonicalTemplateId: String(row.id),
+            },
+          },
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill workbook template ${row.id}: ${err?.message}`);
     }
   }
   return inserted;
@@ -2266,9 +2362,7 @@ async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise
 
 /**
  * Per-runtime description of the canonical registry a template link points at.
- * `null` = no canonical registry exists for that runtime (the seeded
- * `sheet_template` cards are artifact-native), so orphan state is NOT decidable
- * and we must not guess.
+ * `null` is retained as a fail-closed option for a runtime without a registry.
  */
 const TEMPLATE_CANONICAL_REGISTRY: Record<
   TemplateOriginRuntime,
@@ -2277,6 +2371,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     idColumn: string;
     statusColumn: string | null;
     activeColumn: string | null;
+    isSystemColumn: string | null;
+    visibilityColumn: string | null;
   } | null
 > = {
   document_template: {
@@ -2284,26 +2380,40 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     idColumn: 'template_id',
     statusColumn: 'status',
     activeColumn: null,
+    isSystemColumn: 'is_system',
+    visibilityColumn: null,
   },
   report_template: {
     table: 'report_builder_templates',
     idColumn: 'id',
     statusColumn: null,
     activeColumn: 'is_active',
+    isSystemColumn: 'is_system',
+    visibilityColumn: null,
   },
   presentation_template: {
     table: 'presentation_templates',
     idColumn: 'id',
-    statusColumn: null,
+    statusColumn: 'lifecycle_state',
     activeColumn: 'is_active',
+    isSystemColumn: 'is_system',
+    visibilityColumn: 'visibility',
   },
-  sheet_template: null,
+  sheet_template: {
+    table: 'tp_base_templates',
+    idColumn: 'id',
+    statusColumn: 'status',
+    activeColumn: null,
+    isSystemColumn: null,
+    visibilityColumn: 'visibility',
+  },
 };
 
 interface CanonicalTemplateRow {
   canonical_id: string;
   organization_id: string | null;
   is_system: unknown;
+  visibility: unknown;
   status_value: string | null;
   active_value: unknown;
 }
@@ -2325,11 +2435,14 @@ async function loadCanonicalTemplateRows(
   const placeholders = unique.map(() => '?').join(', ');
   const statusSelect = registry.statusColumn ? `t.${registry.statusColumn}` : 'NULL';
   const activeSelect = registry.activeColumn ? `t.${registry.activeColumn}` : 'NULL';
+  const isSystemSelect = registry.isSystemColumn ? `t.${registry.isSystemColumn}` : 'NULL';
+  const visibilitySelect = registry.visibilityColumn ? `t.${registry.visibilityColumn}` : 'NULL';
 
   const rows = await dbAll<CanonicalTemplateRow>(
     `SELECT t.${registry.idColumn} AS canonical_id,
             t.organization_id AS organization_id,
-            t.is_system AS is_system,
+            ${isSystemSelect} AS is_system,
+            ${visibilitySelect} AS visibility,
             ${statusSelect} AS status_value,
             ${activeSelect} AS active_value
      FROM ${registry.table} t
@@ -2351,7 +2464,14 @@ function statusFromCanonicalRow(
   row: CanonicalTemplateRow
 ): TemplateStatus {
   const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
-  if (registry?.statusColumn) return normalizeTemplateStatus(row.status_value);
+  if (registry?.statusColumn) {
+    const status = normalizeTemplateStatus(row.status_value);
+    // Presentation templates historically expose approved active templates as
+    // published in the Materials contract. Preserve that API vocabulary while
+    // retaining draft/deprecated lifecycle precision.
+    if (originRuntime === 'presentation_template' && status === 'approved') return 'published';
+    return status;
+  }
   if (registry?.activeColumn) {
     const active = toBool(row.active_value);
     if (active === false) return 'deprecated';
@@ -2406,7 +2526,7 @@ export async function enrichTemplateOriginSummaries(
 
     const canonicalRows = loaded.get(item.originRuntime);
     const canonicalRow = canonicalRows ? canonicalRows.get(item.originRecordId) : undefined;
-    // No registry to check against (sheet_template) or the probe failed →
+    // No registry to check against or the probe failed →
     // orphan state is unknown, so we do NOT flag it.
     const orphaned = canonicalRows ? !canonicalRow : false;
 
@@ -2578,6 +2698,7 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     reportTemplatesInserted,
     presentationTemplatesInserted,
     docStudioTemplatesInserted,
+    sheetTemplatesInserted,
   ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
@@ -2585,6 +2706,7 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     backfillReportTemplatesForOrg(organizationId),
     backfillPresentationTemplatesForOrg(organizationId),
     backfillDocStudioTemplatesForOrg(organizationId),
+    backfillSheetTemplatesForOrg(organizationId),
   ]);
 
   backfillWatermark.set(organizationId, now);
@@ -2594,12 +2716,14 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     nativeArtifactsInserted ||
     reportTemplatesInserted ||
     presentationTemplatesInserted ||
-    docStudioTemplatesInserted
+    docStudioTemplatesInserted ||
+    sheetTemplatesInserted
   ) {
     logger.info(
       `${LOG_PREFIX} Backfilled ${reportsInserted} reports, ${presentationsInserted} presentations, ` +
         `${nativeArtifactsInserted} native documents, ${reportTemplatesInserted} report templates, ` +
-        `${presentationTemplatesInserted} presentation templates, and ${docStudioTemplatesInserted} document templates ` +
+        `${presentationTemplatesInserted} presentation templates, ${docStudioTemplatesInserted} document templates, ` +
+        `and ${sheetTemplatesInserted} workbook templates ` +
         `for org ${organizationId}`
     );
   }
@@ -2946,8 +3070,9 @@ async function getArtifactListItemRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactListRow | null> {
-  return (await dbGet<ArtifactListRow>(
-    `SELECT a.*,
+  return (
+    (await dbGet<ArtifactListRow>(
+      `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
             r.title AS report_title,
@@ -2997,9 +3122,10 @@ async function getArtifactListItemRow(
       AND p.organization_id = a.organization_id
      WHERE a.organization_id = ?
        AND a.artifact_id = ?`,
-    [organizationId, artifactId],
-    { fallback: true }
-  )) ?? null;
+      [organizationId, artifactId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 /**

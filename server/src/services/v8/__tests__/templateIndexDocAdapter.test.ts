@@ -327,6 +327,104 @@ describe('backfill adapter — document_studio_templates → document_template',
 });
 
 describe('orphan detection (measurement only)', () => {
+  it('returns SHEET-BASE and inventory #95 as canonical with real scopes while legacy runtime stays legacy', async () => {
+    const sheetBaseId = '2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1';
+    const inventory95SourceId = 'e6d27a1e-5fdc-4d66-8a53-95c3c4a79ea2';
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM tp_base_templates')) {
+        return [
+          {
+            canonical_id: sheetBaseId,
+            organization_id: '__system__',
+            is_system: null,
+            visibility: 'system',
+            status_value: 'approved',
+            active_value: null,
+          },
+          {
+            canonical_id: inventory95SourceId,
+            organization_id: 'org-alpha',
+            is_system: null,
+            visibility: null,
+            status_value: 'draft',
+            active_value: null,
+          },
+        ];
+      }
+      if (sql.includes('FROM report_builder_templates')) {
+        return [
+          {
+            canonical_id: 'legacy-sheet-source',
+            organization_id: null,
+            is_system: null,
+            visibility: null,
+            status_value: null,
+            active_value: true,
+          },
+        ];
+      }
+      return [];
+    });
+
+    const results = await enrichTemplateOriginSummaries('org-alpha', [
+      templateListItem({
+        artifactId: 'sheet-base-artifact',
+        outputType: 'sheet',
+        originRuntime: 'sheet_template',
+        originRecordId: sheetBaseId,
+      }),
+      templateListItem({
+        artifactId: '0a757a44-2ef4-466a-9231-dff14b89e515',
+        outputType: 'sheet',
+        originRuntime: 'sheet_template',
+        originRecordId: inventory95SourceId,
+      }),
+      templateListItem({
+        artifactId: 'legacy-sheet-artifact',
+        outputType: 'sheet',
+        originRuntime: 'report_template',
+        originRecordId: 'legacy-sheet-source',
+      }),
+    ]);
+
+    expect(
+      results.map((item) => {
+        const template = (item.originSummary as any).template;
+        return { source: template.source, legacy: template.legacy, scope: template.scope };
+      })
+    ).toEqual([
+      { source: 'canonical', legacy: false, scope: 'system' },
+      { source: 'canonical', legacy: false, scope: 'organization' },
+      { source: 'legacy', legacy: true, scope: 'unknown' },
+    ]);
+  });
+
+  it('does not relabel a real legacy sheet that has no canonical sheet runtime', async () => {
+    const legacySheet = templateListItem({
+      artifactId: 'legacy-sheet-without-canonical-runtime',
+      outputType: 'sheet',
+      originRuntime: 'legacy_sheet' as any,
+      originRecordId: 'legacy-sheet-source',
+      originSummary: {
+        template: {
+          source: 'legacy',
+          legacy: true,
+          scope: 'organization',
+          status: 'published',
+        },
+      },
+    });
+
+    const [result] = await enrichTemplateOriginSummaries('org-alpha', [legacySheet]);
+
+    expect(result).toBe(legacySheet);
+    expect((result.originSummary as any).template).toMatchObject({
+      source: 'legacy',
+      legacy: true,
+    });
+    expect(mockDbAll).not.toHaveBeenCalled();
+  });
+
   it('projects presentation lifecycle instead of treating every active row as published', async () => {
     mockDbAll.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM presentation_templates')) {
