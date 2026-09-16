@@ -23924,7 +23924,8 @@
       "youSuffix": "(You)",
       "joined": "Joined",
       "noMembers": "No members found.",
-      "createOrgNoPermission": "Only an organization owner or administrator can create a new organization. Ask your administrator for an invitation."
+      "createOrgNoPermission": "Only an organization owner or administrator can create a new organization. Ask your administrator for an invitation.",
+      "createdAndSwitched": "Organization created — you are now in {{name}}"
     },
     "professionalProfile": {
       "companyName": "Company Name",

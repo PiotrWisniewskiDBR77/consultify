@@ -165,15 +165,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     }
   }, [orgsLoading, orgs.length]);
 
-  // `fetchOrgs` jest jednorazowe (`orgs.length > 0` → return), więc po
-  // utworzeniu organizacji lista musi zostać wyczyszczona, żeby efekt
-  // pobrał ją ponownie.
-  const handleOrganizationCreated = useCallback(() => {
-    setOrgs([]);
-  }, []);
-
   const handleSwitchOrg = useCallback(
-    async (orgId: string, orgName: string) => {
+    async (orgId: string, orgName: string, opcje?: { komunikat?: string }) => {
       setSwitchingOrgId(orgId);
       try {
         const token = tokenService.getToken();
@@ -195,7 +188,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         localStorage.setItem('consultify_current_org_id', orgId);
         setCurrentProjectId(null);
         setCurrentOrganization({ id: data.organization.id, name: data.organization.name });
-        toast.success(`Switched to ${data.organization.name}`);
+        toast.success(opcje?.komunikat ?? `Switched to ${data.organization.name}`);
         setTimeout(() => {
           window.location.href = window.location.pathname;
         }, 300);
@@ -205,6 +198,30 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       }
     },
     [setCurrentOrganization, setCurrentProjectId]
+  );
+
+  /**
+   * K-21c (KANAL Wpis 143, DEC-575, P1 UX): po utworzeniu organizacji
+   * użytkownik dostawał TYLKO toast — zostawał w starej organizacji, a nowa
+   * nie pojawiała się nigdzie do ponownego otwarcia menu (`fetchOrgs` jest
+   * jednorazowe: `orgs.length > 0` → return). Twórca jest OWNER-em nowej
+   * organizacji, więc ma w niej wylądować: czyścimy listę (żeby efekt pobrał
+   * ją ponownie) i wołamy TĘ SAMĄ ścieżkę przełączania, której używa lista
+   * organizacji — `POST /api/auth/switch-organization` + wymiana tokenu +
+   * przeładowanie kontekstu. Zero drugiej ścieżki.
+   */
+  const handleOrganizationCreated = useCallback(
+    async (organizacja: { id: string; name: string }) => {
+      setOrgs([]);
+      setIsCreateOrgOpen(false);
+      await handleSwitchOrg(organizacja.id, organizacja.name, {
+        komunikat: t('settings.organization.createdAndSwitched', {
+          defaultValue: 'Organization created — you are now in {{name}}',
+          name: organizacja.name,
+        }),
+      });
+    },
+    [handleSwitchOrg, t]
   );
 
   const handleNavigate = (view: AppView) => {

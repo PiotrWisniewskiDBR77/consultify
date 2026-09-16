@@ -75,7 +75,18 @@ vi.mock('react-i18next', async (importOriginal) => {
   return {
     ...actual,
     useTranslation: () => ({
-      t: (_key: string, fallback?: string) => fallback ?? _key,
+      // K-21c: atrapa musi umieć to, co robi i18next w produkcie — `defaultValue`
+      // + interpolacja `{{name}}`. Wcześniej zwracała surowy obiekt opcji, więc
+      // każdy komunikat z parametrem był w teście niewidzialny.
+      t: (_key: string, fallback?: string | Record<string, unknown>) => {
+        if (typeof fallback === 'string') return fallback;
+        if (fallback && typeof fallback.defaultValue === 'string') {
+          return fallback.defaultValue.replace(/\{\{(\w+)\}\}/g, (_m, nazwa) =>
+            String(fallback[nazwa] ?? '')
+          );
+        }
+        return _key;
+      },
       i18n: { language: 'en', resolvedLanguage: 'en', changeLanguage: vi.fn() },
     }),
   };
@@ -120,6 +131,21 @@ vi.mock('../../services/tokenService', () => ({
 const createOrganization = vi.fn();
 vi.mock('../../services/api', () => ({
   Api: { createOrganization: (...args: any[]) => createOrganization(...args) },
+}));
+
+// K-21c: komunikat jest częścią naprawy (użytkownik ma WIEDZIEĆ, gdzie wylądował).
+const toastSuccess = vi.fn();
+const toastError = vi.fn();
+vi.mock('react-hot-toast', () => ({
+  toast: {
+    success: (...args: any[]) => toastSuccess(...args),
+    error: (...args: any[]) => toastError(...args),
+  },
+  default: {
+    success: (...args: any[]) => toastSuccess(...args),
+    error: (...args: any[]) => toastError(...args),
+  },
+  Toaster: () => null,
 }));
 
 vi.mock('../../components/AIChat/UnifiedChatPanel', () => ({
@@ -232,5 +258,126 @@ describe('MainLayout — wejście „Create Organization" w realnej powłoce [K-
     expect(await screen.findByTestId('create-organization-modal')).toBeTruthy();
     // Modal tylko się otwiera — żadna organizacja nie powstaje.
     expect(createOrganization).not.toHaveBeenCalled();
+  });
+});
+
+
+/**
+ * ★ K-21c (KANAL Wpis 143, DEC-575) — [ODMROZENIE 15_SETTINGS DEC-575]
+ *
+ * PREMISA ZMIERZONA na `151111ce06`: po `POST /api/organizations` modal robił
+ * tylko `toast.success('Organization created successfully!')` i zamykał się.
+ * Użytkownik ZOSTAWAŁ w starej organizacji, a nowa nie pojawiała się nigdzie —
+ * `fetchOrgs` jest jednorazowe (`orgs.length > 0` → return), więc nawet lista
+ * w menu jej nie pokazywała do przeładowania strony. Twórca jest OWNER-em
+ * nowej organizacji i ma w niej wylądować.
+ *
+ * Test idzie CAŁĄ ścieżką użytkownika w REALNEJ powłoce (`MainLayout` +
+ * niezamockowany `UserProfileMenu` + prawdziwy `CreateOrganizationModal`) —
+ * lekcja „wołacz istnieje ≠ renderuje się". Mockowany jest wyłącznie transport.
+ *
+ * Czerwony PRZED naprawą (`switch-organization` nie wołane), zielony PO.
+ */
+describe('MainLayout — po utworzeniu organizacji użytkownik w niej ląduje [K-21c]', () => {
+  const NOWA = { id: 'org-2', name: 'Baltic Robotics' };
+
+  function mockTransport(role: string) {
+    const wywolania: { url: string; body: any }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: any, init?: any) => {
+        const url = String(input);
+        const body = init?.body ? JSON.parse(init.body) : null;
+        wywolania.push({ url, body });
+        if (url.includes('/api/organizations/current')) {
+          return {
+            ok: true,
+            json: async () => ({
+              organizations: [{ id: 'org-1', name: 'Acme', role, is_current: true }],
+            }),
+          } as any;
+        }
+        if (url.includes('/api/auth/switch-organization')) {
+          return {
+            ok: true,
+            json: async () => ({
+              token: 't',
+              refreshToken: 'r',
+              organization: NOWA,
+            }),
+          } as any;
+        }
+        return { ok: false, json: async () => ({}) } as any;
+      })
+    );
+    return wywolania;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appState.currentUser.role = 'ADMIN';
+    createOrganization.mockResolvedValue(NOWA);
+  });
+
+  it('woła `switch-organization` z ID NOWEJ organizacji i mówi, gdzie użytkownik jest', async () => {
+    const wywolania = mockTransport('ADMIN');
+    renderLayout();
+    await openOrganizationSwitcher();
+
+    fireEvent.click(await screen.findByTestId('user-menu-create-organization'));
+    const modal = await screen.findByTestId('create-organization-modal');
+
+    fireEvent.change(screen.getByLabelText('Organization Name'), {
+      target: { value: NOWA.name },
+    });
+    fireEvent.click(
+      Array.from(modal.querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Create Organization'
+      ) as HTMLElement
+    );
+
+    await waitFor(() => expect(createOrganization).toHaveBeenCalledWith(NOWA.name));
+
+    // Sedno naprawy: przełączenie na NOWĄ organizację tą samą ścieżką, której
+    // używa lista organizacji — nie drugą, równoległą.
+    await waitFor(() => {
+      const przelaczenie = wywolania.find((w) => w.url.includes('/api/auth/switch-organization'));
+      expect(przelaczenie?.body).toEqual({ organizationId: NOWA.id });
+    });
+
+    // Kontekst aplikacji idzie za tokenem, nie zostaje w starej organizacji.
+    await waitFor(() =>
+      expect(appState.setCurrentOrganization).toHaveBeenCalledWith({
+        id: NOWA.id,
+        name: NOWA.name,
+      })
+    );
+
+    // Jeden komunikat, mówiący GDZIE użytkownik jest — nie dwa ogólniki.
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith(
+        'Organization created — you are now in Baltic Robotics'
+      )
+    );
+    expect(toastSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('modal zamyka się po utworzeniu (nie zostaje nad przełączoną organizacją)', async () => {
+    mockTransport('ADMIN');
+    renderLayout();
+    await openOrganizationSwitcher();
+
+    fireEvent.click(await screen.findByTestId('user-menu-create-organization'));
+    const modal = await screen.findByTestId('create-organization-modal');
+    fireEvent.change(screen.getByLabelText('Organization Name'), {
+      target: { value: NOWA.name },
+    });
+    fireEvent.click(
+      Array.from(modal.querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Create Organization'
+      ) as HTMLElement
+    );
+
+    await waitFor(() => expect(screen.queryByTestId('create-organization-modal')).toBeNull());
   });
 });

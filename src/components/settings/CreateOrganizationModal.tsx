@@ -23,11 +23,23 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
+/** Kształt organizacji odesłany przez `POST /api/organizations` (201). */
+export interface UtworzonaOrganizacja {
+  id: string;
+  name: string;
+}
+
 interface CreateOrganizationModalProps {
   open: boolean;
   onClose: () => void;
-  /** Wywoływane po udanym utworzeniu (np. odświeżenie listy organizacji). */
-  onCreated?: () => void | Promise<void>;
+  /**
+   * K-21c (KANAL Wpis 142/143, DEC-575): wołane z UTWORZONĄ organizacją, nie
+   * bezparametrowo. Wołający odpowiada za przełączenie kontekstu i za KOMUNIKAT
+   * — modal nie wie, czy przełączenie się powiodło, więc nie może obiecywać
+   * „jesteś w <nazwa>". Gdy wołacz nie jest podany, modal sam pokazuje
+   * zachowawczy komunikat o samym utworzeniu (nic się nie gubi).
+   */
+  onCreated?: (organizacja: UtworzonaOrganizacja) => void | Promise<void>;
 }
 
 export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
@@ -52,13 +64,20 @@ export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
     }
     setCreatingOrg(true);
     try {
-      await Api.createOrganization(newOrgName.trim());
-      toast.success(
-        t('settings.organization.createdSuccess', 'Organization created successfully!')
-      );
+      const utworzona = (await Api.createOrganization(newOrgName.trim())) as
+        | UtworzonaOrganizacja
+        | undefined;
       setNewOrgName('');
       onClose();
-      await onCreated?.();
+      if (onCreated && utworzona?.id) {
+        // K-21c: właściciel nowej organizacji ma w niej WYLĄDOWAĆ. Komunikat
+        // należy do wołającego (zna wynik przełączenia) — patrz `UserProfileMenu`.
+        await onCreated({ id: utworzona.id, name: utworzona.name || newOrgName.trim() });
+      } else {
+        toast.success(
+          t('settings.organization.createdSuccess', 'Organization created successfully!')
+        );
+      }
     } catch (error: any) {
       // Serwer odsyła sam KOD (bramka językowa J0) — zdanie dla człowieka
       // składa ekran, więc tester widzi komunikat w swoim języku zamiast
