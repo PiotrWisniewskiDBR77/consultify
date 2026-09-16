@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "denominator": 96,
+  "decisionCounts": {
+    "DEPRECATE": 60,
+    "KEEP": 20,
+    "REBUILD": 16
+  },
+  "familyCounts": {
+    "DECK-BASE": 16,
+    "DOC-BASE": 78,
+    "SHEET-BASE": 2
+  },
+  "runtimeCounts": {
+    "document_template": 46,
+    "presentation_template": 15,
+    "report_template": 33,
+    "sheet_template": 2
+  },
+  "errors": []
+}
