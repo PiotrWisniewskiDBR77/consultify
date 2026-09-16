@@ -165,3 +165,149 @@ describe('K-20 — tor pstryczka OFF nigdy w kolorze powierzchni (całe settings
     expect(zrodlo).toContain('bg-c-control-track');
   });
 });
+
+/**
+ * ★ K-20c (KANAL Wpis 142, DEC-575): CZWARTY detektor ratchetu.
+ *
+ * PREMISA ZMIERZONA PIKSELOWO na `9ec5a9f32b` (nie `getComputedStyle` — ten
+ * zwraca token, a nie to, co widzi oko): tor pstryczka nosił poprawny token
+ * `--c-control-track` (4,76:1 w jasnym motywie), ale WIERSZ, w którym siedział,
+ * miał `opacity-40` (`KeyboardShortcutsSettings.tsx:510`) / `opacity-60`
+ * (`WorkingHoursSettings.tsx:386`). Przezroczystość kontenera MNOŻY kolor
+ * potomka przy składaniu na tle — zmierzone na PNG: **1,68:1** i **2,24:1**.
+ * Trzy poprzednie detektory patrzą wyłącznie na klasę koloru toru i dlatego
+ * były zielone.
+ *
+ * REGUŁA: `opacity-*` na KONTENERZE, którego wnętrze zawiera tor pstryczka
+ * (`peer-checked:`, `SettingsToggleControl`, `role="switch"`) = FAIL.
+ * Wyciszenie stanu wyłączonego robi się punktowo na TEKŚCIE
+ * (`text-c-text-muted`), nigdy fade'em całego wiersza.
+ *
+ * WYJĄTEK: `opacity-*` na SAMEJ kontrolce (np. `disabled` + `opacity-50` na
+ * elemencie z `role="switch"`) jest dozwolone — WCAG 1.4.11 wyłącza kontrolki
+ * nieaktywne spod progu kontrastu. Dlatego markery szukane są WYŁĄCZNIE poniżej
+ * znacznika otwierającego element, który niesie `opacity-*`.
+ *
+ * Czerwony PRZED naprawą K-20c (2 naruszenia), zielony PO.
+ */
+const MARKERY_TORU = [
+  'peer-checked:',
+  'SettingsToggleControl',
+  'role="switch"',
+  // Kanoniczny token toru (DEC-575) — łapie pstryczki klejone ręcznie przez
+  // `cn(...)` na `<button>`, bez `peer` i bez `role="switch"`
+  // (`KeyboardShortcutsSettings.tsx`).
+  'bg-c-control-track',
+];
+
+/** Wcięcie linii (liczba wiodących spacji) — granica bloku JSX liczona z niego. */
+const wciecie = (linia: string): number => linia.length - linia.trimStart().length;
+
+/**
+ * Wygaś treść komentarzy, ZACHOWUJĄC numery linii (znaki → spacje). Bez tego
+ * detektor łapie sam siebie: nota „`opacity-60` na CAŁYM wierszu" opisująca
+ * naprawę jest tekstem `opacity-6` w linii nad `className`. `//` wycinamy
+ * tylko gdy zaczyna linię (żeby nie zjeść `https://` w literale).
+ */
+const bezKomentarzy = (tekst: string): string =>
+  tekst
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    .replace(/^[ \t]*\/\/.*$/gm, (m) => m.replace(/[^\n]/g, ' '));
+
+describe('K-20c — `opacity-*` na kontenerze z pstryczkiem (czwarty detektor)', () => {
+  const wszystkie = pliki(KORZEN);
+
+  it('drzewo ustawień w ogóle się mierzy (bezpiecznik „brak pomiaru nie jest wynikiem")', () => {
+    expect(wszystkie.length).toBeGreaterThan(20);
+  });
+
+  it('zero fade’ów całego wiersza nad torem pstryczka', () => {
+    const naruszenia: string[] = [];
+
+    for (const plik of wszystkie) {
+      const linie = bezKomentarzy(fs.readFileSync(plik, 'utf8')).split('\n');
+
+      linie.forEach((linia, i) => {
+        if (!/\bopacity-\d/.test(linia)) return;
+
+        // 1) Znacznik otwierający elementu, który niesie `opacity-*`:
+        //    pierwsza linia W GÓRĘ zaczynająca się od `<Tag`.
+        let start = i;
+        while (start >= 0 && !/^\s*<[A-Za-z]/.test(linie[start])) start -= 1;
+        if (start < 0) return;
+
+        // 2) Koniec znacznika otwierającego (`>` lub `/>` na końcu linii).
+        let koniecTagu = start;
+        while (koniecTagu < linie.length && !/(^|[^=])\/?>\s*$/.test(linie[koniecTagu])) {
+          koniecTagu += 1;
+        }
+        if (koniecTagu >= linie.length) return;
+        // Element samozamykający nie ma wnętrza — nie jest kontenerem.
+        if (/\/>\s*$/.test(linie[koniecTagu])) return;
+
+        // 3) Wnętrze elementu: do linii o tym samym wcięciu zamykającej `</`.
+        const poziom = wciecie(linie[start]);
+        let koniec = koniecTagu + 1;
+        while (
+          koniec < linie.length &&
+          !(wciecie(linie[koniec]) <= poziom && /^\s*<\//.test(linie[koniec]))
+        ) {
+          koniec += 1;
+        }
+
+        const wnetrze = linie.slice(koniecTagu + 1, koniec).join('\n');
+        const marker = MARKERY_TORU.find((m) => wnetrze.includes(m));
+        if (!marker) return;
+
+        naruszenia.push(
+          `${path.relative(KORZEN, plik)}:${i + 1} → opacity-* nad torem (${marker})`
+        );
+      });
+    }
+
+    expect(naruszenia).toEqual([]);
+  });
+});
+
+/**
+ * K-20c: rodzeństwo POZA `settings/**` — te dwa pliki wypadły z zasięgu
+ * ratchetu K-20b (KORZEN = `settings/`) i dlatego zostały z `bg-c-border`
+ * (1,25:1) na torze OFF. Jawna lista, żeby nie odrosło.
+ */
+describe('K-20c — tory pstryczków poza drzewem settings/', () => {
+  const POZA_SETTINGS = [
+    '../AISettings/SettingsToggle.tsx',
+    '../ReportBuilder/ReportEditor/BrandVoicePanel.tsx',
+  ];
+
+  it.each(POZA_SETTINGS)('%s nie używa `bg-c-border` jako toru', (wzgledna) => {
+    const zrodlo = fs.readFileSync(path.join(KORZEN, wzgledna), 'utf8');
+    expect(zrodlo).not.toMatch(/'bg-c-border'/);
+    expect(zrodlo).toContain('bg-c-control-track');
+  });
+});
+
+/**
+ * K-20c: crimson (`bg-brand` = #85182F) na stanie ZAZNACZONYM checkboxa
+ * powiadomień — czerwień jest w Consultify zarezerwowana dla semantyki
+ * krytycznej (CLAUDE.md, reguła UI 3). Stan aktywny = `--c-focus-solid`.
+ */
+describe('K-20c — zero crimson na stanie aktywnym kontrolek ustawień', () => {
+  it('EmailNotificationsSettings nie maluje zaznaczonego checkboxa na `bg-brand`', () => {
+    const zrodlo = fs.readFileSync(path.join(KORZEN, 'EmailNotificationsSettings.tsx'), 'utf8');
+    expect(zrodlo).not.toMatch(/bg-brand\b/);
+    expect(zrodlo).toContain('bg-c-focus-solid');
+  });
+});
+
+/**
+ * K-20c: `text-white` przybity na sztywno w `KeyboardShortcutsSettings` —
+ * w motywie JASNYM nazwy skrótów i etykiety presetów były białym tekstem na
+ * białej karcie (1,00:1). Token `--c-text` odwraca się z motywem.
+ */
+describe('K-20c — zero przybitego `text-white` w KeyboardShortcutsSettings', () => {
+  it('nazwy skrótów i etykiety presetów używają tokenu, nie `text-white`', () => {
+    const zrodlo = fs.readFileSync(path.join(KORZEN, 'KeyboardShortcutsSettings.tsx'), 'utf8');
+    expect(zrodlo).not.toMatch(/(^|[\s'"`:])(hover:)?text-white(\s|'|"|`|$)/m);
+  });
+});

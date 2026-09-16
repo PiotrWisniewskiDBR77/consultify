@@ -108,7 +108,8 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
                     transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-c-focus
                     ${sizeConfig.toggle}
                     ${/* P-T06 — patrz nota nad komponentem */ ''}
-                    ${checked ? 'bg-c-focus-solid' : 'bg-c-border'}
+                    ${/* K-20c DEC-575: tor OFF `bg-c-border` = 1,25:1 vs --c-surface; kanon = --c-control-track */ ''}
+                    ${checked ? 'bg-c-focus-solid' : 'bg-c-control-track'}
                     ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
       >
