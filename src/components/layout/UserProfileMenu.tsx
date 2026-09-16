@@ -12,6 +12,7 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Plus,
   Sparkles,
   Sun,
   UserCircle,
@@ -28,6 +29,8 @@ import { tokenService } from '../../services/tokenService';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
 import { requestFirstRunRelaunch } from '../Onboarding/firstRunEvents';
+import { isAdminOwnerOrSuperAdminRole } from '../../utils/roleGuards';
+import { CreateOrganizationModal } from '../settings/CreateOrganizationModal';
 
 interface OrgItem {
   id: string;
@@ -60,6 +63,12 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const [orgs, setOrgs] = useState<OrgItem[]>([]);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
+  // K-21b (FEEDBACK-1, zgł. testera Tomka #61): wejście „Create organization".
+  // Przełącznik organizacji w nagłówku to JEDYNE miejsce w produkcie, gdzie
+  // użytkownik widzi listę swoich organizacji — `OrganizationSettings.tsx`
+  // (gdzie ten przycisk naprawiono w K-21) nie ma w produkcie ani jednego
+  // importera, a Ustawienia nie mają sekcji „organization".
+  const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   // ★ Naprawa 2026-07-24 (zgloszenie Piotra ze zrzutu: "menu wchodzi na
   // panel"): dropdown byl zwyklym `position:absolute` potomkiem naglowka
@@ -156,6 +165,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     }
   }, [orgsLoading, orgs.length]);
 
+  // `fetchOrgs` jest jednorazowe (`orgs.length > 0` → return), więc po
+  // utworzeniu organizacji lista musi zostać wyczyszczona, żeby efekt
+  // pobrał ją ponownie.
+  const handleOrganizationCreated = useCallback(() => {
+    setOrgs([]);
+  }, []);
+
   const handleSwitchOrg = useCallback(
     async (orgId: string, orgName: string) => {
       setSwitchingOrgId(orgId);
@@ -244,6 +260,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     ? orgs.find((o) => o.id === activeOrganizationId)?.role
     : undefined;
   const roleLabel = (activeOrgRole || currentUser.role || '').toLowerCase();
+  // Serwer wymaga ADMIN/OWNER/SUPERADMIN na POST /api/organizations — rola
+  // liczona z członkostwa w aktywnej organizacji (ta sama, którą pokazuje
+  // plakietka i lista niżej), z awaryjnym powrotem do roli globalnej.
+  const canCreateOrganization = isAdminOwnerOrSuperAdminRole(activeOrgRole || currentUser.role);
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>
@@ -427,6 +447,27 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             </button>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {canCreateOrganization && (
+                      <div className="border-t border-slate-200 dark:border-navy-700 p-1">
+                        <button
+                          type="button"
+                          data-testid="user-menu-create-organization"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsCreateOrgOpen(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                        >
+                          <div className="w-4 shrink-0 flex items-center justify-center">
+                            <Plus size={14} className="text-c-text-secondary" />
+                          </div>
+                          <span className="truncate">
+                            {t('settings.organization.createOrg', 'Create Organization')}
+                          </span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -622,6 +663,16 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               </button>
             </div>
           </div>,
+          document.body
+        )}
+
+      {isCreateOrgOpen &&
+        createPortal(
+          <CreateOrganizationModal
+            open
+            onClose={() => setIsCreateOrgOpen(false)}
+            onCreated={handleOrganizationCreated}
+          />,
           document.body
         )}
     </div>

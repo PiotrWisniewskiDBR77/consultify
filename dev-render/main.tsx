@@ -362,6 +362,9 @@ const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustaw
 const FeedbackK21OrganizacjaScreen = React.lazy(
   () => import('./screens/feedback-k21-organizacja')
 );
+const FeedbackK21bCreateOrgScreen = React.lazy(
+  () => import('./screens/feedback-k21b-create-org')
+);
 const FeedbackK20PstryczkiScreen = React.lazy(() => import('./screens/feedback-k20-pstryczki'));
 const FeedbackK31ZadaniaScreen = React.lazy(() => import('./screens/feedback-k31-zadania'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
@@ -2179,6 +2182,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K-21 (zgłoszenie #61, Tomek) — REALNY <OrganizationSettings> z JEDNĄ organizacją: wejście „Create Organization" poza gałęzią zero-org. &role=ADMIN|CONSULTANT&lang=en|pl&theme=light|dark',
     render: () => <FeedbackK21OrganizacjaScreen />,
+  },
+  'feedback-k21b-create-org': {
+    label:
+      'K-21b (zgłoszenie #61, Tomek) — REALNY <MainLayout> z prawdziwym <UserProfileMenu>: przełącznik organizacji z wejściem „Create Organization". &role=ADMIN|MEMBER&fix=off&lang=en|pl&theme=light|dark',
+    render: () => <FeedbackK21bCreateOrgScreen />,
   },
   'feedback-k31-zadania': {
     label:

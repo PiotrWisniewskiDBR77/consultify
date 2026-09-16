@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   UserCircle,
   Users,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -22,6 +21,7 @@ import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
 import { formatListDate, formatListDateTime, formatListNumber } from '@/utils/listDateFormat';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
+import { CreateOrganizationModal } from './CreateOrganizationModal';
 
 interface OrganizationSettingsProps {
   currentUser: User;
@@ -37,8 +37,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
   // Create Organization Modal
   const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
-  const [newOrgName, setNewOrgName] = useState('');
-  const [creatingOrg, setCreatingOrg] = useState(false);
 
   // Member Add Form
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -178,102 +176,23 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     );
   }
 
-  const handleCreateOrganization = async () => {
-    // T-VIII (tester Tomek, 2026-09-13): przycisk był wyłączany przez
-    // `disabled={creatingOrg}`, ale wciśnięcie Enter w polu nazwy omijało tę
-    // blokadę — sam handler nie sprawdzał niczego, więc każde kolejne Enter
-    // wysyłało kolejne żądanie i fabrykowało bliźniaczą organizację.
-    // Blokada musi siedzieć W HANDLERZE, nie tylko w atrybucie przycisku.
-    if (creatingOrg) return;
-    if (!newOrgName.trim()) {
-      toast.error(t('settings.organization.nameRequired', 'Organization name is required'));
-      return;
-    }
-    setCreatingOrg(true);
-    try {
-      await Api.createOrganization(newOrgName.trim());
-      toast.success(t('settings.organization.createdSuccess', 'Organization created successfully!'));
-      setIsCreateOrgModalOpen(false);
-      setNewOrgName('');
-      await fetchOrganizations();
-    } catch (error: any) {
-      // Serwer odsyła sam KOD (bramka językowa J0) — zdanie dla człowieka
-      // składa ekran, więc tester widzi komunikat w swoim języku zamiast
-      // surowego ORGANIZATION_NAME_DUPLICATE.
-      const code = String(error?.code || error?.message || '');
-      if (code.includes('ORGANIZATION_NAME_DUPLICATE')) {
-        toast.error(
-          t(
-            'settings.organization.duplicateName',
-            'You already have an organization with this name.'
-          )
-        );
-      } else {
-        toast.error(error.message || 'Failed to create organization');
-      }
-    } finally {
-      setCreatingOrg(false);
-    }
-  };
-
   // K-21 (tester Tomek, zgł. 61): modal i przycisk „Create Organization" istniały
   // WYŁĄCZNIE w gałęzi pustego stanu (`organizations.length === 0`), więc każdy,
-  // kto miał już jedną organizację, nie miał JAK utworzyć drugiej. Modal jest
-  // teraz wspólny dla obu gałęzi, a przycisk dostaje też widok główny.
+  // kto miał już jedną organizację, nie miał JAK utworzyć drugiej.
+  // K-21b: sam modal mieszka teraz w `CreateOrganizationModal` — ten komponent
+  // nie ma w produkcie ani jednego importera, a wejście testera musi być w
+  // realnej powłoce (przełącznik organizacji w `UserProfileMenu`).
   // Rola: serwer wymaga ADMIN/OWNER/SUPERADMIN na POST /api/organizations, więc
   // ekran nie pokazuje wejścia, którego backend i tak by nie przepuścił.
   const canCreateOrganization = isAdminOwnerOrSuperAdminRole(currentUser?.role);
 
-  const createOrgModal = isCreateOrgModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in">
-          <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
-                <Building2 size={20} className="text-c-text-secondary" />
-                {t('settings.organization.createOrgModalTitle', 'Create Organization')}
-              </h3>
-              <button
-                onClick={() => setIsCreateOrgModalOpen(false)}
-                className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  {t('settings.organization.orgNameLabel', 'Organization Name')}
-                </label>
-                <input
-                  type="text"
-                  value={newOrgName}
-                  onChange={(e) => setNewOrgName(e.target.value)}
-                  placeholder={t('settings.organization.orgNamePlaceholder', 'e.g., Acme Corporation')}
-                  className="w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] text-navy-900"
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateOrganization()}
-                  autoFocus
-                />
-              </div>
-              <div className="flex gap-3 justify-end pt-4">
-                <button
-                  onClick={() => setIsCreateOrgModalOpen(false)}
-                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
-                >
-                  {t('settings.organization.cancel', 'Cancel')}
-                </button>
-                <button
-                  onClick={handleCreateOrganization}
-                  disabled={creatingOrg || !newOrgName.trim()}
-                  className="px-6 py-2 bg-c-text hover:bg-c-text text-c-surface rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {creatingOrg && <Loader2 size={16} className="animate-spin" />}
-                  {creatingOrg ? t('settings.organization.creating', 'Creating...') : t('settings.organization.createOrgModalTitle', 'Create Organization')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-  ) : null;
+  const createOrgModal = (
+    <CreateOrganizationModal
+      open={isCreateOrgModalOpen}
+      onClose={() => setIsCreateOrgModalOpen(false)}
+      onCreated={fetchOrganizations}
+    />
+  );
 
   if (organizations.length === 0) {
     return (
