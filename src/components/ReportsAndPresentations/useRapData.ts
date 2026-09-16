@@ -483,15 +483,25 @@ function mapArtifactPresentation(raw: any): PresentationItem {
  *     adopt) with an `originSummary` that carries `sheetCount`/`source` but
  *     never `sourceTable` — those are real `generated_workbooks` rows.
  *
- * `sourceTable === 'tp_tables'` is therefore the reliable discriminator.
- * Defaults to 'workbook' (the richer, real-artifact interpretation) when the
- * marker is absent, matching current writer behavior above.
+ * Both positive markers are required. Missing marker data is ambiguous legacy
+ * state and stays undefined so the runtime resolver can identify it safely.
  */
-export function resolveSheetOrigin(raw: any): SheetOrigin {
+export function resolveSheetOrigin(raw: any): SheetOrigin | undefined {
   const originSummary = raw?.originSummary;
-  const sourceTable =
-    originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
-  return sourceTable === 'tp_tables' ? 'table_export' : 'workbook';
+  if (!originSummary || typeof originSummary !== 'object') return undefined;
+  if (originSummary.sourceTable === 'tp_tables') return 'table_export';
+  // Current generated_workbooks writers stamp both a sheet count and source.
+  // Their absence is ambiguous legacy data, so retain the resolver path rather
+  // than assuming a workbook and potentially bypassing a real tp_tables row.
+  if (
+    typeof originSummary.sheetCount === 'number' &&
+    Number.isFinite(originSummary.sheetCount) &&
+    typeof originSummary.source === 'string' &&
+    originSummary.source.trim()
+  ) {
+    return 'workbook';
+  }
+  return undefined;
 }
 
 export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {

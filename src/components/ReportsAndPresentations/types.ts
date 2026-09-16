@@ -49,7 +49,8 @@ export type RapTab =
  *     by `registerGovernedTableSheetArtifact` (originSummary.sourceTable ===
  *     'tp_tables', governanceMode: 'governed'). 61/75 sheet artifacts on demo.
  *   - 'workbook' — a real generator-built workbook in `generated_workbooks`,
- *     registered by the `/api/workbook` routes (no `sourceTable` marker).
+ *     registered by the `/api/workbook` routes (`sheetCount` + `source`).
+ * Ambiguous legacy rows keep this field undefined and use the runtime resolver.
  * See `resolveSheetOrigin` in useRapData.ts for the derivation.
  */
 export type SheetOrigin = 'table_export' | 'workbook';

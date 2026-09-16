@@ -165,7 +165,7 @@ const permissionsService = {
 
   /**
    * Check if user has access to a base (read or write).
-   * Base creator always has full access; org members have read/write.
+   * Base creator has full access inside the base tenant; org members have read/write.
    */
   async canAccessBase(userId: string, orgId: string, baseId: string): Promise<boolean> {
     const db = getDatabase();
@@ -176,8 +176,13 @@ const permissionsService = {
       );
       const base = result.rows[0] as { created_by: string; organization_id: string } | undefined;
       if (!base) return false;
-      if (base.created_by === userId) return true;
-      return base.organization_id === orgId;
+      // [ODMROZENIE 11_MATERIALS DEC-575] Creator identity never crosses the
+      // tenant boundary. Older code returned true for `created_by` before it
+      // compared organizations, so the same user id paired with a foreign-org
+      // token could read the table. Ownership only has meaning inside the
+      // base's organization; ordinary same-org readers retain today's access.
+      if (base.organization_id !== orgId) return false;
+      return true;
     } catch (e) {
       logger.error('[Permissions] canAccessBase failed', { error: (e as Error).message });
       return false;
