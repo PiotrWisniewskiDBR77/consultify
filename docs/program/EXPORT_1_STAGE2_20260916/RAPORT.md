@@ -1,43 +1,37 @@
-# EXPORT-1 — etap 2 (Wpisy 125, 131, DEC-543)
+# EXPORT-1 — etap 2, poprawka W151
 
 ## Wynik
 
-Eksport prezentacji jest ostrzeżeniem jakościowym, a nie bramką. Wszystkie cztery trasy eksportu wywołują przegląd, ale niezależnie od wyniku przechodzą do renderera. Wynik przeglądu jest dostępny w nagłówkach odpowiedzi i w `warnings[]` zwracanym przez klienta frontendu.
+Poprawka zamyka cztery P1 z Wpisu 151 i zachowuje kontrakt DEC-543: ustalenia jakościowe są zwracane jako ostrzeżenia, ale błąd renderowania nadal blokuje zapis uszkodzonego PPTX. Nowy renderer ma jawny cutover `VITE_EXPORT_PPTX_V2`; kod jest domyślnie OFF, staging ma zmienną `true` ustawioną bez wywołania deploymentu.
 
-Pakiet bazuje na wspólnej linii obu okien `70d366f158` (Wpis 146) i zawiera poprawkę EXPORT-1 1b z Wpisu 144. Nie zmienia plików toru A.
+Paczka rozpoczęła się z bazy `a1932f5caa` wskazanej we Wpisie 159. Przed freeze została przeniesiona na najnowszą linię wskazaną przez CTO. Nie zmienia migracji ani plików toru A.
 
-## Kontrakt DEC-543
+## Cztery P1
 
-- `enforceQualityGateForExport` zwraca status 200 i `success: true` również wtedy, gdy przegląd ma ustalenia;
-- payload zachowuje `result`, `scorecard` i `warnings[]`;
-- odpowiedź plikowa przenosi `X-Presentation-Quality-Result`, `X-Presentation-Quality-Warning-Count` i zakodowane `X-Presentation-Quality-Warnings`;
-- `Access-Control-Expose-Headers` udostępnia te trzy nagłówki klientowi przeglądarkowemu;
-- dotychczasowy parametr override pozostaje czytany dla kompatybilności, ale nie decyduje już o przejściu eksportu;
-- kontrakt regresyjny nie oczekuje już `422 QUALITY_GATE_BLOCKED`.
+1. Trasa download pobiera `organizations.name AS organization_name`; `BoardDeckExportService` nie używa już `organization_id` jako tekstu stopki. Test i artefakt używają realnego kształtu sluga `ateliertoys-demo-session-*` i dowodzą stopki `Consultify · Atelier Toys · Internal` oraz braku sluga w XML.
+2. Adapter wypisuje wyłącznie pola treści. Identyfikatory, typy, flagi, kolejność, style i inne pola techniczne są pomijane; `c-77`, `true` i metadata `count: 12` nie trafiają do PPTX.
+3. `deck_json` jest nadal nakładany na bogaty `unified_json`. Stary `PptxPipelineService` działa jako walidator integralności przed rendererem V2, a jego `warnings[]` przechodzi do istniejącej bramki. Test z celowo zepsutym blokiem potwierdza błąd fail-closed, brak persystencji i zachowanie poprzednich bajtów pliku.
+4. `presentations.builder.export.pptx` ma wartość `Export PPTX` w katalogach EN i PL; fallback w `ShareModal` jest zgodny.
 
-## Deck Builder
+## Cutover i rollback
 
-- nagłówek ma przycisk `Export PPTX` obok `Present` (U-49);
-- przycisk korzysta z produkcyjnej trasy eksportu i pokazuje panel Review, gdy pobrany plik ma ostrzeżenia;
-- trasa Deck Buildera generuje PPTX przez `BoardDeckExportService.exportPresentationDeck`, czyli rodzinę ośmiu zaakceptowanych layoutów EXPORT-1;
-- `Fix with AI` przekazuje do regeneracji slajdu dokładną, ludzką treść uwagi z panelu Review jako `instruction`.
+- `isExportPptxV2Enabled()` zwraca `true` wyłącznie dla dokładnej wartości `VITE_EXPORT_PPTX_V2=true`; brak, `false` i `TRUE` pozostawiają stary renderer.
+- `Dockerfile.api` i `Dockerfile.ie-demo` deklarują build arg i env dla flagi.
+- Railway: projekt `consultify`, środowisko `staging`, usługa `consultify`; zmienna została ustawiona na `true` z `--skip-deploys` i odczytana zwrotnie jako `true`. Nie uruchomiono deploymentu.
+- Rollback: ustawić `VITE_EXPORT_PPTX_V2=false` dla usługi `consultify` na stagingu i przebudować/wdrożyć usługę. Ścieżka OFF generuje plik bezpośrednio przez dotychczasowy `PptxPipelineService`.
 
-## Dowód zachowania
+## Dowód treści i parytetu
 
-RealPG działał na lokalnie odtworzonym dumpie z 11.09. Utrwalony deck `ateliertoys-demo-session-1bd9863714-mtx5ce5c--deck--forward-board-readout` (`Atelier Forward — 2015 Board Readout`) miał 9 ustaleń jakościowych. Nowy kontrakt zwrócił `status=200`, `success=true` i 9 ostrzeżeń.
-
-Artefakt `dowody/deck-builder-export.pptx` został wygenerowany bezpośrednio przez adapter Deck Buildera po końcowym rebase. `slides_test.py` nie wykrył przepełnień. Render trzech slajdów i montaż `dowody/deck-builder-montage.png` potwierdzają użycie zaakceptowanej rodziny: okładka, slajd treści i slajd decyzji.
+`dowody/deck-builder-export.pptx` ma 3 slajdy i został wygenerowany powtarzalnym skryptem `dowody/generate-evidence.ts`. Kontrola OOXML liczy trzy punkty oraz nagłówki i komórki tabeli po dokładnej treści. Każdy oczekiwany element występuje jeden raz; pola metadata nie występują. Render LibreOffice ma trzy obrazy 1921×1080, a montaż został obejrzany po poprawce.
 
 ## Walidacja
 
-- testy skupione: **5 plików / 31 PASS**;
-- RealPG: **1 plik / 1 PASS**;
-- Playwright Chromium: **2 / 2 PASS**, w tym pobranie pliku z ostrzeżeniem odczytanym z nagłówka;
-- backend TypeScript: **RC=0**;
-- pełny root TypeScript: baza `70d366f158` **169 / RC=2**, kandydat **169 / RC=2**; logi bajtowo identyczne, SHA-256 `4a99c5977f42948a26c86b9a24e67c315d075115bf11ad45cb6a28ba198907b9`, delta 0;
-- `slides_test.py`: **PASS**, 0 przepełnień;
-- integralność pakietu OOXML: **PASS**, 3 slajdy, 0 ustaleń;
-- geometria: **PASS**, 3 slajdy 16:9, 0 ustaleń i 0 ostrzeżeń;
-- `git diff --check`: **PASS**.
+- skupiona rodzina: 32 PASS i 1 test RealPG pominięty bez lokalnego URL przed końcowym rebase; osobna rodzina renderera bieżącego: 13/13 PASS, w tym realny V2 cutover i zepsuty blok;
+- server TypeScript: RC=0;
+- Docker VITE flag guard: 4/4 PASS;
+- ESLint zmienionych plików: 0 błędów; zastane warningi dużej trasy nie są podnoszone;
+- `git diff --check`: PASS;
+- artefakt PPTX: 72 946 B, SHA-256 `e45ff0128dd2a8d10cbea8ef669c82e865337acf66a5e466d24d9a664e16796e`;
+- montaż: SHA-256 `77cc38ec84f17b0d0a7fa7b304070863a054f9da495da47cc658f42ca0c41123`.
 
-Szczegółowy receipt znajduje się w `dowody/verification.txt`.
+Końcowy SHA, wyniki po rebase i dokładny receipt są w `dowody/verification.txt`.

@@ -1,48 +1,40 @@
-EXPORT-1 stage 2 verification — 2026-09-16
+EXPORT-1 stage 2 W151 fix — 2026-09-16
 
-BASE
-70d366f158 merge(feedback-1/1a): Materials sheets open safely + tenant-scoped base access [ODMROZENIE 11_MATERIALS DEC-575]
+START BASE
+a1932f5caaf6db5e0e35db0dee26ded9693b6802
 
-FOCUSED TESTS
-5 files / 31 passed
-- BoardDeckExportService production adapters
-- DeckBuilder MELS header action
-- DeckReviewPanel exact instruction
-- DEC-543 helper contract
-- HTTP route warning-header contract
+P1 CONTRACT
+- organization footer: organizations.name, never organization_id
+- content projection: c-77 / true / metadata count 12 absent
+- unified_json merge reaches validator; render warnings fail closed
+- EN + PL presentations.builder.export.pptx = Export PPTX
 
-REAL POSTGRESQL
-1 file / 1 passed
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55443/consultify
-deckId=ateliertoys-demo-session-1bd9863714-mtx5ce5c--deck--forward-board-readout
-organizationId=ateliertoys-demo-session-1bd9863714-mtx5ce5c
-title=Atelier Forward — 2015 Board Readout
-warningCount=9
-result=status 200, success true, warnings preserved
+CUTOVER
+- code default: OFF
+- exact true: ON
+- Railway project/environment/service: consultify/staging/consultify
+- readback: VITE_EXPORT_PPTX_V2=true
+- mutation used --skip-deploys; no deployment triggered
+- rollback: set false and rebuild/redeploy
 
-BROWSER
-Playwright Chromium: 2 / 2 passed
-- successful PPTX response downloads a file
-- response with X-Presentation-Quality-Warnings still downloads and exposes the warning
+FOCUSED TESTS BEFORE FINAL REBASE
+- combined family: 32 PASS, 1 skipped RealPG without local URL
+- current-render family after V2 cutover test: 13/13 PASS
+- deliberate broken block: fail closed, old bytes preserved, persistence not called
+- server TypeScript: RC=0
+- Docker flag guard: 4/4 PASS
+- ESLint: 0 errors; existing warnings retained
 
-TYPESCRIPT
-server: RC=0
-root base: RC=2, 169 errors
-root candidate: RC=2, 169 errors
-base log sha256=4a99c5977f42948a26c86b9a24e67c315d075115bf11ad45cb6a28ba198907b9
-candidate log sha256=4a99c5977f42948a26c86b9a24e67c315d075115bf11ad45cb6a28ba198907b9
-cmp=identical
+PPTX EVIDENCE
+- deck-builder-export.pptx: 72946 bytes
+- sha256: e45ff0128dd2a8d10cbea8ef669c82e865337acf66a5e466d24d9a664e16796e
+- 3 slides
+- Atelier Toys footer present; raw org slug absent
+- metadata c-77 / true / count 12 absent
+- exact authored bullets: 3/3 once each
+- table headers/cells: exact content counts PASS
+- LibreOffice render: 3 PNG, 1921x1080
+- montage sha256: 77cc38ec84f17b0d0a7fa7b304070863a054f9da495da47cc658f42ca0c41123
 
-PPTX RENDER
-deck-builder-export.pptx: 71529 bytes
-deck-builder-export.pptx sha256=3a285f2b2820f34232d27fd4f2288fd54a2a34711c1260bec988d7767e81637f
-deck-builder-montage.png sha256=aa11fc6eac70279b6731573b502823c114b969bf8e53bd0349bf6c822bf4485a
-slides_test.py: PASS, no overflow
-package integrity: PASS, 3 slides, 0 findings
-layout geometry: PASS, 3 slides, 16:9, 0 findings, 0 warnings
-visual inspection: PASS, cover + content + decision use approved family
-
-HYGIENE
-git diff --check: PASS
-free space before freeze: 39 GiB
-Tor A files changed: 0
+FINAL REBASE / SHA
+PENDING

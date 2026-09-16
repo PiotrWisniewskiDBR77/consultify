@@ -23,6 +23,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   CurrentPptxExportError,
   ensureCurrentPptxExport,
+  isExportPptxV2Enabled,
 } from '../../../../routes/presentations.routes.js';
 import { deckDocumentFromUnifiedJson } from '../../../presentationDeckDocumentService.js';
 import { PptxPipelineService } from '../PptxPipelineService.js';
@@ -76,6 +77,7 @@ describe('Generate -> PPTX download happy path', () => {
   const tmpFiles: string[] = [];
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     for (const f of tmpFiles.splice(0)) {
       try {
         fs.unlinkSync(f);
@@ -83,6 +85,52 @@ describe('Generate -> PPTX download happy path', () => {
         /* ignore cleanup errors */
       }
     }
+  });
+
+  it('keeps EXPORT-1 V2 off by default and enables only the exact staging value', () => {
+    expect(isExportPptxV2Enabled({})).toBe(false);
+    expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'false' })).toBe(false);
+    expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'TRUE' })).toBe(false);
+    expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'true' })).toBe(true);
+  });
+
+  it('cuts over to V2 with the resolved organization name while preserving legacy validation', async () => {
+    vi.stubEnv('VITE_EXPORT_PPTX_V2', 'true');
+    const report = buildUnifiedReport();
+    const deckId = `v2-cutover-${Date.now()}`;
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId,
+      organizationId: 'ateliertoys-demo-session-real-slug',
+      title: 'V2 cutover proof',
+      unifiedJson: report,
+    });
+    const exportPath = path.join(os.tmpdir(), `${deckId}.pptx`);
+    tmpFiles.push(exportPath);
+
+    await ensureCurrentPptxExport(
+      {
+        id: deckId,
+        organization_id: 'ateliertoys-demo-session-real-slug',
+        organization_name: 'Atelier Toys',
+        export_path: exportPath,
+        version: 1,
+        exported_version: null,
+        deck_json: JSON.stringify(deckDocument),
+        unified_json: JSON.stringify(report),
+      },
+      { persist: vi.fn(async () => undefined) }
+    );
+
+    const zip = await JSZip.loadAsync(fs.readFileSync(exportPath));
+    const slideXml = (
+      await Promise.all(
+        Object.values(zip.files)
+          .filter((entry) => /^ppt\/slides\/slide\d+\.xml$/.test(entry.name))
+          .map((entry) => entry.async('string'))
+      )
+    ).join('\n');
+    expect(slideXml).toContain('Consultify · Atelier Toys · internal');
+    expect(slideXml).not.toContain('ateliertoys-demo-session-real-slug');
   });
 
   it('generates a valid .pptx buffer from unified JSON', async () => {
@@ -348,6 +396,62 @@ describe('Generate -> PPTX download happy path', () => {
     ).rejects.toBeInstanceOf(CurrentPptxExportError);
 
     expect(generate).toHaveBeenCalledOnce();
+    expect(persist).not.toHaveBeenCalled();
+    expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
+  });
+
+  it('fails closed and preserves the old file when render-integrity reports a broken block', async () => {
+    const report = buildUnifiedReport();
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'broken-block-deck',
+      organizationId: 'org-1',
+      title: 'Broken block deck',
+      unifiedJson: report,
+    });
+    const editedBulletBlock = deckDocument.cards[1].blocks.find(
+      (block) => block.type === 'bullet_list'
+    );
+    if (!editedBulletBlock) throw new Error('fixture must contain a bullet_list block');
+    editedBulletBlock.content = { items: ['Edited finding from deck_json'] };
+    const exportPath = path.join(os.tmpdir(), `broken-block-deck-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+    const oldBytes = Buffer.from('known-good-pptx');
+    fs.writeFileSync(exportPath, oldBytes);
+    const generate = vi.fn(async () => ({
+      buffer: Buffer.from('must-never-be-written'),
+      slideCount: deckDocument.cards.length,
+      warnings: ['Slide 2 render failed: deliberately broken block'],
+    }));
+    const persist = vi.fn(async () => undefined);
+
+    await expect(
+      ensureCurrentPptxExport(
+        {
+          id: 'broken-block-deck',
+          organization_id: 'org-1',
+          export_path: exportPath,
+          version: 2,
+          exported_version: 1,
+          updated_at: new Date().toISOString(),
+          deck_json: JSON.stringify(deckDocument),
+          unified_json: JSON.stringify(report),
+        },
+        { generate, persist }
+      )
+    ).rejects.toThrow('deliberately broken block');
+
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slides: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.objectContaining({
+              key_findings: ['Edited finding from deck_json'],
+            }),
+          }),
+        ]),
+      }),
+      expect.anything()
+    );
     expect(persist).not.toHaveBeenCalled();
     expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
   });

@@ -166,6 +166,9 @@ const IDENTITY_WHITELIST_RAW = [
   // Format eksportu — istniejące osobno 'PowerPoint' i 'PPTX' nie pokrywają
   // złożonej frazy jako całości (dopasowanie jest na pełnym stringu):
   'PowerPoint (PPTX)',
+  // EXPORT-1 W151/U-49 — właściciel wymaga dokładnej etykiety produktu
+  // „Export PPTX” w obu katalogach; PPTX jest nazwą formatu, nie treścią do tłumaczenia.
+  'Export PPTX',
   // Gate decyzyjny — ten sam wzorzec co istniejące 'GO'/'NO-GO'/'CONDITIONAL GO':
   'Go/No-Go',
   // Termin hostingowy używany identycznie w polskich materiałach IT (jak SLA/WACC):
