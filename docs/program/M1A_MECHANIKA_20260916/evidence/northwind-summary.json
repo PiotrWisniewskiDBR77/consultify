@@ -1,0 +1,56 @@
+{
+  "plan": {
+    "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "scenarioId": "6696c99d-22ff-50e5-a6aa-dfcde4e20336",
+    "knowledgeState": "KNOWN",
+    "initiativeCount": 8,
+    "periodCount": 8,
+    "cellCount": 16,
+    "taskCount": 31,
+    "knownDemandHours": 1520
+  },
+  "forecast": {
+    "userCount": 9,
+    "weeks": [
+      {
+        "weekStart": "2026-09-14",
+        "capacityHours": 338,
+        "allocatedHours": 219.3,
+        "taskCount": 11,
+        "unknownTaskCount": 0
+      },
+      {
+        "weekStart": "2026-09-21",
+        "capacityHours": 338,
+        "allocatedHours": 154.4,
+        "taskCount": 8,
+        "unknownTaskCount": 0
+      },
+      {
+        "weekStart": "2026-09-28",
+        "capacityHours": 338,
+        "allocatedHours": 72.6,
+        "taskCount": 5,
+        "unknownTaskCount": 0
+      },
+      {
+        "weekStart": "2026-10-05",
+        "capacityHours": 338,
+        "allocatedHours": 70.8,
+        "taskCount": 4,
+        "unknownTaskCount": 0
+      }
+    ]
+  },
+  "capacityByPerson": {
+    "Daniel Osei": 40,
+    "Emily Carter": 37,
+    "James Whitfield": 40,
+    "Laura Novak": 36,
+    "Michael Grant": 35,
+    "Priya Sharma": 32,
+    "Robert Chen": 38,
+    "Sarah Mitchell": 40,
+    "Thomas Baker": 40
+  }
+}

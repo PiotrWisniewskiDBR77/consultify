@@ -1,0 +1,5 @@
+(node:59888) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: plan scenario not found in organization scope
+    at main (/Users/piotrwisniewski/Developer/codex-wt/b-m1a-mechanika-20260916/scripts/dev/m1-plan-task-demand-readback.ts:35:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
