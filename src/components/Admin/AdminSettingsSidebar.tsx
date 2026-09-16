@@ -6,13 +6,7 @@ import { type AdminLocation, getAdminDomains } from './adminNavigation';
 
 export type { AdminDomain, AdminLocation, AdminScreen } from './adminNavigation';
 export type AdminSettingsSection =
-  | 'people'
-  | 'billing'
-  | 'ai'
-  | 'security'
-  | 'audit'
-  | 'command'
-  | 'health';
+  'people' | 'billing' | 'ai' | 'security' | 'audit' | 'command' | 'health';
 
 interface AdminSettingsSidebarProps {
   activeLocation: AdminLocation;
@@ -20,6 +14,7 @@ interface AdminSettingsSidebarProps {
   className?: string;
   onBack?: () => void;
   canAccessPlatformOperations?: boolean;
+  canManageProjectRoles?: boolean;
 }
 
 export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
@@ -28,6 +23,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   className,
   onBack,
   canAccessPlatformOperations = false,
+  canManageProjectRoles = false,
 }) => {
   const { t } = useTranslation();
   return (
@@ -38,14 +34,21 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
         'Access, organization policies, evidence, and safe operations'
       )}
       navigationLabel={t('admin.shell.navigation', 'Admin Panel navigation')}
-      modules={getAdminDomains(t).map((domain) =>
-        domain.id === 'health' && !canAccessPlatformOperations
-          ? {
-              ...domain,
-              children: domain.children.filter((screen) => screen.id !== 'platform-operations'),
-            }
-          : domain
-      )}
+      modules={getAdminDomains(t).map((domain) => {
+        if (domain.id === 'health' && !canAccessPlatformOperations) {
+          return {
+            ...domain,
+            children: domain.children.filter((screen) => screen.id !== 'platform-operations'),
+          };
+        }
+        if (domain.id === 'team' && !canManageProjectRoles) {
+          return {
+            ...domain,
+            children: domain.children.filter((screen) => screen.id !== 'roles-permissions'),
+          };
+        }
+        return domain;
+      })}
       activeModule={activeLocation.domain}
       activeChild={activeLocation.screen}
       onChildChange={(domain, screen) => onLocationChange({ domain, screen })}
