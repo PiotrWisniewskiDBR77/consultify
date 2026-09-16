@@ -25,7 +25,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
-    i18n: { language: 'pl' },
+    i18n: {
+      language: 'pl',
+      getFixedT: () => (_key: string, fallback?: any) =>
+        typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+    },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
 }));
@@ -67,6 +71,7 @@ import { ROUTES } from '../../../src/routes/routeConfig';
 
 const KPI_ID = '11111111-1111-1111-1111-111111111111';
 const CASE_ID = '22222222-2222-2222-2222-222222222222';
+const INITIATIVE_ID = '33333333-3333-3333-3333-333333333333';
 
 const KPI_ROW = {
   kpiId: KPI_ID,
@@ -190,6 +195,7 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
   afterEach(() => {
     window.localStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   // flip po akcepcie właściciela 27.08: kpiRegistry now defaults ON (D-D
@@ -223,14 +229,14 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
     await waitFor(() => expect(Api.get).toHaveBeenCalledWith(`/vnext/results/kpi/${KPI_ID}`));
 
     // KPI identity + lifecycle
-    await waitFor(() => expect(screen.getAllByText('KPI-REVENUE-001').length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByText('Realizacja korzyści').length).toBeGreaterThan(0));
 
     // Real measurement value renders (never a fabricated 0/placeholder).
     await waitFor(() => expect(screen.getByText('74')).toBeInTheDocument());
 
     // Both dimensions rendered as separate chips (plan §4.3/§4.4 — never one field).
-    expect(screen.getByText('warning')).toBeInTheDocument();
-    expect(screen.getByText('verified')).toBeInTheDocument();
+    expect(screen.getByText(/warning|ostrzeżenie/i)).toBeInTheDocument();
+    expect(screen.getByText(/verified|zweryfikowany/i)).toBeInTheDocument();
   });
 
   it('enables activation when the current definition version is approved', async () => {
@@ -268,6 +274,199 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
     // .DEVIATION_CASE shape) is the same convention
     // `tests/components/PricingView.cta-authority.test.tsx` already uses.
     expect(navigateMock).toHaveBeenCalledWith(`/results/kpi/${KPI_ID}/deviation-cases/${CASE_ID}`);
+  });
+
+  it('U-41 renders business names, an initiative picker, no internal breadcrumb/design note, and a neutral Suspend action', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    window.localStorage.setItem('ff.results_vnext_kpi_usability_u41', '1');
+    mockApiGet({
+      kpi: {
+        kpi: {
+          ...KPI_ROW,
+          primaryProcessId: 'Packaging and dispatch',
+          responsePolicyId: 'Weekly deviation review',
+        },
+      },
+      impacts: {
+        impacts: [
+          {
+            impactId: 'impact-1',
+            organizationId: 'org-1',
+            kpiId: KPI_ID,
+            initiativeId: INITIATIVE_ID,
+            definitionVersionIdAtCommitment: null,
+            status: 'proposed',
+            expectedContributionValue: 4,
+            expectedContributionDirection: 'increase',
+            targetCompletionDate: null,
+            proposedBy: 'user-owner',
+            proposedAt: '2026-08-01T00:00:00.000Z',
+            baselineMeasurementId: null,
+            baselineValueAtCommitment: null,
+            baselinePeriodEnd: null,
+            committedBy: null,
+            committedAt: null,
+            reviewedAttributionValue: null,
+            reviewedAttributionMeasurementId: null,
+            reviewRationale: null,
+            reviewedBy: null,
+            reviewedAt: null,
+            supersededByImpactId: null,
+            supersededAt: null,
+            rowVersion: 1,
+            createdBy: 'user-owner',
+            createdAt: '2026-08-01T00:00:00.000Z',
+            updatedAt: '2026-08-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/initiatives/runtime-v1/initiatives')) {
+        return new Response(
+          JSON.stringify({
+            initiatives: [
+              {
+                version: 2,
+                updatedAt: '2026-08-01T00:00:00.000Z',
+                initiative: {
+                  initiativeId: INITIATIVE_ID,
+                  lifecycleState: 'SCHEDULED',
+                  title: 'Warehouse throughput recovery',
+                  projectId: 'project-1',
+                  readiness: 'NOT_EVALUATED',
+                },
+              },
+            ],
+            nextCursor: null,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      if (url === '/api/initiatives') {
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({}), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAt(`/results/kpi/${KPI_ID}`);
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
+
+    expect(screen.queryByText('KPI registry')).not.toBeInTheDocument();
+    const suspendActions = screen.getAllByRole('button', { name: 'Zawieś' });
+    expect(suspendActions.some((button) => button.className.includes('bg-navy-900'))).toBe(true);
+    for (const suspend of suspendActions) {
+      expect(suspend.className).not.toMatch(/primary|crimson|danger/);
+    }
+    expect(screen.getByText('Packaging and dispatch')).toBeInTheDocument();
+    expect(screen.getByText('Weekly deviation review')).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    const actions = await screen.findAllByText('Działania');
+    await user.click(actions[0]);
+    expect((await screen.findAllByText('Warehouse throughput recovery')).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText(/DESIGN NOTE|kpiDeviation\.routes\.ts/i)).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('kpi-tool-propose-initiative-id')).getByRole('option', {
+        name: 'Warehouse throughput recovery',
+      })
+    ).toBeInTheDocument();
+
+    const deviations = await screen.findAllByText('Odchylenia');
+    await user.click(deviations[0]);
+    expect(await screen.findByText(/Odchylenie .* ·/)).toBeInTheDocument();
+    expect(screen.queryByText('22222222…')).not.toBeInTheDocument();
+  });
+
+  it('U-41 shows the runtime-registry error explicitly and retries that read', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    window.localStorage.setItem('ff.results_vnext_kpi_usability_u41', '1');
+    mockApiGet();
+    let runtimeFails = true;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/initiatives/runtime-v1/initiatives')) {
+        if (runtimeFails) return new Response('{}', { status: 503 });
+        return new Response(JSON.stringify({ initiatives: [], nextCursor: null }), { status: 200 });
+      }
+      if (url === '/api/initiatives') return new Response('[]', { status: 200 });
+      return new Response(JSON.stringify({ cards: [] }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAt(`/results/kpi/${KPI_ID}`);
+    await screen.findByTestId('results-vnext-kpi-tool-page');
+    await userEvent.click(screen.getByRole('button', { name: 'Działania' }));
+    expect(await screen.findByText('Nie udało się wczytać bieżącego rejestru inicjatyw.')).toBeInTheDocument();
+    runtimeFails = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    await waitFor(() =>
+      expect(screen.queryByText('Nie udało się wczytać bieżącego rejestru inicjatyw.')).not.toBeInTheDocument()
+    );
+    expect(screen.getByRole('option', { name: 'Brak dostępnych inicjatyw' })).toBeInTheDocument();
+  });
+
+  it('U-41 shows the legacy-registry error explicitly and retries that read', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    window.localStorage.setItem('ff.results_vnext_kpi_usability_u41', '1');
+    mockApiGet();
+    let legacyFails = true;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/initiatives/runtime-v1/initiatives')) {
+        return new Response(JSON.stringify({ initiatives: [], nextCursor: null }), { status: 200 });
+      }
+      if (url === '/api/initiatives') {
+        if (legacyFails) return new Response('{}', { status: 503 });
+        return new Response('[]', { status: 200 });
+      }
+      return new Response(JSON.stringify({ cards: [] }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAt(`/results/kpi/${KPI_ID}`);
+    await screen.findByTestId('results-vnext-kpi-tool-page');
+    await userEvent.click(screen.getByRole('button', { name: 'Działania' }));
+    expect(await screen.findByText('Nie udało się wczytać starszego rejestru inicjatyw.')).toBeInTheDocument();
+    legacyFails = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    await waitFor(() =>
+      expect(screen.queryByText('Nie udało się wczytać starszego rejestru inicjatyw.')).not.toBeInTheDocument()
+    );
+  });
+
+  it('keeps all five U-41 behaviors unchanged when the flag is OFF', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    mockApiGet({
+      kpi: { kpi: { ...KPI_ROW, status: 'suspended' } },
+      impacts: { impacts: [{ impactId: 'impact-1', initiativeId: INITIATIVE_ID, status: 'proposed' }] },
+    });
+
+    renderAt(`/results/kpi/${KPI_ID}`);
+    const page = await screen.findByTestId('results-vnext-kpi-tool-page');
+    expect(screen.getAllByText('Rejestr KPI').length).toBeGreaterThan(0);
+    expect(page.closest('[data-testid="results-vnext-kpi-tool-chrome"]')?.querySelector('.bg-danger-400')).not.toBeNull();
+
+    const user = userEvent.setup();
+    fireEvent.click(screen.getByText('Działania'));
+    await waitFor(() => expect(page).toHaveTextContent('DESIGN NOTE'));
+    expect(screen.getByText('33333333…')).toBeInTheDocument();
+    expect(screen.queryByText('Unknown initiative')).not.toBeInTheDocument();
+    expect(screen.getByTestId('kpi-tool-propose-initiative-id').tagName).toBe('INPUT');
+
+    fireEvent.click(screen.getByText('Odchylenia'));
+    expect(await screen.findByText('22222222…')).toBeInTheDocument();
+    expect(screen.queryByText(/Odchylenie .* ·/)).not.toBeInTheDocument();
   });
 
   it('shows an honest error state with Retry when the KPI fetch fails, and Retry re-fetches', async () => {

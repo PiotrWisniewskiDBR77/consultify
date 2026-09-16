@@ -1,0 +1,21 @@
+src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > KPI: montuje ResultsVNextLegacyArchivePanel z domain="kpi"
+tests/components/ResultsVNext/KpiTrzyPoziomy.test.tsx > KPI — trzy poziomy: tabela raportów → raport → karta N > MUTACJA (c): raport stoi MIĘDZY rejestrem a miernikiem, nie pod miernikiem
+tests/components/ResultsVNext/KpiTrzyPoziomy.test.tsx > KPI — trzy poziomy: tabela raportów → raport → karta N > POZIOM 3: adres bez parametru dalej działa — stopień raportu z REALNEJ przynależności
+tests/components/ResultsVNext/KpiTrzyPoziomy.test.tsx > KPI — trzy poziomy: tabela raportów → raport → karta N > POZIOM 3: karta N ma DOKŁADNIE trzystopniową ścieżkę, w tej kolejności
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx > ResultsVNextLegacyArchivePanel · błąd wczytywania (RN-G5 Zadanie 2) > NIE pokazuje surowego `body.error` z backendu — pokazuje przetłumaczalny, ogólny komunikat z retry
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx > ResultsVNextLegacyArchivePanel · błąd wczytywania (RN-G5 Zadanie 2) > a 403 (ABAC-style denial) dostaje ten sam OGÓLNY komunikat D06 — nie ujawnia szczegółu backendu
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx > ResultsVNextLegacyArchivePanel · błąd wczytywania (RN-G5 Zadanie 2) > retry (Spróbuj ponownie) faktycznie ponawia wywołanie
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx > ResultsVNextLegacyArchivePanel · kebab „Usuń" na wierszu tylko-do-odczytu (RN-G5 Zadanie 1) > kliknięcie DISABLED „Usuń" nic nie robi (żadnego wywołania usuwania)
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx > ResultsVNextLegacyArchivePanel · kebab „Usuń" na wierszu tylko-do-odczytu (RN-G5 Zadanie 1) > pozycja „Usuń" jest widoczna, DISABLED, i ma podany powód (D06) — nigdy ukryta ani aktywna
+tests/components/ResultsVNext/okr/OkrSetToolPage.test.tsx > OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace, deep link) > renders the honest disabled-flag empty state when okrRegistry flag is OFF (default)
+tests/components/ResultsVNext/roi/RoiCaseToolPage.test.tsx > RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, deep link) > renders the honest disabled-flag empty state when roiRegistry flag is OFF (default)
+tests/resultsVnext/flagGateEnumeration.test.ts > Results VNext flag-gate enumeration > keeps the historical scorecards bypass mechanism isolated, unrouted, and prop-free
+tests/resultsVnext/flagGateEnumeration.test.ts > Results VNext flag-gate enumeration > src/components/ResultsVNext/attention/ResultsAttentionPage.tsx retains the declared gate
+tests/resultsVnext/kpi/day199.kpiToolSections.component.test.tsx > day199 KPI tool scorecards and history wiring > renders an honest empty state for KPI history
+tests/resultsVnext/kpi/day199.kpiToolSections.component.test.tsx > day199 KPI tool scorecards and history wiring > renders an honest empty state for scorecards returned by the reverse lookup
+tests/resultsVnext/kpi/day199.kpiToolSections.component.test.tsx > day199 KPI tool scorecards and history wiring > renders immutable KPI history entries
+tests/resultsVnext/kpi/day199.kpiToolSections.component.test.tsx > day199 KPI tool scorecards and history wiring > renders scorecard data returned by the reverse lookup
+tests/resultsVnext/resultsVNextFeatureFlags.navigationPersist.test.ts > resultsVNextFeatureFlags — flag survives in-app navigation that drops the query string (RN-G6 task 1) > never changes a DIFFERENT domain's default (roiRegistry still resolves false) — this fix is about persistence of an explicit choice, not a new default-on
+tests/unit/results-okr/okrTrzyPoziomy.test.tsx > Poziom 1 — TABELA RAPORTÓW OKR > renderuje tabelę raportów na realnych kolumnach — każda kolumna ma etykietę
+tests/unit/results-okr/okrTrzyPoziomy.test.tsx > Poziom 3 — karta celu z rezultatami JAKO SEKCJĄ > okruszek wraca do RAPORTU (poziom 2), nie do powłoki administracyjnej zestawu
+tests/unit/results-okr/okrTrzyPoziomy.test.tsx > Poziom 3 — karta celu z rezultatami JAKO SEKCJĄ > renderuje pięć sekcji (w tym „Check-iny") i przycisk check-inu na bloku rezultatu

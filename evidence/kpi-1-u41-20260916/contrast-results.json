@@ -1,0 +1,167 @@
+{
+  "threshold": 4.5,
+  "minimum": 6.34,
+  "passed": true,
+  "results": [
+    {
+      "label": "Suspend",
+      "theme": "light",
+      "ratio": 17.85,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        15,
+        23,
+        42
+      ],
+      "text": "Suspend"
+    },
+    {
+      "label": "Initiative select",
+      "theme": "light",
+      "ratio": 17.85,
+      "foreground": [
+        15,
+        23,
+        42
+      ],
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "text": "Select an initiativePackaging line modernizationPlant energy optimization"
+    },
+    {
+      "label": "Suspended status",
+      "theme": "light",
+      "ratio": 11.05,
+      "foreground": [
+        59,
+        40,
+        131
+      ],
+      "background": [
+        248,
+        250,
+        252
+      ],
+      "text": "Suspended"
+    },
+    {
+      "label": "Registry error",
+      "theme": "light",
+      "ratio": 6.34,
+      "foreground": [
+        71,
+        85,
+        105
+      ],
+      "background": [
+        241,
+        233,
+        227
+      ],
+      "text": "Could not load the current initiative registry."
+    },
+    {
+      "label": "Retry",
+      "theme": "light",
+      "ratio": 14.93,
+      "foreground": [
+        15,
+        23,
+        42
+      ],
+      "background": [
+        241,
+        233,
+        227
+      ],
+      "text": "Retry"
+    },
+    {
+      "label": "Suspend",
+      "theme": "dark",
+      "ratio": 17.77,
+      "foreground": [
+        10,
+        15,
+        30
+      ],
+      "background": [
+        244,
+        247,
+        251
+      ],
+      "text": "Suspend"
+    },
+    {
+      "label": "Initiative select",
+      "theme": "dark",
+      "ratio": 16.61,
+      "foreground": [
+        244,
+        247,
+        251
+      ],
+      "background": [
+        15,
+        23,
+        42
+      ],
+      "text": "Select an initiativePackaging line modernizationPlant energy optimization"
+    },
+    {
+      "label": "Suspended status",
+      "theme": "dark",
+      "ratio": 6.47,
+      "foreground": [
+        88,
+        166,
+        255
+      ],
+      "background": [
+        20,
+        31,
+        56
+      ],
+      "text": "Suspended"
+    },
+    {
+      "label": "Registry error",
+      "theme": "dark",
+      "ratio": 9.39,
+      "foreground": [
+        184,
+        196,
+        214
+      ],
+      "background": [
+        32,
+        30,
+        33
+      ],
+      "text": "Could not load the current initiative registry."
+    },
+    {
+      "label": "Retry",
+      "theme": "dark",
+      "ratio": 15.42,
+      "foreground": [
+        244,
+        247,
+        251
+      ],
+      "background": [
+        32,
+        30,
+        33
+      ],
+      "text": "Retry"
+    }
+  ]
+}

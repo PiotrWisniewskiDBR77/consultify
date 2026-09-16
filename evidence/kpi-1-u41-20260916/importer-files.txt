@@ -1,0 +1,17 @@
+src/components/Results/__tests__/resultsOwnerReviewMode.test.ts
+src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.envStaticRead.test.ts
+src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts
+src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx
+src/components/ResultsVNext/roi/card/__tests__/roiCardPage.kartaN.test.tsx
+src/utils/__tests__/demoAcceptanceFlags.test.ts
+tests/components/ResultsVNext/KpiDeviationCaseSubview.test.tsx
+tests/components/ResultsVNext/KpiToolPage.test.tsx
+tests/components/ResultsVNext/KpiTrzyPoziomy.test.tsx
+tests/components/ResultsVNext/ResultsVNextLegacyArchivePanel.test.tsx
+tests/components/ResultsVNext/okr/OkrSetToolPage.test.tsx
+tests/components/ResultsVNext/roi/RoiCaseToolPage.test.tsx
+tests/resultsVnext/flagGateEnumeration.test.ts
+tests/resultsVnext/kpi/day199.kpiToolSections.component.test.tsx
+tests/resultsVnext/resultsVNextFeatureFlags.navigationPersist.test.ts
+tests/unit/flags/flagiDomyslnieOn.test.ts
+tests/unit/results-okr/okrTrzyPoziomy.test.tsx
