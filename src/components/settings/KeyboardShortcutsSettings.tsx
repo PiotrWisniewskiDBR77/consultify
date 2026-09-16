@@ -361,7 +361,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
   const resetAction = (
     <button
       onClick={resetToDefault}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-white bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
     >
       <RotateCcw size={13} />
       {t('settings.shortcuts.reset', 'Reset')}
@@ -425,7 +425,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               {/* Preset Selection */}
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-3">
-                  <Settings size={14} className="inline mr-1.5 text-c-accent" />
+                  <Settings size={14} className="inline mr-1.5 text-c-text-secondary" />
                   {t('settings.shortcuts.preset', 'Shortcut Preset')}
                 </label>
                 <div className="grid grid-cols-5 gap-3">
@@ -445,7 +445,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         <p
                           className={cn(
                             'text-sm font-medium',
-                            isSelected ? 'text-c-accent' : 'text-white'
+                            isSelected ? 'text-c-text' : 'text-c-text-secondary'
                           )}
                         >
                           {t(`settings.shortcuts.presets.${preset.value}.label`, preset.label)}
@@ -505,13 +505,25 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                   return (
                     <div
                       key={shortcut.id}
+                      /*
+                       * K-20c (KANAL Wpis 142, DEC-575): `opacity-40` na CALYM
+                       * wierszu mnozylo token toru pstryczka — `--c-control-track`
+                       * (4,76:1) schodzil po zlozeniu do ~1,7:1 w jasnym motywie.
+                       * Fade zdjety z wiersza; wyciszenie punktowe na TEKSCIE
+                       * (nazwa skrotu nizej), tor pstryczka w pelnej sile.
+                       */
                       className={cn(
                         'flex items-center justify-between px-6 py-3 transition-colors',
-                        isDisabled ? 'opacity-40' : 'hover:bg-c-surface/[0.02]'
+                        !isDisabled && 'hover:bg-c-surface/[0.02]'
                       )}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white">
+                        <p
+                          className={cn(
+                            'text-sm font-medium',
+                            isDisabled ? 'text-c-text-muted' : 'text-c-text'
+                          )}
+                        >
                           {getShortcutName(shortcut)}
                         </p>
                         <p className="text-xs text-c-text-muted">
@@ -531,7 +543,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 'settings.shortcuts.pressKeysPlaceholder',
                                 'Press keys...'
                               )}
-                              className="w-32 px-2 py-1 text-sm bg-c-surface border border-c-accent dark:border-c-accent rounded text-c-text outline-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
+                              className="w-32 px-2 py-1 text-sm bg-c-surface border border-[color:var(--c-focus)] rounded text-c-text outline-none placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary"
                             />
                             <button
                               onClick={() => saveCustomShortcut(shortcut.id)}
@@ -554,7 +566,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                             <KeyBadge keys={getShortcutKey(shortcut)} />
                             <button
                               onClick={() => setEditingShortcut(shortcut.id)}
-                              className="p-1 text-c-text-muted hover:text-c-accent hover:bg-c-accent-soft rounded transition-colors"
+                              className="p-1 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded transition-colors"
                             >
                               <Edit2 size={14} />
                             </button>
@@ -562,7 +574,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                               onClick={() => toggleShortcut(shortcut.id)}
                               className={cn(
                                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                                isDisabled ? 'bg-c-control-track' : 'bg-navy-900'
+                                isDisabled ? 'bg-c-control-track' : 'bg-c-focus-solid'
                               )}
                             >
                               <span

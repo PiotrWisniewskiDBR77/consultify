@@ -80,14 +80,16 @@ describe('P-T06 — rodzeństwo nie odrasta', () => {
     expect(s).toContain('SettingsToggleControl');
   });
 
-  it('`AISettings/SettingsToggle` ma tor OFF `c-border` i ON bez crimson', () => {
+  // K-20c (DEC-575): próg toru podniesiony z `--c-border` (1,25:1 vs --c-surface)
+  // na `--c-control-track` (≥4,5:1) — asercja P-T06 przypinała stary, za słaby token.
+  it('`AISettings/SettingsToggle` ma tor OFF `c-control-track` i ON bez crimson', () => {
     const s = zrodlo('src/components/AISettings/SettingsToggle.tsx');
-    expect(s).toContain("checked ? 'bg-c-focus-solid' : 'bg-c-border'");
+    expect(s).toContain("checked ? 'bg-c-focus-solid' : 'bg-c-control-track'");
     expect(s).not.toContain(['from-c-', 'accent', '-soft'].join(''));
   });
 
   it('`BrandVoicePanel` ma widoczny stan ON', () => {
     const s = zrodlo('src/components/ReportBuilder/ReportEditor/BrandVoicePanel.tsx');
-    expect(s).toContain("checked ? 'bg-c-focus-solid' : 'bg-c-border'");
+    expect(s).toContain("checked ? 'bg-c-focus-solid' : 'bg-c-control-track'");
   });
 });

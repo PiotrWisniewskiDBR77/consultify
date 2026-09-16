@@ -382,9 +382,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 return (
                   <div
                     key={day.key}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                      daySchedule.enabled ? 'bg-c-surface-raised' : 'bg-c-surface-raised opacity-60'
-                    }`}
+                    /*
+                     * K-20c (KANAL Wpis 142, DEC-575): `opacity-60` na CALYM
+                     * wierszu mnozylo token toru pstryczka — `--c-control-track`
+                     * (4,76:1 w jasnym) schodzil po zlozeniu do ~2,2:1. Fade
+                     * zdjety z wiersza; wyciszenie jest punktowe na TEKSCIE
+                     * (etykieta dnia / „Not working" = `text-c-text-secondary`
+                     * ponizej), a tor pstryczka zostaje w pelnej sile.
+                     */
+                    className="flex items-center gap-4 p-4 rounded-lg transition-all bg-c-surface-raised"
                   >
                     {/* Day Toggle — K-20: wspolny SettingsToggleControl zamiast
                         wlasnego pstryczka. Wlasny tor mial w stanie OFF

@@ -437,7 +437,8 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onCh
        * niewidoczny (kontrast 1,00:1). Kanon: ON = `--c-focus-solid`.
        */
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-        checked ? 'bg-c-focus-solid' : 'bg-c-border'
+        // K-20c DEC-575: tor OFF `bg-c-border` = 1,25:1 vs --c-surface -> --c-control-track
+        checked ? 'bg-c-focus-solid' : 'bg-c-control-track'
       }`}
     >
       <span
