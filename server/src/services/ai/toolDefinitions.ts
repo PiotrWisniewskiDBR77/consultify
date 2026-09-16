@@ -1250,7 +1250,8 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
     // FIX-206 (P0): jak wyzej — fail-closed bez kontekstu organizacji.
-    if (!ctx.organizationId) return JSON.stringify({ source: 'assessment', note: 'No organization context' });
+    if (!ctx.organizationId)
+      return JSON.stringify({ source: 'assessment', note: 'No organization context' });
 
     const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
@@ -1364,11 +1365,12 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     // FIX-206 (P0, ODBIOR_205_206.md): bez organizacji z kontekstu nie wolno czytac
     // NICZEGO — audytor zmierzyl wyciek cross-org (org-A + cudzy projectId z ciala
     // zadania -> nazwa/status/ROI inicjatywy org-B). Fail-closed.
-    if (!ctx.organizationId) return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
+    if (!ctx.organizationId)
+      return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
 
     if (args.initiative_id) {
       const initiative = await dbAll(
-        `SELECT id, name, status, priority, progress, cost_capex, cost_opex, expected_roi, start_date, end_date
+        `SELECT id, name, status, lifecycle_stage, lifecycle_stage_source, priority, progress, cost_capex, cost_opex, expected_roi, start_date, end_date
          FROM initiatives WHERE id = ? AND project_id = ? AND organization_id = ?`,
         [args.initiative_id, projectId, ctx.organizationId]
       );
@@ -1376,7 +1378,7 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     }
 
     const initiatives = await dbAll(
-      `SELECT id, name, status, priority, progress, cost_capex, expected_roi
+      `SELECT id, name, status, lifecycle_stage, lifecycle_stage_source, priority, progress, cost_capex, expected_roi
        FROM initiatives WHERE project_id = ? AND organization_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
       [projectId, ctx.organizationId]
     );
@@ -1386,7 +1388,8 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
       total: (initiatives || []).length,
       summary: (initiatives || []).map((i: any) => ({
         name: i.name,
-        status: i.status,
+        status: i.lifecycle_stage || i.status,
+        compatibilityStatus: i.status,
         priority: i.priority,
         progress: i.progress,
         roi: i.expected_roi,

@@ -372,7 +372,7 @@ export async function buildModuleContextGrounding(
     moduleKey === 'initiatives' || moduleKey === 'execution' || moduleKey === 'chat' || moduleKey === 'org_overview';
   if (wantsInitiatives) {
     const rows = await safeQuery(
-      `SELECT id, name, title, status, current_stage, summary, problem_statement,
+      `SELECT id, name, title, status, lifecycle_stage, current_stage, summary, problem_statement,
               owner_business_id, updated_at, created_at
          FROM initiatives
         WHERE organization_id = ?
@@ -385,7 +385,7 @@ export async function buildModuleContextGrounding(
       lines.push(`### Inicjatywy organizacji (${rows.length} najświeższych)`);
       rows.forEach((row: any, index: number) => {
         const name = row.name || row.title || 'Inicjatywa bez nazwy';
-        const status = row.status || row.current_stage || 'brak statusu';
+        const status = row.lifecycle_stage || row.status || row.current_stage || 'brak statusu';
         const summary = truncate(row.summary || row.problem_statement || '', 200);
         lines.push(`- [M${citations.length + 1}] ${name} — status: ${status}${summary ? `; ${summary}` : ''}`);
         pushCitation(
@@ -403,7 +403,7 @@ export async function buildModuleContextGrounding(
   // ------------------------------------------------------------- otwarta karta
   if (openRecordId && (moduleKey === 'initiatives' || moduleKey === 'execution')) {
     const rows = await safeQuery(
-      `SELECT id, name, title, status, current_stage, summary, problem_statement,
+      `SELECT id, name, title, status, lifecycle_stage, current_stage, summary, problem_statement,
               hypothesis, success_criteria, key_risks, business_value, expected_roi
          FROM initiatives
         WHERE id = ? AND organization_id = ?
@@ -415,7 +415,7 @@ export async function buildModuleContextGrounding(
       const row: any = rows[0];
       const name = row.name || row.title || 'Inicjatywa bez nazwy';
       const detail = [
-        `status: ${row.status || row.current_stage || '—'}`,
+        `status: ${row.lifecycle_stage || row.status || row.current_stage || '—'}`,
         row.summary ? `opis: ${truncate(row.summary, 400)}` : '',
         row.problem_statement ? `problem: ${truncate(row.problem_statement, 300)}` : '',
         row.hypothesis ? `hipoteza: ${truncate(row.hypothesis, 300)}` : '',

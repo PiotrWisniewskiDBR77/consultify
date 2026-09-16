@@ -1,5 +1,5 @@
 /**
- * H1c / DEC-506 — JEDNO ŹRÓDŁO MAPOWANIA: 12 etapów silnika → 7 kodów kolumny.
+ * DEC-539 — JEDNO ŹRÓDŁO MAPOWANIA: 12 etapów produktu → 7 kodów zgodności.
  *
  * DLACZEGO TEN PLIK ISTNIEJE
  * --------------------------
@@ -20,9 +20,10 @@
  *     której stoją bramki `INITIATIVE_TRANSITION_MATRIX`, RBAC i wszystkie
  *     odczyty listowe.
  *
- * DEC-506 (CTO, 14.09) rozstrzyga: kolumna zostaje siedmiokodowa (BEZ migracji,
- * BEZ ruszania CHECK), a 12 etapów mapuje się na nią DETERMINISTYCZNIE przy
- * zapisie. Etap NIE ginie — zapisujemy go obok, w agregacie silnika.
+ * DEC-539 uchyla DEC-506: etap 12 jest osobną kolumną
+ * `initiatives.lifecycle_stage`, a `status` zostaje siedmiokodową pochodną do
+ * czasu osobnej decyzji o jego usunięciu. Agregat pozostaje precyzyjnym źródłem
+ * backfillu i projekcją zgodności dla istniejącego runtime-v1.
  *
  * CO BYŁO ZEPSUTE (tripwire `h1b-lifecycle-target-vocabulary-gap.test.ts`)
  * -----------------------------------------------------------------------

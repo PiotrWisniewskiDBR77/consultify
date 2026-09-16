@@ -3,8 +3,8 @@
  * Maps persisted PMO status values to contract §2.3.1 canonical lifecycle buckets
  * and builds bounded handoff envelopes for P03 / P04 / P02 consumers.
  *
- * DB SSOT remains `initiatives.status` (InitiativeStatus enum); this module is the
- * read/coherence + outbound handoff adapter — no parallel grammar in other modules.
+ * DB SSOT is `initiatives.lifecycle_stage` (DEC-539). `initiatives.status`
+ * remains a seven-code compatibility projection while older consumers migrate.
  */
 
 import {
@@ -245,18 +245,20 @@ export {
 /**
  * Etap silnika (12, DEC-490) dla konkretnego wiersza inicjatywy.
  *
- * KOLEJNOŚĆ PRAWDY jest znacząca: agregat silnika
- * (`ie_aggregate_state.payload_json.lifecycleState`) WYGRYWA, bo tylko on
- * rozróżnia etapy, które kolapsują na ten sam kod kolumny (APPROVED_BACKLOG
- * vs SCHEDULED, DELIVERED vs CLOSED). Kolumna `initiatives.status` jest
- * ZAPASEM dla wierszy sprzed wprowadzenia agregatu — wtedy odtwarzamy etap
+ * KOLEJNOŚĆ PRAWDY jest znacząca: `initiatives.lifecycle_stage` wygrywa,
+ * potem agregat silnika (`ie_aggregate_state.payload_json.lifecycleState`),
+ * a `initiatives.status` jest zapasem dla wierszy sprzed migracji. W zapasie
+ * odtwarzamy etap
  * z siedmiokodowego kodu, świadomie tracąc rozróżnienie wewnątrz kolapsu
  * (czytamy pierwszy etap z grupy, nie zgadujemy dalszego).
  */
 export function resolveInitiativeStageForRow(input: {
+  lifecycleStage?: string | null;
   aggregateLifecycleState?: string | null;
   dbStatus: string | unknown;
 }): InitiativeLifecycleStage | null {
+  const fromColumn = resolveInitiativeLifecycleStage(input.lifecycleStage);
+  if (fromColumn) return fromColumn;
   const fromAggregate = resolveInitiativeLifecycleStage(input.aggregateLifecycleState);
   if (fromAggregate) return fromAggregate;
   return resolveInitiativeLifecycleStage(normalizeInitiativeDbStatusForRead(input.dbStatus));

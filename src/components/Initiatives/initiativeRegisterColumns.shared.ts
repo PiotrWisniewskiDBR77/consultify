@@ -10,6 +10,7 @@ import type { PortfolioInitiative } from '@/types';
 import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
+import { INITIATIVE_LIFECYCLE } from '@/contracts/initiatives-execution/foundation';
 
 import { nextStepForLifecycle } from './initiativeRegisterProjection';
 
@@ -56,6 +57,7 @@ export const INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS = ['source'] as const;
 export const resolveInitiativeRegisterLifecycle = (row: InitiativeRegisterRow): string => {
   const raw = String(row.displayStatus || row.status || '').toUpperCase();
   if (!raw) return '';
+  if ((INITIATIVE_LIFECYCLE as readonly string[]).includes(raw)) return raw;
   return mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ?? '';
 };
 
@@ -204,9 +206,13 @@ export const createInitiativeRegisterColumns = (
       label: tr('initiatives.columns.status', 'Status'),
       width: '170px',
       filterable: true,
-      filterOptions: Object.values(InitiativeStatus).map((value) => ({
+      filterOptions: INITIATIVE_LIFECYCLE.map((value) => ({
         value,
-        label: getLocalizedStatusLabel(value, t ?? ((key) => key)),
+        label: enumLabel(
+          'initiativeLifecycle',
+          value,
+          t ?? ((_key: string, fallback: string) => fallback)
+        ),
       })),
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;

@@ -144,7 +144,7 @@ describe('InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 
     const chips = screen.getAllByTestId(/^initiatives-menu3-chip-/);
     expect(chips).toHaveLength(3);
     expect(screen.getByTestId('initiatives-menu3-chip-all')).toBeInTheDocument();
-    expect(screen.getByTestId('initiatives-menu3-chip-PENDING_APPROVAL')).toBeInTheDocument();
+    expect(screen.getByTestId('initiatives-menu3-chip-READY_FOR_DECISION')).toBeInTheDocument();
     expect(screen.getByTestId('initiatives-menu3-chip-IN_EXECUTION')).toBeInTheDocument();
 
     expect(screen.getByTestId('initiatives-lifecycle-dropdown')).toBeInTheDocument();

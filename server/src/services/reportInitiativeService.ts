@@ -9,6 +9,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type { InitiativeStatusType } from '../constants/initiativeStatuses.js';
+import {
+  resolveInitiativeStageWriteTarget,
+  type InitiativeLifecycleStage,
+} from '../constants/initiativeLifecycleStages.js';
 import logger from '../utils/Logger.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
@@ -39,6 +43,7 @@ export interface GeneratedInitiative {
   type: InitiativeType;
   priority: InitiativePriority;
   status: InitiativeStatus;
+  lifecycleStage?: InitiativeLifecycleStage;
   sourceDimensions: string[];
   framework: SupportedFramework;
   expectedMaturityImpact: number;
@@ -690,13 +695,15 @@ class ReportInitiativeService {
           );
           savedIds.push(__r.id);
         } else {
+          const lifecycleTarget = resolveInitiativeStageWriteTarget(initiative.status);
           await this.db.run(
             `INSERT INTO initiatives (
               id, project_id, organization_id, title, description,
-              priority, status, type, estimated_effort, estimated_cost,
+              priority, status, lifecycle_stage, lifecycle_stage_source,
+              type, estimated_effort, estimated_cost,
               estimated_duration, technologies, kpis, metadata,
               created_by, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               initiative.id,
               projectId,
@@ -704,7 +711,9 @@ class ReportInitiativeService {
               initiative.title,
               initiative.description,
               initiative.priority,
-              initiative.status,
+              lifecycleTarget.status,
+              lifecycleTarget.stage,
+              'writer',
               initiative.type,
               initiative.estimatedEffort,
               initiative.estimatedCost,
@@ -779,6 +788,7 @@ class ReportInitiativeService {
       type: row.type,
       priority: row.priority,
       status: row.status,
+      lifecycleStage: row.lifecycle_stage || undefined,
       sourceDimensions: JSON.parse(row.source_dimensions || '[]'),
       framework: row.framework || 'DRD',
       expectedMaturityImpact: row.expected_maturity_impact || 0,

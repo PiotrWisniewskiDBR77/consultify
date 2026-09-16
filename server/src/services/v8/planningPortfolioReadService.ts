@@ -20,6 +20,7 @@ import {
   hasInitiativeStatusSchemaDrift,
   mapDbStatusToP11Lifecycle,
   normalizeInitiativeDbStatusForRead,
+  resolveInitiativeStageForRow,
 } from '../initiative/initiativeLifecycleCanon.js';
 import { kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 
@@ -246,6 +247,10 @@ export async function getPortfolioRead(
       0;
 
     const normalizedStatus = normalizeInitiativeDbStatusForRead(initiative.status);
+    const lifecycleStage = resolveInitiativeStageForRow({
+      lifecycleStage: String(initiative.lifecycle_stage || '') || null,
+      dbStatus: initiative.status,
+    });
     return {
       id: initiative.id,
       organizationId: initiative.organization_id,
@@ -258,7 +263,9 @@ export async function getPortfolioRead(
       summary: initiative.summary,
       hypothesis: initiative.hypothesis,
       status: normalizedStatus,
-      displayStatus: normalizedStatus,
+      lifecycleStage,
+      lifecycleStageSource: initiative.lifecycle_stage_source ?? null,
+      displayStatus: lifecycleStage ?? normalizedStatus,
       p11LifecycleState: mapDbStatusToP11Lifecycle(initiative.status),
       statusReadDrift: hasInitiativeStatusSchemaDrift(initiative.status),
       progress: initiative.progress || 0,
@@ -383,6 +390,10 @@ export async function getInitiativeDetailRead(
   const row = initiative as Record<string, unknown>;
   const rawStatus = row.status;
   const displayStatus = normalizeInitiativeDbStatusForRead(rawStatus);
+  const lifecycleStage = resolveInitiativeStageForRow({
+    lifecycleStage: String(row.lifecycle_stage || '') || null,
+    dbStatus: rawStatus,
+  });
   const p11LifecycleState = mapDbStatusToP11Lifecycle(rawStatus);
   const statusReadDrift = hasInitiativeStatusSchemaDrift(rawStatus);
   // Structured charter (problemStructured, effortProfile, assumptions, strategicRole,
@@ -476,7 +487,9 @@ export async function getInitiativeDetailRead(
     sourcePack: safeJsonParseObject((row as any).source_pack_json as string, {}),
     evidenceRefs: safeJsonParse((row as any).evidence_refs_json as string, []),
     aiGenerated: Boolean((row as any).ai_generated),
-    displayStatus,
+    displayStatus: lifecycleStage ?? displayStatus,
+    lifecycleStage,
+    lifecycleStageSource: row.lifecycle_stage_source ?? null,
     p11LifecycleState,
     statusReadDrift,
   };
@@ -1304,7 +1317,8 @@ export async function getInitiativeKpisRead(
           return {} as Record<string, unknown>;
         }
       }
-      return typeof approvalCard.content_json === 'object' && !Array.isArray(approvalCard.content_json)
+      return typeof approvalCard.content_json === 'object' &&
+        !Array.isArray(approvalCard.content_json)
         ? (approvalCard.content_json as Record<string, unknown>)
         : ({} as Record<string, unknown>);
     })();
