@@ -47,9 +47,9 @@ describe('resolveSheetOrigin', () => {
     ).toBe('workbook');
   });
 
-  it('domyślnie workbook, gdy originSummary jest puste/brak', () => {
-    expect(resolveSheetOrigin({ originSummary: null })).toBe('workbook');
-    expect(resolveSheetOrigin({})).toBe('workbook');
+  it('zostawia niejednoznaczny legacy sheet resolverowi, gdy originSummary jest puste/brak', () => {
+    expect(resolveSheetOrigin({ originSummary: null })).toBeUndefined();
+    expect(resolveSheetOrigin({})).toBeUndefined();
   });
 });
 

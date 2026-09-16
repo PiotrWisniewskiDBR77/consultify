@@ -161,12 +161,9 @@ describe('OutputsAggregateTabContent — row-to-card navigation (Document/Sheet)
   });
 
   it('double-clicking a Sheet row navigates to /excele?artifactId=:id for a real (non-platform) workbook', async () => {
-    // tablePlatformMetadataFirst ON, but the id does not resolve to a Table
-    // Studio workspace — i.e. it is a real generated_workbooks row, not a
-    // tp_tables export. openGovernedSheetRow's documented fallback for this
-    // exact case is /excele?artifactId=..., never a silent XLSX download.
+    // The canonical registry discriminator says this is a generated workbook,
+    // so opening it must not probe table-platform or artifact-action routes.
     isEnabledMock.mockReturnValue(true);
-    resolveTablePlatformWorkspaceIdForTableMock.mockResolvedValue(null);
 
     render(
       <OutputsAggregateTabContent
@@ -186,6 +183,7 @@ describe('OutputsAggregateTabContent — row-to-card navigation (Document/Sheet)
               updatedAt: '2026-08-23T12:30:00Z',
               exportFormats: ['xlsx'],
               fileFormat: 'XLSX',
+              sheetOrigin: 'workbook',
               // Server never sets governance.openPath for originRuntime='sheet'
               // (buildActionTargetPayload, artifacts.routes.ts) — the client
               // must resolve the open route itself via openGovernedSheetRow.
@@ -202,10 +200,99 @@ describe('OutputsAggregateTabContent — row-to-card navigation (Document/Sheet)
 
     fireEvent.doubleClick(screen.getByTestId('row-sheet:workbook-real-id-1'));
 
-    // openGovernedSheetRow is async (awaits the workspace-id resolution).
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith('/excele?artifactId=workbook-real-id-1');
     });
+    expect(resolveTablePlatformWorkspaceIdForTableMock).not.toHaveBeenCalled();
     expect(downloadSheetArtifactXlsxMock).not.toHaveBeenCalled();
+  });
+
+  it('still resolves a governed table export through its tenant-scoped Table Platform base', async () => {
+    isEnabledMock.mockReturnValue(true);
+    resolveTablePlatformWorkspaceIdForTableMock.mockResolvedValue('workspace-1');
+
+    render(
+      <OutputsAggregateTabContent
+        viewMode="table"
+        searchQuery=""
+        activeFilters={[]}
+        onFilterChange={() => {}}
+        rows={
+          [
+            {
+              kind: 'sheet',
+              originRecordId: 'table-real-id-1',
+              artifactId: 'art-table-real-1',
+              title: 'Supplier register',
+              owner: 'Piotr Wisniewski',
+              statusKey: 'ready',
+              updatedAt: '2026-09-16T12:30:00Z',
+              exportFormats: ['xlsx'],
+              fileFormat: 'XLSX',
+              sheetOrigin: 'table_export',
+              governance: { visibilityScope: 'organization' },
+            },
+          ] as any
+        }
+        loading={false}
+        error={null}
+        onRefresh={() => {}}
+        actions={actions as any}
+      />
+    );
+
+    fireEvent.doubleClick(screen.getByTestId('row-sheet:table-real-id-1'));
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith(
+        '/my-work/sheets/workspace-1/tables/table-real-id-1'
+      );
+    });
+    expect(resolveTablePlatformWorkspaceIdForTableMock).toHaveBeenCalledWith('table-real-id-1');
+  });
+
+  it('keeps the resolver for an ambiguous legacy sheet without a verified runtime marker', async () => {
+    isEnabledMock.mockReturnValue(true);
+    resolveTablePlatformWorkspaceIdForTableMock.mockResolvedValue('legacy-workspace');
+
+    render(
+      <OutputsAggregateTabContent
+        viewMode="table"
+        searchQuery=""
+        activeFilters={[]}
+        onFilterChange={() => {}}
+        rows={
+          [
+            {
+              kind: 'sheet',
+              originRecordId: 'legacy-sheet-id-1',
+              artifactId: 'art-legacy-sheet-1',
+              title: 'Legacy sheet',
+              owner: 'Legacy owner',
+              statusKey: 'ready',
+              updatedAt: '2026-09-16T12:30:00Z',
+              exportFormats: ['xlsx'],
+              fileFormat: 'XLSX',
+              governance: { visibilityScope: 'organization' },
+            },
+          ] as any
+        }
+        loading={false}
+        error={null}
+        onRefresh={() => {}}
+        actions={actions as any}
+      />
+    );
+
+    fireEvent.doubleClick(screen.getByTestId('row-sheet:legacy-sheet-id-1'));
+
+    await waitFor(() => {
+      expect(resolveTablePlatformWorkspaceIdForTableMock).toHaveBeenCalledWith(
+        'legacy-sheet-id-1'
+      );
+    });
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/my-work/sheets/legacy-workspace/tables/legacy-sheet-id-1'
+    );
   });
 });

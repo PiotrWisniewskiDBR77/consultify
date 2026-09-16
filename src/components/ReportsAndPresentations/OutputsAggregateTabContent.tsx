@@ -256,9 +256,17 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   );
 
   const openGovernedSheetRow = useCallback(
-    async (originRecordId: string) => {
+    async (originRecordId: string, sheetOrigin?: SheetOrigin) => {
       const tableId = String(originRecordId);
       if (isEnabled('tablePlatformMetadataFirst')) {
+        // The registry already tells us which of the two `sheet` runtimes owns
+        // this id. A generated workbook id is neither a tp_tables id nor an
+        // artifact-registry id, so probing both endpoints only produces a
+        // misleading 403/404 before the workbook opens normally.
+        if (sheetOrigin === 'workbook') {
+          navigate(`/excele?artifactId=${encodeURIComponent(tableId)}`);
+          return;
+        }
         const ws = await resolveTablePlatformWorkspaceIdForTable(tableId);
         if (ws) {
           navigate(buildMyWorkSheetTableOpenPath(ws, tableId));
@@ -635,7 +643,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     // czy to realna tabela platformowa (→ My Work), inaczej otwiera ten sam,
     // jednolity widok arkusza (`/excele?artifactId=`) co reszta modułu.
     if (row.kind === 'sheet') {
-      void openGovernedSheetRow(row.originRecordId);
+      void openGovernedSheetRow(row.originRecordId, row.sheetOrigin);
       return;
     }
     const openPath = resolveArtifactOpenPath({
@@ -866,7 +874,8 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           : t('rap.actions.exportXlsx', 'Download XLSX'),
         icon: Download,
         shortcut: 'D',
-        onClick: () => void openGovernedSheetRow(previewItem.originRecordId),
+        onClick: () =>
+          void openGovernedSheetRow(previewItem.originRecordId, previewItem.sheetOrigin),
       });
     }
     if (previewItem.artifactId) {
