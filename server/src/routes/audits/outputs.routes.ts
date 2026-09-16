@@ -37,7 +37,7 @@ router.get(
     if (!a || !b) {
       res
         .status(400)
-        .json({ success: false, error: 'Parametry a i b są wymagane', code: 'AUDIT_DIFF_PARAMS_MISSING' });
+        .json({ success: false, error: 'AUDIT_DIFF_PARAMS_MISSING', code: 'AUDIT_DIFF_PARAMS_MISSING' });
       return;
     }
     const diff = await outputService.diffOutputs(actor.organizationId, a, b);
@@ -52,7 +52,7 @@ router.get(
     assertActor(actor);
     const output = await outputService.getOutput(actor.organizationId, req.params.id);
     if (!output) {
-      res.status(404).json({ success: false, error: 'Output nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     res.json({ success: true, data: output });
@@ -66,7 +66,7 @@ router.post(
     assertActor(actor);
     const { programId, title } = req.body || {};
     if (!programId || typeof programId !== 'string') {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+      res.status(400).json({ success: false, error: 'AUDIT_PROGRAM_ID_REQUIRED', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
       return;
     }
     const output = await outputService.finalizeOutput(actor.organizationId, actor, programId, {
@@ -85,7 +85,7 @@ router.post(
     if (!newOutputId || typeof newOutputId !== 'string') {
       res
         .status(400)
-        .json({ success: false, error: 'newOutputId jest wymagany', code: 'AUDIT_NEW_OUTPUT_ID_REQUIRED' });
+        .json({ success: false, error: 'AUDIT_NEW_OUTPUT_ID_REQUIRED', code: 'AUDIT_NEW_OUTPUT_ID_REQUIRED' });
       return;
     }
     const output = await outputService.supersedeOutput(actor.organizationId, actor, req.params.id, newOutputId);

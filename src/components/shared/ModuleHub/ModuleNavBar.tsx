@@ -333,7 +333,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
     return (
       <div className="px-4 pb-3">
-        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+        <div className="module-nav-scrollbar-hidden flex items-center justify-between gap-2 overflow-x-auto">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {commandRowContent ? <div className="min-w-0">{commandRowContent}</div> : null}
             {activeFilters.length > 0 ? (

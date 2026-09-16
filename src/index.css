@@ -2,14 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Canonical scrollbar-free overflow utility. Content remains keyboard/touch
- * scrollable; only the browser chrome is suppressed for the seven existing
- * compact horizontal control rows. */
-.no-scrollbar {
+/* W81: only the ModuleNavBar command row suppresses scrollbar chrome. The
+ * earlier generic `.no-scrollbar` rule silently changed six unrelated rows. */
+.module-nav-scrollbar-hidden {
   scrollbar-width: none;
 }
 
-.no-scrollbar::-webkit-scrollbar {
+.module-nav-scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
 

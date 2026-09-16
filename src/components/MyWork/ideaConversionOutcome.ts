@@ -101,7 +101,9 @@ export function describeIdeaConversion(
     const entityId = conversionEntityId(target, result);
     const label = RECEIPT_LABELS[target];
     return {
-      toastKey: `myWork.ideasList.toastReceipt.${target}`,
+      toastKey: entityId
+        ? `myWork.ideasList.toastReceipt.${target}`
+        : `myWork.ideasList.toastReceiptMissing.${target}`,
       toastDefault: entityId
         ? `${label} created (ID: ${entityId}). Opening it now.`
         : `${label} conversion completed, but the server returned no identifier.`,

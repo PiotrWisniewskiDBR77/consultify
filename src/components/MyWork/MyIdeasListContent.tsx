@@ -1123,7 +1123,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         toast.success(
           t(outcome.toastKey, {
             defaultValue: outcome.toastDefault,
-            id: outcome.entityId || '—',
+            ...(outcome.entityId ? { id: outcome.entityId } : {}),
           })
         );
         if (!ideaOverride) {

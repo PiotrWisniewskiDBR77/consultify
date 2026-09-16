@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -58,25 +55,29 @@ describe('ModuleNavBar responsive Menu 2', () => {
     expect(screen.getByTestId('view-mode-grid')).toBeVisible();
   });
 
-  it('defines one cross-browser no-scrollbar utility for all seven current consumers', () => {
-    const repoRoot = path.resolve(__dirname, '../../../..');
-    const css = fs.readFileSync(path.join(repoRoot, 'src/index.css'), 'utf8');
-    const sourceFiles = [
-      'src/components/Initiatives/InitiativesHub.tsx',
-      'src/components/MyWork/MyWorkHub.tsx',
-      'src/components/assessment/AssessmentMenu3ActionBar.tsx',
-      'src/components/shared/BulkSelectionCluster.tsx',
-      'src/components/shared/ModuleHub/ModuleNavBar.tsx',
-      'src/components/shared/ModuleMenu3.tsx',
-    ];
-    const uses = sourceFiles.reduce((count, file) => {
-      const source = fs.readFileSync(path.join(repoRoot, file), 'utf8');
-      return count + (source.match(/\bno-scrollbar\b/g) ?? []).length;
-    }, 0);
+  it('scopes hidden scrollbar chrome to the ModuleNavBar command row', () => {
+    const { container } = render(
+      <ModuleNavBar
+        tabs={[]}
+        activeTab=""
+        onTabChange={noop}
+        onSearch={noop}
+        viewMode="table"
+        onViewModeChange={noop}
+        openDocuments={[]}
+        activeDocumentId={null}
+        onSelectDocument={noop}
+        onCloseDocument={noop}
+        onShowList={noop}
+        activeFilters={[]}
+        onRemoveFilter={noop}
+        onClearFilters={noop}
+        commandRowContent={<span>Filter</span>}
+      />
+    );
 
-    expect(uses).toBe(7);
-    expect(css.match(/^\.no-scrollbar\s*\{/gm)).toHaveLength(1);
-    expect(css).toMatch(/\.no-scrollbar\s*\{[^}]*scrollbar-width:\s*none;/s);
-    expect(css).toMatch(/\.no-scrollbar::\-webkit-scrollbar\s*\{[^}]*display:\s*none;/s);
+    expect(container.querySelector('.module-nav-scrollbar-hidden')).toContainElement(
+      screen.getByText('Filter')
+    );
   });
 });

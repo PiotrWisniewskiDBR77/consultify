@@ -42,7 +42,7 @@ router.get(
     const query = req.query as Record<string, unknown>;
     const programId = query.programId ? String(query.programId) : '';
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
+      res.status(400).json({ success: false, error: 'AUDIT_MISSING_PROGRAM', code: 'AUDIT_MISSING_PROGRAM' });
       return;
     }
     await requireCapability(actor, programId, 'program.read');
@@ -120,7 +120,7 @@ router.get(
     assertActor(actor);
     const programId = String((req.query as Record<string, unknown>).programId || '');
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
+      res.status(400).json({ success: false, error: 'AUDIT_MISSING_PROGRAM', code: 'AUDIT_MISSING_PROGRAM' });
       return;
     }
     await requireCapability(actor, programId, 'program.read');

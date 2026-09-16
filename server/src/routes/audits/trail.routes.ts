@@ -19,7 +19,7 @@ const router = Router();
 function requireProgramId(query: Record<string, unknown>): string {
   const programId = String(query.programId || '');
   if (!programId) {
-    throw new AuditDomainError('programId jest wymagany', 400, 'AUDIT_MISSING_PROGRAM');
+    throw new AuditDomainError('AUDIT_MISSING_PROGRAM', 400, 'AUDIT_MISSING_PROGRAM');
   }
   return programId;
 }
@@ -57,7 +57,7 @@ router.get(
     const entityType = String(query.entityType || '');
     const entityId = String(query.entityId || '');
     if (!entityType || !entityId) {
-      res.status(400).json({ success: false, error: 'entityType i entityId są wymagane', code: 'AUDIT_MISSING_ENTITY' });
+      res.status(400).json({ success: false, error: 'AUDIT_MISSING_ENTITY', code: 'AUDIT_MISSING_ENTITY' });
       return;
     }
     const data = await auditTrailService.getEntityHistory(actor.organizationId, entityType, entityId);

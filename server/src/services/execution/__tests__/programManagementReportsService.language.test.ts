@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -60,5 +60,23 @@ describe('M6 / DEC-461 — PM report packs are English-first', () => {
     );
     expect(source).toContain("error: 'AUDIT_PROGRAM_ID_REQUIRED'");
     expect(source).not.toContain("error: 'Parametr programId jest wymagany'");
+  });
+
+  it('returns stable localization codes from every audits route error branch', () => {
+    const routesDir = resolve(process.cwd(), 'server/src/routes/audits');
+    const offenders = readdirSync(routesDir)
+      .filter((file) => file.endsWith('.routes.ts'))
+      .flatMap((file) => {
+        const source = readFileSync(resolve(routesDir, file), 'utf8');
+        const responseErrors = [...source.matchAll(/error:\s*'([^']+)'/g)].map((match) => match[1]);
+        const domainErrors = [
+          ...source.matchAll(/(?:AuditDomainError|AuditPermissionError)\(\s*'([^']+)'/g),
+        ].map((match) => match[1]);
+        return [...responseErrors, ...domainErrors]
+          .filter((value) => !/^[A-Z][A-Z0-9_]+$/.test(value))
+          .map((value) => `${file}: ${value}`);
+      });
+
+    expect(offenders).toEqual([]);
   });
 });

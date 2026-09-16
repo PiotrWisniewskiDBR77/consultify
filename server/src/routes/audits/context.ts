@@ -30,7 +30,7 @@ export function auditActor(req: AuthRequest): AuditActor {
 
 export function assertActor(actor: AuditActor): void {
   if (!actor.organizationId || !actor.userId) {
-    throw new AuditDomainError('Brak kontekstu organizacji lub użytkownika', 401, 'AUDIT_NO_CONTEXT');
+    throw new AuditDomainError('AUDIT_NO_CONTEXT', 401, 'AUDIT_NO_CONTEXT');
   }
 }
 
@@ -54,7 +54,7 @@ export function handleAuditError(res: Response, error: unknown, where: string): 
   });
   res.status(500).json({
     success: false,
-    error: 'Wystąpił błąd podczas przetwarzania operacji audytowej',
+    error: 'AUDIT_INTERNAL_ERROR',
     code: 'AUDIT_INTERNAL_ERROR',
   });
 }

@@ -67,6 +67,8 @@ describe('S1.14b/W11 — describeIdeaConversion', () => {
     expect(outcome.entityId).toBeNull();
     expect(outcome.href).toBeNull();
     expect(outcome.toastDefault).toContain('no identifier');
+    expect(outcome.toastKey).toBe('myWork.ideasList.toastReceiptMissing.report');
+    expect(outcome.toastDefault).not.toContain('ID: —');
   });
 });
 

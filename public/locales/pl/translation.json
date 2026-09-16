@@ -216,19 +216,23 @@
     "ASSESSMENT_WORKFLOW_V2_SUBMIT_DRAFTS_FAILED": "Nie udało się przesłać szkiców.",
     "ASSESSMENT_WORKFLOW_V2_UPDATE_GATE_DECISION_FAILED": "Nie udało się zaktualizować decyzji bramkowej.",
     "AUDIT_COMPARE_PARAMS_INVALID": "Wymagane parametry liczbowe ?a=<wersja>&b=<wersja>.",
+    "AUDIT_CONCLUSION_LINEAGE_MISSING": "Wniosek zapisano bez rodowodu do raportu audytu.",
     "AUDIT_CONCLUSION_NO_SUMMARY": "Ten raport nie ma wniosku ogólnego ani streszczenia zarządczego — nie ma z czego zbudować wniosku.",
     "AUDIT_CONCLUSION_PERSIST_FAILED": "Nie udało się zapisać wniosku.",
     "AUDIT_CRITERIA_PAYLOAD_INVALID": "Oczekiwano tablicy kryteriów (body albo body.criteria).",
+    "AUDIT_FORBIDDEN": "Nie masz uprawnień do wykonania tej operacji audytowej.",
     "AUDIT_DIFF_PARAMS_MISSING": "Parametry a i b są wymagane.",
     "AUDIT_INTERNAL_ERROR": "Wystąpił błąd podczas przetwarzania operacji audytowej.",
     "AUDIT_MATERIAL_ID_REQUIRED": "materialId jest wymagany.",
     "AUDIT_MISSING_ENTITY": "entityType i entityId są wymagane.",
     "AUDIT_MISSING_PROGRAM": "programId jest wymagany.",
     "AUDIT_NEW_OUTPUT_ID_REQUIRED": "newOutputId jest wymagany.",
+    "AUDIT_NO_CONTEXT": "Brakuje kontekstu organizacji lub użytkownika.",
     "AUDIT_NOT_FOUND": "Nie znaleziono elementu audytu.",
     "AUDIT_PROGRAM_ID_REQUIRED": "Parametr programId jest wymagany.",
     "AUDIT_PROPOSAL_INPUT_INVALID": "programId i findingIds (niepusta lista) są wymagane.",
     "AUDIT_REPORT_INPUT_INVALID": "programId, outputId i reportKind są wymagane.",
+    "AUDIT_REPORT_INVALID_PAYLOAD": "Treść raportu jest niepoprawna lub niekompletna i nie może zostać wyeksportowana.",
     "DATA_EXPORT_CANCEL_DELETION_FAILED": "Nie udało się anulować wniosku o usunięcie danych.",
     "DATA_EXPORT_CREATE_REQUEST_FAILED": "Nie udało się utworzyć wniosku o eksport danych.",
     "DATA_EXPORT_DOWNLOAD_FAILED": "Nie udało się pobrać eksportu.",
@@ -6727,6 +6731,12 @@
         "decision": "Utworzono decyzję (ID: {{id}}). Otwieram ją.",
         "report": "Utworzono raport (ID: {{id}}). Otwieram go.",
         "presentation": "Utworzono prezentację (ID: {{id}}). Otwieram ją."
+      },
+      "toastReceiptMissing": {
+        "initiative": "Konwersja inicjatywy zakończyła się, ale serwer nie zwrócił identyfikatora.",
+        "decision": "Konwersja decyzji zakończyła się, ale serwer nie zwrócił identyfikatora.",
+        "report": "Konwersja raportu zakończyła się, ale serwer nie zwrócił identyfikatora.",
+        "presentation": "Konwersja prezentacji zakończyła się, ale serwer nie zwrócił identyfikatora."
       }
     },
     "decisionReviewNext": {
