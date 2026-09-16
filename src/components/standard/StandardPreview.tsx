@@ -101,6 +101,8 @@ export interface StandardPreviewMeta {
 
 export interface StandardPreviewDetails {
   text?: string;
+  /** Persisted/user prose, excluded from UI-language classification. */
+  textContentOrigin?: 'user-content';
   loading?: boolean;
   label?: string;
   /**
@@ -492,6 +494,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
           {details ? (
             <PreviewDetailsSection
               text={details.text}
+              textContentOrigin={details.textContentOrigin}
               loading={details.loading}
               label={details.label}
               customActions={detailsActions?.length ? detailsActions : undefined}

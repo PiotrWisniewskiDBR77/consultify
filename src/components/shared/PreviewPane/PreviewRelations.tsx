@@ -32,6 +32,8 @@ export interface RelationItem {
    * widzieć w treści chipa; etykieta zostaje czytelna, ID żyje w tooltipie.
    */
   title?: string;
+  /** Persisted/customer-authored label, excluded from UI-language classification. */
+  contentOrigin?: 'user-content';
 }
 
 export interface PreviewRelationsProps {
@@ -108,6 +110,8 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
         className={`${PREVIEW_RELATION_CHIP} ${tone}${item.onClick ? ' cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/[0.04]' : ''}`}
         onClick={item.onClick}
         title={item.title ?? (label === rawLabel ? rawLabel : `${label} — ${rawLabel}`)}
+        data-language-source={item.contentOrigin}
+        translate={item.contentOrigin ? 'no' : undefined}
       >
         {Icon ? <Icon size={13} /> : (item.icon as React.ReactNode)}
         {item.value !== undefined ? (

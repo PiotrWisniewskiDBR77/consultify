@@ -48,6 +48,8 @@ export interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   selectedId: string | null;
   /** Currently selected item data */
   selectedItem: T | null;
+  /** Entity titles may be persisted/user content and must stay outside UI-language audits. */
+  titleContentOrigin?: 'user-content';
   /** Called when selection changes (single click) */
   onSelect: (id: string | null) => void;
   /** Called when full detail should open (double-click / Enter) */
@@ -107,6 +109,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   children,
   selectedId,
   selectedItem,
+  titleContentOrigin,
   onSelect,
   onOpenFull,
   openDisabledReason,
@@ -595,6 +598,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           >
             <PreviewPaneShell
               title={pinnedItem.title}
+              titleContentOrigin={titleContentOrigin}
               onClose={handleUnpin}
               className={overlayMode ? 'h-full rounded-2xl shadow-2xl !bg-c-surface' : undefined}
               actions={
@@ -689,6 +693,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               >
                 <PreviewPaneShell
                   title={tytulPanelu}
+                  titleContentOrigin={selectedItem ? titleContentOrigin : undefined}
                   onClose={handleClose}
                   closeLabel={t('list.rightPanel.close', 'Close panel')}
                   actions={previewActions}
@@ -739,6 +744,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             >
               <PreviewPaneShell
                 title={tytulPanelu}
+                titleContentOrigin={selectedItem ? titleContentOrigin : undefined}
                 onClose={handleClose}
                 closeLabel={t('list.rightPanel.close', 'Close panel')}
                 actions={previewActions}
