@@ -49374,7 +49374,9 @@
       "sendTitle": "Send comment",
       "send": "Send",
       "aiEnhanceTitle": "AI helps refine comment",
-      "deleteComment": "Delete comment"
+      "deleteComment": "Delete comment",
+      "deleteConfirmTitle": "Delete this comment?",
+      "deleteConfirmDescription": "The comment will be permanently removed from the thread. This cannot be undone."
     },
     "aiFieldEnhancer": {
       "triggerTitle": "AI actions for this field",

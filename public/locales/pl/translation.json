@@ -49735,7 +49735,9 @@
       "sendTitle": "Wyślij komentarz",
       "send": "Wyślij",
       "aiEnhanceTitle": "AI pomoże dopracować komentarz",
-      "deleteComment": "Usuń komentarz"
+      "deleteComment": "Usuń komentarz",
+      "deleteConfirmTitle": "Czy na pewno usunąć ten komentarz?",
+      "deleteConfirmDescription": "Komentarz zostanie trwale usunięty z wątku. Tej operacji nie można cofnąć."
     },
     "aiFieldEnhancer": {
       "triggerTitle": "Akcje AI dla tego pola",
