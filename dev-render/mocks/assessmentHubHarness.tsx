@@ -40,10 +40,30 @@ import { seedRealisticSession } from './seedStore';
 
 export type AssessmentHubTab = 'library' | 'processes' | 'outputs' | 'reports' | 'initiatives';
 
-/** Legacy assessments (non-DRD) — `Api.listAssessments`. DRD-y przychodzą
- *  osobno z Method Core (patrz `MOCK_METHOD_SESSIONS`), bo
- *  `loadAssessmentListCore()` wycina `type === 'DRD'` z listy legacy. */
+/** Legacy assessments — `Api.listAssessments`. DRD-y nadal nie są osobnymi
+ *  wierszami listy: AssessmentHub ukrywa je i wykorzystuje wyłącznie jako
+ *  report-source twins dla kanonicznych sesji Method Core (W114/U-25). */
 const MOCK_ASSESSMENTS = [
+  {
+    id: 'legacy-assessment-drd-dbr77-0001',
+    name: 'DBR77 · Digital Readiness Diagnosis — Grupa',
+    status: 'in_review',
+    type: 'DRD',
+    projectId: 'project-drd-dbr77',
+    completionPercent: 72,
+    overallScore: 3.4,
+    createdBy: 'user-piotr-demo',
+  },
+  {
+    id: 'legacy-assessment-drd-consultify-0002',
+    name: 'Grupa Consultify — Roczna re-diagnoza',
+    status: 'approved',
+    type: 'DRD',
+    projectId: 'project-drd-consultify',
+    completionPercent: 100,
+    overallScore: 3.9,
+    createdBy: 'user-piotr-demo',
+  },
   {
     id: 'assess-2',
     name: 'Segment Manufacturing — DRD Light',
@@ -104,7 +124,7 @@ const MOCK_METHOD_SESSIONS = [
   {
     id: 'sess-drd-dbr77-grupa-0001',
     organizationId: 'org-dbr77-demo',
-    projectId: null,
+    projectId: 'project-drd-dbr77',
     module: 'assessment',
     methodPackId: DRD_METHOD_PACK_ID,
     methodPackVersion: DRD_METHOD_PACK_VERSION,
@@ -122,7 +142,7 @@ const MOCK_METHOD_SESSIONS = [
   {
     id: 'sess-drd-consultify-roczna-0002',
     organizationId: 'org-dbr77-demo',
-    projectId: null,
+    projectId: 'project-drd-consultify',
     module: 'assessment',
     methodPackId: DRD_METHOD_PACK_ID,
     methodPackVersion: DRD_METHOD_PACK_VERSION,
@@ -330,6 +350,23 @@ export function installAssessmentHubHarness(tab: AssessmentHubTab): void {
   const originalGet = Api.get.bind(Api);
   Api.get = (async (url: string, ...rest: unknown[]) => {
     if (url.startsWith('/initiatives')) return MOCK_INITIATIVES;
+    if (url.startsWith('/report-builder/templates')) {
+      return {
+        templates: [
+          {
+            id: 'template-drd-board-report',
+            name: 'DRD board report',
+            description: 'Executive report for a frozen DRD assessment.',
+            reportType: 'ASSESSMENT_DRD',
+            sourceType: 'ASSESSMENT',
+            framework: 'DRD',
+            recipient: 'board',
+            isSystem: true,
+            isDefault: true,
+          },
+        ],
+      };
+    }
     return (originalGet as any)(url, ...rest);
   }) as typeof Api.get;
 
