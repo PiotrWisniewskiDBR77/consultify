@@ -23102,7 +23102,8 @@
       "sendInvite": "Wyślij zaproszenie",
       "youSuffix": "(Ty)",
       "joined": "Dołączył(a)",
-      "noMembers": "Nie znaleziono członków."
+      "noMembers": "Nie znaleziono członków.",
+      "createOrgNoPermission": "Nową organizację może utworzyć wyłącznie właściciel lub administrator organizacji. Poproś administratora o zaproszenie."
     },
     "professionalProfile": {
       "companyName": "Nazwa firmy",

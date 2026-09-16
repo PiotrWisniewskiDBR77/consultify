@@ -42,9 +42,24 @@ router.get('/current', OrganizationController.getCurrentOrganizations);
 
 /**
  * POST /api/organizations
- * Create new organization
+ * Create new organization — ADMIN/OWNER/SUPERADMIN only.
+ *
+ * K-21 (triage testerów 16.09): trasa była wyłącznie za `verifyToken`, więc
+ * KAŻDY zalogowany principal — łącznie z kontem demo (rola CONSULTANT) i
+ * respondentem pilota — mógł zakładać kolejne tenanty. Kontrola roli jest tą
+ * samą konwencją, którą mają sąsiednie trasy organizacji
+ * (`/:orgId/members`, `/:orgId/admin/*`): `requireRole('ADMIN','OWNER','SUPERADMIN')`.
+ * Każda ścieżka rejestracji zakłada konto RAZEM z organizacją
+ * (`auth.routes.ts` → users.role 'ADMIN' + organization_members 'OWNER';
+ * demo signup → własna organizacja demo), więc bramka nie odcina nikogo od
+ * pierwszej organizacji — zamyka tylko zakładanie kolejnych.
  */
-router.post('/', validateBody(CreateOrganizationSchema), OrganizationController.createOrganization);
+router.post(
+  '/',
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  validateBody(CreateOrganizationSchema),
+  OrganizationController.createOrganization
+);
 
 /**
  * GET /api/organizations/:orgId
