@@ -6,7 +6,7 @@
 
 **Decyzje:** KANAL.md W108, W113, W118, W126, W128
 
-**Baza poprawki:** `cb7616f7509e1a15d4eadbfa856bae7392a25d30`
+**Baza poprawki po wymaganym rebase:** `facf323157a822453f472bee8cdfedd68938e526`
 
 **Zakres:** `DOC-BASE`, `DECK-BASE`, `SHEET-BASE`; obie warstwy danych; bez czystki 96 i bez plików toru A.
 
@@ -81,7 +81,7 @@ Dowody: `evidence/realpg-v2-first-run.txt`, `evidence/realpg-v2-second-run.txt`,
 - snapshot parity: **2/2 PASS**;
 - OOXML DOCX/XLSX: **PASS**.
 - server TSC: **RC=0**, plik dowodu niepusty;
-- pełny root/frontend TSC bez limitu, na tej samej współdzielonej instalacji: baza `cb7616f750` **170 / RC=2** → kandydat **170 / RC=2**; logi są bajtowo identyczne, delta 0;
+- pełny root/frontend TSC bez limitu, na tej samej współdzielonej instalacji: baza `facf323157` **169 / RC=2** → kandydat **169 / RC=2**; logi są bajtowo identyczne, delta 0;
 - ESLint nowych skryptów: **RC=0**.
 
 Nie wykonywano zapisu na staging, deployu ani operacji Railway.

@@ -1,9 +1,9 @@
-base_sha=cb7616f7509e1a15d4eadbfa856bae7392a25d30
+base_sha=facf323157a822453f472bee8cdfedd68938e526
 installation=/Users/piotrwisniewski/Developer/Consultify/node_modules
 root_base_rc=2
-root_base_diagnostics=170
+root_base_diagnostics=169
 root_candidate_rc=2
-root_candidate_diagnostics=170
-root_logs_sha256=d09e65b39ab6551028bfa4a48ded1c54514c779ff033a395f1f062f22b8e7cb9
+root_candidate_diagnostics=169
+root_logs_sha256=642f0ece09034581c8244c3a196806226629ed9f62c1216c1216220ff39f9090
 root_delta=0
 server_candidate_rc=0
