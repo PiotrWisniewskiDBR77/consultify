@@ -13,7 +13,6 @@ let aiMemoryMetricsService: any;
 let aiCostControlService: any;
 let slaService: any;
 let taskAssignmentService: any;
-let decisionEscalationChainService: any;
 let storageReconciliationService: any;
 let aiMemoryManager: any;
 let feedbackService: any;
@@ -149,8 +148,8 @@ export function registerInternalBetaBackupJob(
 // FIX-2 (day18 layer-1 acceptance): both registrars used to be a bare
 // `async () => { await runXTick(); }` with no logger.info and no .catch() —
 // a thrown error (e.g. the organizations SELECT failing) became an
-// unhandled rejection instead of a logged failure. Brought to the exact
-// job7b pattern below: logger.info at start, promise chain with
+// unhandled rejection instead of a logged failure. Keep the same explicit
+// logger.info + promise-chain failure receipt here.
 // .catch(logger.error).
 export function registerWorkSignalProducerJob(
   schedule: typeof cron.schedule = cron.schedule
@@ -207,7 +206,7 @@ export const Scheduler = {
     logger.info('[Scheduler] Initializing Cron Jobs...');
 
     // Resolve lazy services
-    const [ls_p, amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
+    const [ls_p, amms_p, accs_p, slas_p, tass_p, amm_p, fs_p] = await Promise.all([
       import('../services/ai/learningSystem.js').then(
         (m) => (m as any).learningSystem || (m as any).default
       ),
@@ -215,7 +214,6 @@ export const Scheduler = {
       import('../services/aiCostControlService.js').then((m) => m.default),
       import('../services/slaService.js').then((m) => m.default),
       import('../services/taskAssignmentService.js').then((m) => m.default),
-      import('../services/decisionEscalationChainService.js').then((m) => m.default),
       // import('../services/storageReconciliationService').then((m) => m.default),
       import('../services/aiMemoryManager.js').then((m) => m.default),
       import('../services/feedbackService.js').then((m) => m.default),
@@ -226,7 +224,6 @@ export const Scheduler = {
     aiCostControlService = accs_p;
     slaService = slas_p;
     taskAssignmentService = tass_p;
-    decisionEscalationChainService = decs_p;
     // storageReconciliationService = await srs_p;
     aiMemoryManager = amm_p;
     feedbackService = fs_p;
@@ -311,14 +308,11 @@ export const Scheduler = {
     });
     this.jobs.push(job7);
 
-    // 7b. Decision Auto-Escalation - Run every 15 minutes
-    const job7b = cron.schedule('*/15 * * * *', () => {
-      logger.info('[Scheduler] Running Decision Auto-Escalation');
-      decisionEscalationChainService.checkAndEscalateOverdue({ limit: 100 }).catch((err: Error) => {
-        logger.error('[Scheduler] Decision Auto-Escalation job failed:', err.message);
-      });
-    });
-    this.jobs.push(job7b);
+    // Decision escalation has one scheduler authority: job 46 below, once per
+    // day at 00:10 UTC. The former 15-minute chain service expected obsolete
+    // decisions columns (`escalated_at`, `decider_id`, `backup_decider_id`) and
+    // treated the canonical text severity (`none|amber|red`) as a numeric step.
+    // Keeping both jobs would give one business event two incompatible writers.
     this.jobs.push(registerWorkSignalProducerJob());
     this.jobs.push(registerWorkSignalInterpreterJob());
 
