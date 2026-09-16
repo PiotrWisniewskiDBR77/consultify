@@ -10,7 +10,6 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import i18n from '../../i18n';
 import {
   AlertCircle,
   Archive,
@@ -89,8 +88,10 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { formatListDate } from '@/utils/listDateFormat';
 import { isM03TasksStandardTableEnabled } from '@/utils/m03TasksStandardTableFlag';
 
+import i18n from '../../i18n';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
 import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';
@@ -98,7 +99,18 @@ import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
 import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
-import { formatListDate } from '@/utils/listDateFormat';
+import {
+  countTaskHubFilters,
+  filterTasksForHub,
+  getTaskHubTimeBucket,
+  isHubTaskNew,
+  isHubTaskOverdue,
+  parseTaskHubDate,
+  readTriagedTaskIds,
+  type TaskHubFilter,
+  type TaskHubTimeBucket,
+  writeTriagedTaskIds,
+} from './taskHubFilter';
 
 // duplicateIdentity — CB-04/RB-019/RV-029.
 //
@@ -166,8 +178,7 @@ function computeDuplicateGroups(
   return { counts, idsByKey };
 }
 
-type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
-type TaskTimeGroup = 'all' | 'overdue' | 'today' | 'week' | 'later' | 'no-date';
+type TaskFilter = TaskHubFilter;
 
 interface TaskCounts {
   total: number;
@@ -352,7 +363,8 @@ const getStatusConfig = (status?: string) => {
 const formatDueDate = (dueDate?: string | Date): string => {
   const isPl = i18n.language?.startsWith('pl');
   if (!dueDate) return i18n.t('myWork.tasksList.noDueDate', 'No due date');
-  const date = new Date(dueDate);
+  const date = parseTaskHubDate(dueDate);
+  if (!date) return i18n.t('myWork.tasksList.noDueDate', 'No due date');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -369,57 +381,13 @@ const formatDueDate = (dueDate?: string | Date): string => {
   return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
-const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
-  if (!dueDate) return false;
-  const isCompleted = ['done', 'completed', 'validated'].includes(status?.toLowerCase() || '');
-  if (isCompleted) return false;
-  const date = new Date(dueDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date < today;
-};
+const isOverdue = (dueDate?: string | Date, status?: string): boolean =>
+  isHubTaskOverdue({ dueDate, status });
 
 // Categorize task by time
-export const categorizeTask = (task: Task): TaskTimeGroup => {
-  const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
-  if (isCompleted) return 'later';
-
-  if (!task.dueDate) return 'no-date';
-
-  const dueDate = new Date(task.dueDate);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const endOfWeek = new Date(today);
-  endOfWeek.setDate(endOfWeek.getDate() + 7);
-
-  dueDate.setHours(0, 0, 0, 0);
-
-  if (dueDate < today) return 'overdue';
-  if (dueDate.getTime() === today.getTime()) return 'today';
-  if (dueDate < endOfWeek) return 'week';
-  return 'later';
+export const categorizeTask = (task: Task, now?: Date): TaskHubTimeBucket => {
+  return getTaskHubTimeBucket(task, now);
 };
-
-/**
- * K-31: ktory kubelek czasowy widzi tester przy danym filtrze zakladki.
- *
- * Wydzielone jako CZYSTA funkcja, zeby dalo sie o to zapytac bez montowania
- * calego huba — i zeby nie dalo sie tego cofnac niepostrzezenie.
- * 'urgent' i 'new' zwezaja liste PRZED grupowaniem, wiec biora caly kubelek
- * 'all' (juz zwezony); 'overdue'/'today'/'week' biora swoj kubelek.
- * Zadanie BEZ terminu ma kubelek 'no-date' i nie wpada do zadnego z nich.
- */
-export function selectTasksForFilter<T>(
-  groups: Record<TaskTimeGroup, T[]>,
-  activeFilter: TaskFilter
-): T[] {
-  if (activeFilter === 'overdue') return groups.overdue;
-  if (activeFilter === 'today') return groups.today;
-  if (activeFilter === 'week') return groups.week;
-  return groups.all;
-}
 
 // Task table column definitions
 const TASK_COLUMNS: ColumnDef[] = [
@@ -1501,46 +1469,25 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, []);
 
   // Triage state (persisted in localStorage)
-  const [triagedIds, setTriagedIds] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('consultify-triaged-task-ids');
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const [triagedIds, setTriagedIds] = useState<Set<string>>(() => readTriagedTaskIds());
 
   const markTriaged = useCallback((taskId: string) => {
     setTriagedIds((prev) => {
       const next = new Set(prev);
       next.add(taskId);
-      localStorage.setItem('consultify-triaged-task-ids', JSON.stringify([...next]));
+      writeTriagedTaskIds(next);
       return next;
     });
   }, []);
 
-  const isNewTask = useCallback(
-    (task: Task) => {
-      if (triagedIds.has(task.id)) return false;
-      const isCompleted = ['done', 'completed', 'validated'].includes(
-        task.status?.toLowerCase() || ''
-      );
-      if (isCompleted) return false;
-      if (!task.createdAt) return false;
-      const created = new Date(task.createdAt);
-      const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      return created > threeDaysAgo;
-    },
-    [triagedIds]
-  );
+  const isNewTask = useCallback((task: Task) => isHubTaskNew(task, triagedIds), [triagedIds]);
 
   // Fetch tasks
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       setLoadError(false);
-      const data = await Api.getPersonalTasks({ includeDone: true });
+      const data = await Api.getPersonalTasks({ includeDone: true, limit: 500 });
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -1589,76 +1536,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     };
   }, [refreshTrigger]);
 
-  // Group tasks
-  const groupedTasks = useMemo(() => {
-    const groups: Record<TaskTimeGroup, Task[]> = {
-      all: [],
-      overdue: [],
-      today: [],
-      week: [],
-      later: [],
-      'no-date': [],
-    };
-
-    let filteredTasks = tasks;
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filteredTasks = tasks.filter(
-        (task) =>
-          task.title?.toLowerCase().includes(query) ||
-          task.description?.toLowerCase().includes(query)
-      );
-    }
-
-    if (activeFilter === 'urgent') {
-      filteredTasks = filteredTasks.filter((task) => {
-        const p = task.priority?.toLowerCase();
-        return p === 'urgent' || p === 'critical' || p === 'high';
-      });
-    }
-
-    if (activeFilter === 'new') {
-      filteredTasks = filteredTasks.filter(isNewTask);
-    }
-
-    filteredTasks.forEach((task) => {
-      const category = categorizeTask(task);
-      groups[category].push(task);
-      groups.all.push(task);
-    });
-
-    // Sort each group by priority then due date
-    const priorityOrder: Record<string, number> = {
-      urgent: 0,
-      critical: 0,
-      high: 1,
-      medium: 2,
-      low: 3,
-    };
-    Object.keys(groups).forEach((key) => {
-      groups[key as TaskTimeGroup].sort((a, b) => {
-        const ap = priorityOrder[a.priority?.toLowerCase() || 'medium'] ?? 2;
-        const bp = priorityOrder[b.priority?.toLowerCase() || 'medium'] ?? 2;
-        if (ap !== bp) return ap - bp;
-        if (a.dueDate && b.dueDate) {
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        }
-        return 0;
-      });
-    });
-
-    return groups;
-  }, [tasks, searchQuery, activeFilter, isNewTask]);
-
-  const urgentCount = useMemo(() => {
-    return tasks.filter((task) => {
-      const p = task.priority?.toLowerCase();
-      return p === 'urgent' || p === 'critical' || p === 'high';
-    }).length;
-  }, [tasks]);
-
-  const newUntriagedCount = useMemo(() => tasks.filter(isNewTask).length, [tasks, isNewTask]);
-
   // K-31 (zgloszenia #84 Kasia i #71): „Pojawia sie we wszystkich filtrach
   // oprocz «Pilne»" / „W zakladkach Zalegle, Dzisiaj i Ten tydzien nie mam
   // zadnych zadan (stan «0»), a wyswietlaja sie wszystkie".
@@ -1670,27 +1547,22 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // PRZED grupowaniem. Stad rozjazd „licznik 0, a wiersze sa" i zadanie bez
   // terminu widoczne w „Zaleglych" i „Dzisiaj".
   const tasksForActiveFilter = useMemo(
-    () => selectTasksForFilter(groupedTasks, activeFilter),
-    [groupedTasks, activeFilter]
+    () => filterTasksForHub(tasks, activeFilter, { searchQuery, triagedTaskIds: triagedIds }),
+    [tasks, activeFilter, searchQuery, triagedIds]
   );
 
   useEffect(() => {
-    const counts: TaskCounts = {
-      total: groupedTasks.all.length,
-      overdue: groupedTasks.overdue.length,
-      today: groupedTasks.today.length,
-      week: groupedTasks.week.length,
-      urgent: urgentCount,
-      newUntriaged: newUntriagedCount,
-    };
+    const counts: TaskCounts = countTaskHubFilters(tasks, {
+      searchQuery,
+      triagedTaskIds: triagedIds,
+    });
     onCountsChange(counts);
-  }, [groupedTasks, urgentCount, newUntriagedCount, onCountsChange]);
+  }, [tasks, searchQuery, triagedIds, onCountsChange]);
 
   // Handlers
   const persistPersonalTask = async (taskId: string, updates: Record<string, unknown>) => {
     const current = tasks.find((task) => task.id === taskId) as
-      | (Task & { versionToken?: string })
-      | undefined;
+      (Task & { versionToken?: string }) | undefined;
     const updated = await Api.updatePersonalTask(taskId, {
       ...updates,
       expectedVersionToken: String(current?.versionToken || ''),
@@ -2118,7 +1990,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     showConfirm,
     t,
   ]);
-
 
   // Flat list of all visible tasks for keyboard navigation
   const flatTaskList = useMemo(() => tasksForActiveFilter, [tasksForActiveFilter]);

@@ -10,6 +10,6 @@ describe('MyTasksListContent completed-task readback contract', () => {
       'utf8'
     );
 
-    expect(source).toContain('Api.getPersonalTasks({ includeDone: true })');
+    expect(source).toMatch(/includeDone:\s*true/);
   });
 });

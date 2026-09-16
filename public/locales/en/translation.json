@@ -30104,6 +30104,13 @@
     "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
     "builder": {
       "loading": "Loading…",
+      "chart": {
+        "fallbacks": {
+          "value": "Value",
+          "impact": "Impact",
+          "feasibility": "Feasibility"
+        }
+      },
       "back": "Back",
       "slides": "slides",
       "dataRefresh": {

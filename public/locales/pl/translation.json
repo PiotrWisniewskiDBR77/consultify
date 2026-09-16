@@ -2680,6 +2680,13 @@
       "saveFailed": "Nie udało się zapisać"
     },
     "builder": {
+      "chart": {
+        "fallbacks": {
+          "value": "Wartość",
+          "impact": "Wpływ",
+          "feasibility": "Wykonalność"
+        }
+      },
       "selection": {
         "tools": "Narzędzia zaznaczenia wielu bloków",
         "count": "Zaznaczone bloki: {{count}}",

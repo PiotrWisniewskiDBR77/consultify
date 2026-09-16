@@ -103,13 +103,24 @@ export interface HarveySpec {
 }
 
 export type DeckChartSpec =
-  | CartesianSpec
-  | PieSpec
-  | WaterfallSpec
-  | Matrix2x2Spec
-  | RagSpec
-  | MarimekkoSpec
-  | HarveySpec;
+  CartesianSpec | PieSpec | WaterfallSpec | Matrix2x2Spec | RagSpec | MarimekkoSpec | HarveySpec;
+
+/**
+ * Localized labels used only when authored chart data omits a label.
+ * Keeping them as input preserves this adapter as a pure function and makes
+ * English the deterministic default outside React/i18next contexts.
+ */
+export interface DeckChartFallbackLabels {
+  seriesValue: string;
+  matrixImpact: string;
+  matrixFeasibility: string;
+}
+
+export const DEFAULT_DECK_CHART_FALLBACK_LABELS: DeckChartFallbackLabels = {
+  seriesValue: 'Value',
+  matrixImpact: 'Impact',
+  matrixFeasibility: 'Feasibility',
+};
 
 // ── Coercion helpers (fail-soft) ─────────────────────────────────────────────
 
@@ -127,7 +138,10 @@ function asArray(v: unknown): unknown[] {
 }
 
 /** Normalize the two authoring shapes of cartesian/pie data into series+categories. */
-function readSeries(content: Record<string, unknown>): {
+function readSeries(
+  content: Record<string, unknown>,
+  fallbackLabels: DeckChartFallbackLabels
+): {
   categories: string[];
   series: { label: string; values: number[] }[];
 } {
@@ -166,7 +180,12 @@ function readSeries(content: Record<string, unknown>): {
     if (pairs.length > 0) {
       return {
         categories: pairs.map((p) => p.label || ''),
-        series: [{ label: str(content.title) || 'Wartość', values: pairs.map((p) => p.value) }],
+        series: [
+          {
+            label: str(content.title) || fallbackLabels.seriesValue,
+            values: pairs.map((p) => p.value),
+          },
+        ],
       };
     }
   }
@@ -288,7 +307,11 @@ function adaptWaterfall(content: Record<string, unknown>, title?: string): Water
   return { type: 'waterfall', title, bars, domain };
 }
 
-function adaptMatrix(content: Record<string, unknown>, title?: string): Matrix2x2Spec | null {
+function adaptMatrix(
+  content: Record<string, unknown>,
+  title: string | undefined,
+  fallbackLabels: DeckChartFallbackLabels
+): Matrix2x2Spec | null {
   const raw = asArray(content.points ?? content.items ?? content.data);
   const points = raw
     .map((p) => {
@@ -311,7 +334,10 @@ function adaptMatrix(content: Record<string, unknown>, title?: string): Matrix2x
     title,
     points: points.map((p) => ({ ...p, quadrant: quadrantOf(p.x, p.y, xMid, yMid) })),
     midpoints: { x: xMid, y: yMid },
-    axisLabels: { x: str(axis.x) || 'Wpływ', y: str(axis.y) || 'Wykonalność' },
+    axisLabels: {
+      x: str(axis.x) || fallbackLabels.matrixImpact,
+      y: str(axis.y) || fallbackLabels.matrixFeasibility,
+    },
   };
 }
 
@@ -415,7 +441,10 @@ const ADVANCED = new Set([
  * Returns `null` when the block carries no usable chart data — the renderer
  * MUST draw nothing in that case (fail-open, no placeholder). Never throws.
  */
-export function adaptChartBlockContent(content: unknown): DeckChartSpec | null {
+export function adaptChartBlockContent(
+  content: unknown,
+  fallbackLabels: DeckChartFallbackLabels = DEFAULT_DECK_CHART_FALLBACK_LABELS
+): DeckChartSpec | null {
   try {
     if (!content || typeof content !== 'object') return null;
     const c = content as Record<string, unknown>;
@@ -425,14 +454,14 @@ export function adaptChartBlockContent(content: unknown): DeckChartSpec | null {
     if (ADVANCED.has(kind)) {
       if (kind === 'waterfall' || kind === 'bridge') return adaptWaterfall(c, title);
       if (kind === 'matrix_2x2' || kind === 'matrix' || kind === 'prioritization')
-        return adaptMatrix(c, title);
+        return adaptMatrix(c, title, fallbackLabels);
       if (kind === 'rag' || kind === 'rag_status') return adaptRag(c, title);
       if (kind === 'marimekko' || kind === 'mekko') return adaptMarimekko(c, title);
       if (kind === 'harvey_balls' || kind === 'harvey') return adaptHarvey(c, title);
     }
 
     // Cartesian / pie families.
-    const { categories, series } = readSeries(c);
+    const { categories, series } = readSeries(c, fallbackLabels);
     if (series.length === 0) return null;
 
     if (kind === 'pie' || kind === 'donut') {

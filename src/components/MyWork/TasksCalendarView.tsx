@@ -7,7 +7,18 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { Task } from '@/types';
 
-type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+import {
+  countTaskHubFilters,
+  filterTasksForHub,
+  isHubTaskCompleted,
+  isHubTaskOverdue,
+  isHubTaskUrgent,
+  readTriagedTaskIds,
+  taskHubLocalDateKey,
+  type TaskHubFilter,
+} from './taskHubFilter';
+
+type TaskFilter = TaskHubFilter;
 type CalendarSource = 'all' | 'project' | 'personal';
 
 interface TaskCounts {
@@ -16,6 +27,7 @@ interface TaskCounts {
   today: number;
   week: number;
   urgent: number;
+  newUntriaged: number;
 }
 
 interface TasksCalendarViewProps {
@@ -36,30 +48,10 @@ const startOfWeekMonday = (d: Date) => {
   return date;
 };
 
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
-const isTaskDone = (status?: string | null) => {
-  const s = String(status || '').toLowerCase();
-  return s === 'done' || s === 'completed' || s === 'validated';
-};
-
-const isOverdue = (dueDate?: string | Date | null, status?: string | null) => {
-  if (!dueDate) return false;
-  if (isTaskDone(status)) return false;
-  const dd = new Date(dueDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  dd.setHours(0, 0, 0, 0);
-  return dd.getTime() < today.getTime();
-};
-
-const isUrgent = (priority?: string | null) => {
-  const p = String(priority || '').toLowerCase();
-  return p === 'urgent' || p === 'critical' || p === 'high';
-};
+const isTaskDone = (status?: string | null) => isHubTaskCompleted({ status });
+const isOverdue = (dueDate?: string | Date | null, status?: string | null) =>
+  isHubTaskOverdue({ dueDate, status });
+const isUrgent = (priority?: string | null) => isHubTaskUrgent({ priority });
 
 const fmtDayLabel = (d: Date, locale: string) =>
   d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -79,17 +71,18 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [updatingDueDate, setUpdatingDueDate] = useState<Record<string, boolean>>({});
   const [source, setSource] = useState<CalendarSource>('all');
+  const triagedTaskIds = useMemo(() => readTriagedTaskIds(), [activeFilter, refreshTrigger]);
 
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       params.set('source', source);
-      params.set('includeDone', 'false');
+      params.set('includeDone', 'true');
       params.set('limit', '500');
       const [res, personalTasks] = await Promise.all([
         Api.get(`/my-work/calendar?${params.toString()}`) as Promise<any>,
-        Api.getPersonalTasks({ limit: 500 }),
+        Api.getPersonalTasks({ includeDone: true, limit: 500 }),
       ]);
       const list = Array.isArray(res) ? res : res?.tasks || [];
       const personalTokens = new Map(
@@ -114,56 +107,14 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     fetchTasks();
   }, [fetchTasks, refreshTrigger]);
 
-  const filteredTasks = useMemo(() => {
-    let list = tasks;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (x) => x.title?.toLowerCase().includes(q) || x.description?.toLowerCase().includes(q)
-      );
-    }
-    if (activeFilter === 'urgent') {
-      list = list.filter((x) => isUrgent(x.priority));
-    }
-    if (activeFilter === 'overdue') {
-      list = list.filter((x) => isOverdue(x.dueDate, x.status));
-    }
-    if (activeFilter === 'today') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      list = list.filter((x) => x.dueDate && sameDay(new Date(x.dueDate), today));
-    }
-    if (activeFilter === 'week') {
-      const start = new Date(weekStart);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 7);
-      list = list.filter((x) => {
-        if (!x.dueDate) return false;
-        const dd = new Date(x.dueDate);
-        return dd >= start && dd < end;
-      });
-    }
-    return list;
-  }, [tasks, searchQuery, activeFilter, weekStart]);
+  const filteredTasks = useMemo(
+    () => filterTasksForHub(tasks, activeFilter, { searchQuery, triagedTaskIds }),
+    [tasks, searchQuery, activeFilter, triagedTaskIds]
+  );
 
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(weekStart);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-
-    const counts: TaskCounts = {
-      total: tasks.length,
-      overdue: tasks.filter((x) => isOverdue(x.dueDate, x.status)).length,
-      today: tasks.filter((x) => x.dueDate && sameDay(new Date(x.dueDate), today)).length,
-      week: tasks.filter(
-        (x) => x.dueDate && new Date(x.dueDate) >= start && new Date(x.dueDate) < end
-      ).length,
-      urgent: tasks.filter((x) => isUrgent(x.priority)).length,
-    };
-    onCountsChange(counts);
-  }, [tasks, onCountsChange, weekStart]);
+    onCountsChange(countTaskHubFilters(tasks, { searchQuery, triagedTaskIds }));
+  }, [tasks, searchQuery, triagedTaskIds, onCountsChange]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, idx) => {
@@ -183,13 +134,14 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const d of weekDays) map.set(d.toISOString().slice(0, 10), []);
+    for (const d of weekDays) {
+      const key = taskHubLocalDateKey(d);
+      if (key) map.set(key, []);
+    }
     for (const task of filteredTasks) {
       if (!task.dueDate) continue;
-      const dd = new Date(task.dueDate);
-      dd.setHours(0, 0, 0, 0);
-      const key = dd.toISOString().slice(0, 10);
-      if (!map.has(key)) continue;
+      const key = taskHubLocalDateKey(task.dueDate);
+      if (!key || !map.has(key)) continue;
       map.get(key)!.push(task);
     }
     // stable sort: priority (urgent/high first) then title
@@ -231,7 +183,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     [fetchTasks, t]
   );
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = taskHubLocalDateKey(new Date());
 
   if (loading) {
     return (
@@ -306,7 +258,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
         </div>
       </div>
 
-      {overdue.length > 0 && activeFilter !== 'overdue' && (
+      {overdue.length > 0 && (
         <div className="rounded-lg border border-danger-200 dark:border-danger-900/40 bg-danger-50/70 dark:bg-danger-500/10 p-3">
           <div className="flex items-center gap-2 text-xs font-medium text-danger-700 dark:text-danger-300">
             <Clock size={14} />
@@ -316,7 +268,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
             </span>
           </div>
           <div className="mt-2 grid gap-1">
-            {overdue.slice(0, 6).map((task) => (
+            {(activeFilter === 'overdue' ? overdue : overdue.slice(0, 6)).map((task) => (
               <button
                 key={task.id}
                 className="text-left rounded-md px-2 py-1 text-xs text-danger-800 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/10"
@@ -383,7 +335,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
         <div className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
           <div className="grid grid-cols-7 border-b border-slate-200 dark:border-navy-700">
             {weekDays.map((d) => {
-              const key = d.toISOString().slice(0, 10);
+              const key = taskHubLocalDateKey(d) || '';
               const isToday = key === todayKey;
               return (
                 <div
@@ -401,7 +353,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
           </div>
           <div className="grid grid-cols-7">
             {weekDays.map((d) => {
-              const key = d.toISOString().slice(0, 10);
+              const key = taskHubLocalDateKey(d) || '';
               const list = tasksByDay.get(key) || [];
               const isToday = key === todayKey;
               return (

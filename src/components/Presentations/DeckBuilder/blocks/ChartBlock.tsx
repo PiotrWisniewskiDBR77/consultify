@@ -13,6 +13,7 @@
  * active theme's `chartPalette` (already ≤7, colorblind-safe).
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Area,
   AreaChart,
@@ -74,7 +75,14 @@ const ChartTitle: React.FC<{ title?: string; theme: CuratedColorSet }> = ({ titl
   ) : null;
 
 export const ChartBlock: React.FC<Props> = ({ block, theme, density = 'default' }) => {
-  const spec = adaptChartBlockContent(block.content);
+  const { t } = useTranslation();
+  const spec = adaptChartBlockContent(block.content, {
+    seriesValue: t('presentations.builder.chart.fallbacks.value', { defaultValue: 'Value' }),
+    matrixImpact: t('presentations.builder.chart.fallbacks.impact', { defaultValue: 'Impact' }),
+    matrixFeasibility: t('presentations.builder.chart.fallbacks.feasibility', {
+      defaultValue: 'Feasibility',
+    }),
+  });
   // FAIL-OPEN: no usable data → render nothing (no placeholder balast).
   if (!spec) return null;
 
