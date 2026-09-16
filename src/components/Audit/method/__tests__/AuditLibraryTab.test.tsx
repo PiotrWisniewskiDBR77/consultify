@@ -295,6 +295,21 @@ describe('AuditLibraryTab', () => {
     expect(previewButton).toBeDisabled();
   });
 
+  it('OPEN-1/U-27 partial: missing purpose/scope and zero criteria never leak placeholders', async () => {
+    mockedGetPack.mockResolvedValue({
+      ...packDetailFixture(demoPack),
+      purpose: null,
+      scope: null,
+      criteria: [],
+    });
+    renderTab();
+    fireEvent.click(screen.getByText('Demonstration Pack'));
+    await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-2'));
+    expect(screen.queryByText(/not provided/i)).toBeNull();
+    expect(screen.queryByText('undefined')).toBeNull();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
   it('enables "Start audit" for a published pack that HAS a source, and calls onStartAudit', async () => {
     mockedGetPack.mockResolvedValue(packDetailFixture(verifiedInternalProcedure));
     const { onStartAudit } = renderTab();

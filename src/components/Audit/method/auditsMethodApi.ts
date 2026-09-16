@@ -386,6 +386,7 @@ export interface AuditProposalSummary {
   sourceFindingIds: string[];
   priority: string | null;
   status: AuditProposalStatus;
+  registeredInitiativeId: string | null;
   updatedAt: string;
 }
 

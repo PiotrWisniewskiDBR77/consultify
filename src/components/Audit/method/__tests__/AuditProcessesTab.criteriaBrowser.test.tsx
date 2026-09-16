@@ -124,21 +124,31 @@ function renderTab() {
   );
 }
 
-describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish)', () => {
+describe('AuditProcessesTab — criteria browser drill-down', () => {
   afterEach(() => {
     window.localStorage.removeItem('ff.audits_scale_and_polish');
     mockNavigate.mockClear();
   });
 
-  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
-  // via the localStorage kill switch to keep this regression coverage.
-  it('flag OFF (localStorage override): no "View all" entry point, mini-list unchanged', async () => {
+  it('OPEN-1: the existing criteria workspace remains reachable when the old scale flag is OFF', async () => {
     window.localStorage.setItem('ff.audits_scale_and_polish', '0');
     setupApiMocks();
     renderTab();
     fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
     await waitFor(() => expect(screen.getByText(/Customer complaint intake/)).toBeInTheDocument());
-    expect(screen.queryByTestId('open-criteria-browser')).toBeNull();
+    const openBrowser = screen.getByTestId('open-criteria-browser');
+    fireEvent.click(openBrowser);
+    expect(await screen.findByTestId('criteria-browser-back')).toBeInTheDocument();
+  });
+
+  it('OPEN-1: a lifecycle failure ends Loading and offers retry', async () => {
+    setupApiMocks();
+    mockedGetProgramLifecycle.mockRejectedValueOnce(new Error('offline'));
+    renderTab();
+    fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
+    expect(await screen.findByText('Nie udało się wczytać bramek następnego etapu.')).toBeInTheDocument();
+    expect(screen.queryByText('Ładowanie…')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Spróbuj ponownie' })).toBeInTheDocument();
   });
 
   it('flag ON: "View all" opens a full-screen StandardTable with search + status filter, and rows navigate to the workspace', async () => {

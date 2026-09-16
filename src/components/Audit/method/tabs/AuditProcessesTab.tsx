@@ -92,6 +92,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
   const [coverage, setCoverage] = useState<AuditProgramCoverage | null>(null);
   const [lifecycle, setLifecycle] = useState<AuditProgramLifecycle | null>(null);
+  const [lifecycleLoading, setLifecycleLoading] = useState(false);
+  const [lifecycleError, setLifecycleError] = useState(false);
+  const [reloadDetail, setReloadDetail] = useState(0);
   const [detailLoading, setDetailLoading] = useState(false);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
@@ -119,8 +122,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     }
     let cancelled = false;
     setDetailLoading(true);
+    setLifecycleLoading(true);
+    setLifecycleError(false);
     setCriteriaError(null);
-    Promise.all([
+    Promise.allSettled([
       getProgram(selectedId),
       getProgramCoverage(selectedId),
       getProgramLifecycle(selectedId),
@@ -128,16 +133,17 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     ])
       .then(([programResult, coverageResult, lifecycleResult, criteriaResult]) => {
         if (cancelled) return;
-        setDetail(programResult);
-        setCoverage(coverageResult);
-        setLifecycle(lifecycleResult);
-        setCriteria(criteriaResult);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDetail(null);
-          setCoverage(null);
+        setDetail(programResult.status === 'fulfilled' ? programResult.value : null);
+        setCoverage(coverageResult.status === 'fulfilled' ? coverageResult.value : null);
+        if (lifecycleResult.status === 'fulfilled') {
+          setLifecycle(lifecycleResult.value);
+        } else {
           setLifecycle(null);
+          setLifecycleError(true);
+        }
+        if (criteriaResult.status === 'fulfilled') {
+          setCriteria(criteriaResult.value);
+        } else {
           setCriteria([]);
           setCriteriaError(
             isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.'
@@ -145,12 +151,15 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         }
       })
       .finally(() => {
-        if (!cancelled) setDetailLoading(false);
+        if (!cancelled) {
+          setDetailLoading(false);
+          setLifecycleLoading(false);
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, reloadDetail, isPolish]);
 
   const selectedProgram = programs.find((p) => p.id === selectedId) || null;
   const flatCriteria = criteria.flatMap(function flatten(item): AuditCriterionSummary[] {
@@ -405,7 +414,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       ]
     : undefined;
 
-  if (scaleAndPolishEnabled && criteriaBrowserOpen && selectedProgram) {
+  if (criteriaBrowserOpen && selectedProgram) {
     return (
       <AuditCriteriaBrowser
         programId={selectedProgram.id}
@@ -431,6 +440,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
             jedenPanel.otworz();
             setSelectedId(String(row.id));
           }}
+          onRowDoubleClick={(row) => {
+            setSelectedId(String(row.id));
+            setCriteriaBrowserOpen(true);
+          }}
           selectedRowId={selectedId}
           persistKey="audits.method.processes"
           empty={{
@@ -448,6 +461,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
           <StandardPreview
             title={selectedProgram.name}
             onClose={() => setSelectedId(null)}
+            onOpenFull={() => setCriteriaBrowserOpen(true)}
             loading={detailLoading}
             meta={{
               pills: [
@@ -512,9 +526,24 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}
               </div>
-              {!lifecycle ? (
+              {lifecycleLoading || (!lifecycle && !lifecycleError) ? (
                 <div className="text-xs text-c-text-muted">
                   {isPolish ? 'Ładowanie…' : 'Loading…'}
+                </div>
+              ) : lifecycleError ? (
+                <div className="space-y-2" role="alert">
+                  <div className="text-xs text-c-text-muted">
+                    {isPolish
+                      ? 'Nie udało się wczytać bramek następnego etapu.'
+                      : 'Could not load next-stage gates.'}
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-c-text underline underline-offset-2"
+                    onClick={() => setReloadDetail((value) => value + 1)}
+                  >
+                    {isPolish ? 'Spróbuj ponownie' : 'Try again'}
+                  </button>
                 </div>
               ) : lifecycle.allowed.length === 0 ? (
                 <div className="text-xs text-c-text-muted">
@@ -558,7 +587,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                   {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
                 </div>
-                {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
+                {flatCriteria.length > 0 ? (
                   <button
                     type="button"
                     onClick={() => setCriteriaBrowserOpen(true)}

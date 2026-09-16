@@ -618,6 +618,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
     sourceFindingIds: ['finding-mp-12'],
     priority: 'high',
     status: 'sent_to_candidates',
+    registeredInitiativeId: null,
     updatedAt: '2026-08-09T16:00:00Z',
   },
   {
@@ -628,6 +629,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
     sourceFindingIds: ['finding-mp-15', 'finding-mp-18'],
     priority: 'critical',
     status: 'draft',
+    registeredInitiativeId: null,
     updatedAt: '2026-08-09T16:05:00Z',
   },
   {
@@ -638,6 +640,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
     sourceFindingIds: ['finding-vl-04'],
     priority: 'medium',
     status: 'registered',
+    registeredInitiativeId: 'initiative-vantico-1',
     updatedAt: '2026-08-12T09:00:00Z',
   },
 ];
@@ -1174,7 +1177,12 @@ Api.post = (async (url: string, data: any) => {
         status: 409,
       });
     }
-    proposalsStore[idx] = { ...proposal, status: 'registered', updatedAt: new Date().toISOString() };
+    proposalsStore[idx] = {
+      ...proposal,
+      status: 'registered',
+      registeredInitiativeId: `initiative-${proposal.id}`,
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(proposalsStore[idx]);
   }
   const dismissProposal = url.match(/^\/audits\/proposals\/([^/]+)\/dismiss$/);

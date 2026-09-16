@@ -389,16 +389,12 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
 
   const detailProperties: ArtifactPropertyRow[] | undefined = detail
     ? [
-        {
-          id: 'purpose',
-          label: isPolish ? 'Cel' : 'Purpose',
-          value: detail.purpose || (isPolish ? '— nie podano —' : '— not provided —'),
-        },
-        {
-          id: 'scope',
-          label: isPolish ? 'Zakres' : 'Scope',
-          value: detail.scope || (isPolish ? '— nie podano —' : '— not provided —'),
-        },
+        ...(detail.purpose
+          ? [{ id: 'purpose', label: isPolish ? 'Cel' : 'Purpose', value: detail.purpose }]
+          : []),
+        ...(detail.scope
+          ? [{ id: 'scope', label: isPolish ? 'Zakres' : 'Scope', value: detail.scope }]
+          : []),
         {
           id: 'source',
           label: isPolish ? 'Źródło' : 'Source',
@@ -428,7 +424,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'criteriaCount',
           label: isPolish ? 'Liczba kryteriów' : 'Criteria count',
-          value: String(detail.criteria.length || detail.criteriaCount),
+          value: String(detail.criteria.length),
           mono: true,
         },
       ]

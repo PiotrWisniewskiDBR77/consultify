@@ -14,8 +14,9 @@
  * (`proposalService.ts`) — plus podgląd (StandardPreview) i uczciwie
  * disabled Edit/Archive/Delete z powodem.
  */
-import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
+import { Ban, CheckCircle2, Clock3, ExternalLink, Lightbulb } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
@@ -24,6 +25,7 @@ import type { ArtifactPropertyRow } from '@/components/standard/ArtifactProperti
 import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
+import { buildInitiativeDeepLink } from '@/utils/initiativeDeepLink';
 
 import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 import {
@@ -71,6 +73,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   onCountsChange,
   reloadToken = 0,
 }) => {
+  const navigate = useNavigate();
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
@@ -262,6 +265,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   };
 
   const selected = items.find((p) => p.id === selectedId) || null;
+  const openRegisteredInitiative = useCallback(
+    (initiativeId: string) => navigate(buildInitiativeDeepLink(initiativeId, { mode: 'doc' })),
+    [navigate]
+  );
   const selectedProperties: ArtifactPropertyRow[] | undefined = selected
     ? [
         {
@@ -323,6 +330,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
               jedenPanel.otworz();
               setSelectedId(String(row.id));
             }}
+            onRowDoubleClick={(rawRow) => {
+              const row = rawRow as unknown as AuditProposalSummary;
+              if (row.registeredInitiativeId) openRegisteredInitiative(row.registeredInitiativeId);
+            }}
             selectedRowId={selectedId}
             persistKey="audits.method.initiatives"
             empty={{
@@ -340,6 +351,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
             <StandardPreview
               title={selected.title}
               onClose={() => setSelectedId(null)}
+              onOpenFull={selected.registeredInitiativeId
+                ? () => openRegisteredInitiative(selected.registeredInitiativeId as string)
+                : undefined}
               meta={{
                 pills: [
                   {
@@ -354,6 +368,27 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
                 label: isPolish ? 'Szczegóły' : 'Details',
                 propertyLabel: isPolish ? 'Właściwość' : 'Property',
                 valueLabel: isPolish ? 'Wartość' : 'Value',
+              }}
+              actions={{
+                resolutions: selected.status !== 'registered' && selected.status !== 'dismissed'
+                  ? [{
+                      id: 'register-initiative',
+                      variant: 'positive',
+                      label: isPolish ? 'Zarejestruj jako inicjatywę' : 'Register as initiative',
+                      icon: CheckCircle2,
+                      onClick: () => void runTransition(selected.id, 'register'),
+                      disabled: transitioning === `${selected.id}:register`,
+                    }]
+                  : undefined,
+                informational: selected.registeredInitiativeId
+                  ? [{
+                      id: 'open-initiative',
+                      variant: 'neutral',
+                      label: isPolish ? 'Otwórz inicjatywę' : 'Open initiative',
+                      icon: ExternalLink,
+                      onClick: () => openRegisteredInitiative(selected.registeredInitiativeId as string),
+                    }]
+                  : undefined,
               }}
             />
           ) : null}

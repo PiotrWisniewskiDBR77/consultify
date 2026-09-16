@@ -205,6 +205,7 @@ const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canv
 const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
 const Day221AudytyWarsztatScreen = React.lazy(() => import('./screens/day221-audyty-warsztat'));
 const Day220AudytyRejestrScreen = React.lazy(() => import('./screens/day220-audyty-rejestr'));
+const Open1AuditPathsScreen = React.lazy(() => import('./screens/open1-audit-paths'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
@@ -1877,6 +1878,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day220 — Audyty: Sesje/Raporty/Ustalenia, pełne polskie wartości; &view=processes|reports|findings',
     render: () => <Day220AudytyRejestrScreen />,
+  },
+  'open1-audit-paths': {
+    label: 'OPEN-1 — real Audit Sessions/Initiatives list-to-object paths; English fixtures',
+    render: () => <Open1AuditPathsScreen />,
   },
   'agent-hub': {
     label:

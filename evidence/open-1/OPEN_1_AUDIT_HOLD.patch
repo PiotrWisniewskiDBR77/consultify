@@ -1,0 +1,755 @@
+diff --git a/dev-render/main.tsx b/dev-render/main.tsx
+index 13f4b0de8e..3ea7305a43 100644
+--- a/dev-render/main.tsx
++++ b/dev-render/main.tsx
+@@ -205,6 +205,7 @@ const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canv
+ const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
+ const Day221AudytyWarsztatScreen = React.lazy(() => import('./screens/day221-audyty-warsztat'));
+ const Day220AudytyRejestrScreen = React.lazy(() => import('./screens/day220-audyty-rejestr'));
++const Open1AuditPathsScreen = React.lazy(() => import('./screens/open1-audit-paths'));
+ const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
+ const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
+ const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
+@@ -1878,6 +1879,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement
+       'Day220 — Audyty: Sesje/Raporty/Ustalenia, pełne polskie wartości; &view=processes|reports|findings',
+     render: () => <Day220AudytyRejestrScreen />,
+   },
++  'open1-audit-paths': {
++    label: 'OPEN-1 — real Audit Sessions/Initiatives list-to-object paths; English fixtures',
++    render: () => <Open1AuditPathsScreen />,
++  },
+   'agent-hub': {
+     label:
+       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
+diff --git a/dev-render/screens/audyty-piec-powierzchni.tsx b/dev-render/screens/audyty-piec-powierzchni.tsx
+index 5560551f0d..bc6660d615 100644
+--- a/dev-render/screens/audyty-piec-powierzchni.tsx
++++ b/dev-render/screens/audyty-piec-powierzchni.tsx
+@@ -618,6 +618,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
+     sourceFindingIds: ['finding-mp-12'],
+     priority: 'high',
+     status: 'sent_to_candidates',
++    registeredInitiativeId: null,
+     updatedAt: '2026-08-09T16:00:00Z',
+   },
+   {
+@@ -628,6 +629,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
+     sourceFindingIds: ['finding-mp-15', 'finding-mp-18'],
+     priority: 'critical',
+     status: 'draft',
++    registeredInitiativeId: null,
+     updatedAt: '2026-08-09T16:05:00Z',
+   },
+   {
+@@ -638,6 +640,7 @@ const MOCK_PROPOSALS: AuditProposalSummary[] = [
+     sourceFindingIds: ['finding-vl-04'],
+     priority: 'medium',
+     status: 'registered',
++    registeredInitiativeId: 'initiative-vantico-1',
+     updatedAt: '2026-08-12T09:00:00Z',
+   },
+ ];
+@@ -1174,7 +1177,12 @@ Api.post = (async (url: string, data: any) => {
+         status: 409,
+       });
+     }
+-    proposalsStore[idx] = { ...proposal, status: 'registered', updatedAt: new Date().toISOString() };
++    proposalsStore[idx] = {
++      ...proposal,
++      status: 'registered',
++      registeredInitiativeId: `initiative-${proposal.id}`,
++      updatedAt: new Date().toISOString(),
++    };
+     return envelope(proposalsStore[idx]);
+   }
+   const dismissProposal = url.match(/^\/audits\/proposals\/([^/]+)\/dismiss$/);
+diff --git a/server/src/services/audits/__tests__/programService.test.ts b/server/src/services/audits/__tests__/programService.test.ts
+index 46a0e95ff2..ea37da7bff 100644
+--- a/server/src/services/audits/__tests__/programService.test.ts
++++ b/server/src/services/audits/__tests__/programService.test.ts
+@@ -138,6 +138,68 @@ suite('programService (Postgres realny — U3)', () => {
+     expect(child!.requirement_text).toBe(ORIGINAL_REQUIREMENT_TEXT);
+   });
+ 
++  it('OPEN-1/U-28 — program snapshot contains criteria only from its selected pack', async () => {
++    const foreignPackId = `u3foreignpk_${randomUUID()}`;
++    const foreignCriterionId = `u3foreignpkc_${randomUUID()}`;
++    await auditsDb.auditRun(
++      `INSERT INTO audit_packs
++         (id, organization_id, pack_key, version, title, classification, publication_status,
++          finding_taxonomy, required_roles, expert_approved_by, expert_approved_at,
++          published_by, published_at, created_at, updated_at)
++       VALUES ($1,$2,$3,1,$4,'DEMONSTRATION','published','[]'::jsonb,'[]'::jsonb,
++               'u3-tester',NOW(),'u3-tester',NOW(),NOW(),NOW())`,
++      [foreignPackId, orgA, `u3-foreign-pack-key-${foreignPackId}`, 'Foreign pack guard'],
++    );
++    await auditsDb.auditRun(
++      `INSERT INTO audit_pack_criteria
++         (id, pack_id, parent_id, ordinal, ref_code, node_kind, title, expected_evidence, mandatory)
++       VALUES ($1,$2,NULL,1,'FOREIGN.1','criterion','Foreign criterion','[]'::jsonb,true)`,
++      [foreignCriterionId, foreignPackId],
++    );
++
++    try {
++      const detail = await programService.createProgramFromPack(orgA, adminActor, {
++        packId,
++        name: 'CNC pack scoping measurement',
++      });
++      const receipt = await auditsDb.auditAll<{
++        program_id: string;
++        program_pack_id: string;
++        pack_criterion_id: string;
++        source_pack_id: string;
++      }>(
++        `SELECT apc.program_id, ap.pack_id AS program_pack_id,
++                apc.pack_criterion_id, source.pack_id AS source_pack_id
++           FROM audit_program_criteria apc
++           JOIN audit_programs ap ON ap.id = apc.program_id
++           JOIN audit_pack_criteria source ON source.id = apc.pack_criterion_id
++          WHERE apc.program_id = $1
++          ORDER BY apc.ordinal ASC`,
++        [detail.program.id],
++      );
++
++      expect(receipt).toHaveLength(2);
++      expect(receipt.every((row) => row.program_pack_id === packId)).toBe(true);
++      expect(receipt.every((row) => row.source_pack_id === packId)).toBe(true);
++      expect(receipt.some((row) => row.pack_criterion_id === foreignCriterionId)).toBe(false);
++      // Durable CI/receipt line: exact ephemeral IDs plus the read-only join result.
++      // The fixture is deleted below; this is evidence, not retained product data.
++      console.info(
++        `OPEN1_CNC_PACK_SCOPE ${JSON.stringify({
++          programId: detail.program.id,
++          programPackId: packId,
++          foreignPackId,
++          foreignCriterionId,
++          rows: receipt,
++          actualCncDataset: 'DATA_NOT_PROVEN',
++        })}`,
++      );
++    } finally {
++      await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id = $1`, [foreignPackId]);
++      await auditsDb.auditRun(`DELETE FROM audit_packs WHERE id = $1`, [foreignPackId]);
++    }
++  });
++
+   it("E.2 — zmiana pakietu PO utworzeniu programu NIE zmienia kryteriów programu (immutability snapshotu)", async () => {
+     const detail = await programService.createProgramFromPack(orgA, adminActor, {
+       packId,
+diff --git a/src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx b/src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx
+index 061b1c9018..1099b7eb01 100644
+--- a/src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx
++++ b/src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx
+@@ -6,6 +6,7 @@
+  */
+ import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+ import React from 'react';
++import { MemoryRouter } from 'react-router-dom';
+ import { describe, expect, it, vi } from 'vitest';
+ 
+ vi.mock('../auditsMethodApi', async () => {
+@@ -33,10 +34,24 @@ const draftProposal: AuditProposalSummary = {
+   sourceFindingIds: ['f-1', 'f-2'],
+   priority: 'high',
+   status: 'draft',
++  registeredInitiativeId: null,
+   updatedAt: '2026-08-10',
+ };
+ 
+-const registeredProposal: AuditProposalSummary = { ...draftProposal, id: 'prop-2', status: 'registered' };
++const registeredProposal: AuditProposalSummary = {
++  ...draftProposal,
++  id: 'prop-2',
++  status: 'registered',
++  registeredInitiativeId: 'initiative-22',
++};
++
++function renderTab() {
++  return render(
++    <MemoryRouter initialEntries={['/audits']}>
++      <AuditInitiativesTab isPolish={false} />
++    </MemoryRouter>
++  );
++}
+ 
+ async function openKebab(index = 0) {
+   const triggers = await screen.findAllByRole('button', { name: /row actions/i });
+@@ -47,7 +62,7 @@ async function openKebab(index = 0) {
+ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
+   it('renders a working kebab with Register enabled for a draft proposal', async () => {
+     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
+-    render(<AuditInitiativesTab isPolish={false} />);
++    renderTab();
+     await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+ 
+     const menu = await openKebab();
+@@ -57,7 +72,7 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
+ 
+   it('disables Register/Defer/Dismiss for an already-registered proposal, with a real reason', async () => {
+     mockedListProposals.mockResolvedValue({ items: [registeredProposal], total: 1 });
+-    render(<AuditInitiativesTab isPolish={false} />);
++    renderTab();
+     await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+ 
+     const menu = await openKebab();
+@@ -68,8 +83,12 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
+ 
+   it('calls the real registerProposal endpoint and reflects the returned status', async () => {
+     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
+-    mockedRegisterProposal.mockResolvedValue({ ...draftProposal, status: 'registered' });
+-    render(<AuditInitiativesTab isPolish={false} />);
++    mockedRegisterProposal.mockResolvedValue({
++      ...draftProposal,
++      status: 'registered',
++      registeredInitiativeId: 'initiative-22',
++    });
++    renderTab();
+     await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+ 
+     const menu = await openKebab();
+@@ -77,11 +96,13 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
+ 
+     await waitFor(() => expect(mockedRegisterProposal).toHaveBeenCalledWith('prop-1'));
+     await waitFor(() => expect(screen.getByText('Registered')).toBeInTheDocument());
++    fireEvent.click(screen.getByText('Fix intake process gap'));
++    expect(await screen.findByRole('button', { name: 'Open initiative' })).toBeInTheDocument();
+   });
+ 
+   it('shows Delete disabled with a real reason — never a silent no-op', async () => {
+     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
+-    render(<AuditInitiativesTab isPolish={false} />);
++    renderTab();
+     await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+ 
+     const menu = await openKebab();
+diff --git a/src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx b/src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx
+index 5d3d8c114b..33d2307c71 100644
+--- a/src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx
++++ b/src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx
+@@ -295,6 +295,21 @@ describe('AuditLibraryTab', () => {
+     expect(previewButton).toBeDisabled();
+   });
+ 
++  it('OPEN-1/U-27 partial: missing purpose/scope and zero criteria never leak placeholders', async () => {
++    mockedGetPack.mockResolvedValue({
++      ...packDetailFixture(demoPack),
++      purpose: null,
++      scope: null,
++      criteria: [],
++    });
++    renderTab();
++    fireEvent.click(screen.getByText('Demonstration Pack'));
++    await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-2'));
++    expect(screen.queryByText(/not provided/i)).toBeNull();
++    expect(screen.queryByText('undefined')).toBeNull();
++    expect(screen.getByText('0')).toBeInTheDocument();
++  });
++
+   it('enables "Start audit" for a published pack that HAS a source, and calls onStartAudit', async () => {
+     mockedGetPack.mockResolvedValue(packDetailFixture(verifiedInternalProcedure));
+     const { onStartAudit } = renderTab();
+diff --git a/src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx b/src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx
+index cf2c4feff8..6a51ce5c9e 100644
+--- a/src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx
++++ b/src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx
+@@ -124,21 +124,31 @@ function renderTab() {
+   );
+ }
+ 
+-describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish)', () => {
++describe('AuditProcessesTab — criteria browser drill-down', () => {
+   afterEach(() => {
+     window.localStorage.removeItem('ff.audits_scale_and_polish');
+     mockNavigate.mockClear();
+   });
+ 
+-  // flip po akcepcie właściciela 27.08: default was OFF, now ON — force OFF
+-  // via the localStorage kill switch to keep this regression coverage.
+-  it('flag OFF (localStorage override): no "View all" entry point, mini-list unchanged', async () => {
++  it('OPEN-1: the existing criteria workspace remains reachable when the old scale flag is OFF', async () => {
+     window.localStorage.setItem('ff.audits_scale_and_polish', '0');
+     setupApiMocks();
+     renderTab();
+     fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
+     await waitFor(() => expect(screen.getByText(/Customer complaint intake/)).toBeInTheDocument());
+-    expect(screen.queryByTestId('open-criteria-browser')).toBeNull();
++    const openBrowser = screen.getByTestId('open-criteria-browser');
++    fireEvent.click(openBrowser);
++    expect(await screen.findByTestId('criteria-browser-back')).toBeInTheDocument();
++  });
++
++  it('OPEN-1: a lifecycle failure ends Loading and offers retry', async () => {
++    setupApiMocks();
++    mockedGetProgramLifecycle.mockRejectedValueOnce(new Error('offline'));
++    renderTab();
++    fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
++    expect(await screen.findByText('Nie udało się wczytać bramek następnego etapu.')).toBeInTheDocument();
++    expect(screen.queryByText('Ładowanie…')).toBeNull();
++    expect(screen.getByRole('button', { name: 'Spróbuj ponownie' })).toBeInTheDocument();
+   });
+ 
+   it('flag ON: "View all" opens a full-screen StandardTable with search + status filter, and rows navigate to the workspace', async () => {
+diff --git a/src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx b/src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx
+index 566d256fb6..6b3f9cc880 100644
+--- a/src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx
++++ b/src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx
+@@ -7,6 +7,7 @@
+  */
+ import { render, screen, waitFor } from '@testing-library/react';
+ import React from 'react';
++import { MemoryRouter } from 'react-router-dom';
+ import { describe, expect, it } from 'vitest';
+ 
+ import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
+@@ -33,7 +34,7 @@ const program: AuditProgramSummary = {
+ describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
+   it('resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields', async () => {
+     render(
+-      <AuditProcessesTab
++      <MemoryRouter><AuditProcessesTab
+         programs={[program]}
+         loading={false}
+         error={null}
+@@ -42,7 +43,7 @@ describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
+         onProgramChanged={() => {}}
+         packTitleById={new Map([['pack-1', 'ISO 19011 Audit Pack v2']])}
+         userNameById={new Map([['u1', 'Ada Lovelace']])}
+-      />
++      /></MemoryRouter>
+     );
+ 
+     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
+@@ -52,14 +53,14 @@ describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
+ 
+   it('falls back to "—" (never crashes) when neither the map nor the API field has a value', async () => {
+     render(
+-      <AuditProcessesTab
++      <MemoryRouter><AuditProcessesTab
+         programs={[program]}
+         loading={false}
+         error={null}
+         onRetry={() => {}}
+         isPolish={false}
+         onProgramChanged={() => {}}
+-      />
++      /></MemoryRouter>
+     );
+ 
+     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
+diff --git a/src/components/Audit/method/auditsMethodApi.ts b/src/components/Audit/method/auditsMethodApi.ts
+index 016e3d84e9..758d65e462 100644
+--- a/src/components/Audit/method/auditsMethodApi.ts
++++ b/src/components/Audit/method/auditsMethodApi.ts
+@@ -386,6 +386,7 @@ export interface AuditProposalSummary {
+   sourceFindingIds: string[];
+   priority: string | null;
+   status: AuditProposalStatus;
++  registeredInitiativeId: string | null;
+   updatedAt: string;
+ }
+ 
+diff --git a/src/components/Audit/method/tabs/AuditInitiativesTab.tsx b/src/components/Audit/method/tabs/AuditInitiativesTab.tsx
+index 6c844ac7c8..d24d344ea2 100644
+--- a/src/components/Audit/method/tabs/AuditInitiativesTab.tsx
++++ b/src/components/Audit/method/tabs/AuditInitiativesTab.tsx
+@@ -14,8 +14,9 @@
+  * (`proposalService.ts`) — plus podgląd (StandardPreview) i uczciwie
+  * disabled Edit/Archive/Delete z powodem.
+  */
+-import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
++import { Ban, CheckCircle2, Clock3, ExternalLink, Lightbulb } from 'lucide-react';
+ import React, { useCallback, useEffect, useMemo, useState } from 'react';
++import { useNavigate } from 'react-router-dom';
+ 
+ import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+ import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+@@ -24,6 +25,7 @@ import type { ArtifactPropertyRow } from '@/components/standard/ArtifactProperti
+ import { ErrorState } from '@/components/shared/states';
+ import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
+ import { formatListDate } from '@/utils/listDateFormat';
++import { buildInitiativeDeepLink } from '@/utils/initiativeDeepLink';
+ 
+ import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
+ import {
+@@ -71,6 +73,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
+   onCountsChange,
+   reloadToken = 0,
+ }) => {
++  const navigate = useNavigate();
+   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+   const jedenPanel = useJedenPanel();
+@@ -262,6 +265,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
+   };
+ 
+   const selected = items.find((p) => p.id === selectedId) || null;
++  const openRegisteredInitiative = useCallback(
++    (initiativeId: string) => navigate(buildInitiativeDeepLink(initiativeId, { mode: 'doc' })),
++    [navigate]
++  );
+   const selectedProperties: ArtifactPropertyRow[] | undefined = selected
+     ? [
+         {
+@@ -323,6 +330,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
+               jedenPanel.otworz();
+               setSelectedId(String(row.id));
+             }}
++            onRowDoubleClick={(rawRow) => {
++              const row = rawRow as unknown as AuditProposalSummary;
++              if (row.registeredInitiativeId) openRegisteredInitiative(row.registeredInitiativeId);
++            }}
+             selectedRowId={selectedId}
+             persistKey="audits.method.initiatives"
+             empty={{
+@@ -340,6 +351,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
+             <StandardPreview
+               title={selected.title}
+               onClose={() => setSelectedId(null)}
++              onOpenFull={selected.registeredInitiativeId
++                ? () => openRegisteredInitiative(selected.registeredInitiativeId as string)
++                : undefined}
+               meta={{
+                 pills: [
+                   {
+@@ -355,6 +369,27 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
+                 propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                 valueLabel: isPolish ? 'Wartość' : 'Value',
+               }}
++              actions={{
++                resolutions: selected.status !== 'registered' && selected.status !== 'dismissed'
++                  ? [{
++                      id: 'register-initiative',
++                      variant: 'positive',
++                      label: isPolish ? 'Zarejestruj jako inicjatywę' : 'Register as initiative',
++                      icon: CheckCircle2,
++                      onClick: () => void runTransition(selected.id, 'register'),
++                      disabled: transitioning === `${selected.id}:register`,
++                    }]
++                  : undefined,
++                informational: selected.registeredInitiativeId
++                  ? [{
++                      id: 'open-initiative',
++                      variant: 'neutral',
++                      label: isPolish ? 'Otwórz inicjatywę' : 'Open initiative',
++                      icon: ExternalLink,
++                      onClick: () => openRegisteredInitiative(selected.registeredInitiativeId as string),
++                    }]
++                  : undefined,
++              }}
+             />
+           ) : null}
+         />
+diff --git a/src/components/Audit/method/tabs/AuditLibraryTab.tsx b/src/components/Audit/method/tabs/AuditLibraryTab.tsx
+index 884db07d4a..8a10a108d5 100644
+--- a/src/components/Audit/method/tabs/AuditLibraryTab.tsx
++++ b/src/components/Audit/method/tabs/AuditLibraryTab.tsx
+@@ -389,16 +389,12 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
+ 
+   const detailProperties: ArtifactPropertyRow[] | undefined = detail
+     ? [
+-        {
+-          id: 'purpose',
+-          label: isPolish ? 'Cel' : 'Purpose',
+-          value: detail.purpose || (isPolish ? '— nie podano —' : '— not provided —'),
+-        },
+-        {
+-          id: 'scope',
+-          label: isPolish ? 'Zakres' : 'Scope',
+-          value: detail.scope || (isPolish ? '— nie podano —' : '— not provided —'),
+-        },
++        ...(detail.purpose
++          ? [{ id: 'purpose', label: isPolish ? 'Cel' : 'Purpose', value: detail.purpose }]
++          : []),
++        ...(detail.scope
++          ? [{ id: 'scope', label: isPolish ? 'Zakres' : 'Scope', value: detail.scope }]
++          : []),
+         {
+           id: 'source',
+           label: isPolish ? 'Źródło' : 'Source',
+@@ -428,7 +424,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
+         {
+           id: 'criteriaCount',
+           label: isPolish ? 'Liczba kryteriów' : 'Criteria count',
+-          value: String(detail.criteria.length || detail.criteriaCount),
++          value: String(detail.criteria.length),
+           mono: true,
+         },
+       ]
+diff --git a/src/components/Audit/method/tabs/AuditProcessesTab.tsx b/src/components/Audit/method/tabs/AuditProcessesTab.tsx
+index 1f635c79b2..d810d5e7f1 100644
+--- a/src/components/Audit/method/tabs/AuditProcessesTab.tsx
++++ b/src/components/Audit/method/tabs/AuditProcessesTab.tsx
+@@ -92,6 +92,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
+   const [coverage, setCoverage] = useState<AuditProgramCoverage | null>(null);
+   const [lifecycle, setLifecycle] = useState<AuditProgramLifecycle | null>(null);
++  const [lifecycleLoading, setLifecycleLoading] = useState(false);
++  const [lifecycleError, setLifecycleError] = useState(false);
++  const [reloadDetail, setReloadDetail] = useState(0);
+   const [detailLoading, setDetailLoading] = useState(false);
+   const [transitioning, setTransitioning] = useState<string | null>(null);
+   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
+@@ -119,8 +122,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+     }
+     let cancelled = false;
+     setDetailLoading(true);
++    setLifecycleLoading(true);
++    setLifecycleError(false);
+     setCriteriaError(null);
+-    Promise.all([
++    Promise.allSettled([
+       getProgram(selectedId),
+       getProgramCoverage(selectedId),
+       getProgramLifecycle(selectedId),
+@@ -128,16 +133,17 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+     ])
+       .then(([programResult, coverageResult, lifecycleResult, criteriaResult]) => {
+         if (cancelled) return;
+-        setDetail(programResult);
+-        setCoverage(coverageResult);
+-        setLifecycle(lifecycleResult);
+-        setCriteria(criteriaResult);
+-      })
+-      .catch(() => {
+-        if (!cancelled) {
+-          setDetail(null);
+-          setCoverage(null);
++        setDetail(programResult.status === 'fulfilled' ? programResult.value : null);
++        setCoverage(coverageResult.status === 'fulfilled' ? coverageResult.value : null);
++        if (lifecycleResult.status === 'fulfilled') {
++          setLifecycle(lifecycleResult.value);
++        } else {
+           setLifecycle(null);
++          setLifecycleError(true);
++        }
++        if (criteriaResult.status === 'fulfilled') {
++          setCriteria(criteriaResult.value);
++        } else {
+           setCriteria([]);
+           setCriteriaError(
+             isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.'
+@@ -145,12 +151,15 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+         }
+       })
+       .finally(() => {
+-        if (!cancelled) setDetailLoading(false);
++        if (!cancelled) {
++          setDetailLoading(false);
++          setLifecycleLoading(false);
++        }
+       });
+     return () => {
+       cancelled = true;
+     };
+-  }, [selectedId]);
++  }, [selectedId, reloadDetail, isPolish]);
+ 
+   const selectedProgram = programs.find((p) => p.id === selectedId) || null;
+   const flatCriteria = criteria.flatMap(function flatten(item): AuditCriterionSummary[] {
+@@ -405,7 +414,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+       ]
+     : undefined;
+ 
+-  if (scaleAndPolishEnabled && criteriaBrowserOpen && selectedProgram) {
++  if (criteriaBrowserOpen && selectedProgram) {
+     return (
+       <AuditCriteriaBrowser
+         programId={selectedProgram.id}
+@@ -431,6 +440,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+             jedenPanel.otworz();
+             setSelectedId(String(row.id));
+           }}
++          onRowDoubleClick={(row) => {
++            setSelectedId(String(row.id));
++            setCriteriaBrowserOpen(true);
++          }}
+           selectedRowId={selectedId}
+           persistKey="audits.method.processes"
+           empty={{
+@@ -448,6 +461,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+           <StandardPreview
+             title={selectedProgram.name}
+             onClose={() => setSelectedId(null)}
++            onOpenFull={() => setCriteriaBrowserOpen(true)}
+             loading={detailLoading}
+             meta={{
+               pills: [
+@@ -512,10 +526,25 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                 {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}
+               </div>
+-              {!lifecycle ? (
++              {lifecycleLoading || (!lifecycle && !lifecycleError) ? (
+                 <div className="text-xs text-c-text-muted">
+                   {isPolish ? 'Ładowanie…' : 'Loading…'}
+                 </div>
++              ) : lifecycleError ? (
++                <div className="space-y-2" role="alert">
++                  <div className="text-xs text-c-text-muted">
++                    {isPolish
++                      ? 'Nie udało się wczytać bramek następnego etapu.'
++                      : 'Could not load next-stage gates.'}
++                  </div>
++                  <button
++                    type="button"
++                    className="text-xs font-medium text-c-text underline underline-offset-2"
++                    onClick={() => setReloadDetail((value) => value + 1)}
++                  >
++                    {isPolish ? 'Spróbuj ponownie' : 'Try again'}
++                  </button>
++                </div>
+               ) : lifecycle.allowed.length === 0 ? (
+                 <div className="text-xs text-c-text-muted">
+                   {isPolish
+@@ -558,7 +587,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
+                 <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                   {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+                 </div>
+-                {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
++                {flatCriteria.length > 0 ? (
+                   <button
+                     type="button"
+                     onClick={() => setCriteriaBrowserOpen(true)}
+diff --git a/dev-render/screens/open1-audit-paths.tsx b/dev-render/screens/open1-audit-paths.tsx
+new file mode 100644
+index 0000000000..ca8e9d9ebe
+--- /dev/null
++++ b/dev-render/screens/open1-audit-paths.tsx
+@@ -0,0 +1,137 @@
++/** OPEN-1 screenshot harness: real Audit list components with English fixtures. */
++import React from 'react';
++import { MemoryRouter } from 'react-router-dom';
++
++import type {
++  AuditCriterionSummary,
++  AuditProgramSummary,
++  AuditProposalSummary,
++} from '../../src/components/Audit/method/auditsMethodApi';
++import { AuditInitiativesTab } from '../../src/components/Audit/method/tabs/AuditInitiativesTab';
++import { AuditProcessesTab } from '../../src/components/Audit/method/tabs/AuditProcessesTab';
++
++const PROGRAM_ID = 'open1-program-cnc';
++const PACK_ID = 'open1-pack-cnc';
++const PROGRAM: AuditProgramSummary = {
++  id: PROGRAM_ID,
++  name: 'CNC process governance audit',
++  packId: PACK_ID,
++  packTitle: 'CNC process governance pack',
++  packVersion: 1,
++  lifecycleState: 'fieldwork',
++  applicableCriteria: 1,
++  concludedCriteria: 0,
++  openFindings: 0,
++  leadAuditorId: 'user-alex',
++  leadAuditorName: 'Alex Morgan',
++  plannedStart: '2026-09-01T00:00:00Z',
++  plannedEnd: '2026-10-15T00:00:00Z',
++  updatedAt: '2026-09-16T08:00:00Z',
++};
++
++const CRITERIA = [
++  {
++    id: 'open1-program-criterion-cnc-1',
++    programId: PROGRAM_ID,
++    packCriterionId: 'open1-pack-criterion-cnc-1',
++    parentId: null,
++    ordinal: 1,
++    refCode: 'CNC.1',
++    nodeKind: 'criterion',
++    title: 'Machine configuration changes are authorised',
++    requirementText: 'Every CNC configuration change has an owner and approval.',
++    auditQuestion: 'Show the approval for the latest CNC configuration change.',
++    expectedEvidence: [],
++    mandatory: true,
++    applicable: true,
++    conformityStatus: 'not_tested',
++    workStatus: 'open',
++    evidenceCount: 0,
++    findingCount: 0,
++    children: [],
++  },
++] as AuditCriterionSummary[];
++
++let proposals: AuditProposalSummary[] = [
++  {
++    id: 'open1-proposal-1',
++    programId: PROGRAM_ID,
++    programName: PROGRAM.name,
++    title: 'Introduce quarterly CNC access reviews',
++    sourceFindingIds: ['finding-cnc-1'],
++    priority: 'high',
++    status: 'draft',
++    registeredInitiativeId: null,
++    updatedAt: '2026-09-16T08:00:00Z',
++  },
++];
++
++const json = (body: unknown) =>
++  new Response(JSON.stringify(body), {
++    status: 200,
++    headers: { 'Content-Type': 'application/json' },
++  });
++
++const realFetch = window.fetch.bind(window);
++window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
++  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++  const method = (init?.method || 'GET').toUpperCase();
++  if (url.includes(`/audits/programs/${PROGRAM_ID}/lifecycle`)) {
++    return json({ success: true, data: { state: 'fieldwork', allowed: [{ state: 'findings_review', blockers: [] }] } });
++  }
++  if (url.includes(`/audits/programs/${PROGRAM_ID}/coverage`)) {
++    return json({ success: true, data: { applicableTotal: 1, concludedTotal: 0, evidenceInsufficientTotal: 0 } });
++  }
++  if (url.includes('/audits/criteria')) {
++    return json({ success: true, data: { criteria: CRITERIA } });
++  }
++  if (url.includes(`/audits/programs/${PROGRAM_ID}`)) {
++    return json({ success: true, data: { program: PROGRAM } });
++  }
++  if (url.includes('/audits/proposals') && method === 'GET') {
++    return json({ success: true, data: { proposals, total: proposals.length } });
++  }
++  if (url.includes('/audits/proposals/open1-proposal-1/register') && method === 'POST') {
++    proposals = proposals.map((proposal) =>
++      proposal.id === 'open1-proposal-1'
++        ? {
++            ...proposal,
++            status: 'registered',
++            registeredInitiativeId: 'initiative-cnc-access-reviews',
++            updatedAt: '2026-09-16T08:05:00Z',
++          }
++        : proposal
++    );
++    return json({ success: true, data: proposals[0] });
++  }
++  return realFetch(input as RequestInfo, init);
++}) as typeof window.fetch;
++
++export default function Open1AuditPathsScreen(): React.ReactElement {
++  const view = new URLSearchParams(window.location.search).get('view') || 'sessions';
++  return (
++    <MemoryRouter initialEntries={['/audit-programs']}>
++      <main className="h-screen bg-c-bg p-8 text-c-text">
++        <div className="mx-auto h-full max-w-[1440px] overflow-hidden rounded-xl border border-c-border bg-c-surface">
++          {view === 'initiatives' ? (
++            <AuditInitiativesTab
++              isPolish={false}
++              programNameById={new Map([[PROGRAM_ID, PROGRAM.name]])}
++            />
++          ) : (
++            <AuditProcessesTab
++              programs={[PROGRAM]}
++              loading={false}
++              error={null}
++              onRetry={() => {}}
++              isPolish={false}
++              onProgramChanged={() => {}}
++              packTitleById={new Map([[PACK_ID, PROGRAM.packTitle || 'CNC process governance pack']])}
++              userNameById={new Map([['user-alex', 'Alex Morgan']])}
++            />
++          )}
++        </div>
++      </main>
++    </MemoryRouter>
++  );
++}

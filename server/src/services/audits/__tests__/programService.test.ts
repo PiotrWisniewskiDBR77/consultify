@@ -138,6 +138,68 @@ suite('programService (Postgres realny — U3)', () => {
     expect(child!.requirement_text).toBe(ORIGINAL_REQUIREMENT_TEXT);
   });
 
+  it('OPEN-1/U-28 — program snapshot contains criteria only from its selected pack', async () => {
+    const foreignPackId = `u3foreignpk_${randomUUID()}`;
+    const foreignCriterionId = `u3foreignpkc_${randomUUID()}`;
+    await auditsDb.auditRun(
+      `INSERT INTO audit_packs
+         (id, organization_id, pack_key, version, title, classification, publication_status,
+          finding_taxonomy, required_roles, expert_approved_by, expert_approved_at,
+          published_by, published_at, created_at, updated_at)
+       VALUES ($1,$2,$3,1,$4,'DEMONSTRATION','published','[]'::jsonb,'[]'::jsonb,
+               'u3-tester',NOW(),'u3-tester',NOW(),NOW(),NOW())`,
+      [foreignPackId, orgA, `u3-foreign-pack-key-${foreignPackId}`, 'Foreign pack guard'],
+    );
+    await auditsDb.auditRun(
+      `INSERT INTO audit_pack_criteria
+         (id, pack_id, parent_id, ordinal, ref_code, node_kind, title, expected_evidence, mandatory)
+       VALUES ($1,$2,NULL,1,'FOREIGN.1','criterion','Foreign criterion','[]'::jsonb,true)`,
+      [foreignCriterionId, foreignPackId],
+    );
+
+    try {
+      const detail = await programService.createProgramFromPack(orgA, adminActor, {
+        packId,
+        name: 'CNC pack scoping measurement',
+      });
+      const receipt = await auditsDb.auditAll<{
+        program_id: string;
+        program_pack_id: string;
+        pack_criterion_id: string;
+        source_pack_id: string;
+      }>(
+        `SELECT apc.program_id, ap.pack_id AS program_pack_id,
+                apc.pack_criterion_id, source.pack_id AS source_pack_id
+           FROM audit_program_criteria apc
+           JOIN audit_programs ap ON ap.id = apc.program_id
+           JOIN audit_pack_criteria source ON source.id = apc.pack_criterion_id
+          WHERE apc.program_id = $1
+          ORDER BY apc.ordinal ASC`,
+        [detail.program.id],
+      );
+
+      expect(receipt).toHaveLength(2);
+      expect(receipt.every((row) => row.program_pack_id === packId)).toBe(true);
+      expect(receipt.every((row) => row.source_pack_id === packId)).toBe(true);
+      expect(receipt.some((row) => row.pack_criterion_id === foreignCriterionId)).toBe(false);
+      // Durable CI/receipt line: exact ephemeral IDs plus the read-only join result.
+      // The fixture is deleted below; this is evidence, not retained product data.
+      console.info(
+        `OPEN1_CNC_PACK_SCOPE ${JSON.stringify({
+          programId: detail.program.id,
+          programPackId: packId,
+          foreignPackId,
+          foreignCriterionId,
+          rows: receipt,
+          actualCncDataset: 'DATA_NOT_PROVEN',
+        })}`,
+      );
+    } finally {
+      await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id = $1`, [foreignPackId]);
+      await auditsDb.auditRun(`DELETE FROM audit_packs WHERE id = $1`, [foreignPackId]);
+    }
+  });
+
   it("E.2 — zmiana pakietu PO utworzeniu programu NIE zmienia kryteriów programu (immutability snapshotu)", async () => {
     const detail = await programService.createProgramFromPack(orgA, adminActor, {
       packId,

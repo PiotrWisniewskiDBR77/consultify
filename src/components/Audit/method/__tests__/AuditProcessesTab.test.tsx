@@ -7,6 +7,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
 import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
@@ -33,7 +34,7 @@ const program: AuditProgramSummary = {
 describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
   it('resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields', async () => {
     render(
-      <AuditProcessesTab
+      <MemoryRouter><AuditProcessesTab
         programs={[program]}
         loading={false}
         error={null}
@@ -42,7 +43,7 @@ describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
         onProgramChanged={() => {}}
         packTitleById={new Map([['pack-1', 'ISO 19011 Audit Pack v2']])}
         userNameById={new Map([['u1', 'Ada Lovelace']])}
-      />
+      /></MemoryRouter>
     );
 
     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
@@ -52,14 +53,14 @@ describe('AuditProcessesTab — pack/lead-auditor name resolution', () => {
 
   it('falls back to "—" (never crashes) when neither the map nor the API field has a value', async () => {
     render(
-      <AuditProcessesTab
+      <MemoryRouter><AuditProcessesTab
         programs={[program]}
         loading={false}
         error={null}
         onRetry={() => {}}
         isPolish={false}
         onProgramChanged={() => {}}
-      />
+      /></MemoryRouter>
     );
 
     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
