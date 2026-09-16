@@ -63,6 +63,11 @@ vi.mock('@/services/api', () => ({
   Api: {
     getMeeting: getMeetingMock,
     listMeetingNotes: listNotesMock,
+    // [U-51] Karta wola nowa trase `GET /:id/participants` (uczestnicy po
+    // nazwisku + rola + RSVP). Atrapa modulu jest BIALA LISTA — bez tego
+    // wpisu `Api.listMeetingParticipants` jest `undefined` i karta pokazuje
+    // stan bledu uczestnikow zamiast tresci.
+    listMeetingParticipants: vi.fn().mockResolvedValue({ participants: [] }),
     // DEC-82: the right panel's Properties table now also reads the org
     // roster (organizer lookup) and the D.4/D.5 decision/follow-up-record
     // resources (counts). Stubbed to honest empty defaults by default (see

@@ -45,6 +45,11 @@ vi.mock('@/services/api', () => ({
     getMeetings: getMeetingsMock,
     getAIOperatorMeetingBrief: getBriefMock,
     listMeetingNotes: listNotesMock,
+    // [U-51] Karta wola nowa trase `GET /:id/participants` (uczestnicy po
+    // nazwisku + rola + RSVP). Atrapa modulu jest BIALA LISTA — bez tego
+    // wpisu `Api.listMeetingParticipants` jest `undefined` i karta pokazuje
+    // stan bledu uczestnikow zamiast tresci.
+    listMeetingParticipants: vi.fn().mockResolvedValue({ participants: [] }),
     generateMeetingNotes: generateNotesMock,
     decideMeetingNote: decideNoteMock,
   },

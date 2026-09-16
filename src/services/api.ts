@@ -111,6 +111,32 @@ export interface MeetingFollowUpRecordDto {
 // (server/src/services/aiOperatorService.ts:642-711) — replaces the `any` this
 // endpoint used to return, which had leaked into MeetingObjectPage.tsx's and
 // MeetingHub.tsx's own local `operatorBrief` state.
+/**
+ * [U-51] Uczestnicy spotkania jako OSOBY — 1:1 z `MeetingParticipant`
+ * (server/src/services/meeting/meetingDay16Service.ts:5-16), zwracany przez
+ * `GET /api/meeting/:id/participants` (meeting.routes.ts:462).
+ *
+ * DLACZEGO OSOBNY TYP, A NIE ZMIANA `MeetingItem.attendees`: `attendees` to
+ * legacy `attendees_json` (tablica stringów), ktora jest jednoczesnie FORMATEM
+ * ZAPISU w `PUT /api/meeting/:id` (meeting.routes.ts:451 — `attendees` musi
+ * zostac tablica stringow) i wejsciem edytora w `MeetingHub`. Zamiana jej na
+ * obiekty zepsulaby zapis; tabela `meeting_participants` to osobne, bogatsze
+ * zrodlo (nazwisko, rola, RSVP) i dostaje wlasny typ oraz wlasnego wolacza.
+ */
+export interface MeetingParticipantDto {
+  id: string;
+  organizationId: string;
+  meetingId: string;
+  participantKind: 'user' | 'guest';
+  userId: string | null;
+  email: string | null;
+  displayName: string;
+  role: 'organizer' | 'attendee' | 'optional';
+  invitationStatus: 'invited' | 'accepted' | 'declined' | 'tentative' | 'no_response';
+  deliveryStatus: 'pending' | 'sent' | 'failed' | 'blocked_demo' | 'captured';
+  respondedAt: string | null;
+}
+
 export interface MeetingOperatorBriefDto {
   meetingId: string;
   title: string;
@@ -3862,6 +3888,17 @@ export const Api = {
       timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate meeting notes');
+  },
+
+  // [U-51] Uczestnicy po nazwisku + rola + RSVP. Trasa istnieje od dnia 16
+  // (meeting.routes.ts:462), front nie mial do niej ani jednego wolacza.
+  listMeetingParticipants: async (
+    meetingId: string
+  ): Promise<{ participants: MeetingParticipantDto[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/participants`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load meeting participants');
   },
 
   listMeetingNotes: async (meetingId: string): Promise<{ notes: GovernedMeetingNoteDto[] }> => {

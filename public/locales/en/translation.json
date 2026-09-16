@@ -38919,7 +38919,17 @@
       "propertyLabel": "Property",
       "valueLabel": "Value",
       "lastSavedLabel": "Data read from server",
-      "panelAriaLabel": "Meeting details"
+      "panelAriaLabel": "Meeting details",
+      "minutesApproved": "Minutes approved",
+      "minutesApproveFailed": "Could not approve the minutes",
+      "minutesApproveForbidden": "Only the meeting organizer or an administrator can approve the minutes.",
+      "propCountInMinutes": "{{n}} in minutes, not yet recorded",
+      "history": "History",
+      "historyEmpty": "No recorded changes to the minutes yet.",
+      "historyProposed": "Minutes proposed",
+      "historyApproved": "Minutes approved",
+      "historyRejected": "Minutes rejected",
+      "historyMaterialized": "Minutes recorded as a document"
     },
     "objectNotFound": {
       "title": "Meeting not found",
@@ -38939,7 +38949,19 @@
       "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",
       "deletedNoun": "deleted"
     },
-    "project": "Project"
+    "project": "Project",
+    "participants": {
+      "roleOrganizer": "Organizer",
+      "roleAttendee": "Attendee",
+      "roleOptional": "Optional",
+      "rsvpAccepted": "Accepted",
+      "rsvpDeclined": "Declined",
+      "rsvpTentative": "Tentative",
+      "rsvpInvited": "Invited",
+      "rsvpNoResponse": "No response",
+      "legacyHint": "Invitation list only — no roles or RSVP recorded for this meeting.",
+      "loadFailed": "Could not load the participant list."
+    }
   },
   "manager": {
     "col": {

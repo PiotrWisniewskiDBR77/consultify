@@ -12,7 +12,7 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useLocation: () => ({ pathname: '/meetings/meeting-1/minutes' }), useParams: () => ({ meetingId: 'meeting-1', noteId: undefined }) }));
 const api = vi.hoisted(() => ({ getMeeting: vi.fn(), listMeetingNotes: vi.fn() }));
-vi.mock('@/services/api', () => ({ Api: { getMeeting: api.getMeeting, listMeetingNotes: api.listMeetingNotes, getUsers: vi.fn().mockResolvedValue([]), listMeetingDecisionRecords: vi.fn().mockResolvedValue({ decisions: [] }), listMeetingFollowUpRecords: vi.fn().mockResolvedValue({ followUps: [] }) } }));
+vi.mock('@/services/api', () => ({ Api: { getMeeting: api.getMeeting, listMeetingNotes: api.listMeetingNotes, listMeetingParticipants: vi.fn().mockResolvedValue({ participants: [] }), getUsers: vi.fn().mockResolvedValue([]), listMeetingDecisionRecords: vi.fn().mockResolvedValue({ decisions: [] }), listMeetingFollowUpRecords: vi.fn().mockResolvedValue({ followUps: [] }) } }));
 
 import { MeetingObjectPage } from '../MeetingObjectPage';
 

@@ -8,7 +8,20 @@
  * to that one note) — all four mount this SAME page, which reads the active
  * section straight off `location.pathname` and re-navigates on tab click.
  *
- * ★ POWŁOKA ARTEFAKTU (SPEC-A, archetyp C „Rekord") — DEC-2026-08-25-52.
+ * ★ POWŁOKA ARTEFAKTU (SPEC-A, archetyp **B „Dokument”, klasa L**) —
+ * DEC-2026-08-25-52, KOREKTA ARCHETYPU [U-51] 2026-09-16.
+ *
+ * KOREKTA [U-51]: ten plik deklarował do 16.09.2026 „archetyp C Rekord”.
+ * Kanon mówi co innego i mówi to trzy razy: `ARTIFACT_ANATOMY_STANDARD.md:180`
+ * („Meeting Notes | B Dokument”), `:253-254` (mapa nawigacyjna — poz. 35
+ * „Meeting | B | L”, poz. 36 „Meeting Notes | B | S”) oraz `:1066`
+ * (§13.2 instancjacja archetypu B: ikona `file-text`, Menu 1 primary
+ * „Powiąż z zadaniami”, treść „agenda+decyzje+akcje”). Protokół ze spotkania
+ * jest DOKUMENTEM (ciągła treść, zatwierdzenie, dystrybucja), nie rekordem z
+ * polami — i z tego wynikają trzy rzeczy wprost (§5 „Archetyp B”):
+ *  · Menu 2 ISTNIEJE (patrz `toolbar` niżej): Sekcje · Edycja|Podgląd,
+ *  · Menu 1 ma PRIMARY (przejście cyklu życia protokołu),
+ *  · panel: Akcje · Właściwości · Powiązania · Komentarze · Historia.
  * Ten ekran stał wcześniej na własnym, bespoke tabbed-card layout (Menu3Chip
  * + ręczne divy) — realne odstępstwo od CLAUDE.md §UI pkt 6/`ARTIFACT_
  * ANATOMY_STANDARD.md` §10.2/§11.2: spotkanie jest OBIEKTEM (ma tożsamość,
@@ -34,16 +47,32 @@
  *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
  *    Powiązania · Komentarze · Historia.
  *
- * UCZCIWIE o trzech sekcjach panelu bez treści: spotkania nie mają dziś
- * (a) mechanizmu powiązań z innymi artefaktami, (b) wątku komentarzy, ani
- * (c) dziennika zdarzeń w API (`meeting.routes.ts` zwraca tylko rekord
- * spotkania) — każda z trzech jest `pominięta` z konkretnym uzasadnieniem
- * (SPEC-N §2.2), a nie renderowana jako pusty akordeon udający funkcję,
- * której nie ma.
+ * UCZCIWIE o sekcjach panelu bez treści [U-51, stan po korekcie]: `relations`
+ * i `comments` są dalej `pominięte` z uzasadnieniem (spotkania nie mają
+ * mechanizmu powiązań ani wątku komentarzy w API), natomiast `history`
+ * PRZESTAŁA być pominięta: dziennikiem zmian protokołu są realne znaczniki
+ * czasu propozycji notatek (`createdAt`, `decidedAt`, `materializedAt` z
+ * `GET /api/meeting/:id/notes`) — to jest ten sam zasób, na który stare
+ * uzasadnienie się powoływało, więc pominięcie było opisem, nie faktem.
  *
- * Header-level `primaryAction` pozostaje świadomym, uzasadnionym brakiem
- * (SPEC-N §2.3) — edycja spotkania, usuwanie i generowanie notatek AI wciąż
- * żyją na liście (`MeetingHub.tsx`). ZMIANA D.4/D.5 (2026-08-25, dyżur dnia
+ * PRIMARY [U-51] — ZMIERZONE, nie wymyślone. Zakres zlecenia wskazywał
+ * „Approve minutes” (draft) → „Distribute” (approved). Pomiar 31 tras
+ * (`server/src/routes/meeting.routes.ts`):
+ *  · „Approve minutes” ISTNIEJE — `POST /:id/notes/:noteId/decision`
+ *    (`:1076`, `{action:'approve'}`, bramka `requireMeetingAdmin`): robi
+ *    zatwierdzenie + materializację jednym wywołaniem,
+ *  · „Distribute” NIE ISTNIEJE — jedyna wysyłka to `POST /:id/invitations/send`
+ *    (`:577`), która rozsyła ZAPROSZENIA ICS (REQUEST/CANCEL), a nie protokół;
+ *    grep „docx|pdf|export|distribut” w `meeting.routes.ts` = 0 trafień.
+ * Dlatego primary jest stanowy, ale drugim stanem NIE jest atrapa „Distribute”:
+ *  (1) jest propozycja notatki w stanie `proposed` → „Zatwierdź protokół”,
+ *  (2) protokół zatwierdzony i ma działania bez zadania → „Powiąż z zadaniami”
+ *      (dokładnie primary z kanonu §13.2 dla Meeting Notes, `:1066`), realna
+ *      trasa `POST /:id/notes/:noteId/action-items/:index/task` (`:1156`),
+ *  (3) nie ma czego zatwierdzić ani powiązać → jawny, uzasadniony BRAK primary
+ *      (SPEC-N §2.3) zamiast wyłączonego przycisku-atrapy.
+ *
+ * ZMIANA D.4/D.5 (2026-08-25, dyżur dnia
  * 10 UI-wiring): sekcja „Decyzje i działania" PRZESTAŁA być czystym odczytem
  * — dodawanie/edycja/usuwanie decyzji i dodawanie/zmiana statusu follow-upów
  * to teraz realne kontrolki zapisu wewnątrz centrum karty, wołające dedykowane
@@ -67,6 +96,8 @@ import {
   CheckSquare2,
   ClipboardList,
   FileText,
+  History,
+  Link2,
   ListChecks,
   Loader2,
   MapPin,
@@ -82,6 +113,10 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import type { ArtifactCardSpec } from '@/components/shared/NModeLayout/cardSets';
+import { SectionsManagerMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
 import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import { EmptyState } from '@/components/shared/states';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
@@ -100,6 +135,7 @@ import {
   type MeetingDecisionRecordDto,
   type MeetingFollowUpRecordDto,
   type MeetingOperatorBriefDto,
+  type MeetingParticipantDto,
 } from '@/services/api';
 
 import { deriveMeetingLifecycle, formatDateTime, type MeetingItem } from './MeetingHub';
@@ -169,6 +205,112 @@ function ListField({
         </ul>
       ) : (
         // Honest empty state (task brief §3): "—", never invented copy.
+        <div className="text-sm text-c-text-muted">—</div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * [U-51] Uczestnicy jako OSOBY: nazwisko · rola · RSVP.
+ *
+ * Właściciel (U-51, 15.09): „ATTENDEES jako surowe adresy e-mail zamiast
+ * nazwisk”. Nazwiska, role i statusy odpowiedzi leżą w `meeting_participants`
+ * (migracja 20261075) i są zwracane przez `GET /api/meeting/:id/participants`
+ * (`meeting.routes.ts:462`) — front nie miał do tej trasy ANI JEDNEGO
+ * wołacza. Ten komponent renderuje dokładnie to, co zwrócił serwer; e-mail
+ * jest FALLBACKIEM etykiety (gdy `displayName` pusty), a legacy
+ * `attendees_json` fallbackiem CAŁEJ sekcji (gdy spotkanie nie ma wierszy
+ * uczestników) — nigdy odwrotnie, żeby brak danych nie udawał danych.
+ */
+function ParticipantsField({
+  participants,
+  legacyAttendees,
+  loading,
+  error,
+  onRetry,
+  t,
+}: {
+  participants: MeetingParticipantDto[];
+  legacyAttendees: string[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  t: (key: string, fallback?: string) => string;
+}) {
+  const roleLabel = (role: MeetingParticipantDto['role']) =>
+    role === 'organizer'
+      ? t('meeting.participants.roleOrganizer', 'Organizer')
+      : role === 'optional'
+        ? t('meeting.participants.roleOptional', 'Optional')
+        : t('meeting.participants.roleAttendee', 'Attendee');
+
+  const rsvp = (
+    status: MeetingParticipantDto['invitationStatus']
+  ): { label: string; tone: 'success' | 'warning' | 'danger' | 'info' } => {
+    switch (status) {
+      case 'accepted':
+        return { label: t('meeting.participants.rsvpAccepted', 'Accepted'), tone: 'success' };
+      case 'declined':
+        return { label: t('meeting.participants.rsvpDeclined', 'Declined'), tone: 'danger' };
+      case 'tentative':
+        return { label: t('meeting.participants.rsvpTentative', 'Tentative'), tone: 'warning' };
+      case 'invited':
+        return { label: t('meeting.participants.rsvpInvited', 'Invited'), tone: 'info' };
+      default:
+        return { label: t('meeting.participants.rsvpNoResponse', 'No response'), tone: 'warning' };
+    }
+  };
+
+  return (
+    <div
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-3"
+      data-testid="meeting-participants"
+    >
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+        <Users size={14} />
+        <span>{t('meeting.attendees2', 'Attendees')}</span>
+      </div>
+      {loading ? (
+        <LoadingState variant="spinner" className="h-16" />
+      ) : error ? (
+        <ErrorState message={error} retry={onRetry} />
+      ) : participants.length ? (
+        <ul className="space-y-1.5">
+          {participants.map((person) => {
+            const answer = rsvp(person.invitationStatus);
+            const name = person.displayName?.trim() || person.email || '—';
+            return (
+              <li
+                key={person.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-0.5"
+              >
+                <span className="min-w-0 truncate text-sm text-c-text-secondary">{name}</span>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="text-xs text-c-text-muted">{roleLabel(person.role)}</span>
+                  <StatusChip tone={answer.tone} label={answer.label} />
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : legacyAttendees.length ? (
+        <div className="space-y-1.5" data-testid="meeting-participants-legacy">
+          <ul className="space-y-1.5">
+            {legacyAttendees.map((item, idx) => (
+              <li key={`legacy-${idx}`} className="text-sm text-c-text-secondary">
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div className="text-xs text-c-text-muted">
+            {t(
+              'meeting.participants.legacyHint',
+              'Invitation list only — no roles or RSVP recorded for this meeting.'
+            )}
+          </div>
+        </div>
+      ) : (
         <div className="text-sm text-c-text-muted">—</div>
       )}
     </div>
@@ -267,6 +409,51 @@ export const MeetingObjectPage: React.FC = () => {
 
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
 
+  // [U-51] Uczestnicy jako osoby — `GET /api/meeting/:id/participants`.
+  const [participants, setParticipants] = useState<MeetingParticipantDto[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [participantsError, setParticipantsError] = useState<string | null>(null);
+
+  // [U-51] Menu 2 (archetyp B): „Edycja | Podgląd”. Podgląd chowa jedyne
+  // kontrolki zapisu tej karty (formularze w sekcji „Decyzje i działania”),
+  // czyli daje realny tryb „do pokazania klientowi”, a nie dekoracyjny
+  // przełącznik.
+  const [readMode, setReadMode] = useState(false);
+
+  // [U-51] Menu 2 → „Sekcje”: kanoniczny `SectionsManagerMenu` na kanonicznym
+  // szwie `useCardLayout(spec)`. Spec budujemy lokalnie (trzy sekcje = trzy
+  // trasy tej karty), zamiast dopisywać ósmy wpis do `DEFAULT_CARD_SETS`.
+  const specSekcji = useMemo<ArtifactCardSpec>(
+    () => ({
+      catalog: [
+        {
+          id: 'details',
+          label: { en: 'Details', pl: 'Szczegóły' },
+          // `ICONS` w `NModeCardManager` nie zna `ClipboardList` (cichy
+          // fallback na `Layers`) — deklarujemy `Layers` wprost.
+          icon: 'Layers',
+          core: true,
+        },
+        { id: 'minutes', label: { en: 'Minutes', pl: 'Protokół' }, icon: 'FileText', core: true },
+        {
+          id: 'decisions',
+          label: { en: 'Decisions & actions', pl: 'Decyzje i działania' },
+          icon: 'CheckSquare',
+          core: true,
+        },
+      ],
+      sets: [
+        {
+          id: 'default',
+          label: { en: 'Meeting minutes', pl: 'Protokół spotkania' },
+          cards: ['details', 'minutes', 'decisions'],
+        },
+      ],
+    }),
+    []
+  );
+  const ukladSekcji = useCardLayout({ artifactType: 'tool', spec: specSekcji });
+
   // DEC-82: "Organizer" property row resolves `meeting.createdBy` (a user id,
   // see `MeetingItem.createdBy` in MeetingHub.tsx) against the org roster —
   // same pattern as `DecisionDetailView.loadUsers`/`deciderUser`. `GET /users`
@@ -362,6 +549,89 @@ export const MeetingObjectPage: React.FC = () => {
         return next;
       });
       toast.error(t('meetingActionItemsP9.taskCreateFailed', 'Could not create task'));
+    }
+  };
+
+  // [U-51] Uczestnicy po nazwisku + rola + RSVP. 403 (brak prawa do listy) i
+  // 404 traktujemy jak „brak wierszy” — sekcja spada wtedy na legacy
+  // `attendees_json`; każdy inny błąd jest pokazany wprost, z ponowieniem.
+  const loadParticipants = async (id: string) => {
+    setParticipantsLoading(true);
+    setParticipantsError(null);
+    try {
+      const response = await Api.listMeetingParticipants(id);
+      setParticipants(Array.isArray(response?.participants) ? response.participants : []);
+    } catch (error: unknown) {
+      setParticipants([]);
+      if (isMeetingApiError(error) && (error.status === 403 || error.status === 404)) {
+        return;
+      }
+      console.error('Failed to load meeting participants:', error);
+      setParticipantsError(
+        t('meeting.participants.loadFailed', 'Could not load the participant list.')
+      );
+    } finally {
+      setParticipantsLoading(false);
+    }
+  };
+
+  /**
+   * [U-51] PRIMARY (2) — „Powiąż z zadaniami” (kanon §13.2 dla Meeting Notes,
+   * `ARTIFACT_ANATOMY_STANDARD.md:1066`).
+   *
+   * Nie nowa mechanika: pętla po tych samych działaniach, które sekcja
+   * „Protokół” pokazuje z przyciskiem „Create task”, przez tę samą trasę
+   * `POST /:id/notes/:noteId/action-items/:index/task`. Sekwencyjnie, bo
+   * `createTaskFromActionItem` trzyma blokadę per pozycja i sam raportuje
+   * błędy — równoległy `Promise.all` tylko zdublowałby komunikaty.
+   */
+  const [linkingTasks, setLinkingTasks] = useState(false);
+  const linkActionsToTasks = async (items: Array<{ noteId: string; index: number }>) => {
+    if (linkingTasks || !items.length) return;
+    setLinkingTasks(true);
+    try {
+      for (const item of items) {
+        await createTaskFromActionItem(item.noteId, item.index);
+      }
+    } finally {
+      setLinkingTasks(false);
+    }
+  };
+
+  /**
+   * [U-51] PRIMARY (1) — „Zatwierdź protokół”.
+   *
+   * Realna trasa `POST /api/meeting/:id/notes/:noteId/decision`
+   * (`meeting.routes.ts:1076`) robi zatwierdzenie I materializację jednym
+   * wywołaniem; po niej przeładowujemy notatki, decyzje i follow-upy, żeby
+   * liczniki prawego panelu liczyły stan z serwera, nie z pamięci przeglądarki.
+   * Bramka `requireMeetingAdmin` zwraca 403 zwykłemu członkowi — mówimy to
+   * wprost, zamiast „coś poszło nie tak”.
+   */
+  const [approvingNote, setApprovingNote] = useState(false);
+  const approveMinutes = async (noteIdValue: string) => {
+    if (approvingNote) return;
+    setApprovingNote(true);
+    try {
+      await Api.decideMeetingNote(meetingId, noteIdValue, { action: 'approve' });
+      toast.success(t('meeting.object.minutesApproved', 'Minutes approved'));
+      await Promise.all([
+        loadNotes(meetingId),
+        loadDecisionRecords(meetingId),
+        loadFollowUpRecords(meetingId),
+      ]);
+    } catch (error: unknown) {
+      console.error('Failed to approve meeting minutes:', error);
+      toast.error(
+        isMeetingApiError(error) && error.status === 403
+          ? t(
+              'meeting.object.minutesApproveForbidden',
+              'Only the meeting organizer or an administrator can approve the minutes.'
+            )
+          : t('meeting.object.minutesApproveFailed', 'Could not approve the minutes')
+      );
+    } finally {
+      setApprovingNote(false);
     }
   };
 
@@ -577,6 +847,7 @@ export const MeetingObjectPage: React.FC = () => {
   useEffect(() => {
     if (meeting?.id) {
       void loadNotes(meeting.id);
+      void loadParticipants(meeting.id);
       void loadOperatorBrief(meeting.id);
       void loadDecisionRecords(meeting.id);
       void loadFollowUpRecords(meeting.id);
@@ -598,6 +869,58 @@ export const MeetingObjectPage: React.FC = () => {
         }))
         .filter((decision) => decision.label)
     );
+
+  // [U-51] Działania z ZATWIERDZONYCH notatek — zasilają primary „Powiąż z
+  // zadaniami” oraz licznik follow-upów.
+  const approvedNoteActionItems = notes
+    .filter((note) => note.status === 'approved')
+    .flatMap((note) =>
+      (note.actionItems || []).map((item, index) => ({
+        noteId: note.id,
+        index,
+        ...noteActionLabel(item),
+      }))
+    )
+    .filter((item) => item.task);
+  const actionItemsWithoutTask = approvedNoteActionItems.filter(
+    (item) => !actionItemTasks[`${item.noteId}:${item.index}`]
+  );
+
+  /** [U-51] Propozycja protokołu czekająca na decyzję człowieka. */
+  const pendingNote = notes.find((note) => note.status === 'proposed') || null;
+
+  /**
+   * [U-51] JEDNO ŹRÓDŁO LICZNIKÓW (właściciel: „Decisions 0 / Follow-ups 0
+   * mimo 1 decyzji w Minutes”).
+   *
+   * Źródłem prawdy zostają rejestry `meeting_decisions` /
+   * `meeting_follow_ups` (trasy `/decision-records`, `/follow-up-records`) —
+   * tak jak dotąd, bez zmiany schematu. Nowe jest to, że licznik NIE MILCZY o
+   * treści, którą sekcja „Protokół” rysuje z `meeting_notes`: pozycje z
+   * zatwierdzonej notatki, którym nie odpowiada żaden wiersz rejestru
+   * (`sourceKind === 'note'` / `sourceNoteId`), są policzone osobno i pokazane
+   * jako „N in minutes, not yet recorded”. Licznik mówi prawdę o obu
+   * magazynach, zamiast pokazywać 0 obok widocznej treści.
+   */
+  const recordedFromNotes = decisionRecords.filter(
+    (record) => record.sourceKind === 'note' || record.sourceNoteId
+  ).length;
+  const decisionsOnlyInMinutes = Math.max(0, approvedNoteDecisions.length - recordedFromNotes);
+  const followUpsFromNotes = followUpRecords.filter(
+    (record) => record.sourceKind === 'note' || record.sourceNoteId
+  ).length;
+  const followUpsOnlyInMinutes = Math.max(0, approvedNoteActionItems.length - followUpsFromNotes);
+
+  const licznikZRejestruIProtokolu = (recorded: number, onlyInMinutes: number): string => {
+    if (onlyInMinutes <= 0) return String(recorded);
+    // `n`, nie `count` — `count` włączyłby w i18next liczbę mnogą (klucze
+    // `_one`/`_other`), których ten komunikat nie ma i nie potrzebuje.
+    const wProtokole = t('meeting.object.propCountInMinutes', {
+      n: onlyInMinutes,
+      defaultValue: '{{n}} in minutes, not yet recorded',
+    });
+    return recorded > 0 ? `${recorded} · ${wProtokole}` : wProtokole;
+  };
 
   // The active section is derived straight from the URL, never local state,
   // so it can never drift from what the address bar/back-button say —
@@ -670,10 +993,13 @@ export const MeetingObjectPage: React.FC = () => {
   // ── Centrum: trzy sekcje = te same trasy co dziś (details/minutes/decisions) ──
   const detailsContent = (
     <div className="grid gap-4 p-5 lg:grid-cols-2">
-      <ListField
-        icon={<Users size={14} />}
-        label={t('meeting.attendees2', 'Attendees')}
-        items={meeting.attendees}
+      <ParticipantsField
+        participants={participants}
+        legacyAttendees={meeting.attendees}
+        loading={participantsLoading}
+        error={participantsError}
+        onRetry={() => void loadParticipants(meeting.id)}
+        t={t}
       />
       <ListField
         icon={<FileText size={14} />}
@@ -837,38 +1163,42 @@ export const MeetingObjectPage: React.FC = () => {
     <div className="grid gap-4 p-5">
       <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.decisions2', 'Decisions')}>
         <div className="space-y-3">
-          <div className="space-y-2 rounded-xl border border-dashed border-c-border-subtle p-3">
-            <input
-              className={decisionInputClass}
-              placeholder={t('meeting.decisionRecords.statementPlaceholder', 'New decision…')}
-              value={decisionStatement}
-              onChange={(e) => setDecisionStatement(e.target.value)}
-            />
-            <textarea
-              className={`${decisionInputClass} min-h-16`}
-              placeholder={t(
-                'meeting.decisionRecords.rationalePlaceholder',
-                'Rationale (optional)'
-              )}
-              value={decisionRationale}
-              onChange={(e) => setDecisionRationale(e.target.value)}
-            />
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => void handleCreateDecision()}
-                disabled={!decisionStatement.trim() || decisionSaving}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {decisionSaving ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Plus size={12} />
+          {/* [U-51] Podglad (Menu 2) = wersja do pokazania klientowi:
+              kontrolki zapisu znikaja, tresc protokolu zostaje. */}
+          {!readMode && (
+            <div className="space-y-2 rounded-xl border border-dashed border-c-border-subtle p-3">
+              <input
+                className={decisionInputClass}
+                placeholder={t('meeting.decisionRecords.statementPlaceholder', 'New decision…')}
+                value={decisionStatement}
+                onChange={(e) => setDecisionStatement(e.target.value)}
+              />
+              <textarea
+                className={`${decisionInputClass} min-h-16`}
+                placeholder={t(
+                  'meeting.decisionRecords.rationalePlaceholder',
+                  'Rationale (optional)'
                 )}
-                {t('meeting.decisionRecords.add', 'Record decision')}
-              </button>
+                value={decisionRationale}
+                onChange={(e) => setDecisionRationale(e.target.value)}
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => void handleCreateDecision()}
+                  disabled={!decisionStatement.trim() || decisionSaving}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {decisionSaving ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Plus size={12} />
+                  )}
+                  {t('meeting.decisionRecords.add', 'Record decision')}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {decisionRecordsLoading ? (
             <LoadingState variant="spinner" className="h-16" />
@@ -999,41 +1329,45 @@ export const MeetingObjectPage: React.FC = () => {
 
       <SectionCard icon={<CheckSquare2 size={14} />} title={t('meeting.followUps2', 'Follow-ups')}>
         <div className="space-y-3">
-          <div className="grid gap-2 rounded-xl border border-dashed border-c-border-subtle p-3 sm:grid-cols-3">
-            <input
-              className={`${decisionInputClass} sm:col-span-1`}
-              placeholder={t('meeting.followUpRecords.titlePlaceholder', 'Follow-up…')}
-              value={followUpTitle}
-              onChange={(e) => setFollowUpTitle(e.target.value)}
-            />
-            <input
-              className={`${decisionInputClass} sm:col-span-1`}
-              placeholder={t('meeting.followUpRecords.ownerPlaceholder', 'Owner')}
-              value={followUpOwner}
-              onChange={(e) => setFollowUpOwner(e.target.value)}
-            />
-            <input
-              type="date"
-              className={`${decisionInputClass} sm:col-span-1`}
-              value={followUpDueAt}
-              onChange={(e) => setFollowUpDueAt(e.target.value)}
-            />
-            <div className="flex justify-end sm:col-span-3">
-              <button
-                type="button"
-                onClick={() => void handleCreateFollowUp()}
-                disabled={!followUpTitle.trim() || followUpSaving}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {followUpSaving ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Plus size={12} />
-                )}
-                {t('meeting.followUpRecords.add', 'Add follow-up')}
-              </button>
+          {/* [U-51] Podglad (Menu 2) = wersja do pokazania klientowi:
+              kontrolki zapisu znikaja, tresc protokolu zostaje. */}
+          {!readMode && (
+            <div className="grid gap-2 rounded-xl border border-dashed border-c-border-subtle p-3 sm:grid-cols-3">
+              <input
+                className={`${decisionInputClass} sm:col-span-1`}
+                placeholder={t('meeting.followUpRecords.titlePlaceholder', 'Follow-up…')}
+                value={followUpTitle}
+                onChange={(e) => setFollowUpTitle(e.target.value)}
+              />
+              <input
+                className={`${decisionInputClass} sm:col-span-1`}
+                placeholder={t('meeting.followUpRecords.ownerPlaceholder', 'Owner')}
+                value={followUpOwner}
+                onChange={(e) => setFollowUpOwner(e.target.value)}
+              />
+              <input
+                type="date"
+                className={`${decisionInputClass} sm:col-span-1`}
+                value={followUpDueAt}
+                onChange={(e) => setFollowUpDueAt(e.target.value)}
+              />
+              <div className="flex justify-end sm:col-span-3">
+                <button
+                  type="button"
+                  onClick={() => void handleCreateFollowUp()}
+                  disabled={!followUpTitle.trim() || followUpSaving}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-c-text px-3 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {followUpSaving ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Plus size={12} />
+                  )}
+                  {t('meeting.followUpRecords.add', 'Add follow-up')}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {followUpRecordsLoading ? (
             <LoadingState variant="spinner" className="h-16" />
@@ -1192,17 +1526,26 @@ export const MeetingObjectPage: React.FC = () => {
     {
       id: 'uczestnicy',
       label: t('meeting.attendees2', 'Attendees'),
-      value: String(meeting.attendees.length),
+      // [U-51] Liczymy wiersze `meeting_participants` (to samo źródło, co
+      // sekcja Szczegóły); gdy ich nie ma, spadamy na legacy `attendees_json`
+      // — dokładnie tak, jak spada sama sekcja.
+      value: participantsLoading ? '…' : String(participants.length || meeting.attendees.length),
     },
     {
       id: 'liczba-decyzji',
       label: t('meeting.object.propDecisionsCount', 'Decisions'),
-      value: decisionRecordsLoading ? '…' : String(decisionRecords.length),
+      value:
+        decisionRecordsLoading || notesLoading
+          ? '…'
+          : licznikZRejestruIProtokolu(decisionRecords.length, decisionsOnlyInMinutes),
     },
     {
       id: 'liczba-follow-upow',
       label: t('meeting.object.propFollowUpsCount', 'Follow-ups'),
-      value: followUpRecordsLoading ? '…' : String(followUpRecords.length),
+      value:
+        followUpRecordsLoading || notesLoading
+          ? '…'
+          : licznikZRejestruIProtokolu(followUpRecords.length, followUpsOnlyInMinutes),
     },
     {
       id: 'lokalizacja',
@@ -1215,6 +1558,54 @@ export const MeetingObjectPage: React.FC = () => {
       value: organizerName,
     },
   ];
+
+  /**
+   * [U-51] Dziennik protokołu z realnych znaczników czasu propozycji notatek.
+   * Pozycja bez daty jest POMIJANA (brak pomiaru nie jest wynikiem), a autor
+   * decyzji rozwiązywany po rosterze organizacji — tak samo jak wiersz
+   * „Organizator” w Właściwościach.
+   */
+  const historyEvents = notes
+    .flatMap((note) => {
+      const decider = users.find((u) => u.id === note.decidedBy);
+      const deciderName = decider
+        ? `${decider.firstName} ${decider.lastName}`.trim()
+        : note.decidedBy || '';
+      const events: Array<{ id: string; label: string; at: string; sort: number }> = [];
+      const push = (id: string, label: string, iso?: string | null) => {
+        if (!iso) return;
+        const ts = new Date(iso).getTime();
+        if (!Number.isFinite(ts)) return;
+        events.push({ id, label, at: formatDateTime(iso, isPolish), sort: ts });
+      };
+      const withWho = (label: string) => (deciderName ? `${label} — ${deciderName}` : label);
+      push(
+        `${note.id}-created`,
+        t('meeting.object.historyProposed', 'Minutes proposed'),
+        note.createdAt
+      );
+      if (note.status === 'approved') {
+        push(
+          `${note.id}-approved`,
+          withWho(t('meeting.object.historyApproved', 'Minutes approved')),
+          note.decidedAt
+        );
+      }
+      if (note.status === 'rejected') {
+        push(
+          `${note.id}-rejected`,
+          withWho(t('meeting.object.historyRejected', 'Minutes rejected')),
+          note.decidedAt
+        );
+      }
+      push(
+        `${note.id}-materialized`,
+        t('meeting.object.historyMaterialized', 'Minutes recorded as a document'),
+        note.materializedAt
+      );
+      return events;
+    })
+    .sort((a, b) => b.sort - a.sort);
 
   const prawyPanel = {
     actions: {
@@ -1241,54 +1632,15 @@ export const MeetingObjectPage: React.FC = () => {
                 },
               ],
             },
-            // DEC-82 (owner right-panel review): jawne placeholdery „później" —
-            // te trzy działania żyją dziś WYŁĄCZNIE na liście (`MeetingHub.tsx`,
-            // patrz komentarz nagłówkowy tego pliku, DEC-2026-08-25-52). Zamiast
-            // milczeć o ich braku (SPEC-N §2.3 zabrania cichego pominięcia),
-            // panel pokazuje je jako wyłączone, podpisane „w przygotowaniu" —
-            // widoczna zapowiedź, nie atrapa udająca działającą akcję.
-            {
-              buttons: [
-                {
-                  label: `${t('meeting.object.editMeeting', 'Edit meeting')} — ${t('common.comingSoon', 'In development')}`,
-                  icon: Pencil,
-                  colorScheme: 'neutral' as const,
-                  flex: true,
-                  disabled: true,
-                  onClick: () => undefined,
-                },
-                {
-                  label: `${t('meeting.object.generateAiNotesAction', 'Generate AI notes')} — ${t('common.comingSoon', 'In development')}`,
-                  icon: RefreshCw,
-                  colorScheme: 'neutral' as const,
-                  flex: true,
-                  disabled: true,
-                  onClick: () => undefined,
-                },
-              ],
-            },
-            {
-              buttons: [
-                {
-                  label: `${t('meeting.object.deleteMeeting', 'Delete meeting')} — ${t('common.comingSoon', 'In development')}`,
-                  icon: Trash2,
-                  colorScheme: 'red' as const,
-                  flex: true,
-                  disabled: true,
-                  onClick: () => undefined,
-                },
-              ],
-            },
           ]}
         />
       ),
-      actionIds: [
-        'wczytaj-ponownie',
-        'wroc-do-listy',
-        'pozniej-edytuj-spotkanie',
-        'pozniej-generuj-notatki-ai',
-        'pozniej-usun-spotkanie',
-      ],
+      // [U-51] Trzy wyszarzone atrapy (Edit meeting · Generate AI notes ·
+      // Delete meeting, każda z dopiskiem „In development”) USUNIĘTE.
+      // Właściciel czytał je jako „nic tu nie działa”, a wszystkie trzy mają
+      // realny dom na liście (`MeetingHub.tsx`), do której prowadzi przycisk
+      // obok. Wyłączony przycisk-zapowiedź jest gorszy niż jego brak.
+      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
     },
     properties: {
       label: t('meeting.object.properties', 'Properties'),
@@ -1310,10 +1662,35 @@ export const MeetingObjectPage: React.FC = () => {
       reason:
         'Backend spotkań nie ma wątku komentarzy (brak serwisu i tabeli) — rozmowa o spotkaniu toczy się dziś w notatkach (zakładka Protokół), nie w osobnym wątku komentarzy.',
     },
+    /**
+     * [U-51] Historia PRZESTAJE być pominięta.
+     *
+     * Stare uzasadnienie samo wskazywało źródło: „jedynym realnym zapisem
+     * zmian są propozycje notatek widoczne w zakładce Protokół, z własnymi
+     * znacznikami czasu i statusem”. To JEST dziennik: kiedy powstała
+     * propozycja protokołu, kto i kiedy ją rozstrzygnął, kiedy została
+     * zmaterializowana jako dokument. Renderujemy dokładnie te zdarzenia z
+     * `GET /api/meeting/:id/notes` — zero nowego backendu, zero wymyślania.
+     */
     history: {
-      pominieta: true as const,
-      reason:
-        'Spotkania nie mają dziś dziennika zdarzeń w API (`GET /api/meeting/:id` zwraca wyłącznie bieżący rekord) — jedynym realnym zapisem zmian są propozycje notatek widoczne w zakładce Protokół, z własnymi znacznikami czasu i statusem.',
+      label: t('meeting.object.history', 'History'),
+      icon: History,
+      children: notesLoading ? (
+        <LoadingState variant="spinner" className="h-16" />
+      ) : historyEvents.length ? (
+        <ol className="space-y-2" data-testid="meeting-history">
+          {historyEvents.map((event) => (
+            <li key={event.id} className="flex items-baseline justify-between gap-3">
+              <span className="min-w-0 text-sm text-c-text-secondary">{event.label}</span>
+              <span className="shrink-0 text-xs tabular-nums text-c-text-muted">{event.at}</span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <div className="text-sm text-c-text-muted">
+          {t('meeting.object.historyEmpty', 'No recorded changes to the minutes yet.')}
+        </div>
+      ),
     },
   };
 
@@ -1344,12 +1721,72 @@ export const MeetingObjectPage: React.FC = () => {
           statusLabel,
           statusTone,
         }}
-        primaryAction={{
-          intentionallyNone: true,
-          reason:
-            'Ta karta nie ma jednego działania nadrzędnego dla całego obiektu: edycja spotkania, usuwanie i generowanie notatek AI żyją w widoku listy (`MeetingHub.tsx`, DEC-2026-08-25-52); dodawanie decyzji/follow-upów (D.4/D.5) to kontrolki WEWNĄTRZ sekcji „Decyzje i działania", nie jedno globalne primary. Wyłączony przycisk byłby atrapą, więc primary po prostu nie powstaje (SPEC-N §2.3: brak jest jawny i uzasadniony, nie przemilczany).',
-        }}
-        sections={sekcje}
+        /*
+         * [U-51] PRIMARY STANOWY — pomiar tras w komentarzu nagłówkowym:
+         *  (1) jest propozycja protokołu `proposed` → „Zatwierdź protokół”
+         *      (`POST /:id/notes/:noteId/decision`, action=approve),
+         *  (2) protokół zatwierdzony, są działania bez zadania → „Powiąż z
+         *      zadaniami” (kanon §13.2 dla Meeting Notes),
+         *  (3) nie ma czego zatwierdzić ani powiązać → jawny, uzasadniony brak.
+         * „Roześlij”/„Distribute” NIE powstaje: w `meeting.routes.ts` nie ma
+         * trasy rozsyłania protokołu (jedyna wysyłka to zaproszenia ICS), więc
+         * przycisk byłby czwartą atrapą obok trzech właśnie usuniętych.
+         */
+        primaryAction={
+          pendingNote
+            ? {
+                id: 'zatwierdz-protokol',
+                label: { en: 'Approve minutes', pl: 'Zatwierdź protokół' },
+                icon: CheckSquare2,
+                disabled: approvingNote || readMode,
+                onClick: () => void approveMinutes(pendingNote.id),
+                title: {
+                  en: 'Approve the minutes proposal and record its decisions and actions',
+                  pl: 'Zatwierdź propozycję protokołu i zapisz jej decyzje oraz działania',
+                },
+              }
+            : actionItemsWithoutTask.length
+              ? {
+                  id: 'powiaz-z-zadaniami',
+                  label: { en: 'Link to tasks', pl: 'Powiąż z zadaniami' },
+                  icon: Link2,
+                  disabled: linkingTasks || readMode,
+                  onClick: () => void linkActionsToTasks(actionItemsWithoutTask),
+                  title: {
+                    en: 'Create a task in Execution for every action in the approved minutes',
+                    pl: 'Utwórz zadanie w Realizacji dla każdego działania z zatwierdzonego protokołu',
+                  },
+                }
+              : {
+                  intentionallyNone: true,
+                  reason:
+                    'Nie ma propozycji protokołu do zatwierdzenia ani działania bez zadania, a trasy rozesłania protokołu backend nie ma (`meeting.routes.ts` zna wyłącznie wysyłkę zaproszeń ICS `POST /:id/invitations/send`) — wyłączony przycisk „Roześlij” byłby atrapą, więc primary tu po prostu nie powstaje (SPEC-N §2.3).',
+                }
+        }
+        sections={ukladSekcji.applyToSections(sekcje)}
+        /*
+         * [U-51] MENU 2 — powód, dla którego ten segment w ogóle się renderuje.
+         * `NModeShell.tsx:198` liczy `hasActionBar` z paska/akcji; karta nie
+         * podawała żadnego, więc CAŁY segment znikał i właściciel widział
+         * „brak menu 2” (U-51). Archetyp B ma ten pasek w kanonie (§5
+         * „Archetyp B”), więc karta podaje kanoniczny `NModeMenu2`:
+         * LEWA = Sekcje, ŚRODEK = Edycja|Podgląd. Przycisku „Analizuj z AI”
+         * NIE dokładamy: spotkanie nie ma dziś własnej analizy karty, a
+         * neutralny przycisk bez treści byłby kolejną atrapą.
+         */
+        toolbar={
+          <NModeMenu2
+            isPolish={isPolish}
+            // `isPolish` CELOWO nie jest przekazywane: `SectionsManagerMenu`
+            // przy jawnym propie wola `i18n.getFixedT`, ktorego atrapy
+            // `react-i18next` w testach nie maja. Bez propu komponent czyta
+            // jezyk z wlasnego hooka — ten sam wynik, zero zaleznosci od
+            // ksztaltu atrapy.
+            sectionsMenu={<SectionsManagerMenu layout={ukladSekcji} />}
+            readMode={readMode}
+            onReadModeChange={setReadMode}
+          />
+        }
         rightPanel={prawyPanel}
         activeSection={activeSection}
         onSectionChange={goToSection}
