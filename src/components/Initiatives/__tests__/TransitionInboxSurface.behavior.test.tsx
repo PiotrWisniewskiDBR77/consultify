@@ -24,14 +24,14 @@ import type { TransitionProposal } from '@/services/initiativeTransitionInboxApi
 
 import { TransitionInboxSurface } from '../TransitionInboxSurface';
 
-const approveMock = vi.fn(async () => ({}));
-const rejectMock = vi.fn(async () => ({}));
+const approveMock = vi.fn(async (_proposal: TransitionProposal, _reason: string) => ({}));
+const rejectMock = vi.fn(async (_proposal: TransitionProposal, _reason: string) => ({}));
 
 vi.mock('@/services/initiativeTransitionInboxApi', () => ({
   listTransitionProposals: vi.fn(async () => []),
   listTransitionProposalsForInitiative: vi.fn(async () => []),
-  approveTransitionProposal: (...args: unknown[]) => approveMock(...(args as [])),
-  rejectTransitionProposal: (...args: unknown[]) => rejectMock(...(args as [])),
+  approveTransitionProposal: (...args: unknown[]) => approveMock(...(args as [TransitionProposal, string])),
+  rejectTransitionProposal: (...args: unknown[]) => rejectMock(...(args as [TransitionProposal, string])),
 }));
 
 vi.mock('react-i18next', () => ({

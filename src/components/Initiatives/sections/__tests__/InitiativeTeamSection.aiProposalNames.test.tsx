@@ -60,7 +60,16 @@ async function renderWithUsers(users: any[]) {
   const ctx = makeContext({ users, teamAiRequest: { nonce: 1 } });
   return render(
     <InitiativeContext.Provider value={ctx}>
-      <InitiativeTeamSection />
+      <InitiativeTeamSection
+        sectionType={{
+          id: 'team', key: 'team', name: 'Team', namePl: 'Zespół',
+          description: null, descriptionPl: null, category: 'content',
+          columnPosition: 'left', defaultOrder: 0, icon: null, iconColor: null,
+          iconBg: null, componentKey: 'InitiativeTeamSection', isSystem: true, isActive: true,
+        }}
+        expanded
+        onToggle={vi.fn()}
+      />
     </InitiativeContext.Provider>
   );
 }

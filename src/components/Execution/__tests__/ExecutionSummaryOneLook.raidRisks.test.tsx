@@ -35,7 +35,7 @@ const baseProps = {
 // POMIAR: mock `/api/raid` z 16 pozycji (Wave 1.12-R1b), już przycięty do
 // TOP 10 przez `topRaidItemsByLevel` (host — ExecutionHub) w kolejności
 // malejącej po poziomie.
-const TOP_10: OneLookRisk[] = Array.from({ length: 9 }, (_, i) => ({
+const TOP_10: OneLookRisk[] = Array.from({ length: 9 }, (_, i): OneLookRisk => ({
   id: `r${i}`,
   title: `Ryzyko ${i}`,
   score: 9 - i,

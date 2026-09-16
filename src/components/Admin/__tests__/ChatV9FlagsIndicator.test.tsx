@@ -134,7 +134,7 @@ describe('ChatV9FlagsIndicator debug gate (production build simulation)', () => 
   };
 
   beforeEach(() => {
-    vi.stubEnv('DEV', false as unknown as string);
+    vi.stubEnv('DEV', false);
     window.sessionStorage.clear();
     setSearch('');
   });

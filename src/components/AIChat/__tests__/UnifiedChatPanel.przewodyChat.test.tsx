@@ -7,7 +7,7 @@ const harness = vi.hoisted(() => {
   const navigate = vi.fn();
   const clearKickoff = vi.fn();
   const addChatMessage = vi.fn();
-  const startStream = vi.fn(async () => undefined);
+  const startStream = vi.fn(async (_prompt: string): Promise<void> => undefined);
   const featureFlags = new Map<string, boolean>();
   const appState: Record<string, unknown> = {
   currentStreamContent: '',
@@ -118,7 +118,28 @@ vi.mock('../../../hooks/useAIStream', () => ({
   }),
 }));
 vi.mock('../../../hooks/useUniversalVoice', () => ({
-  useUniversalVoice: () => ({ isSupported: false, isListening: false }),
+  useUniversalVoice: () => ({
+    state: {
+      mode: 'idle',
+      isListening: false,
+      isSpeaking: false,
+      isProcessing: false,
+      transcript: '',
+      interimTranscript: '',
+      error: null,
+      audioLevel: 0,
+      recordingDuration: 0,
+    },
+    settings: {
+      autoSpeakResponses: false,
+    },
+    isSupported: false,
+    startListening: vi.fn(),
+    stopListening: vi.fn(),
+    speak: vi.fn(async () => undefined),
+    stopSpeaking: vi.fn(),
+    updateSettings: vi.fn(),
+  }),
 }));
 vi.mock('../../../hooks/useDemoSession', () => ({
   useDemoSession: () => ({

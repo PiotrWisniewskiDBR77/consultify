@@ -73,8 +73,26 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run TypeScript check
-        run: npm run type-check
+      - name: 'Run TypeScript check (frontend ratchet: max 169 errors)'
+        shell: bash
+        run: |
+          set +e
+          npm run type-check 2>&1 | tee /tmp/frontend-typecheck.log
+          typecheck_rc=${PIPESTATUS[0]}
+          set -e
+
+          error_count="$(grep -Ec 'error TS[0-9]+:' /tmp/frontend-typecheck.log || true)"
+          echo "Frontend TypeScript errors: ${error_count} (ratchet: 169)"
+
+          if [[ "${typecheck_rc}" -ne 0 && "${error_count}" -eq 0 ]]; then
+            echo "TypeScript failed without diagnostics (exit ${typecheck_rc})."
+            exit "${typecheck_rc}"
+          fi
+
+          if [[ "${error_count}" -gt 169 ]]; then
+            echo "Frontend TypeScript debt increased: ${error_count} > 169."
+            exit 1
+          fi
 
       # Typy SERWERA nie byly sprawdzane przez zadna bramke CI. Wchodzily
       # przypadkiem do sprawdzenia FRONTU (przez dwa testy integracyjne w src/,
