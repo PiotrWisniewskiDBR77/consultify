@@ -2261,8 +2261,23 @@ router.get(
       const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
       const tableName = await ExportService.getTableName(tableId);
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-      const buffer = await ExportService.buildXlsxBuffer({ tableId, viewId, fieldIds });
+      let organizationName = 'Organization';
+      if (authReq.organizationId) {
+        const organizationResult = (await (
+          await import('../database/Database.js')
+        )
+          .getDatabase()
+          .query('SELECT name FROM organizations WHERE id = $1', [authReq.organizationId])) as {
+          rows?: Array<{ name?: string }>;
+        };
+        organizationName = organizationResult.rows?.[0]?.name || organizationName;
+      }
+      const buffer = await ExportService.buildXlsxBuffer({
+        tableId,
+        viewId,
+        fieldIds,
+        organizationName,
+      });
       exportArtifactId = registeredArtifactId;
       if (!exportArtifactId && authReq.organizationId && authReq.userId) {
         const artifact = await artifactRegistryService
