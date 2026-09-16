@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-09-16T11:03:24.612Z",
+  "database": "local restored dump",
+  "objects": {
+    "drd": {
+      "id": "b2de5832-0a42-5639-8e46-6ecff2db82e5",
+      "docxBytes": 161677,
+      "pptxBytes": 362124,
+      "pdfBytes": 50495,
+      "status": "PASS"
+    },
+    "deck": {
+      "id": "56ba0108-856b-54a6-9a96-76292797342b",
+      "status": "PASS",
+      "bytes": 125042,
+      "slides": 6,
+      "warnings": []
+    },
+    "workbook": {
+      "id": "2352986d-4d0a-5f43-afa3-0c721c302a53",
+      "status": "PASS",
+      "bytes": 10475,
+      "title": "Scrap Cost Model",
+      "note": "dump has no Supplier Quality Scorecard; this is the only generated_workbooks row"
+    },
+    "availability": {
+      "report_builder_reports": 4,
+      "audit_reports": 0,
+      "audit_outputs": 0,
+      "generated_workbooks": 1
+    }
+  }
+}

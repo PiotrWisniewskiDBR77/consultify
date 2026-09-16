@@ -1,0 +1,299 @@
+{
+  "generatedAt": "2026-09-16T11:07:23Z",
+  "contractVersion": "export-structure-v0",
+  "comparisons": [
+    {
+      "id": "frozen-drd-b2de5832-docx",
+      "note": "Real HTTP application export versus accepted client-final report mockup.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-drd-route-current.docx",
+        "bytes": 161676,
+        "runFonts": [],
+        "brandCrimsonHits": 3,
+        "semanticRiskRedHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 2
+        },
+        "kind": "docx",
+        "sections": 1,
+        "headings": 150,
+        "tables": 18,
+        "tocFields": 0,
+        "headers": 0,
+        "footers": 2
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/client-final-report.docx",
+        "bytes": 18920,
+        "runFonts": [
+          "Arial"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": true,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "docx",
+        "sections": 2,
+        "headings": 16,
+        "tables": 11,
+        "tocFields": 0,
+        "headers": 1,
+        "footers": 2
+      },
+      "numeric": {
+        "sections": {
+          "app": 1,
+          "mock": 2,
+          "delta": -1
+        },
+        "tables": {
+          "app": 18,
+          "mock": 11,
+          "delta": 7
+        },
+        "headings": {
+          "app": 150,
+          "mock": 16,
+          "delta": 134
+        }
+      },
+      "requirements": {
+        "runFontsAreThemeDriven": true,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroBrandCrimsonFilewide": false,
+        "semanticRiskRedReported": 0
+      }
+    },
+    {
+      "id": "steering-deck",
+      "note": "Engine probe is structurally renderable, but the real HTTP route is blocked by P1 quality gate; see northwind-steering-route-422.json.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-steering-current.pptx",
+        "bytes": 125042,
+        "runFonts": [
+          "Inter"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 1
+        },
+        "kind": "pptx",
+        "slides": 6,
+        "masters": 1,
+        "layouts": 4,
+        "charts": 0,
+        "tables": 0
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/deck-board.pptx",
+        "bytes": 250779,
+        "runFonts": [
+          "Arial"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": true,
+          "northwind": true,
+          "clientLogoRefs": 1
+        },
+        "kind": "pptx",
+        "slides": 8,
+        "masters": 1,
+        "layouts": 1,
+        "charts": 1,
+        "tables": 1
+      },
+      "numeric": {
+        "slides": {
+          "app": 6,
+          "mock": 8,
+          "delta": -2
+        },
+        "layouts": {
+          "app": 4,
+          "mock": 1,
+          "delta": 3
+        },
+        "charts": {
+          "app": 0,
+          "mock": 1,
+          "delta": -1
+        },
+        "tables": {
+          "app": 0,
+          "mock": 1,
+          "delta": -1
+        }
+      },
+      "requirements": {
+        "runFontsAreThemeDriven": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroBrandCrimsonFilewide": true,
+        "semanticRiskRedReported": 0
+      }
+    },
+    {
+      "id": "supplier-scorecard",
+      "note": "The restored Northwind dump contains no supplier scorecard; nearest live workbook is measured separately and no success is fabricated.",
+      "app": {
+        "exists": false,
+        "file": "/Users/piotrwisniewski/Developer/codex-wt/b-export1-pptx-20260916/docs/program/EXPORT_1_KROK0_20260916/pliki-app/MISSING-supplier-scorecard.xlsx"
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/supplier-scorecard.xlsx",
+        "bytes": 10471,
+        "runFonts": [
+          "Arial",
+          "Calibri"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 2,
+        "formulas": 28,
+        "frozenPanes": 2,
+        "conditionalFormatting": 3,
+        "autoFilters": 1
+      },
+      "numeric": {
+        "sheets": {
+          "app": null,
+          "mock": 2,
+          "delta": null
+        },
+        "formulas": {
+          "app": null,
+          "mock": 28,
+          "delta": null
+        },
+        "frozenPanes": {
+          "app": null,
+          "mock": 2,
+          "delta": null
+        },
+        "conditionalFormatting": {
+          "app": null,
+          "mock": 3,
+          "delta": null
+        },
+        "autoFilters": {
+          "app": null,
+          "mock": 1,
+          "delta": null
+        }
+      },
+      "requirements": {
+        "runFontsAreThemeDriven": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroBrandCrimsonFilewide": false,
+        "semanticRiskRedReported": null
+      }
+    },
+    {
+      "id": "nearest-current-workbook",
+      "note": "Nearest current WorkbookBuilder path, not a semantic parity claim for supplier scorecard.",
+      "app": {
+        "exists": true,
+        "file": "pliki-app/northwind-scrap-route-current.xlsx",
+        "bytes": 10401,
+        "runFonts": [
+          "Calibri"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 0,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 3,
+        "formulas": 4,
+        "frozenPanes": 2,
+        "conditionalFormatting": 0,
+        "autoFilters": 2
+      },
+      "mock": {
+        "exists": true,
+        "file": "pliki-makieta/supplier-scorecard.xlsx",
+        "bytes": 10471,
+        "runFonts": [
+          "Arial",
+          "Calibri"
+        ],
+        "brandCrimsonHits": 0,
+        "semanticRiskRedHits": 4,
+        "branding": {
+          "consultify": true,
+          "dbr77": false,
+          "northwind": true,
+          "clientLogoRefs": 0
+        },
+        "kind": "xlsx",
+        "sheets": 2,
+        "formulas": 28,
+        "frozenPanes": 2,
+        "conditionalFormatting": 3,
+        "autoFilters": 1
+      },
+      "numeric": {
+        "sheets": {
+          "app": 3,
+          "mock": 2,
+          "delta": 1
+        },
+        "formulas": {
+          "app": 4,
+          "mock": 28,
+          "delta": -24
+        },
+        "frozenPanes": {
+          "app": 2,
+          "mock": 2,
+          "delta": 0
+        },
+        "conditionalFormatting": {
+          "app": 0,
+          "mock": 3,
+          "delta": -3
+        },
+        "autoFilters": {
+          "app": 2,
+          "mock": 1,
+          "delta": 1
+        }
+      },
+      "requirements": {
+        "runFontsAreThemeDriven": false,
+        "coBrandingConsultifyDbr77Client": false,
+        "zeroBrandCrimsonFilewide": true,
+        "semanticRiskRedReported": 0
+      }
+    }
+  ]
+}

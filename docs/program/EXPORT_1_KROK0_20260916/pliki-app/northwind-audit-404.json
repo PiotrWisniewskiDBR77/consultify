@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/audits/reports/e726e659-fec9-57a7-bfc9-4b32311ab067/export.docx",
+    "id": "e726e659-fec9-57a7-bfc9-4b32311ab067",
+    "idType": "existing Northwind audit_program id; no audit_report id exists in the restored dump"
+  },
+  "response": {
+    "status": 404,
+    "body": {
+      "success": false,
+      "error": "Raport nie został znaleziony",
+      "code": "AUDIT_NOT_FOUND"
+    }
+  }
+}
