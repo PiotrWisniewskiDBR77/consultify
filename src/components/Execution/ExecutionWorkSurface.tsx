@@ -211,21 +211,39 @@ const isOpaqueIdentifier = (value: string) =>
  * UUID nigdy nie trafia na ekran jako nazwisko (obraz zatwierdzony ma tu
  * „Anna Kowalska", „Marek Nowak", „Katarzyna Wójcik").
  */
+const actorLabelWithOrigin = (
+  value: string,
+  t: (key: string, fallback: string) => string,
+  resolveMemberName?: MemberNameResolver,
+  isPolish = true
+): { label: string; userContent: boolean } => {
+  const fromDirectory = value ? resolveMemberName?.(value) : null;
+  if (fromDirectory) return { label: fromDirectory, userContent: true };
+  const roleLabel = executionReviewRoleLabel(value, t);
+  if (roleLabel) return { label: roleLabel, userContent: false };
+  const fromDemo = executionReviewPeople[value];
+  if (fromDemo) return { label: fromDemo, userContent: true };
+  if (isOpaqueIdentifier(value)) {
+    return { label: memberNameOrUnknown(resolveMemberName, value, isPolish), userContent: false };
+  }
+  return {
+    label: value
+      .replace(/[-_]+/g, ' ')
+      .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase()),
+    userContent: Boolean(value),
+  };
+};
+
 const actorLabel = (
   value: string,
   t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
-) => {
-  const fromDirectory = value ? resolveMemberName?.(value) : null;
-  if (fromDirectory) return fromDirectory;
-  const fromDemo = executionReviewRoleLabel(value, t) ?? executionReviewPeople[value];
-  if (fromDemo) return fromDemo;
-  if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
-  return value
-    .replace(/[-_]+/g, ' ')
-    .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());
-};
+) => actorLabelWithOrigin(value, t, resolveMemberName, isPolish).label;
+
+const userContent = (value: React.ReactNode): React.ReactNode => (
+  <span data-language-source="user-content" translate="no">{value}</span>
+);
 // i18n-reszta 20260903: kolumny przeniesione do funkcji wywoływanej z `t`
 // wewnątrz komponentu (patrz `useMemo` w ciele `ExecutionWorkSurface`) —
 // poprzednio literały PL na module-scope nie reagowały na `?lang=` (pomiar
@@ -322,6 +340,10 @@ const buildCols = ({
       label: t('execution.work.columns.title', 'Task'),
       sortable: true,
       width: '260px',
+      cellAttributes: () => ({
+        'data-language-source': 'user-content',
+        translate: 'no',
+      }),
     },
     {
       id: 'initiativeName',
@@ -330,6 +352,10 @@ const buildCols = ({
       width: '200px',
       // „—" nie mówi, czy danych brakuje, czy zadanie naprawdę nie należy do
       // żadnej inicjatywy. Tu wiadomo, że to drugie (pole jest puste w bazie).
+      cellAttributes: (row) =>
+        row.initiativeName
+          ? { 'data-language-source': 'user-content', translate: 'no' }
+          : {},
       render: (row) =>
         (row.initiativeName as string) || (
           <span className="text-c-text-muted">
@@ -346,7 +372,18 @@ const buildCols = ({
       // zamiast 150 px, gdy tabela nie mieści się przy 1440 px (podgląd
       // otwarty) — patrz nota przy `getColumnFitFloor` w `FilterableTable.tsx`.
       dataType: 'owner',
-      render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
+      cellAttributes: (row) => {
+        const actor = actorLabelWithOrigin(row.owner as string, t, resolveMemberName, isPolish);
+        return actor.userContent
+          ? { 'data-language-source': 'user-content', translate: 'no' }
+          : {};
+      },
+      render: (row) => actorLabelWithOrigin(
+        row.owner as string,
+        t,
+        resolveMemberName,
+        isPolish
+      ).label,
       editable: {
         kind: 'select',
         ariaLabel: t('execution.work.edit.person', 'Change assignee'),
@@ -1820,6 +1857,7 @@ export const ExecutionWorkSurface = ({
           <TableWithPreviewLayout<Row>
             selectedId={selectedId}
             selectedItem={selected}
+            titleContentOrigin="user-content"
             onSelect={(id) => {
               if (showWorkspace) return;
               setSelectedId(id);
@@ -1881,17 +1919,22 @@ export const ExecutionWorkSurface = ({
                       t('execution.work.preview.noDescription', 'No additional description.'),
                     glowa.detailsNote
                   ),
+                  textContentOrigin: r.source.description ? 'user-content' : undefined,
                   properties: [
                     {
                       id: 'owner',
                       label: t('execution.work.field.owner', 'Owner'),
-                      value: businessLabel(
-                        r.owner,
-                        t('execution.work.unassigned', 'Unassigned'),
-                        t,
-                        resolveMemberName,
-                        isPolish
-                      ),
+                      value: (() => {
+                        const label = businessLabel(
+                          r.owner,
+                          t('execution.work.unassigned', 'Unassigned'),
+                          t,
+                          resolveMemberName,
+                          isPolish
+                        );
+                        const origin = actorLabelWithOrigin(r.owner, t, resolveMemberName, isPolish);
+                        return origin.userContent ? userContent(label) : label;
+                      })(),
                     },
                     // 1.12-R1 (B): „Termin / SLA" rozdzielone — SLA było puste
                     // w każdym wierszu realnych danych (tabela `tasks` nie ma
@@ -1925,8 +1968,9 @@ export const ExecutionWorkSurface = ({
                           : t('execution.work.field.case', 'Delivery'),
                       value:
                         r.origin === 'tasks'
-                          ? r.initiativeName ||
-                            t('execution.work.noInitiative', 'Without initiative')
+                          ? r.initiativeName
+                            ? userContent(r.initiativeName)
+                            : t('execution.work.noInitiative', 'Without initiative')
                           : caseLabel(r.executionCaseId),
                     },
                     {
@@ -1952,7 +1996,7 @@ export const ExecutionWorkSurface = ({
                 relations={
                   r.origin === 'tasks'
                     ? r.initiativeName
-                      ? [{ label: r.initiativeName, onClick: () => undefined }]
+                      ? [{ label: r.initiativeName, contentOrigin: 'user-content' as const, onClick: () => undefined }]
                       : []
                     : [
                         { label: caseLabel(r.executionCaseId), onClick: () => undefined },

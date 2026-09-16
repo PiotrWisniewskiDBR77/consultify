@@ -1,0 +1,84 @@
+{
+  "measuredAt": "2026-09-17",
+  "baseReference": "5f86e971f0",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 2
+  },
+  "url": "http://localhost:4214/?screen=execution-tab-work&lang=en&theme=light&uwagi=0&tab=work&view=table",
+  "baselineRowHeights": [
+    56.5,
+    57,
+    57,
+    57,
+    57,
+    73
+  ],
+  "rowHeights": [
+    56.5,
+    57,
+    57,
+    57,
+    57,
+    73
+  ],
+  "primaryCellHeights": [
+    56.5,
+    57,
+    57,
+    57,
+    57,
+    73
+  ],
+  "primaryAttrs": [
+    {
+      "source": "user-content",
+      "translate": "no"
+    },
+    {
+      "source": "user-content",
+      "translate": "no"
+    },
+    {
+      "source": "user-content",
+      "translate": "no"
+    },
+    {
+      "source": "user-content",
+      "translate": "no"
+    },
+    {
+      "source": "user-content",
+      "translate": "no"
+    },
+    {
+      "source": "user-content",
+      "translate": "no"
+    }
+  ],
+  "tooltipTriggers": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "tooltipTextClasses": [
+    "text-sm text-slate-700 dark:text-slate-200 block truncate",
+    "text-sm text-slate-700 dark:text-slate-200 block truncate",
+    "text-sm text-slate-700 dark:text-slate-200 block truncate",
+    "text-sm text-slate-700 dark:text-slate-200 block truncate",
+    "text-sm text-slate-700 dark:text-slate-200 block truncate",
+    "text-sm text-slate-700 dark:text-slate-200 block truncate"
+  ],
+  "primaryCellClasses": [
+    "h-14 px-4 py-3 break-words  ",
+    "h-14 px-4 py-3 break-words  ",
+    "h-14 px-4 py-3 break-words  ",
+    "h-14 px-4 py-3 break-words  ",
+    "h-14 px-4 py-3 break-words  ",
+    "h-14 px-4 py-3 break-words  "
+  ]
+}

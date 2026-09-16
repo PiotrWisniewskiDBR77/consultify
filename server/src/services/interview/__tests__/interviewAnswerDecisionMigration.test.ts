@@ -5,6 +5,16 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 let executable = '';
 
+const definesTable = (tableName: string): boolean =>
+  executable
+    .split(';')
+    .map((statement) => statement.trim())
+    .some((statement) =>
+      new RegExp(`^CREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\s+${tableName}\\b`, 'i').test(
+        statement
+      )
+    );
+
 describe('Interview answer decisions additive migration contract', () => {
   beforeAll(() => {
     const testPath = expect.getState().testPath;
@@ -32,7 +42,7 @@ describe('Interview answer decisions additive migration contract', () => {
   });
 
   it('defines one parent command replay boundary for a complete multi-answer command', () => {
-    expect(executable).toContain('CREATE TABLE IF NOT EXISTS interview_answer_decision_commands');
+    expect(definesTable('interview_answer_decision_commands')).toBe(true);
     expect(executable).toContain(
       'ON interview_answer_decision_commands (organization_id, client_request_id)'
     );
@@ -47,7 +57,7 @@ describe('Interview answer decisions additive migration contract', () => {
   });
 
   it('defines tenant-scoped immutable answer receipts with deterministic submission order', () => {
-    expect(executable).toContain('CREATE TABLE IF NOT EXISTS interview_answer_decisions');
+    expect(definesTable('interview_answer_decisions')).toBe(true);
     expect(executable).toContain('PRIMARY KEY (organization_id, id)');
     expect(executable).toContain('REFERENCES interview_answer_decision_commands');
     expect(executable).toContain(
