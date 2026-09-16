@@ -156,6 +156,7 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
   kontekstArtefaktu,
   moznaEdytowac,
   powodTylkoOdczyt,
+  previewFillDisabledReason,
   disabled = false,
   disabledTytul,
   isPolish = false,
@@ -331,10 +332,30 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
       },
     ];
 
-    // ── Zasada 2b: bez prawa edycji pozycje „Uzupełnij…" NIE RENDERUJĄ SIĘ ──
+    // ── Zasada 2b: bez prawa edycji pozycje „Uzupełnij…” domyślnie znikają ──
     // (nie „wyszarzone" — ich po prostu nie ma; słowa właściciela: „jeżeli ktoś
     // nie ma uprawnień do edycji, to ten przycisk pośrodku nie ma sensu").
-    if (!moznaEdytowac) return lista;
+    if (!moznaEdytowac) {
+      if (!previewFillDisabledReason) return lista;
+
+      lista.push(
+        {
+          id: 'uzupelnij-sekcje',
+          etykieta: et('uzupelnijSekcje'),
+          tytul: previewFillDisabledReason,
+          wylaczona: true,
+          powodWylaczenia: previewFillDisabledReason,
+        },
+        {
+          id: 'uzupelnij-dokument',
+          etykieta: et('uzupelnijDokument'),
+          tytul: previewFillDisabledReason,
+          wylaczona: true,
+          powodWylaczenia: previewFillDisabledReason,
+        }
+      );
+      return lista;
+    }
 
     lista.push({
       id: 'uzupelnij-sekcje',
@@ -363,6 +384,7 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
     et,
     onAnalizuj,
     moznaEdytowac,
+    previewFillDisabledReason,
     uzupelnijSekcje,
     uzupelnijDokument,
     aktywnaSekcja,

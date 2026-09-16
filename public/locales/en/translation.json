@@ -9084,6 +9084,9 @@
       "generateInitiatives": "Generate initiatives"
     },
     "insightViewer": {
+      "switchToEditToFill": "Switch to Edit to fill",
+      "publishedReadOnlyReason": "insight is published",
+      "previewReadOnlyReason": "card opened in Preview mode",
       "panelResults": "Results",
       "panelResultsEmpty": "Nothing has been produced from this insight yet.",
       "manualFieldHint": "Text edited by hand. Stored separately from the AI content — regeneration does not erase it.",

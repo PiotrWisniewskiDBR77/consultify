@@ -94,12 +94,19 @@ export interface PracujZAIProps {
   kontekstArtefaktu: KontekstArtefaktuAI;
 
   /**
-   * Zasada 2b: gdy `false`, pozycje „Uzupełnij…" NIE RENDERUJĄ SIĘ (nie są
-   * „wyszarzone" — ich nie ma). Zostaje wyłącznie „Analizuj".
+   * Zasada 2b: gdy `false`, pozycje „Uzupełnij…” domyślnie NIE RENDERUJĄ SIĘ
+   * (nie są „wyszarzone" — ich nie ma). Zostaje wyłącznie „Analizuj".
    */
   moznaEdytowac: boolean;
   /** Powód braku prawa edycji — pokazywany w liście jako jedno zdanie. */
   powodTylkoOdczyt?: string;
+  /**
+   * Narrow opt-in for Preview surfaces that still expose an Edit toggle.
+   * When provided while editing is disabled, both Fill actions stay visible
+   * but disabled and use this value as their explanatory tooltip. Omitting
+   * the prop preserves the DEC-407 read-only contract.
+   */
+  previewFillDisabledReason?: string;
 
   /** Całe wejście AI niedostępne (np. wyczerpany budżet / brak licencji). */
   disabled?: boolean;
