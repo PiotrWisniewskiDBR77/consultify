@@ -10,6 +10,7 @@ import {
   SURFACE_KINDS,
   matrixContract,
   parseVariant,
+  routeMatchesModule,
   variantKey,
 } from './contract.mjs';
 import { validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
@@ -36,7 +37,7 @@ const PREVIOUS = value('--previous', '');
 const HEADLESS = value('--headed', '0') !== '1';
 const SHA = process.env.GITHUB_SHA || process.env.E2E_APP_SHA || 'UNKNOWN';
 
-const actorPrefix = `E2E_${variant.actor.toUpperCase()}`;
+const actorPrefix = variant.secretPrefix;
 const email = process.env[`${actorPrefix}_EMAIL`];
 const password = process.env[`${actorPrefix}_PASSWORD`];
 if (!email || !password) {
@@ -192,7 +193,7 @@ async function setPresentationState(page) {
 async function settle(page, route) {
   await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   // Staging keeps polling connections open. A long networkidle wait multiplies
-  // into hours across 256 module runs, so cap it and then give React one frame
+  // into hours across 128 module runs, so cap it and then give React one frame
   // budget to settle. Surface-level HTTP errors remain captured independently.
   await page.waitForLoadState('networkidle', { timeout: 4_000 }).catch(() => {});
   await page.waitForTimeout(700);
@@ -299,7 +300,8 @@ async function runModule(page, module, allMutations) {
   const cells = [];
   await settle(page, module.route);
   const landingMutations = buffers.mutations.splice(0);
-  const landingReached = page.url().startsWith(`${BASE}${module.route}`);
+  const routeAfter = page.url().replace(BASE, '');
+  const landingReached = routeMatchesModule(routeAfter, module);
   cells.push({
     variant: VARIANT,
     module: module.id,
@@ -309,6 +311,7 @@ async function runModule(page, module, allMutations) {
     note: landingMutations.length
       ? `Mutation on view blocked before network: ${landingMutations.map((item) => `${item.method} ${item.url}`).join(', ')}`
       : '',
+    routeAfter,
     screenshot: await screenshot(page, module.id, 'menu1', module.route),
     consoleErrors: buffers.console.splice(0),
     httpErrors: buffers.http.splice(0),
