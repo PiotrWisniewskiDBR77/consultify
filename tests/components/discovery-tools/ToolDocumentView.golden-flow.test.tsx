@@ -274,6 +274,15 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(screen.getByRole('dialog', { name: 'Teresa proposals' })).toBeInTheDocument();
     expect(screen.getByTestId('governed-teresa-proposals')).toBeInTheDocument();
 
+    // [ODMROZENIE 03_TOOLS DEC-575] Reports/Outputs is navigation over the
+    // already-loaded session. Hydration normalizes the raw answers, but that
+    // normalization and the section's currentStep update are not user edits.
+    fireEvent.click(await screen.findByTestId('nmode-section-outputs'));
+    expect(screen.getByTestId('dynamic-swot-section-step')).toHaveAttribute(
+      'data-phase-id',
+      'outputs'
+    );
+
     // The production debounce is 2s. A read-only reopen must neither schedule
     // a write nor flush one during unmount.
     await act(async () => {
@@ -281,6 +290,86 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
       unmount();
       portal.remove();
     });
+
+    expect(updateToolSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('does not write a persisted same-id session before its deferred GET and hydrate complete', async () => {
+    // Reproduce the W124 race: zustand-persist already contains the same id,
+    // while the authoritative GET is still in flight.
+    useToolStore.getState().hydrateSessionFromApi({
+      ...baseSwotSession(),
+      toolType: 'dynamic-swot',
+    } as any);
+    let resolveLoad: (value: unknown) => void = () => {};
+    getToolSessionMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLoad = resolve;
+        })
+    );
+    // If an old pre-hydrate autosave asks for a version, make that second GET
+    // finish immediately so the forbidden PUT cannot hide behind a promise.
+    getToolSessionMock.mockResolvedValue(baseSwotSession());
+    updateToolSessionMock.mockResolvedValue({
+      id: 'sess-existing-1',
+      status: 'IN_PROGRESS',
+      version: 2,
+      updatedAt: '2026-09-16T12:00:00.000Z',
+    });
+
+    const { unmount } = render(
+      <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
+    );
+    await waitFor(() => expect(getToolSessionMock).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      unmount();
+      await Promise.resolve();
+    });
+    expect(updateToolSessionMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveLoad(baseSwotSession());
+      await Promise.resolve();
+    });
+    expect(updateToolSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps Reports navigation read-only after a deferred same-id GET hydrates', async () => {
+    useToolStore.getState().hydrateSessionFromApi({
+      ...baseSwotSession(),
+      toolType: 'dynamic-swot',
+    } as any);
+    let resolveLoad: (value: unknown) => void = () => {};
+    getToolSessionMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLoad = resolve;
+        })
+    );
+    updateToolSessionMock.mockResolvedValue({
+      id: 'sess-existing-1',
+      status: 'IN_PROGRESS',
+      version: 2,
+      updatedAt: '2026-09-16T12:00:00.000Z',
+    });
+
+    const { unmount } = render(
+      <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
+    );
+    await waitFor(() => expect(getToolSessionMock).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      resolveLoad(baseSwotSession());
+    });
+    await waitFor(() => expect(getUsersMock).toHaveBeenCalled());
+
+    fireEvent.click(await screen.findByTestId('nmode-section-outputs'));
+    expect(screen.getByTestId('dynamic-swot-section-step')).toHaveAttribute(
+      'data-phase-id',
+      'outputs'
+    );
+    await act(async () => unmount());
 
     expect(updateToolSessionMock).not.toHaveBeenCalled();
   });
