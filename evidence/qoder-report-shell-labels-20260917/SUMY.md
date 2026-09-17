@@ -78,6 +78,18 @@ TREŚCI powłoki wyżej.
 | `npm run check:jezyk:ci` | EXIT 0 (spadki: K4en -13, K4obj -36, K5en -1, K7 -1) |
 | `npm run build` (8 GB) | EXIT 0 |
 
+## Wpis 27 — dlaczego stopka ma ternar, nie `defaultPageLabel`
+
+CTO (Wpis 27) prosi o jedno źródło prawdy: użycie `defaultPageLabel` z linii 2160 zamiast
+drugiego ternara. Sprawdzono zasięg: `const defaultPageLabel` jest zadeklarowane WEWNĄTRZ
+bloku `} else {` (linia 2159–2183, gałąź „brak własnego formatu stopki"), a akapit stopki DRD
+to gałąź równoległa wyrażenia `footerChildren` (linia 2185+) — **zmienna NIE jest w zasięgu**
+w miejscu naprawy. Podniesienie deklaracji wyżej = dodatkowe linie poza 4 instrukcjami
+GO (Wpis 24 pkt 1), więc zgodnie z klauzulą Wpisu 27 („jeśli nie w zasięgu — zostaw ternar
+i napisz to w meldunku") zostaje ternar o IDENTYCZNYM wyrażeniu co `defaultPageLabel`.
+Kandydat na follow-up (po akcepcie CTO): podnieść `defaultPageLabel` do zasięgu funkcji
+i użyć w obu miejscach.
+
 ## OTWARTE (poza zakresem GO — decyzja CTO)
 
 Stopka DRD EN po naprawie czyta się `Page 2 z 19`: separator `text: ' z '` (linia 2255)
