@@ -2485,7 +2485,6 @@
     "src/components/Reports/RichTextEditor.tsx",
     "src/components/Reports/RiskMatrix.tsx",
     "src/components/Reports/ShareModal.tsx",
-    "src/components/Reports/SponsorReportView.tsx",
     "src/components/Reports/StickyNavigation.tsx",
     "src/components/Reports/TableOfContents.tsx",
     "src/components/Reports/Wizard/ReportGeneratorWizard.tsx",

@@ -39857,6 +39857,25 @@
     "lastStatusRefresh": "Last status refresh: {{time}}",
     "owner": "Owner",
     "chunks": "{{count}} chunks",
+    "viewer": {
+      "loading": "Loading the document…",
+      "stateEmpty": "This document has no content yet.",
+      "stateLoadFailed": "The document could not be loaded. Try again.",
+      "stateNotFound": "No content is stored for this document.",
+      "registryArtifact": "Artifact content",
+      "registryCanvas": "Work Canvas draft",
+      "actions": "Actions",
+      "edit": "Edit",
+      "properties": "Properties",
+      "property": "Property",
+      "value": "Value",
+      "status": "Status",
+      "registry": "Content registry",
+      "owner": "Owner",
+      "updated": "Updated",
+      "untitled": "Document",
+      "panelAriaLabel": "Document details"
+    },
     "contextAssetSelector": {
       "loadingDocuments": "Loading documents...",
       "orgWideResearchModeSearches": "Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected."

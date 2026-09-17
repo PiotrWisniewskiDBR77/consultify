@@ -40419,6 +40419,25 @@
     "lastStatusRefresh": "Ostatnie odświeżenie statusu: {{time}}",
     "owner": "Właściciel",
     "chunks": "{{count}} fragmentów",
+    "viewer": {
+      "loading": "Wczytywanie dokumentu…",
+      "stateEmpty": "Ten dokument nie ma jeszcze treści.",
+      "stateLoadFailed": "Nie udało się wczytać dokumentu. Spróbuj ponownie.",
+      "stateNotFound": "Dla tego dokumentu nie zapisano treści.",
+      "registryArtifact": "Treść artefaktu",
+      "registryCanvas": "Szkic Work Canvas",
+      "actions": "Akcje",
+      "edit": "Edytuj",
+      "properties": "Właściwości",
+      "property": "Właściwość",
+      "value": "Wartość",
+      "status": "Status",
+      "registry": "Rejestr treści",
+      "owner": "Właściciel",
+      "updated": "Zaktualizowano",
+      "untitled": "Dokument",
+      "panelAriaLabel": "Szczegóły dokumentu"
+    },
     "contextAssetSelector": {
       "loadingDocuments": "Ładowanie dokumentów...",
       "orgWideResearchModeSearches": "Tryb badania w skali organizacji przeszukuje cały zatwierdzony kontekst organizacji. Nie trzeba wybierać\n          konkretnych dokumentów."
