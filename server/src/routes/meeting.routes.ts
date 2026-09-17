@@ -19,6 +19,16 @@ import {
   type MeetingAttachmentKind,
 } from '../services/meeting/meetingAttachmentService.js';
 import {
+  createMeetingAgendaItem,
+  deleteMeetingAgendaItem,
+  getMeetingAgendaItem,
+  isMeetingLifecycleState,
+  listMeetingAgendaItems,
+  MeetingLifecycleTransitionError,
+  setMeetingLifecycle,
+  updateMeetingAgendaItem,
+} from '../services/meeting/meetingAgendaService.js';
+import {
   addMeetingParticipant,
   deleteMeetingParticipant,
   listMeetingParticipants,
@@ -1345,6 +1355,180 @@ router.patch(
 router.delete(
   '/:id/occurrence',
   asyncHandler(async (req: AuthRequest, res: Response) => handleOccurrenceMutation(req, res, true))
+);
+
+/**
+ * MTG-1 etap 1 / DEC-596 — agenda jako oś spotkania + trwały cykl życia.
+ * Autoryzacja wg zmierzonego wzorca sąsiednich mutacji spotkania: orgId/userId
+ * z tokena (401), spotkanie scopowane orgId, potem `canAccessMeeting`
+ * (admin spotkania / twórca / uczestnik) z 404 na odmowę (`denyMeetingAccess`).
+ */
+async function loadAccessibleMeetingForAgenda(
+  req: AuthRequest,
+  res: Response,
+  meetingId: string
+): Promise<Awaited<ReturnType<typeof getMeeting>> | null> {
+  const orgId = req.user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+  const meeting = await getMeeting({ organizationId: orgId, meetingId });
+  if (!canAccessMeeting(req, meeting)) {
+    denyMeetingAccess(res);
+    return null;
+  }
+  return meeting;
+}
+
+router.get(
+  '/:id/agenda',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+    const items = await listMeetingAgendaItems({
+      organizationId: orgId,
+      meetingId: meeting.id,
+    });
+    return res.json({ agendaItems: items });
+  })
+);
+
+router.post(
+  '/:id/agenda',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) return res.status(400).json({ code: 'MEETING_AGENDA_TITLE_REQUIRED' });
+    const purpose = req.body?.purpose;
+    if (
+      purpose !== undefined &&
+      purpose !== 'information' &&
+      purpose !== 'discussion' &&
+      purpose !== 'decision'
+    ) {
+      return res.status(400).json({ code: 'MEETING_AGENDA_PURPOSE_INVALID' });
+    }
+    const item = await createMeetingAgendaItem({
+      organizationId: orgId,
+      meetingId: meeting.id,
+      title,
+      ...(typeof req.body?.durationMinutes === 'number'
+        ? { durationMinutes: req.body.durationMinutes }
+        : {}),
+      ...(purpose ? { purpose } : {}),
+      ...(typeof req.body?.leadUserId === 'string' ? { leadUserId: req.body.leadUserId } : {}),
+      ...(Array.isArray(req.body?.preRead) ? { preRead: req.body.preRead } : {}),
+      ...(typeof req.body?.initiativeId === 'string' ? { initiativeId: req.body.initiativeId } : {}),
+      ...(typeof req.body?.decisionId === 'string' ? { decisionId: req.body.decisionId } : {}),
+      ...(typeof req.body?.notes === 'string' ? { notes: req.body.notes } : {}),
+      ...(typeof req.body?.position === 'number' ? { position: req.body.position } : {}),
+    });
+    return res.status(201).json({ agendaItem: item });
+  })
+);
+
+router.patch(
+  '/:id/agenda/:itemId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const existing = await getMeetingAgendaItem({
+      organizationId: orgId,
+      itemId: String(req.params.itemId),
+    });
+    if (!existing || existing.meetingId !== meeting.id) return denyMeetingAccess(res);
+
+    const purpose = req.body?.purpose;
+    if (
+      purpose !== undefined &&
+      purpose !== 'information' &&
+      purpose !== 'discussion' &&
+      purpose !== 'decision'
+    ) {
+      return res.status(400).json({ code: 'MEETING_AGENDA_PURPOSE_INVALID' });
+    }
+    if (req.body?.title !== undefined && !String(req.body.title || '').trim()) {
+      return res.status(400).json({ code: 'MEETING_AGENDA_TITLE_EMPTY' });
+    }
+    const item = await updateMeetingAgendaItem({
+      organizationId: orgId,
+      itemId: existing.id,
+      ...(typeof req.body?.title === 'string' ? { title: String(req.body.title).trim() } : {}),
+      ...(typeof req.body?.durationMinutes === 'number'
+        ? { durationMinutes: req.body.durationMinutes }
+        : {}),
+      ...(purpose ? { purpose } : {}),
+      ...(req.body?.leadUserId !== undefined ? { leadUserId: req.body.leadUserId } : {}),
+      ...(Array.isArray(req.body?.preRead) ? { preRead: req.body.preRead } : {}),
+      ...(req.body?.initiativeId !== undefined ? { initiativeId: req.body.initiativeId } : {}),
+      ...(req.body?.decisionId !== undefined ? { decisionId: req.body.decisionId } : {}),
+      ...(typeof req.body?.notes === 'string' ? { notes: req.body.notes } : {}),
+      ...(typeof req.body?.position === 'number' ? { position: req.body.position } : {}),
+    });
+    return res.json({ agendaItem: item });
+  })
+);
+
+router.delete(
+  '/:id/agenda/:itemId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const existing = await getMeetingAgendaItem({
+      organizationId: orgId,
+      itemId: String(req.params.itemId),
+    });
+    if (!existing || existing.meetingId !== meeting.id) return denyMeetingAccess(res);
+    await deleteMeetingAgendaItem({ organizationId: orgId, itemId: existing.id });
+    return res.status(204).send();
+  })
+);
+
+router.patch(
+  '/:id/lifecycle',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const nextState = req.body?.nextState;
+    if (!isMeetingLifecycleState(nextState)) {
+      return res.status(400).json({ code: 'MEETING_LIFECYCLE_STATE_INVALID' });
+    }
+    try {
+      const lifecycleState = await setMeetingLifecycle({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        nextState,
+      });
+      return res.json({ lifecycleState });
+    } catch (error) {
+      if (error instanceof MeetingLifecycleTransitionError) {
+        return res.status(409).json({
+          error: error.message,
+          code: error.code,
+          from: error.from,
+          to: error.to,
+        });
+      }
+      throw error;
+    }
+  })
 );
 
 export default router;
