@@ -20,6 +20,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_METRICS_DASHBOARD: z.boolean().default(true),
   ENABLE_AI_COACH: z.boolean().default(true),
   ENABLE_HELP_SYSTEM: z.boolean().default(true),
+  ENABLE_CHAT_IMAGES: z.boolean().default(false),
   ENABLE_TABLE_PLATFORM_METADATA_FIRST: z.boolean().default(false),
   ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(true),
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
@@ -103,6 +104,11 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // Enable self-serve help system
     ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false', // Default true
+
+    // CHAT-IMG-1: opt-in transport from the authenticated chat upload endpoint
+    // through the multimodal provider payload. Read at call time by the route
+    // and pipeline; this registry entry documents the default-OFF contract.
+    ENABLE_CHAT_IMAGES: process.env.ENABLE_CHAT_IMAGES === 'true',
 
     // Table Platform: metadata-first backend
     // Opt-in only. Default must stay off until parity with legacy table graph is complete.
@@ -339,6 +345,11 @@ export function isArtifactKnowledgeIndexEnabled(): boolean {
 
 export function isDeckFromKnowledgeEnabled(): boolean {
   return process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true';
+}
+
+/** Call-time gate so one process can prove OFF/ON parity without re-importing config. */
+export function isChatImagesEnabled(): boolean {
+  return process.env.ENABLE_CHAT_IMAGES === 'true';
 }
 
 export function isDeckOverflowWarningEnabled(): boolean {

@@ -19,8 +19,9 @@
  * need a live database to verify.
  */
 import express, { type Express } from 'express';
+import sharp from 'sharp';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { errorHandlerMiddleware } from '../../utils/ErrorHandler.js';
 
@@ -257,6 +258,135 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
       body: expect.objectContaining({ code: 'PDF_TEXT_EXTRACTION_FAILED' }),
     });
     expect(extractTextFromBuffer).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('POST /ai/chat/images (multimodal image transport)', () => {
+  const previousFlag = process.env.ENABLE_CHAT_IMAGES;
+
+  beforeEach(() => {
+    process.env.ENABLE_CHAT_IMAGES = 'true';
+    membershipSawFile = false;
+  });
+
+  afterAll(() => {
+    if (previousFlag === undefined) delete process.env.ENABLE_CHAT_IMAGES;
+    else process.env.ENABLE_CHAT_IMAGES = previousFlag;
+  });
+
+  it('is inert while the server flag is OFF', async () => {
+    process.env.ENABLE_CHAT_IMAGES = 'false';
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/chat/images')
+      .attach('file', Buffer.from('not parsed while off'), {
+        filename: 'screen.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('CHAT_IMAGES_DISABLED');
+    expect(membershipSawFile).toBe(false);
+  });
+
+  it('processes a real PNG after the active-membership wall and returns provider-ready data', async () => {
+    const png = await sharp({
+      create: { width: 2, height: 3, channels: 4, background: '#2255aa' },
+    })
+      .png()
+      .toBuffer();
+    const app = await createApp();
+    const res = await request(app).post('/api/ai/chat/images').attach('file', png, {
+      filename: 'screen.png',
+      contentType: 'image/png',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      success: true,
+      image: {
+        name: 'screen.png',
+        mimeType: 'image/png',
+        width: 2,
+        height: 3,
+      },
+    });
+    expect(res.body.image.dataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(res.body.image.size).toBeGreaterThan(0);
+    expect(requireActiveTenantMembership).toHaveBeenCalled();
+    expect(membershipSawFile).toBe(false);
+  });
+
+  it('rejects a revoked tenant membership before parsing image bytes', async () => {
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/chat/images')
+      .set('x-test-membership', 'revoked')
+      .attach('file', Buffer.from('must not be parsed'), {
+        filename: 'screen.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ACTIVE_MEMBERSHIP_REQUIRED');
+    expect(membershipSawFile).toBe(false);
+  });
+
+  it('returns a clear 413 from multer for a PNG larger than 5 MB', async () => {
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/chat/images')
+      .attach('file', Buffer.alloc(5 * 1024 * 1024 + 1, 1), {
+        filename: 'too-large.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(413);
+    expect(res.body).toMatchObject({
+      code: 'CHAT_IMAGE_TOO_LARGE',
+      maxBytes: 5 * 1024 * 1024,
+    });
+  });
+
+  it('rejects two images with CHAT_IMAGE_LIMIT before decoding their payloads', async () => {
+    const { prepareChatImages } = await import('../ai.routes.js');
+
+    await expect(
+      prepareChatImages([
+        { name: 'first.png', mimeType: 'image/png', dataUrl: 'not-decoded' },
+        { name: 'second.png', mimeType: 'image/png', dataUrl: 'not-decoded' },
+      ])
+    ).rejects.toMatchObject({ statusCode: 400, code: 'CHAT_IMAGE_LIMIT' });
+  });
+
+  it('returns 415 for a MIME allow-list violation', async () => {
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/chat/images')
+      .attach('file', Buffer.from('<svg/>'), {
+        filename: 'unsafe.svg',
+        contentType: 'image/svg+xml',
+      });
+
+    expect(res.status).toBe(415);
+    expect(res.body.code).toBe('UNSUPPORTED_MEDIA_TYPE');
+  });
+
+  it('returns 415 when PNG magic bytes are present but sharp cannot decode the image', async () => {
+    const truncatedPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/chat/images')
+      .attach('file', truncatedPng, {
+        filename: 'truncated.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(415);
+    expect(res.body).toMatchObject({
+      code: 'INVALID_IMAGE_DATA',
+      error: 'INVALID_IMAGE_DATA',
+    });
   });
 });
 

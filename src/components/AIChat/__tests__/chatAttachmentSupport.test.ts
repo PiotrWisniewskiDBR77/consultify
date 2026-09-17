@@ -2,10 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getChatAttachmentRejectionReason,
+  getChatAttachmentKind,
+  getLatestConversationChatImage,
+  getSupportedChatAttachmentAccept,
   isChatAttachmentSizeOk,
+  isChatImageSizeOk,
+  isChatImagesEnabled,
   isImageChatAttachment,
+  isSupportedChatImage,
   isSupportedChatAttachment,
   MAX_CHAT_ATTACHMENT_BYTES,
+  MAX_CHAT_IMAGE_BYTES,
+  normalizeChatImagePayload,
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
   SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -13,6 +21,8 @@ import {
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const VALID_PNG_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 describe('SUPPORTED_CHAT_ATTACHMENT constants', () => {
   it('includes docx alongside the original text-extractable types', () => {
@@ -28,6 +38,16 @@ describe('SUPPORTED_CHAT_ATTACHMENT constants', () => {
 
   it('builds the accept string from the extension list with a leading dot', () => {
     expect(SUPPORTED_CHAT_ATTACHMENT_ACCEPT).toBe('.pdf,.txt,.md,.json,.csv,.docx');
+  });
+
+  it('keeps image picker formats behind the default-OFF flag', () => {
+    expect(isChatImagesEnabled({})).toBe(false);
+    expect(isChatImagesEnabled({ VITE_CHAT_IMAGES: 'false' })).toBe(false);
+    expect(isChatImagesEnabled({ VITE_CHAT_IMAGES: 'true' })).toBe(true);
+    expect(getSupportedChatAttachmentAccept(false)).toBe('.pdf,.txt,.md,.json,.csv,.docx');
+    expect(getSupportedChatAttachmentAccept(true)).toBe(
+      '.pdf,.txt,.md,.json,.csv,.docx,.png,.jpg,.jpeg,.webp,.gif'
+    );
   });
 
   it('keeps the human-readable label in sync', () => {
@@ -94,6 +114,16 @@ describe('isSupportedChatAttachment — rejected types', () => {
     expect(isImageChatAttachment({ name: 'misleading.png', type: 'text/plain' })).toBe(true);
   });
 
+  it('classifies png/jpeg/webp/gif as images when the flag is ON', () => {
+    expect(getChatAttachmentKind({ name: 'pic.png', type: 'image/png' }, true)).toBe('image');
+    expect(getChatAttachmentKind({ name: 'pic.JPG', type: '' }, true)).toBe('image');
+    expect(getChatAttachmentKind({ name: 'pic.webp', type: 'image/webp' }, true)).toBe('image');
+    expect(getChatAttachmentKind({ name: 'pic.gif', type: 'image/gif' }, true)).toBe('image');
+    expect(getChatAttachmentKind({ name: 'pic.png', type: 'image/png' }, false)).toBeNull();
+    expect(isSupportedChatImage({ name: 'pic.jpeg', type: '' })).toBe(true);
+    expect(isSupportedChatAttachment({ name: 'pic.png', type: 'image/png' }, true)).toBe(true);
+  });
+
   it('rejects arbitrary binary / unknown extensions', () => {
     expect(isSupportedChatAttachment({ name: 'app.exe', type: 'application/octet-stream' })).toBe(
       false
@@ -127,6 +157,46 @@ describe('MAX_CHAT_ATTACHMENT_BYTES / isChatAttachmentSizeOk', () => {
     expect(isChatAttachmentSizeOk({})).toBe(true);
     expect(isChatAttachmentSizeOk({ size: 0 })).toBe(true);
     expect(isChatAttachmentSizeOk({ size: Number.NaN })).toBe(true);
+  });
+});
+
+describe('MAX_CHAT_IMAGE_BYTES / isChatImageSizeOk', () => {
+  it('enforces the separate 5MB image limit', () => {
+    expect(MAX_CHAT_IMAGE_BYTES).toBe(5 * 1024 * 1024);
+    expect(isChatImageSizeOk({ size: MAX_CHAT_IMAGE_BYTES })).toBe(true);
+    expect(isChatImageSizeOk({ size: MAX_CHAT_IMAGE_BYTES + 1 })).toBe(false);
+  });
+});
+
+describe('persisted chat image metadata', () => {
+  const image = {
+    name: 'process.png',
+    mimeType: 'image/png' as const,
+    dataUrl: VALID_PNG_DATA_URL,
+    width: 1,
+    height: 1,
+    size: 68,
+  };
+
+  it('accepts a bounded image and rejects invalid dimensions, sizes, and base64', () => {
+    expect(normalizeChatImagePayload(image)).toEqual(image);
+    expect(normalizeChatImagePayload({ ...image, width: 0 })).toBeNull();
+    expect(normalizeChatImagePayload({ ...image, size: MAX_CHAT_IMAGE_BYTES + 1 })).toBeNull();
+    expect(
+      normalizeChatImagePayload({ ...image, dataUrl: 'data:image/png;base64,abc' })
+    ).toBeNull();
+  });
+
+  it('takes the latest image only from a user message', () => {
+    expect(
+      getLatestConversationChatImage([
+        { role: 'user', metadata: { images: [image] } },
+        {
+          role: 'ai',
+          metadata: { images: [{ ...image, name: 'untrusted-ai.png' }] },
+        },
+      ])
+    ).toEqual(image);
   });
 });
 
@@ -167,5 +237,15 @@ describe('getChatAttachmentRejectionReason — honest, specific rejection reason
         size: MAX_CHAT_ATTACHMENT_BYTES + 1,
       })
     ).toBe('UNSUPPORTED_FORMAT');
+  });
+
+  it('reports the image-specific 5MB limit only when image support is ON', () => {
+    const image = {
+      name: 'screen.png',
+      type: 'image/png',
+      size: MAX_CHAT_IMAGE_BYTES + 1,
+    };
+    expect(getChatAttachmentRejectionReason(image, true)).toBe('IMAGE_SIZE_LIMIT_EXCEEDED');
+    expect(getChatAttachmentRejectionReason(image, false)).toBe('UNSUPPORTED_FORMAT');
   });
 });

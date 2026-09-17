@@ -364,6 +364,15 @@ export interface ConversationMessage {
       mimeType?: string;
       size?: number;
     }>;
+    /** Governed image persisted on the originating user turn. */
+    images?: Array<{
+      name: string;
+      mimeType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif';
+      dataUrl: string;
+      width: number;
+      height: number;
+      size: number;
+    }>;
     /**
      * Optional diagnostics for persisted AI/system messages.
      * Useful for debugging stream failures without polluting message content.

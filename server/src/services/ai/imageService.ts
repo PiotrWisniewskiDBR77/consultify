@@ -34,6 +34,15 @@ export interface ImageValidationResult {
   size?: number;
 }
 
+export class ImageProcessingError extends Error {
+  readonly code = 'INVALID_IMAGE_DATA';
+
+  constructor(message = 'INVALID_IMAGE_DATA', options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'ImageProcessingError';
+  }
+}
+
 // Supported MIME types for vision models
 const SUPPORTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -75,9 +84,20 @@ export function validateImage(data: Buffer | string, mimeType?: string): ImageVa
       buffer = data;
     }
 
-    // Detect MIME type from magic bytes if not provided
-    if (!detectedMime) {
-      detectedMime = detectMimeType(buffer) || undefined;
+    // Always inspect magic bytes. Trusting a multipart Content-Type alone lets
+    // arbitrary bytes reach sharp/provider APIs under an image/* label.
+    const magicMime = detectMimeType(buffer) || undefined;
+    if (!detectedMime) detectedMime = magicMime;
+
+    if (detectedMime && magicMime && detectedMime !== magicMime) {
+      return {
+        valid: false,
+        error: `Image content does not match declared type: ${detectedMime}`,
+      };
+    }
+
+    if (!magicMime) {
+      return { valid: false, error: 'Invalid or unrecognized image data' };
     }
 
     // Validate MIME type
@@ -281,15 +301,7 @@ export async function processImageForVision(
     };
   } catch (error: any) {
     logger.error('[ImageService] Processing error:', error);
-    // Return original if processing fails
-    return {
-      base64: buffer.toString('base64'),
-      mimeType,
-      originalSize,
-      processedSize: buffer.length,
-      width: 0,
-      height: 0,
-    };
+    throw new ImageProcessingError('INVALID_IMAGE_DATA', { cause: error });
   }
 }
 
@@ -318,8 +330,14 @@ export function fromDataUrl(dataUrl: string): { base64: string; mimeType: string
 export function buildMultimodalContent(
   text: string,
   images: ProcessedImage[]
-): Array<{ type: string; text?: string; image_url?: { url: string }; source?: any }> {
-  const content: any[] = [];
+): Array<
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: string; mediaType: string }
+> {
+  const content: Array<
+    | { type: 'text'; text: string }
+    | { type: 'image'; image: string; mediaType: string }
+  > = [];
 
   // Add text if present
   if (text) {
@@ -328,13 +346,10 @@ export function buildMultimodalContent(
 
   // Add images
   for (const image of images) {
-    // OpenAI format
     content.push({
-      type: 'image_url',
-      image_url: {
-        url: toDataUrl(image.base64, image.mimeType),
-        detail: 'auto', // Can be 'low', 'high', or 'auto'
-      },
+      type: 'image',
+      image: toDataUrl(image.base64, image.mimeType),
+      mediaType: image.mimeType,
     });
   }
 

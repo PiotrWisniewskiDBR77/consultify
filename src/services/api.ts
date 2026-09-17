@@ -9277,6 +9277,35 @@ export const Api = {
     return handleResponse(res, 'Failed to ingest attachment');
   },
 
+  uploadChatImage: async (
+    file: File
+  ): Promise<{
+    success: boolean;
+    image: {
+      name: string;
+      mimeType: string;
+      dataUrl: string;
+      width: number;
+      height: number;
+      size: number;
+    };
+  }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const multipartHeaders = getHeaders();
+    delete multipartHeaders['Content-Type'];
+
+    const res = await fetchWithRetry(`${API_URL}/ai/chat/images`, {
+      method: 'POST',
+      headers: multipartHeaders,
+      body: formData,
+      skipDefaultHeaders: true,
+      timeoutMs: 120000,
+    });
+    return handleResponse(res, 'Failed to process chat image');
+  },
+
   ingestChatUrlAttachment: async (
     url: string,
     options?: { title?: string }
