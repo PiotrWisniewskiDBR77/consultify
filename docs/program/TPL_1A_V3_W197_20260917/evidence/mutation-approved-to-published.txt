@@ -1,0 +1,59 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-w197-20260917
+
+······x·x·····
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > projects presentation lifecycle instead of treating every active row as published
+AssertionError: expected [ 'draft', 'published', 'deprecated' ] to deeply equal [ 'draft', 'approved', 'deprecated' ]
+
+- Expected
++ Received
+
+  [
+    "draft",
+-   "approved",
++   "published",
+    "deprecated",
+  ]
+
+ ❯ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts:476:80
+    474|     ]);
+    475|
+    476|     expect(results.map((item) => (item.originSummary as any).template.…
+       |                                                                                ^
+    477|       'draft',
+    478|       'approved',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > projects non-empty canonical content and approved status for all three base families
+AssertionError: expected [ 'approved', 'published', 'approved' ] to deeply equal [ 'approved', 'approved', 'approved' ]
+
+- Expected
++ Received
+
+  [
+    "approved",
+-   "approved",
++   "published",
+    "approved",
+  ]
+
+ ❯ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts:605:51
+    603|
+    604|     const templates = [doc, deck, sheet].map((item) => (item.originSum…
+    605|     expect(templates.map(({ status }) => status)).toEqual(['approved',…
+       |                                                   ^
+    606|     expect(templates.map(({ description }) => description)).toEqual([
+    607|       'A governed decision document.',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  12:22:59
+   Duration  662ms (transform 200ms, setup 95ms, import 200ms, tests 47ms, environment 230ms)
+

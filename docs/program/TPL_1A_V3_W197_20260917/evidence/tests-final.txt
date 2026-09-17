@@ -1,0 +1,10 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-w197-20260917
+
+·······························································································
+
+ Test Files  8 passed (8)
+      Tests  95 passed (95)
+   Start at  12:22:30
+   Duration  3.32s (transform 4.74s, setup 1.83s, import 8.10s, tests 1.23s, environment 6.37s)
+
