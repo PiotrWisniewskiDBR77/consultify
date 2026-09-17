@@ -3,8 +3,12 @@
  * Generates sponsor-ready PPTX decks for assessment frameworks (DRD, SIRI, ADMA).
  */
 
-const PptxGenJS: any = require('pptxgenjs');
+import { createRequire } from 'module';
+
 import logger from '../utils/Logger.js';
+
+const require = createRequire(import.meta.url);
+const PptxGenJS: any = require('pptxgenjs');
 
 // ---------------------------------------------------------------------------
 // Types

@@ -13,6 +13,7 @@ import PDFDocument from 'pdfkit';
 
 import config from '../config/Config.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
+import { buildAttachmentContentDisposition } from '../utils/contentDisposition.js';
 import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir } from '../utils/storagePaths.js';
@@ -424,7 +425,7 @@ router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${result.report.title || 'report'}.pdf"`
+      buildAttachmentContentDisposition(result.report.title, 'pdf')
     );
     return res.sendFile(filePath);
   } catch (err: any) {
@@ -513,7 +514,7 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${result.report.title || 'report'}.pptx"`
+      buildAttachmentContentDisposition(result.report.title, 'pptx')
     );
     return res.send(pptxResult.buffer);
   } catch (err: any) {
@@ -593,7 +594,7 @@ router.get('/:token/docx', async (req: Request, res: Response, next: NextFunctio
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${result.report.title || 'report'}.docx"`
+      buildAttachmentContentDisposition(result.report.title, 'docx')
     );
     return res.sendFile(filePath);
   } catch (err: any) {
