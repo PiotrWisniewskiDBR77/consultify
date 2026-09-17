@@ -145,6 +145,37 @@ vi.mock('../demoSeedService.js', () => ({
   })),
 }));
 
+// Wpis 83 (DEC-539): align is now fail-closed — a real `pg` connect or a
+// `processOrg` throw aborts session creation. This suite's subject is the dataset
+// SIGNAL, not align, so stub both to a no-op success: `pg.Client` never opens a
+// socket and `processOrg` reports everything already aligned.
+vi.mock('pg', () => {
+  class Client {
+    connectionString: string;
+    constructor(config: { connectionString: string }) {
+      this.connectionString = config?.connectionString ?? '';
+    }
+    async connect() {
+      return undefined;
+    }
+    async query() {
+      return { rows: [] };
+    }
+    async end() {
+      return undefined;
+    }
+  }
+  return { default: { Client }, Client };
+});
+
+vi.mock('../../initiatives/alignInitiativeAggregateService.js', () => ({
+  processOrg: vi.fn(async () => ({
+    counts: { align: 0, 'skip-aligned': 1, 'skip-short-circuit': 0, 'skip-no-stage': 0 },
+    wrote: 0,
+    allowed: true,
+  })),
+}));
+
 vi.mock('../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));

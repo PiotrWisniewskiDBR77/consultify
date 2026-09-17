@@ -420,8 +420,17 @@ export async function cleanupExpiredDemoSessions(): Promise<number> {
  * joining one would be impossible without rewriting the whole seed. Placed after
  * the `seed.complete` guard so a half-provisioned tenant (purged below) is never
  * aligned, and before the `demo_sessions` insert so a clone is never observable
- * while still divergent. Best-effort but loud: a failure is logged, and the CLI
- * stays the operator's repair path.
+ * while still divergent.
+ *
+ * FAIL-CLOSED (Wpis 83 · CTO decision (d) 22:12): align is a REQUIRED provisioning
+ * stage, so a `processOrg` failure PROPAGATES (it is no longer caught and logged
+ * here). The caller rolls the partial tenant back and aborts session creation, so
+ * a divergent clone is never observable and no orphan org is left behind. The
+ * `no reachable DATABASE_URL` branch stays a logged skip: it is a precondition
+ * guard, not an align failure — in the live path the seed wrote via this same URL
+ * moments earlier, so it is unreachable there (it only triggers in DB-less unit
+ * tests, where there is nothing to align against). The CLI stays the operator's
+ * bulk-repair path.
  */
 async function alignCloneAggregateAfterSeed(organizationId: string): Promise<void> {
   const resolved = resolveReachableDatabaseUrl({
@@ -442,11 +451,6 @@ async function alignCloneAggregateAfterSeed(organizationId: string): Promise<voi
     logger.info(
       `[demoSessionService] live aggregate align org=${organizationId} allowed=${allowed ? 'YES' : 'NO'} :: ` +
         `aligned=${counts.align} already=${counts['skip-aligned']} skipped=${skipped} wrote=${wrote}`
-    );
-  } catch (error) {
-    logger.error(
-      `[demoSessionService] live aggregate align FAILED for org=${organizationId}: ` +
-        (error instanceof Error ? error.message : String(error))
     );
   } finally {
     await client.end().catch(() => undefined);
@@ -522,7 +526,34 @@ export async function startDemoSession(
   // D-19 v3 (Wpis 77): the seed's writes are durable (autocommit), so repair the
   // aggregate/column divergence the seed just created, before the session row
   // makes the clone observable.
-  await alignCloneAggregateAfterSeed(session.session_org_id);
+  //
+  // FAIL-CLOSED (Wpis 83 · CTO decision (d)): align is a required provisioning
+  // stage. If it throws, the clone is divergent and must not become observable —
+  // roll the partial tenant back (same compensating purge as the `!seed.complete`
+  // branch, same DEMO_ORG_ID guard) and rethrow the ORIGINAL error so the caller
+  // fails the request instead of serving a divergent demo.
+  try {
+    await alignCloneAggregateAfterSeed(session.session_org_id);
+  } catch (alignError: unknown) {
+    let cleanedUp = false;
+    try {
+      if (session.session_org_id && session.session_org_id !== DEMO_ORG_ID) {
+        await deleteDemoDatasetForOrganization(session.session_org_id);
+      }
+      cleanedUp = true;
+    } catch (cleanupError: unknown) {
+      logger.error(
+        `[demoSessionService] rollback of divergent demo tenant ${session.session_org_id} FAILED: ` +
+          (cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
+      );
+    }
+    logger.error(
+      `[demoSessionService] demo session aborted for ${userId}: live aggregate align failed, ` +
+        `tenant ${session.session_org_id} ${cleanedUp ? 'rolled back' : 'LEFT BEHIND (cleanup failed)'}: ` +
+        (alignError instanceof Error ? alignError.message : String(alignError))
+    );
+    throw alignError;
+  }
 
   await dbRun(
     `INSERT INTO demo_sessions (
