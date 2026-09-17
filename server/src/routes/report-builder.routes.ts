@@ -62,6 +62,7 @@ import { checkQualityGates } from '../services/reportQualityGatesService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import { buildAttachmentContentDisposition } from '../utils/contentDisposition.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
@@ -182,19 +183,20 @@ async function syncArtifactRegistryForReport(
   }
 }
 
-async function enforceQualityGatesForExport(
+async function applyQualityWarningsForExport(
   organizationId: string,
   reportId: string,
   res: Response
-): Promise<boolean> {
+): Promise<void> {
   const qualityReport = await checkQualityGates(organizationId, reportId);
-  if (qualityReport.canExport) return true;
-  res.status(409).json({
-    error: 'REPORT_NOT_READY_FOR_EXPORT',
-    message: 'Report failed quality gates required for export.',
-    qualityReport,
-  });
-  return false;
+  const warnings = qualityReport.canExport ? [] : qualityReport.gates || [];
+  res.setHeader('X-Report-Quality-Result', qualityReport.canExport ? 'PASS' : 'BLOCKED_P1');
+  res.setHeader('X-Report-Quality-Warning-Count', String(warnings.length));
+  res.setHeader('X-Report-Quality-Warnings', encodeURIComponent(JSON.stringify(warnings)));
+  res.setHeader(
+    'Access-Control-Expose-Headers',
+    'X-Report-Quality-Result, X-Report-Quality-Warning-Count, X-Report-Quality-Warnings'
+  );
 }
 
 const router = Router();
@@ -3556,7 +3558,9 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
-    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+    if (!reportData) {
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
+    }
 
     // M17: export-approval gate — Notion is an external publish target, so this
     // is the most important main-path gate of all (fail-open on registry lag).
@@ -3584,9 +3588,7 @@ router.post('/:id/export/notion', async (req: Request, res: Response) => {
       return;
     }
 
-    // Notion is an external publish target — apply the same export-readiness gate
-    // enforced for pdf/doc/docx/pptx so un-vetted reports cannot leak outside.
-    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
+    await applyQualityWarningsForExport(organizationId, id, res);
 
     const notionConfig = await getNotionConfigForUser(userId);
     if (!notionConfig) {
@@ -3655,6 +3657,11 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
   const id = paramStr(req.params.id);
   const { userId, organizationId } = getAuthContext(req);
   try {
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) {
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
+    }
+
     // M17: export-approval gate. Fail-open when the artifact registry has no
     // linked record yet (registry-sync lag) — the existence/visibility check
     // belongs to a separate concern (P18-B, already covered on the pptx path);
@@ -3684,12 +3691,7 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
-
-    const reportData = await ReportBuilderService.getReport(id, organizationId);
-    if (!reportData) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
+    await applyQualityWarningsForExport(organizationId, id, res);
 
     const exportDir = await ensureExportDir();
     const fileName = `${id}-${Date.now()}.pdf`;
@@ -3710,27 +3712,19 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
       language: 'en',
       exportedBy: userId,
     });
+    logger.info('[ReportBuilder] PDF exported', { reportId: id, userId });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      buildAttachmentContentDisposition(reportData.report.title, 'pdf')
+    );
     await recordCanonicalExportTrace({
       organizationId,
       userId,
       reportId: id,
       format: 'pdf',
     }).catch(() => null);
-
-    logger.info('[ReportBuilder] PDF exported', { reportId: id, userId });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    const exportTitle = String(reportData.report.title || 'report');
-    const asciiFileName =
-      exportTitle
-        .normalize('NFKD')
-        .replace(/[^\x20-\x7E]/g, '')
-        .replace(/["\\/;\r\n]/g, '_')
-        .trim() || 'report';
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${asciiFileName}.pdf"; filename*=UTF-8''${encodeURIComponent(`${exportTitle}.pdf`)}`
-    );
     return res.sendFile(filePath);
   } catch (err: any) {
     await recordCanonicalExportTrace({
@@ -3762,6 +3756,11 @@ const exportDocx = async (req: Request, res: Response) => {
   const id = paramStr(req.params.id);
   const { userId, organizationId } = getAuthContext(req);
   try {
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) {
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
+    }
+
     // M17: export-approval gate (fail-open on registry lag — see /export/pdf above).
     const approvalArtifact = await artifactRegistryService
       .getArtifactByOrigin({
@@ -3787,12 +3786,7 @@ const exportDocx = async (req: Request, res: Response) => {
       return;
     }
 
-    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
-
-    const reportData = await ReportBuilderService.getReport(id, organizationId);
-    if (!reportData) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
+    await applyQualityWarningsForExport(organizationId, id, res);
 
     const exportDir = await ensureExportDir();
     const fileName = `${id}-${Date.now()}.docx`;
@@ -3820,13 +3814,6 @@ const exportDocx = async (req: Request, res: Response) => {
         : 'en',
       exportedBy: userId,
     });
-    await recordCanonicalExportTrace({
-      organizationId,
-      userId,
-      reportId: id,
-      format: 'docx',
-    }).catch(() => null);
-
     logger.info('[ReportBuilder] Word (.docx) exported', { reportId: id, userId });
 
     res.setHeader(
@@ -3835,8 +3822,14 @@ const exportDocx = async (req: Request, res: Response) => {
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${reportData.report.title || 'report'}.docx"`
+      buildAttachmentContentDisposition(reportData.report.title, 'docx')
     );
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'docx',
+    }).catch(() => null);
     return res.sendFile(filePath);
   } catch (err: any) {
     await recordCanonicalExportTrace({
@@ -3876,6 +3869,11 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
 
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) {
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
+    }
+
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
     const artifact = await artifactRegistryService.getArtifactByOrigin({
       organizationId,
@@ -3885,7 +3883,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       roleKey,
     });
     if (!artifact) {
-      return res.status(404).json({ error: 'Report not found' });
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
     }
 
     // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts
@@ -3904,12 +3902,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       return;
     }
 
-    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
-
-    const reportData = await ReportBuilderService.getReport(id, organizationId);
-    if (!reportData) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
+    await applyQualityWarningsForExport(organizationId, id, res);
 
     let buffer: Buffer;
 
@@ -4069,21 +4062,20 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       language: (language as string) || 'pl',
       exportedBy: userId,
     });
-    await recordCanonicalExportTrace({
-      organizationId,
-      userId,
-      reportId: id,
-      format: 'pptx',
-    }).catch(() => null);
-
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${reportData.report.title || 'report'}.pptx"`
+      buildAttachmentContentDisposition(reportData.report.title, 'pptx')
     );
+    await recordCanonicalExportTrace({
+      organizationId,
+      userId,
+      reportId: id,
+      format: 'pptx',
+    }).catch(() => null);
     return res.sendFile(filePath);
   } catch (err: any) {
     await recordCanonicalExportTrace({
@@ -4127,8 +4119,10 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     }
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
-    if (!reportData) return res.status(404).json({ error: 'Report not found' });
-    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
+    if (!reportData) {
+      return res.status(403).json({ error: 'Report not found', code: 'REPORT_EXPORT_FORBIDDEN' });
+    }
+    await applyQualityWarningsForExport(organizationId, id, res);
 
     const exportDir = await ensureExportDir();
     const safeTitle = String(reportData.report.title || 'report')
