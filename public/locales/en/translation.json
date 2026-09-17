@@ -50177,6 +50177,9 @@
       "newContentGeneratedConfirm": "New content has been generated.\n\nChanges: {{changes}}\n\nApply the new version?",
       "updatedNBlocks": "Updated {{count}} blocks"
     },
+    "coverPreview": {
+      "fallbackTitle": "Report"
+    },
     "blockCard": {
       "saved": "Saved",
       "commentAdded": "Comment added",

@@ -64,6 +64,7 @@ import type {
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
 import { ChapterNavigation, groupBlocksIntoChapters, hasChapters } from './ChapterNavigation';
+import { looksLikeCoverJson, parseCoverContent } from './CoverPreview';
 import { EscalationBanner } from './EscalationBanner';
 import { NarrativeEngineMetadata } from './NarrativeEngineMetadata';
 import { ReviewPanel } from './ReviewPanel';
@@ -243,25 +244,16 @@ function renderCoverPage(
   reportTitle: string,
   styling: ReportStyling
 ): React.ReactNode {
-  let parsed: Record<string, string> | null = null;
-  try {
-    // Cover pages are often stored as JSON
-    const trimmed = content.trim();
-    if (trimmed.startsWith('{')) {
-      parsed = JSON.parse(trimmed);
-    }
-  } catch {
-    // Not JSON — render as markdown
-  }
+  const fields = parseCoverContent(content);
 
-  if (parsed) {
-    const title = parsed.title || reportTitle || 'Report';
-    const subtitle = parsed.subtitle || '';
-    const company = parsed.companyName || parsed.company || '';
+  if (fields) {
+    const title = fields.title || reportTitle || 'Report';
+    const subtitle = fields.subtitle;
+    const company = fields.company;
     const date =
-      parsed.date ||
+      fields.date ||
       new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
-    const assessmentType = parsed.assessmentType || '';
+    const assessmentType = fields.assessmentType;
 
     return (
       <div
@@ -288,6 +280,23 @@ function renderCoverPage(
           {company && date && <span>·</span>}
           {date && <span>{date}</span>}
         </div>
+      </div>
+    );
+  }
+
+  // Unparsable but JSON-looking cover must not dump raw text in the View modal.
+  if (looksLikeCoverJson(content)) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center text-center py-24 px-8"
+        style={{ minHeight: '60vh' }}
+      >
+        <h1
+          className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
+          style={{ color: styling.primaryColor }}
+        >
+          {reportTitle || 'Report'}
+        </h1>
       </div>
     );
   }

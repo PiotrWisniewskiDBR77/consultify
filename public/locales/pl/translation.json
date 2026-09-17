@@ -50424,7 +50424,7 @@
       "illustrationLevel": "Przykłady",
       "illustrationLevelMinimal": "Minimalnie",
       "illustrationLevelModerate": "Umiarkowanie",
-      "illustrationLevelExtensive": "Rozbudowanie",
+      "illustrationLevelExtensive": "Rozbudowane",
       "customTone": "Własny ton (opcjonalnie)",
       "customTonePlaceholder": "Np. bezpośrednio i w oparciu o dane",
       "contentCoherence": "Spójność treści",
@@ -50539,6 +50539,9 @@
       "noDetails": "brak szczegółów",
       "newContentGeneratedConfirm": "Nowa treść została wygenerowana.\n\nZmiany: {{changes}}\n\nCzy zastosować nową wersję?",
       "updatedNBlocks": "Zaktualizowano {{count}} bloków"
+    },
+    "coverPreview": {
+      "fallbackTitle": "Raport"
     },
     "blockCard": {
       "saved": "Zapisano",

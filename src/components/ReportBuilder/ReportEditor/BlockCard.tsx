@@ -57,10 +57,10 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
 
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
+import { CoverPreview } from './CoverPreview';
 import { getBlockSettings } from './BlockSettingsRegistry';
 import type { BlockConfig } from './ReportEditor';
 
@@ -1104,37 +1104,6 @@ const PROMPT_PLACEHOLDERS: Record<string, { en: string; pl: string }> = {
     en: 'E.g., "Initiative cards with ROI, effort sizing, grouped by axis"',
     pl: 'Np. "Karty inicjatyw z ROI, sizing nakładów, grupowane wg osi"',
   },
-};
-
-// ==========================================
-// COVER PREVIEW
-// ==========================================
-
-const CoverPreview: React.FC<{ content: string }> = ({ content }) => {
-  try {
-    const trimmed = content.trim();
-    if (trimmed.startsWith('{')) {
-      const p = JSON.parse(trimmed);
-      return (
-        <div className="text-center py-6 px-4">
-          <h3 className="text-xl font-bold text-c-text mb-1">{p.title || 'Report'}</h3>
-          {p.subtitle && <p className="text-sm text-c-text-secondary mb-3">{p.subtitle}</p>}
-          <div className="flex items-center justify-center gap-2 text-xs text-c-text-secondary">
-            {p.companyName || p.company ? <span>{p.companyName || p.company}</span> : null}
-            {(p.companyName || p.company) && p.date ? <span>·</span> : null}
-            {p.date ? <span>{p.date}</span> : null}
-          </div>
-        </div>
-      );
-    }
-  } catch {
-    /* fallthrough */
-  }
-  return (
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      <ReactMarkdown>{content}</ReactMarkdown>
-    </div>
-  );
 };
 
 // ==========================================
