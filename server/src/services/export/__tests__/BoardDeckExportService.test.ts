@@ -5,15 +5,21 @@ import { describe, expect, it } from 'vitest';
 import { generatePartnerToolkitResourceFile } from '../../partnerToolkitResources.js';
 import { boardDeckExportService, contentStringsFrom } from '../BoardDeckExportService.js';
 
-async function inspectPptx(buffer: Buffer): Promise<{ names: string[]; xml: string }> {
+async function inspectPptx(
+  buffer: Buffer
+): Promise<{ names: string[]; xml: string; slides: string[] }> {
   const zip = await JSZip.loadAsync(buffer);
   const names = Object.keys(zip.files);
+  const slideNames = names
+    .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+    .sort((a, b) => Number(a.match(/\d+/)?.[0]) - Number(b.match(/\d+/)?.[0]));
+  const slides = await Promise.all(slideNames.map((name) => zip.file(name)!.async('string')));
   const xml = (
     await Promise.all(
       names.filter((name) => name.endsWith('.xml')).map((name) => zip.file(name)!.async('string'))
     )
   ).join('\n');
-  return { names, xml };
+  return { names, xml, slides };
 }
 
 describe('BoardDeckExportService production callers', () => {
@@ -56,9 +62,18 @@ describe('BoardDeckExportService production callers', () => {
               source_refs: [{ artifact_name: 'Operations review' }],
             },
             {
-              intent: 'analysis',
-              title: 'Supplier comparison',
+              intent: 'risk_management',
+              title: 'Risk management',
+              key_message: 'KEY-MESSAGE-RYZYKA-MUSI-ZOSTAC',
               blocks: [
+                {
+                  type: 'heading',
+                  content: { text: 'NAGLOWEK-BLOKU-Risk management' },
+                },
+                {
+                  type: 'callout',
+                  content: { text: 'HEADLINE-VISUAL-LEAD-MUSI-ZOSTAC' },
+                },
                 {
                   type: 'table',
                   content: {
@@ -71,16 +86,36 @@ describe('BoardDeckExportService production callers', () => {
                 },
               ],
             },
+            {
+              intent: 'decision',
+              title: 'Decision with supporting table',
+              key_message: 'Approve the controlled option.',
+              blocks: [
+                {
+                  type: 'table',
+                  content: {
+                    headers: ['Option', 'Cost'],
+                    rows: [['Controlled', '£410k']],
+                  },
+                },
+              ],
+            },
           ],
         },
       })
     );
 
     expect(result.names.filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))).toHaveLength(
-      3
+      4
     );
-    expect(result.xml).toContain('<a:tbl>');
-    expect(result.xml).toContain('Supplier comparison');
+    expect(result.slides[2]).toContain('<a:tbl>');
+    expect(result.slides[2]).toContain('Risk management');
+    expect(result.slides[2]).toContain('NAGLOWEK-BLOKU-Risk management');
+    expect(result.slides[2]).toContain('HEADLINE-VISUAL-LEAD-MUSI-ZOSTAC');
+    expect(result.slides[2]).toContain('SO WHAT');
+    expect(result.slides[2]).toContain('KEY-MESSAGE-RYZYKA-MUSI-ZOSTAC');
+    expect(result.slides[3]).toContain('DECISION');
+    expect(result.slides[3]).toContain('RECOMMENDATION');
     expect(result.xml).toContain('Q3 Steering Deck');
     expect(result.xml).toContain('Cycle time fell by 18%.');
     expect(result.xml.match(/Quality held/g)).toHaveLength(1);
