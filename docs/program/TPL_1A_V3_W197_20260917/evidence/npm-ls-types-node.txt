@@ -1,0 +1,3 @@
+consultinity@0.0.1 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-w197-20260917
+└── @types/node@22.19.3 -> ./../../wt/hotfix-ts2559/node_modules/@types/node
+
