@@ -3094,7 +3094,6 @@ export const Api = {
                     { errorCode: canonicalCode }
                   )}`;
 
-                  hasAnyVisibleOutput = true;
                   // Surowa tresc dostawcy nie trafia do rozmowy — tylko do
                   // konsoli przegladarki, zeby ops mial czym debugowac.
                   try {
@@ -3107,7 +3106,14 @@ export const Api = {
                   } catch {
                     /* ignore */
                   }
-                  onChunk(friendly);
+                  // The no-vision error is rendered once by useAIStream's
+                  // onStreamError path, which also persists the canonical
+                  // error metadata. Emitting it here as a text chunk first
+                  // would create a second assistant message for one failure.
+                  if (canonicalCode !== 'AI_MODEL_NO_VISION') {
+                    hasAnyVisibleOutput = true;
+                    onChunk(friendly);
+                  }
 
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);

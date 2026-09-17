@@ -115,6 +115,10 @@ export function getLatestConversationChatImage(
       const image = normalizeChatImagePayload(candidate);
       if (image) return image;
     }
+    // An explicit empty (or invalid) image list is a durable context tombstone.
+    // Do not walk past a failed replacement attempt and silently resurrect an
+    // older image on later turns.
+    return null;
   }
   return null;
 }

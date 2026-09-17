@@ -42,6 +42,26 @@ type ProviderChatMessage = {
 };
 
 /**
+ * Return only the human-authored text from either a legacy string message or
+ * an AI SDK multimodal content array. Image data must never enter intent
+ * classification (or logs) through JSON/string coercion.
+ */
+export function readProviderChatMessageText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+
+  return content
+    .map((part) => {
+      if (typeof part === 'string') return part;
+      if (!part || typeof part !== 'object') return '';
+      const text = (part as { text?: unknown }).text;
+      return typeof text === 'string' ? text : '';
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
  * The contract seam between chat orchestration and llmService. Keeping this
  * pure makes it possible to prove that pixels, rather than a filename or
  * placeholder sentence, reach the provider message payload.
@@ -62,7 +82,7 @@ export function attachChatImagesToLastUserMessage(
   }
   if (lastUserIndex < 0) throw new Error('CHAT_IMAGE_USER_MESSAGE_MISSING');
   output[lastUserIndex].content = buildMultimodalContent(
-    String(output[lastUserIndex].content || ''),
+    readProviderChatMessageText(output[lastUserIndex].content),
     images
   );
   return output;
@@ -73,7 +93,10 @@ export function assertVisionCapableModel(modelId: string): void {
     ? String(modelId).split('/').pop() || String(modelId)
     : String(modelId);
   if (!modelMeetsRequirements(providerNativeModelId, { vision: true })) {
-    throw new Error(`CHAT_IMAGE_MODEL_UNSUPPORTED:${modelId}`);
+    throw Object.assign(new Error(`CHAT_IMAGE_MODEL_UNSUPPORTED:${modelId}`), {
+      code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      retryable: false,
+    });
   }
 }
 
@@ -443,7 +466,7 @@ export class AIPipeline {
               const { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS } =
                 await import('./chatCreationIntent.js');
               const lastUser = [...nonSystemMsgs].reverse().find((m) => m.role === 'user')?.content;
-              const intent = classifyChatCreationIntent(String(lastUser || ''));
+              const intent = classifyChatCreationIntent(readProviderChatMessageText(lastUser));
               if (intent) {
                 const forcedTool = INTENT_TO_TOOL[intent];
                 const hasForced = defs.some((d: { name: string }) => d.name === forcedTool);
@@ -598,7 +621,8 @@ export class AIPipeline {
             if (requiresVision) {
               try {
                 assertVisionCapableModel(modelId);
-              } catch {
+              } catch (visionError) {
+                lastError = visionError as Error;
                 logger.info(`[AIPipeline] Skipping non-vision fallback: ${providerId}/${modelId}`);
                 continue;
               }
@@ -3298,7 +3322,7 @@ export class AIPipeline {
       return {
         code: preserved || inferred || 'AI_ERROR',
         message: error.message,
-        retryable: true,
+        retryable: anyErr?.retryable !== false,
         ...(Number.isInteger(anyErr?.providerStarts)
           ? { providerStarts: Number(anyErr.providerStarts) }
           : {}),

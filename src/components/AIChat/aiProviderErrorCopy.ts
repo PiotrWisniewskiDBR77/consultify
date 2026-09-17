@@ -19,6 +19,7 @@ export type AiErrorCode =
   | 'AI_TIMEOUT'
   | 'AI_STREAM_INTERRUPTED'
   | 'AI_EMPTY'
+  | 'AI_MODEL_NO_VISION'
   | 'AI_ERROR';
 
 export type AiErrorTone = 'danger' | 'warning';
@@ -56,6 +57,8 @@ const LEGACY_TO_CANONICAL: Record<string, AiErrorCode> = {
   EMPTY_STREAM: 'AI_EMPTY',
   EMPTY_LLM_RESPONSE: 'AI_EMPTY',
   AI_EMPTY: 'AI_EMPTY',
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 'AI_MODEL_NO_VISION',
+  AI_MODEL_NO_VISION: 'AI_MODEL_NO_VISION',
   PARTIAL_RECOVERY_NOT_FOUND: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_UNAVAILABLE: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_SUPERSEDED: 'AI_STREAM_INTERRUPTED',
@@ -75,6 +78,7 @@ const TONE: Record<AiErrorCode, AiErrorTone> = {
   AI_TIMEOUT: 'warning',
   AI_STREAM_INTERRUPTED: 'warning',
   AI_EMPTY: 'warning',
+  AI_MODEL_NO_VISION: 'warning',
   AI_CONFIG: 'danger',
   AI_ERROR: 'danger',
 };
@@ -87,7 +91,13 @@ const SLUG: Record<AiErrorCode, string> = {
   AI_TIMEOUT: 'timeout',
   AI_STREAM_INTERRUPTED: 'interrupted',
   AI_EMPTY: 'empty',
+  AI_MODEL_NO_VISION: 'modelNoVision',
   AI_ERROR: 'generic',
+};
+
+const GENERIC_ERROR_FALLBACK = {
+  message: 'The assistant could not complete this request.',
+  action: 'Try again. If it keeps happening, contact your administrator.',
 };
 
 /** Awaryjne teksty EN — gdy `t()` nie znajdzie klucza. */
@@ -116,10 +126,8 @@ const FALLBACK_EN: Record<AiErrorCode, { message: string; action: string }> = {
     message: 'The assistant returned no answer.',
     action: 'Try again, or rephrase your question.',
   },
-  AI_ERROR: {
-    message: 'The assistant could not complete this request.',
-    action: 'Try again. If it keeps happening, contact your administrator.',
-  },
+  AI_MODEL_NO_VISION: GENERIC_ERROR_FALLBACK,
+  AI_ERROR: GENERIC_ERROR_FALLBACK,
 };
 
 /** Sprowadza dowolny kod (nowy `errorCode` lub stary `code`) do kanonicznego. */

@@ -23,6 +23,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import { isChatImagesEnabled } from '../config/FeatureFlags.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
   validateBody,
@@ -175,7 +176,86 @@ const UpdateConversationSchema = z.object({
   expectedVersion: z.number().int().positive().optional(),
 });
 
-const AddMessageSchema = z.object({
+export const MAX_PERSISTED_CHAT_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_PERSISTED_CHAT_IMAGE_DATA_URL_CHARS =
+  32 + 4 * Math.ceil(MAX_PERSISTED_CHAT_IMAGE_BYTES / 3);
+const PERSISTED_CHAT_IMAGE_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+] as const;
+
+const PersistedChatImageSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255),
+    mimeType: z.enum(PERSISTED_CHAT_IMAGE_MIME_TYPES),
+    dataUrl: z.string().max(MAX_PERSISTED_CHAT_IMAGE_DATA_URL_CHARS),
+    width: z.number().int().positive().max(16384),
+    height: z.number().int().positive().max(16384),
+    size: z.number().int().positive().max(MAX_PERSISTED_CHAT_IMAGE_BYTES),
+  })
+  .strict()
+  .superRefine((image, context) => {
+    const prefix = `data:${image.mimeType};base64,`;
+    if (!image.dataUrl.startsWith(prefix)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dataUrl'],
+        message: 'CHAT_IMAGE_MIME_MISMATCH',
+      });
+      return;
+    }
+
+    const encoded = image.dataUrl.slice(prefix.length);
+    if (!encoded || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dataUrl'],
+        message: 'CHAT_IMAGE_BASE64_INVALID',
+      });
+      return;
+    }
+
+    const decodedBytes =
+      Math.floor((encoded.length * 3) / 4) -
+      (encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0);
+    if (decodedBytes > MAX_PERSISTED_CHAT_IMAGE_BYTES) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dataUrl'],
+        message: 'CHAT_IMAGE_PERSISTENCE_LIMIT',
+      });
+    }
+    if (decodedBytes !== image.size) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['size'],
+        message: 'CHAT_IMAGE_SIZE_MISMATCH',
+      });
+    }
+  });
+
+const MessageMetadataSchema = z.record(z.string(), z.unknown()).superRefine((metadata, context) => {
+  // The feature is default-OFF. Preserve the pre-CHAT-IMG open metadata
+  // contract byte-for-byte while disabled; the narrow image contract becomes
+  // active only together with the server feature gate.
+  if (!isChatImagesEnabled()) return;
+  if (!Object.prototype.hasOwnProperty.call(metadata, 'images')) return;
+
+  const parsedImages = z.array(PersistedChatImageSchema).max(1).safeParse(metadata.images);
+  if (parsedImages.success) return;
+
+  for (const issue of parsedImages.error.issues) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['images', ...issue.path],
+      message: issue.message,
+    });
+  }
+});
+
+export const AddMessageSchema = z.object({
   role: z.enum(['user', 'ai']),
   content: z.string().min(1),
   messageType: z
@@ -192,7 +272,7 @@ const AddMessageSchema = z.object({
       'execution_result',
     ])
     .optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: MessageMetadataSchema.optional(),
   tokenCount: z.number().int().positive().optional(),
   modelUsed: z.string().max(100).optional(),
   /** Idempotency key (client-generated) so a retried/duplicated POST collapses to one row. */

@@ -198,6 +198,15 @@ describe('persisted chat image metadata', () => {
       ])
     ).toEqual(image);
   });
+
+  it('treats an explicit empty image list as a durable context tombstone', () => {
+    expect(
+      getLatestConversationChatImage([
+        { role: 'user', metadata: { images: [image] } },
+        { role: 'user', metadata: { images: [] } },
+      ])
+    ).toBeNull();
+  });
 });
 
 describe('getChatAttachmentRejectionReason — honest, specific rejection reasons', () => {

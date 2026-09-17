@@ -59,4 +59,22 @@ describe('CHAT-02 stream transport recovery', () => {
     expect(onChunk).toHaveBeenCalledWith('Hello');
     expect(onDone).toHaveBeenCalledTimes(1);
   });
+
+  it('propagates a no-vision error without emitting a duplicate assistant chunk', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      sseResponse([
+        'data: {"error":"safe","code":"CHAT_IMAGE_MODEL_UNSUPPORTED","errorCode":"AI_MODEL_NO_VISION"}\n\n',
+        'data: [DONE]\n\n',
+      ])
+    );
+    const onChunk = vi.fn();
+    const onDone = vi.fn();
+
+    await expect(Api.chatWithAIStream('describe image', [], onChunk, onDone)).rejects.toMatchObject({
+      code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      errorCode: 'AI_MODEL_NO_VISION',
+    });
+    expect(onChunk).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
+  });
 });

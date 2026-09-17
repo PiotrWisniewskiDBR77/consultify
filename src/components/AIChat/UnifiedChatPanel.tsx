@@ -4495,6 +4495,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             (a: any): a is File => typeof File !== 'undefined' && a instanceof File
           )
         : [];
+      const attemptedImageUpload = files.some(
+        (file) => getChatAttachmentKind(file, chatImagesEnabled) === 'image'
+      );
 
       const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
         Array.isArray(attachments)
@@ -4633,7 +4636,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         try {
           if (attachmentKind === 'image') {
             const resp = await Api.uploadChatImage(file);
-            const image = (resp as any)?.image;
+            const image = resp.image;
             const normalizedImage = normalizeChatImagePayload({
               name: image?.name || file.name,
               mimeType: image?.mimeType,
@@ -4850,9 +4853,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const effectiveImages =
         uploadedImages.length > 0
           ? uploadedImages
-          : persistedConversationImage
-            ? [persistedConversationImage]
-            : [];
+          : attemptedImageUpload
+            ? []
+            : persistedConversationImage
+              ? [persistedConversationImage]
+              : [];
 
       // Save user message to conversation store
       if (conversationId) {
@@ -4860,12 +4865,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           const userMessageMetadata =
             uploadedAttachments.length > 0 ||
             uploadedImages.length > 0 ||
+            attemptedImageUpload ||
             failedAttachments.length > 0 ||
             attachmentDocIds.length > 0 ||
             canvasContextPacket
               ? {
                   ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
-                  ...(uploadedImages.length > 0 ? { images: uploadedImages } : {}),
+                  ...(uploadedImages.length > 0 || attemptedImageUpload
+                    ? { images: uploadedImages }
+                    : {}),
                   ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
                   // Persist the KB doc ids attached to this turn so the RAG scope can be
                   // reconstructed after a page reload (previously only sent to the live AI call).

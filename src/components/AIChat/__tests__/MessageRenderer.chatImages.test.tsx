@@ -7,7 +7,13 @@ import { MessageRenderer, type MessageRendererProps } from '../MessageRenderer';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (key: string, fallbackOrValues?: string | Record<string, unknown>) => {
+      if (key === 'aiChat.attachments.imagePreviewAlt') {
+        const values = typeof fallbackOrValues === 'object' ? fallbackOrValues : {};
+        return `Preview of ${String(values.name || '')}`;
+      }
+      return typeof fallbackOrValues === 'string' ? fallbackOrValues : key;
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -116,7 +122,10 @@ describe('MessageRenderer persisted chat image', () => {
       ],
     });
 
-    expect(screen.getByRole('img', { name: 'persistent.png' })).toHaveAttribute('src', dataUrl);
+    expect(screen.getByRole('img', { name: 'Preview of persistent.png' })).toHaveAttribute(
+      'src',
+      dataUrl
+    );
   });
 
   it('does not render persisted image metadata while the flag is OFF', () => {

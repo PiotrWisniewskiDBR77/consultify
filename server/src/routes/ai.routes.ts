@@ -521,6 +521,36 @@ export async function prepareChatImages(raw: unknown): Promise<
   return output;
 }
 
+function hasLegacyChatImagePayload(body: unknown): boolean {
+  if (!body || typeof body !== 'object') return false;
+  const record = body as Record<string, unknown>;
+  const context =
+    record.context && typeof record.context === 'object'
+      ? (record.context as Record<string, unknown>)
+      : {};
+  return [record.images, record.chatImages, context.images, context.chatImages].some((value) =>
+    Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null
+  );
+}
+
+function enforceLegacyChatImageContract(
+  req: AuthRequest,
+  res: Response,
+  next: (error?: unknown) => void
+) {
+  if (!hasLegacyChatImagePayload(req.body)) return next();
+  if (!isChatImagesEnabled()) {
+    return res.status(404).json({
+      code: 'CHAT_IMAGES_DISABLED',
+      error: 'CHAT_IMAGES_DISABLED',
+    });
+  }
+  return res.status(422).json({
+    code: 'CHAT_IMAGES_REQUIRE_STREAM',
+    error: 'CHAT_IMAGES_REQUIRE_STREAM',
+  });
+}
+
 // ==================== SHARED AI HANDLER PRELUDE (standard formula) ====================
 // Single source of truth for the provider-availability + access-policy gate that
 // every direct LLM endpoint needs. Returns an error descriptor to send, or null
@@ -7104,6 +7134,7 @@ router.post(
 router.post(
   '/chat',
   verifyToken,
+  enforceLegacyChatImageContract,
   validateBody(ChatRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;

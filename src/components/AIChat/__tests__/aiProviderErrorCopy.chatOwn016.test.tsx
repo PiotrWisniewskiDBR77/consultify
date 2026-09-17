@@ -32,6 +32,7 @@ const KODY = [
   'AI_TIMEOUT',
   'AI_STREAM_INTERRUPTED',
   'AI_EMPTY',
+  'AI_MODEL_NO_VISION',
   'AI_ERROR',
 ] as const;
 
@@ -60,7 +61,7 @@ describe('CHAT-OWN-016 — kod bledu -> zrozumiale zdanie', () => {
     expect(copy.message).not.toBe(`aiChat.providerError`);
   });
 
-  it('siedem kodow daje siedem roznych zdan (zero jednego ogolnika na wszystko)', () => {
+  it('kazdy kod daje inne zdanie (zero jednego ogolnika na wszystko)', () => {
     const zdania = new Set(KODY.map((k) => getAiErrorCopy(t, { errorCode: k }).message));
     expect(zdania.size).toBe(KODY.length);
   });
@@ -94,6 +95,7 @@ describe('CHAT-OWN-016 — stare kody serwera tez daja zrozumiale zdanie', () =>
     ['NO_LLM_PROVIDER', 'AI_CONFIG'],
     ['INVALID_API_KEY', 'AI_CONFIG'],
     ['EMPTY_STREAM', 'AI_EMPTY'],
+    ['CHAT_IMAGE_MODEL_UNSUPPORTED', 'AI_MODEL_NO_VISION'],
     ['PARTIAL_RECOVERY_NOT_FOUND', 'AI_STREAM_INTERRUPTED'],
     ['AI_STREAM_ERROR', 'AI_ERROR'],
     ['cos-czego-nie-znamy', 'AI_ERROR'],

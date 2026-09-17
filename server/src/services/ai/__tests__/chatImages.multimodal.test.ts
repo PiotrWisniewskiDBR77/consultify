@@ -43,15 +43,19 @@ vi.mock('../qaAiRuntime.js', () => ({
   getQaAiModeLabel: vi.fn(() => 'off'),
   isQaAiMode: vi.fn(() => false),
 }));
+vi.mock('../llmConfigService.js', () => ({
+  llmConfigService: { getFallbackChain: vi.fn(async () => []) },
+}));
 
 import {
   assertVisionCapableModel,
   attachChatImagesToLastUserMessage,
+  readProviderChatMessageText,
 } from '../AIPipeline.js';
 import { inferChatTaskPurpose } from '../aiTaskCatalog.js';
 import { llmService } from '../llmService.js';
 import { modelMeetsRequirements } from '../modelCapabilities.js';
-import { MODEL_PROVIDER_MAP, TIER_DEFAULTS } from '../modelRouter.js';
+import { ModelRouter, MODEL_PROVIDER_MAP, TIER_DEFAULTS } from '../modelRouter.js';
 
 describe('CHAT-IMG-1 multimodal provider contract', () => {
   beforeEach(() => {
@@ -126,8 +130,54 @@ describe('CHAT-IMG-1 multimodal provider contract', () => {
   });
 
   it('rejects an explicit selected text-only model instead of dropping the image', () => {
-    expect(() => assertVisionCapableModel('openai/o1-mini')).toThrow(
-      'CHAT_IMAGE_MODEL_UNSUPPORTED:openai/o1-mini'
+    try {
+      assertVisionCapableModel('openai/o1-mini');
+      throw new Error('expected assertion to reject a text-only model');
+    } catch (error) {
+      expect(error).toMatchObject({
+        message: 'CHAT_IMAGE_MODEL_UNSUPPORTED:openai/o1-mini',
+        code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+        retryable: false,
+      });
+    }
+  });
+
+  it('reads intent text from a multimodal turn without stringifying image objects', () => {
+    const content = [
+      { type: 'text', text: 'Create a task from this screenshot.' },
+      { type: 'image', image: 'data:image/png;base64,cGl4ZWxz', mediaType: 'image/png' },
+    ];
+
+    expect(readProviderChatMessageText(content)).toBe('Create a task from this screenshot.');
+    expect(readProviderChatMessageText(content)).not.toContain('[object Object]');
+    expect(readProviderChatMessageText(content)).not.toContain('cGl4ZWxz');
+  });
+
+  it('keeps the namespaced BUDGET vision model in the real runtime fallback list', async () => {
+    const router = new ModelRouter();
+    Object.defineProperties(router, {
+      getModelsForTier: { value: vi.fn(async () => []) },
+      getProviderConfig: {
+        value: vi.fn(async (modelId: string) => ({
+          id: modelId,
+          provider: 'openrouter',
+          apiKey: 'test-key',
+          endpoint: null,
+          tier: 'BUDGET',
+        })),
+      },
+    });
+
+    const candidates = await router.getRuntimeFallbackCandidates({
+      capability: 'chat_with_image',
+      purpose: 'chat_with_image',
+      requirements: { vision: true },
+      tier: 'BUDGET',
+      options: { tier: 'BUDGET' },
+    });
+
+    expect(candidates.map((candidate: { id: string }) => candidate.id)).toContain(
+      'openai/gpt-4o-mini'
     );
   });
 });

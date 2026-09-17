@@ -185,6 +185,17 @@ describe('EnhancedChatInput — Teresa voice CTA', () => {
       'src',
       'blob:screen'
     );
+    const attachmentChip = screen.getByText('screen.png').closest('div');
+    expect(attachmentChip).toHaveClass(
+      'border-c-border',
+      'bg-c-surface-raised',
+      'text-c-text-secondary'
+    );
+    expect(attachmentChip?.className).not.toMatch(/(?:bg|text)-(?:slate|navy)-/);
+    expect(screen.getByRole('button', { name: '×' })).toHaveClass(
+      'text-c-text-muted',
+      'hover:text-c-text'
+    );
     await userEvent.type(input, 'Describe this{enter}');
     expect(onSend).toHaveBeenCalledWith('Describe this', [image]);
     expect(toastError).not.toHaveBeenCalled();

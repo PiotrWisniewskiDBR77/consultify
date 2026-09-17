@@ -85,6 +85,14 @@ const CASES: Array<{
     httpStatus: 502,
   },
   {
+    nazwa: 'wybrany model nie obsluguje obrazow',
+    err: Object.assign(new Error('CHAT_IMAGE_MODEL_UNSUPPORTED:openai/o1-mini'), {
+      code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+    }),
+    errorCode: 'AI_MODEL_NO_VISION',
+    httpStatus: 422,
+  },
+  {
     nazwa: 'blad nierozpoznany',
     err: new Error('something odd happened in the worker'),
     errorCode: 'AI_ERROR',
@@ -106,10 +114,20 @@ describe('providerErrorMapper — kazdy przypadek dostawcy ma kod i bezpieczny k
     }
   });
 
+  it('model bez obslugi obrazow jest bledem jawnym i nie jest ponawiany', () => {
+    const mapped = mapProviderError({ code: 'CHAT_IMAGE_MODEL_UNSUPPORTED' });
+    expect(mapped).toMatchObject({
+      errorCode: 'AI_MODEL_NO_VISION',
+      legacyCode: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      httpStatus: 422,
+      retryable: false,
+    });
+  });
+
   it('kazdy przypadek daje inny errorCode niz zbiorczy AI_ERROR, poza jawnym nierozpoznanym', () => {
     const rozpoznane = CASES.filter((c) => c.errorCode !== 'AI_ERROR');
     expect(rozpoznane.length).toBe(CASES.length - 1);
-    expect(new Set(rozpoznane.map((c) => c.errorCode)).size).toBe(6);
+    expect(new Set(rozpoznane.map((c) => c.errorCode)).size).toBe(7);
   });
 });
 

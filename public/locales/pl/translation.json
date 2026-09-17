@@ -27340,6 +27340,10 @@
         "message": "Asystent nie zwrócił odpowiedzi.",
         "action": "Spróbuj ponownie albo sformułuj pytanie inaczej."
       },
+      "modelNoVision": {
+        "message": "Wybrany model nie potrafi odczytywać obrazów.",
+        "action": "Wybierz model obsługujący obrazy albo usuń obraz."
+      },
       "generic": {
         "message": "Asystent nie mógł wykonać tego polecenia.",
         "action": "Spróbuj ponownie. Jeśli problem wraca, skontaktuj się z administratorem."

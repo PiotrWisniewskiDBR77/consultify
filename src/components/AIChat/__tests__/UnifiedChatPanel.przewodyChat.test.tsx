@@ -388,6 +388,23 @@ describe('UnifiedChatPanel chat route wiring', () => {
 
   it('maps a server image error code to localized copy before transport', async () => {
     vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const previousImage = {
+      name: 'previous.png',
+      mimeType: 'image/png' as const,
+      dataUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      width: 1,
+      height: 1,
+      size: 68,
+    };
+    harness.conversationState.activeConversationId = 'conversation-368';
+    harness.conversationState.activeMessages = [
+      {
+        id: 'previous-image-turn',
+        role: 'user',
+        metadata: { images: [previousImage] },
+      },
+    ];
     vi.spyOn(Api, 'uploadChatImage').mockRejectedValue({
       message: 'Invalid or corrupted image data',
       data: {
@@ -411,6 +428,57 @@ describe('UnifiedChatPanel chat route wiring', () => {
         error: expect.not.stringContaining('Invalid or corrupted image data'),
       }),
     ]);
+    expect(harness.startStream.mock.calls[0]?.[3]).not.toHaveProperty('images');
+    expect(harness.addConversationMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ images: [] }),
+      })
+    );
+  });
+
+  it('does not resurrect an older image after a failed replacement tombstone', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const previousImage = {
+      name: 'previous.png',
+      mimeType: 'image/png' as const,
+      dataUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      width: 1,
+      height: 1,
+      size: 68,
+    };
+    harness.conversationState.activeConversationId = 'conversation-368';
+    harness.conversationState.activeMessages = [
+      {
+        id: 'previous-image-turn',
+        role: 'user',
+        metadata: { images: [previousImage] },
+      },
+      {
+        id: 'failed-replacement-turn',
+        role: 'user',
+        metadata: {
+          images: [],
+          failedAttachments: [{ filename: 'broken.png', code: 'CHAT_IMAGE_UPLOAD_FAILED' }],
+        },
+      },
+    ];
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-text-only' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalledTimes(1));
+    expect(harness.startStream.mock.calls[0]?.[3]).toEqual(
+      expect.objectContaining({
+        attachmentFileNames: [],
+        hasAttachments: false,
+      })
+    );
+    expect(harness.startStream.mock.calls[0]?.[3]).not.toHaveProperty('images');
   });
 
   it('keeps Business Actions hidden with the flag at its default OFF value', () => {

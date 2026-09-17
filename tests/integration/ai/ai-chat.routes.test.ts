@@ -22,6 +22,7 @@ vi.mock('../../../server/src/services/aiAuditLogger.js', () => ({
 describe('AI routes: /chat (REAL integration)', () => {
   const origNodeEnv = process.env.NODE_ENV;
   const origBypass = process.env.ENABLE_TEST_AUTH_BYPASS;
+  const origChatImages = process.env.ENABLE_CHAT_IMAGES;
   let canListen = true;
   let router: any;
 
@@ -40,10 +41,13 @@ describe('AI routes: /chat (REAL integration)', () => {
     else process.env.NODE_ENV = origNodeEnv;
     if (origBypass === undefined) delete process.env.ENABLE_TEST_AUTH_BYPASS;
     else process.env.ENABLE_TEST_AUTH_BYPASS = origBypass;
+    if (origChatImages === undefined) delete process.env.ENABLE_CHAT_IMAGES;
+    else process.env.ENABLE_CHAT_IMAGES = origChatImages;
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.ENABLE_CHAT_IMAGES;
     processMessage.mockResolvedValue({
       role: 'assistant',
       intent: 'chat',
@@ -83,6 +87,43 @@ describe('AI routes: /chat (REAL integration)', () => {
         details: expect.any(Array),
       })
     );
+  });
+
+  it('POST /api/ai/chat rejects image payloads at the OFF gate before orchestration or audit', async function () {
+    if (!canListen) this.skip();
+    const res = await request(makeApp())
+      .post('/api/ai/chat')
+      .send({
+        message: 'Describe this image',
+        context: { images: [{ dataUrl: 'data:image/png;base64,cGl4ZWxz' }] },
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({
+      code: 'CHAT_IMAGES_DISABLED',
+      error: 'CHAT_IMAGES_DISABLED',
+    });
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(logSuggestion).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/ai/chat explicitly requires the stream route when image support is ON', async function () {
+    if (!canListen) this.skip();
+    process.env.ENABLE_CHAT_IMAGES = 'true';
+    const res = await request(makeApp())
+      .post('/api/ai/chat')
+      .send({
+        message: 'Describe this image',
+        chatImages: [{ dataUrl: 'data:image/png;base64,cGl4ZWxz' }],
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body).toEqual({
+      code: 'CHAT_IMAGES_REQUIRE_STREAM',
+      error: 'CHAT_IMAGES_REQUIRE_STREAM',
+    });
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(logSuggestion).not.toHaveBeenCalled();
   });
 
   it('POST /api/ai/chat returns 500 when orchestrator throws (H6.4: coded, no err.message leak)', async function () {
