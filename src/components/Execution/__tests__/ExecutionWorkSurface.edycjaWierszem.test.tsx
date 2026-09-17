@@ -57,7 +57,10 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (store: unknown) => unknown) =>
-    selector({ currentUser: { id: 'user-1' }, currentOrganization: { id: 'org-1' } }),
+    selector({
+      currentUser: { id: 'user-1', role: 'OWNER' },
+      currentOrganization: { id: 'org-1' },
+    }),
 }));
 
 vi.mock('@/services/api/organizations.api', () => ({
