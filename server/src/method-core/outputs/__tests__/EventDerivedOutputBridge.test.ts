@@ -86,6 +86,18 @@ describe('deriveFindingsFromEvents (pure)', () => {
     expect(findings[0].recommendation.length).toBeGreaterThan(0);
   });
 
+  it('DEC-546: a confirmed Yes advances currentLevel even before supporting evidence exists', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 1, payload: { questionId: 'q1', answerState: 'confirmed' } }),
+      makeEvent({ id: 'e2', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2, payload: { questionId: 'q2', answerState: 'confirmed' } }),
+    ];
+
+    const { current, findings } = deriveFindingsFromEvents(events);
+
+    expect(current['1A']).toBe(2);
+    expect(findings).toHaveLength(0);
+  });
+
   it('DEC-544: a later yes above a no/help gap never raises currentLevel', () => {
     const events: MethodEvent[] = [
       makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 1, payload: { questionId: 'q1', answerState: 'confirmed' } }),
