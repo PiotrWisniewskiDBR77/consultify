@@ -47,7 +47,7 @@ const renderContentStart = hub.indexOf('const renderContent = () => {');
 const activeDocumentBlockStart = hub.indexOf('if (activeDocumentId) {', renderContentStart);
 const activeTabListStart = hub.indexOf("if (activeTab === 'list') {", activeDocumentBlockStart);
 
-describe('D-6 — ExecutionHub renderContent kieruje work:<id> do ExecutionWorkSurface', () => {
+describe('D-6/W205 — ExecutionHub renderContent kieruje work:<id>', () => {
   it('(a) blok activeDocumentId obsługuje prefiks work: przed fallbackiem karty inicjatywy', () => {
     expect(renderContentStart).toBeGreaterThan(-1);
     expect(activeDocumentBlockStart).toBeGreaterThan(renderContentStart);
@@ -68,11 +68,21 @@ describe('D-6 — ExecutionHub renderContent kieruje work:<id> do ExecutionWorkS
     expect(workBranchIndex).toBeLessThan(fallbackIndex);
   });
 
-  it('(c) gałąź work: przekazuje documentId z reszty identyfikatora (join po drugim ":")', () => {
+  it('(c) gałąź work: przekazuje workRecordId z reszty identyfikatora (join po drugim ":")', () => {
     const body = hub.slice(activeDocumentBlockStart, activeTabListStart);
     const workBranchIndex = body.indexOf("activeDocumentId.startsWith('work:')");
-    const snippet = body.slice(workBranchIndex, workBranchIndex + 400);
+    const snippet = body.slice(workBranchIndex, workBranchIndex + 1200);
     expect(snippet).toContain("activeDocumentId.split(':')");
-    expect(snippet).toContain('documentId={workIdParts.join(\':\')}');
+    expect(snippet).toContain('documentId={workRecordId}');
+  });
+
+  it('(d) zadanie work:<case>:<task> otwiera TaskDetailView w trybie managera ownerScoped=false', () => {
+    const body = hub.slice(activeDocumentBlockStart, activeTabListStart);
+    const workBranchIndex = body.indexOf("activeDocumentId.startsWith('work:')");
+    const snippet = body.slice(workBranchIndex, workBranchIndex + 950);
+    expect(snippet).toContain("activeDoc?.type === 'task'");
+    expect(snippet).toContain('<TaskDetailView');
+    expect(snippet).toContain('taskId={workRecordId}');
+    expect(snippet).toContain('ownerScoped={false}');
   });
 });

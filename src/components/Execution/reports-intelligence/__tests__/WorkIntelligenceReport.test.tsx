@@ -56,11 +56,13 @@ vi.mock('@/components/standard/StandardTable', () => ({
           >
             {row.title}
           </button>
-          {columns.map((column: any) => column.render
-            ? <span key={column.id}>{column.render(row)}</span>
-            : column.id !== 'title' && row[column.id] != null
-              ? <span key={column.id}>{String(row[column.id])}</span>
-              : null)}
+          {columns.map((column: any) =>
+            column.render ? (
+              <span key={column.id}>{column.render(row)}</span>
+            ) : column.id !== 'title' && row[column.id] != null ? (
+              <span key={column.id}>{String(row[column.id])}</span>
+            ) : null
+          )}
         </div>
       ))}
     </div>
@@ -68,6 +70,9 @@ vi.mock('@/components/standard/StandardTable', () => ({
 }));
 
 const stateDate = new Date('2026-08-25T12:00:00.000Z');
+const GOVERNED_DECISION_TITLE = 'Governed decision';
+const TECHNICAL_DECISION_TITLE = 'Technical tool decision';
+
 const item = (overrides: Partial<WorkReportItem>): WorkReportItem => ({
   id: 'task-1',
   executionCaseId: 'case-1',
@@ -207,8 +212,6 @@ describe('Work Intelligence report', () => {
     expect(screen.getByTestId('standard-table')).toHaveTextContent('Governed task');
   });
 
-
-
   it('keeps calculated epistemic and severity labels separated in Executive Pulse', async () => {
     api.listExecutionCases.mockResolvedValue({
       cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1' }],
@@ -222,14 +225,16 @@ describe('Work Intelligence report', () => {
     render(<WorkIntelligenceReport />);
 
     await screen.findByRole('heading', { name: 'Executive Pulse' });
-    const calculatedPulseButtons = screen.getAllByRole('button').filter((button) =>
-      button.textContent?.includes('CALCULATED')
-    );
+    const calculatedPulseButtons = screen
+      .getAllByRole('button')
+      .filter((button) => button.textContent?.includes('CALCULATED'));
 
     expect(calculatedPulseButtons.length).toBeGreaterThan(0);
     for (const button of calculatedPulseButtons) {
       expect(button.textContent).not.toMatch(/CalculatedNeutral|CALCULATEDNeutral/);
-      expect(button.textContent).toMatch(/CALCULATED\s+Neutral|CALCULATED\s+Amber|CALCULATED\s+Red|CALCULATED\s+Unknown|CALCULATED\s+Warning/);
+      expect(button.textContent).toMatch(
+        /CALCULATED\s+Neutral|CALCULATED\s+Amber|CALCULATED\s+Red|CALCULATED\s+Unknown|CALCULATED\s+Warning/
+      );
     }
   });
 
@@ -296,29 +301,72 @@ describe('Work Intelligence report', () => {
     expect(screen.getByRole('button', { name: /Previous week/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Next week/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Next month/ })).toBeInTheDocument();
-    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent('Prepare the weekly gate');
+    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent(
+      'Prepare the weekly gate'
+    );
     expect(screen.getAllByTestId('standard-table').at(-1)).not.toHaveTextContent(
       'Close the monthly dependency'
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Next month/ }));
-    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent('Close the monthly dependency');
+    expect(screen.getAllByTestId('standard-table').at(-1)).toHaveTextContent(
+      'Close the monthly dependency'
+    );
   });
 
   it('shows concrete attention reasons, persists on demand, and executes manager actions through the governed service client', async () => {
-    api.listExecutionCases.mockResolvedValue({ cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1', projectId: 'project-1', projectTitle: 'North plant' }] });
+    api.listExecutionCases.mockResolvedValue({
+      cases: [
+        {
+          executionCaseId: 'case-1',
+          initiativeId: 'initiative-1',
+          projectId: 'project-1',
+          projectTitle: 'North plant',
+        },
+      ],
+    });
     api.readExecutionWork.mockResolvedValue({
-      tasks: [{ taskId: 'task-1', title: 'Blocked commissioning', status: 'BLOCKED', priority: 'HIGH', dueAt: '2026-08-20T12:00:00.000Z' }],
+      tasks: [
+        {
+          taskId: 'task-1',
+          title: 'Blocked commissioning',
+          status: 'BLOCKED',
+          priority: 'HIGH',
+          dueAt: '2026-08-20T12:00:00.000Z',
+        },
+      ],
       decisions: [],
     });
     api.readExecutionMilestones.mockResolvedValue({ items: [] });
-    managerApi.getManagerProblems.mockImplementation((laneId: string) => Promise.resolve({ data: { problems: laneId === 'action-queue' ? [{
-      id: 'aq-task-blocked-task-1', sourceEntityId: 'task-1', sourceEntityType: 'TASK', actions: [
-        { id: 'escalate', label: 'Escalate' }, { id: 'reassign', label: 'Reassign' }, { id: 'set_capacity', label: 'Set capacity' },
-      ],
-    }] : [] } }));
-    managerApi.executeManagerProblemAction.mockResolvedValue({ data: { success: true, message: 'Task reassigned.', changedCount: 1 } });
-    managerApi.generateExecutionWorkAnalysis.mockResolvedValue({ id: 'run-week-1', created: true, asOf: '2026-08-24T12:00:00.000Z' });
+    managerApi.getManagerProblems.mockImplementation((laneId: string) =>
+      Promise.resolve({
+        data: {
+          problems:
+            laneId === 'action-queue'
+              ? [
+                  {
+                    id: 'aq-task-blocked-task-1',
+                    sourceEntityId: 'task-1',
+                    sourceEntityType: 'TASK',
+                    actions: [
+                      { id: 'escalate', label: 'Escalate' },
+                      { id: 'reassign', label: 'Reassign' },
+                      { id: 'set_capacity', label: 'Set capacity' },
+                    ],
+                  },
+                ]
+              : [],
+        },
+      })
+    );
+    managerApi.executeManagerProblemAction.mockResolvedValue({
+      data: { success: true, message: 'Task reassigned.', changedCount: 1 },
+    });
+    managerApi.generateExecutionWorkAnalysis.mockResolvedValue({
+      id: 'run-week-1',
+      created: true,
+      asOf: '2026-08-24T12:00:00.000Z',
+    });
 
     render(<WorkIntelligenceReport analysisEnabled />);
     fireEvent.change(await screen.findByLabelText('Week of'), { target: { value: '2026-08-24' } });
@@ -327,14 +375,58 @@ describe('Work Intelligence report', () => {
     expect(screen.getAllByText('North plant').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Blocked commissioning' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delegate' }));
-    await waitFor(() => expect(managerApi.executeManagerProblemAction).toHaveBeenCalledWith(
-      'action-queue',
-      { problemId: 'aq-task-blocked-task-1', actionId: 'reassign' },
-      'project-1'
-    ));
+    await waitFor(() =>
+      expect(managerApi.executeManagerProblemAction).toHaveBeenCalledWith(
+        'action-queue',
+        { problemId: 'aq-task-blocked-task-1', actionId: 'reassign' },
+        'project-1'
+      )
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Generate for this week' }));
-    await waitFor(() => expect(managerApi.generateExecutionWorkAnalysis).toHaveBeenCalledWith('2026-08-24'));
+    await waitFor(() =>
+      expect(managerApi.generateExecutionWorkAnalysis).toHaveBeenCalledWith('2026-08-24')
+    );
     expect(await screen.findByTestId('work-analysis-receipt')).toHaveTextContent('run-week-1');
+  });
+
+  it('opens a decision by its real decision.id and filters TOOL_* technical decisions', async () => {
+    const onOpenDocument = vi.fn();
+    api.listExecutionCases.mockResolvedValue({
+      cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1' }],
+    });
+    api.readExecutionWork.mockResolvedValue({
+      tasks: [],
+      decisions: [
+        {
+          id: 'decision-real-1',
+          decisionId: 'runtime-shadow-id',
+          title: GOVERNED_DECISION_TITLE,
+          status: 'DRAFT',
+        },
+        {
+          id: 'TOOL_AUTO_REWRITE',
+          decisionId: 'TOOL_AUTO_REWRITE',
+          title: TECHNICAL_DECISION_TITLE,
+          status: 'DRAFT',
+        },
+      ],
+    });
+    api.readExecutionMilestones.mockResolvedValue({ items: [] });
+
+    render(<WorkIntelligenceReport onOpenDocument={onOpenDocument} />);
+    const table = await screen.findByTestId('standard-table');
+    expect(screen.queryByText(TECHNICAL_DECISION_TITLE)).not.toBeInTheDocument();
+    fireEvent.doubleClick(within(table).getByRole('button', { name: GOVERNED_DECISION_TITLE }));
+
+    await waitFor(() =>
+      expect(onOpenDocument).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'decision-real-1',
+          kind: 'DECISION',
+          executionCaseId: 'case-1',
+        })
+      )
+    );
   });
 
   it('renders an honest empty state when runtime returns no cases', async () => {

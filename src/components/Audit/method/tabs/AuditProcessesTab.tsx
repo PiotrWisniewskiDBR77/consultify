@@ -92,6 +92,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
   const [coverage, setCoverage] = useState<AuditProgramCoverage | null>(null);
   const [lifecycle, setLifecycle] = useState<AuditProgramLifecycle | null>(null);
+  const [lifecycleError, setLifecycleError] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
@@ -115,12 +116,14 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       setDetail(null);
       setCoverage(null);
       setLifecycle(null);
+      setLifecycleError(null);
       return;
     }
     let cancelled = false;
     setDetailLoading(true);
     setCriteriaError(null);
-    Promise.all([
+    setLifecycleError(null);
+    Promise.allSettled([
       getProgram(selectedId),
       getProgramCoverage(selectedId),
       getProgramLifecycle(selectedId),
@@ -128,16 +131,28 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     ])
       .then(([programResult, coverageResult, lifecycleResult, criteriaResult]) => {
         if (cancelled) return;
-        setDetail(programResult);
-        setCoverage(coverageResult);
-        setLifecycle(lifecycleResult);
-        setCriteria(criteriaResult);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDetail(null);
-          setCoverage(null);
+
+        if (programResult.status === 'fulfilled') setDetail(programResult.value);
+        else setDetail(null);
+
+        if (coverageResult.status === 'fulfilled') setCoverage(coverageResult.value);
+        else setCoverage(null);
+
+        if (lifecycleResult.status === 'fulfilled') {
+          setLifecycle(lifecycleResult.value);
+          setLifecycleError(null);
+        } else {
           setLifecycle(null);
+          setLifecycleError(
+            isPolish
+              ? 'Nie udało się wczytać bramek następnego etapu.'
+              : 'Could not load next-stage gates.'
+          );
+        }
+
+        if (criteriaResult.status === 'fulfilled') {
+          setCriteria(criteriaResult.value);
+        } else {
           setCriteria([]);
           setCriteriaError(
             isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.'
@@ -213,9 +228,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       render: (row: AuditProgramSummary) => {
         const packTitle =
           packTitleById.get(row.packId) ||
-            (row.packTitle
-              ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}`
-              : '—');
+          (row.packTitle
+            ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}`
+            : '—');
         return (
           <span
             className="text-xs text-c-text-secondary truncate block max-w-[160px]"
@@ -379,12 +394,14 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         {
           id: 'scope',
           label: isPolish ? 'Zakres' : 'Scope',
-          value: detail.scopeText || (isPolish ? 'Brak opisu zakresu.' : 'No scope description yet.'),
+          value:
+            detail.scopeText || (isPolish ? 'Brak opisu zakresu.' : 'No scope description yet.'),
         },
         {
           id: 'objective',
           label: isPolish ? 'Cele' : 'Objective',
-          value: detail.objective || (isPolish ? 'Brak opisu celu.' : 'No objective description yet.'),
+          value:
+            detail.objective || (isPolish ? 'Brak opisu celu.' : 'No objective description yet.'),
         },
         {
           id: 'coverage',
@@ -419,6 +436,65 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     );
   }
 
+  const lifecycleGateContent = (() => {
+    if (lifecycleError) {
+      return (
+        <div className="text-xs text-c-danger" role="alert">
+          {lifecycleError}
+        </div>
+      );
+    }
+    if (!lifecycle && detailLoading) {
+      return (
+        <div className="text-xs text-c-text-muted">
+          {isPolish ? 'Ładowanie…' : 'Loading…'}
+        </div>
+      );
+    }
+    if (!lifecycle) {
+      const unavailableLabel = isPolish
+        ? 'Bramki następnego etapu są chwilowo niedostępne.'
+        : 'Next-stage gates are temporarily unavailable.';
+      return <div className="text-xs text-c-text-muted">{unavailableLabel}</div>;
+    }
+    if (lifecycle.allowed.length === 0) {
+      return (
+        <div className="text-xs text-c-text-muted">
+          {isPolish
+            ? 'Brak dalszych przejść z tego etapu.'
+            : 'No further transitions from this stage.'}
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-1.5">
+        {lifecycle.allowed.map((gate) => (
+          <div key={gate.state} className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-xs font-medium text-c-text">
+                {programLifecycleLabel(gate.state, isPolish)}
+              </div>
+              {gate.blockers.length > 0 ? (
+                <div className="mt-0.5 text-[11px] text-c-text-muted">
+                  {gate.blockers.join('; ')}
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              disabled={gate.blockers.length > 0 || transitioning === gate.state}
+              onClick={() => void handleTransition(gate.state)}
+              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full border border-c-border bg-c-surface px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              <ArrowRight size={11} />
+              {isPolish ? 'Przejdź' : 'Move'}
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  })();
+
   return (
     <div className="flex h-full min-h-0">
       <div className="flex-1 min-w-0 overflow-auto p-4">
@@ -444,159 +520,125 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       </div>
       <JedenPrawyPanel
         className="border-l border-c-border-subtle"
-        rekord={selectedProgram ? (
-          <StandardPreview
-            title={selectedProgram.name}
-            onClose={() => setSelectedId(null)}
-            loading={detailLoading}
-            meta={{
-              pills: [
-                {
-                  label: isPolish ? 'Etap' : 'Stage',
-                  value: programLifecycleLabel(selectedProgram.lifecycleState, isPolish),
-                  tone: programLifecycleTone(selectedProgram.lifecycleState),
-                },
-              ],
-            }}
-            details={{
-              properties: detailProperties,
-              label: isPolish ? 'Szczegóły' : 'Details',
-              propertyLabel: isPolish ? 'Właściwość' : 'Property',
-              valueLabel: isPolish ? 'Wartość' : 'Value',
-            }}
-            relations={
-              detail?.members?.map((member) => ({
-                id: member.userId,
-                label: member.name || member.userId,
-                value: auditRoleLabel(member.memberRole, isPolish),
-              })) ?? []
-            }
-            relationsEmptyLabel={isPolish ? 'Brak przypisanego zespołu' : 'No team assigned'}
-          >
-            <div
-              className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
-              data-testid="audit-finalize-output-control"
+        rekord={
+          selectedProgram ? (
+            <StandardPreview
+              title={selectedProgram.name}
+              onClose={() => setSelectedId(null)}
+              loading={detailLoading}
+              meta={{
+                pills: [
+                  {
+                    label: isPolish ? 'Etap' : 'Stage',
+                    value: programLifecycleLabel(selectedProgram.lifecycleState, isPolish),
+                    tone: programLifecycleTone(selectedProgram.lifecycleState),
+                  },
+                ],
+              }}
+              details={{
+                properties: detailProperties,
+                label: isPolish ? 'Szczegóły' : 'Details',
+                propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                valueLabel: isPolish ? 'Wartość' : 'Value',
+              }}
+              relations={
+                detail?.members?.map((member) => ({
+                  id: member.userId,
+                  label: member.name || member.userId,
+                  value: auditRoleLabel(member.memberRole, isPolish),
+                })) ?? []
+              }
+              relationsEmptyLabel={isPolish ? 'Brak przypisanego zespołu' : 'No team assigned'}
             >
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Output programu' : 'Program Output'}
-              </div>
-              <button
-                type="button"
-                disabled={finalizingOutput}
-                onClick={() => void handleFinalizeOutput()}
-                className="inline-flex h-8 items-center rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              <div
+                className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+                data-testid="audit-finalize-output-control"
               >
-                {finalizingOutput
-                  ? isPolish
-                    ? 'Finalizowanie…'
-                    : 'Finalizing…'
-                  : isPolish
-                    ? 'Sfinalizuj Output'
-                    : 'Finalize Output'}
-              </button>
-              {finalizeResult ? (
-                <p className="mt-2 text-xs text-c-text-secondary" role="status">
-                  {isPolish ? 'Utworzono Output' : 'Output created'} v{finalizeResult.version} ·{' '}
-                  <span className="font-mono">
-                    {(finalizeResult.contentHash || '—').slice(0, 12)}
-                  </span>
-                </p>
-              ) : null}
-              {finalizeError ? (
-                <p className="mt-2 text-xs text-c-danger" role="alert">
-                  {finalizeError}
-                </p>
-              ) : null}
-            </div>
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}
-              </div>
-              {!lifecycle ? (
-                <div className="text-xs text-c-text-muted">
-                  {isPolish ? 'Ładowanie…' : 'Loading…'}
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {isPolish ? 'Output programu' : 'Program Output'}
                 </div>
-              ) : lifecycle.allowed.length === 0 ? (
-                <div className="text-xs text-c-text-muted">
-                  {isPolish
-                    ? 'Brak dalszych przejść z tego etapu.'
-                    : 'No further transitions from this stage.'}
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  {lifecycle.allowed.map((gate) => (
-                    <div key={gate.state} className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium text-c-text">
-                          {programLifecycleLabel(gate.state, isPolish)}
-                        </div>
-                        {gate.blockers.length > 0 ? (
-                          <div className="mt-0.5 text-[11px] text-c-text-muted">
-                            {gate.blockers.join('; ')}
-                          </div>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        disabled={gate.blockers.length > 0 || transitioning === gate.state}
-                        onClick={() => void handleTransition(gate.state)}
-                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full border border-c-border bg-c-surface px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        <ArrowRight size={11} />
-                        {isPolish ? 'Przejdź' : 'Move'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div
-              className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
-              data-testid="audit-criteria-navigator"
-            >
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                  {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
-                </div>
-                {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => setCriteriaBrowserOpen(true)}
-                    data-testid="open-criteria-browser"
-                    className="shrink-0 text-[11px] font-medium text-c-text-secondary underline decoration-c-border-subtle underline-offset-2 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
-                  >
-                    {isPolish ? 'Zobacz wszystkie' : 'View all'} ({flatCriteria.length})
-                  </button>
+                <button
+                  type="button"
+                  disabled={finalizingOutput}
+                  onClick={() => void handleFinalizeOutput()}
+                  className="inline-flex h-8 items-center rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {finalizingOutput
+                    ? isPolish
+                      ? 'Finalizowanie…'
+                      : 'Finalizing…'
+                    : isPolish
+                      ? 'Sfinalizuj Output'
+                      : 'Finalize Output'}
+                </button>
+                {finalizeResult ? (
+                  <p className="mt-2 text-xs text-c-text-secondary" role="status">
+                    {isPolish ? 'Utworzono Output' : 'Output created'} v{finalizeResult.version} ·{' '}
+                    <span className="font-mono">
+                      {(finalizeResult.contentHash || '—').slice(0, 12)}
+                    </span>
+                  </p>
+                ) : null}
+                {finalizeError ? (
+                  <p className="mt-2 text-xs text-c-danger" role="alert">
+                    {finalizeError}
+                  </p>
                 ) : null}
               </div>
-              {criteriaError ? (
-                <p className="text-xs text-c-danger">{criteriaError}</p>
-              ) : flatCriteria.length === 0 ? (
-                <p className="text-xs text-c-text-muted">
-                  {isPolish ? 'Brak kryteriów w tym programie.' : 'This program has no criteria.'}
-                </p>
-              ) : (
-                <div className="max-h-52 space-y-1 overflow-auto">
-                  {flatCriteria.map((item) => (
-                    <Link
-                      key={item.id}
-                      to={`/audit-programs/${selectedId}/criteria/${item.id}`}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      <span className="min-w-0 truncate text-xs font-medium text-c-text">
-                        {item.refCode ? `${item.refCode} · ` : ''}
-                        {item.title}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-c-text-muted">
-                        {item.evidenceCount} / {item.findingCount}
-                      </span>
-                    </Link>
-                  ))}
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}
                 </div>
-              )}
-            </div>
-          </StandardPreview>
-        ) : null}
+                {lifecycleGateContent}
+              </div>
+              <div
+                className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+                data-testid="audit-criteria-navigator"
+              >
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                    {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+                  </div>
+                  {scaleAndPolishEnabled && flatCriteria.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setCriteriaBrowserOpen(true)}
+                      data-testid="open-criteria-browser"
+                      className="shrink-0 text-[11px] font-medium text-c-text-secondary underline decoration-c-border-subtle underline-offset-2 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
+                    >
+                      {isPolish ? 'Zobacz wszystkie' : 'View all'} ({flatCriteria.length})
+                    </button>
+                  ) : null}
+                </div>
+                {criteriaError ? (
+                  <p className="text-xs text-c-danger">{criteriaError}</p>
+                ) : flatCriteria.length === 0 ? (
+                  <p className="text-xs text-c-text-muted">
+                    {isPolish ? 'Brak kryteriów w tym programie.' : 'This program has no criteria.'}
+                  </p>
+                ) : (
+                  <div className="max-h-52 space-y-1 overflow-auto">
+                    {flatCriteria.map((item) => (
+                      <Link
+                        key={item.id}
+                        to={`/audit-programs/${selectedId}/criteria/${item.id}`}
+                        className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        <span className="min-w-0 truncate text-xs font-medium text-c-text">
+                          {item.refCode ? `${item.refCode} · ` : ''}
+                          {item.title}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-c-text-muted">
+                          {item.evidenceCount} / {item.findingCount}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </StandardPreview>
+          ) : null
+        }
       />
     </div>
   );

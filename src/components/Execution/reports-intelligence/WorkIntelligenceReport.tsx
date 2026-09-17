@@ -3,10 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { initiativeStatusLabel } from '@/components/Initiatives/initiativeStatusLabels';
-import {
-  memberNameOrUnknown,
-  type MemberNameResolver,
-} from '@/hooks/useOrganizationMemberNames';
+import { memberNameOrUnknown, type MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
 import {
   StandardTable,
   type TableColumn,
@@ -49,6 +46,14 @@ type State =
   | { kind: 'ready'; items: WorkReportItem[]; failedCases: number; syncedAt: string };
 
 type ManagerProblemBinding = V8ManagerProblemRow & { laneId: string };
+
+const workDecisionId = (item: Record<string, unknown>): string =>
+  String(item.id ?? item.decisionId ?? '').trim();
+
+const isUserFacingWorkDecision = (item: Record<string, unknown>): boolean => {
+  const decisionId = workDecisionId(item);
+  return Boolean(decisionId) && !decisionId.toUpperCase().startsWith('TOOL_');
+};
 
 const arrayAt = (payload: unknown, key: string): Array<Record<string, unknown>> => {
   if (!payload || typeof payload !== 'object') return [];
@@ -189,7 +194,11 @@ export function WorkIntelligenceReport({
   const [selectedWindow, setSelectedWindow] =
     useState<keyof ExecutionWorkAnalysis['windows']>('nextWeek');
   const [managerProblems, setManagerProblems] = useState<ManagerProblemBinding[]>([]);
-  const [generation, setGeneration] = useState<{ id: string; created: boolean; asOf: string } | null>(null);
+  const [generation, setGeneration] = useState<{
+    id: string;
+    created: boolean;
+    asOf: string;
+  } | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [selectedAttentionId, setSelectedAttentionId] = useState<string | null>(null);
@@ -232,40 +241,45 @@ export function WorkIntelligenceReport({
               definitionOfDone: item.definitionOfDone ? String(item.definitionOfDone) : null,
               sourceVersion: Number.isFinite(Number(item.version)) ? Number(item.version) : null,
             }));
-            const decisions: WorkReportItem[] = arrayAt(work, 'decisions').map((item) => ({
+            const decisions: WorkReportItem[] = arrayAt(work, 'decisions')
+              .filter(isUserFacingWorkDecision)
+              .map((item) => {
+                const decisionId = workDecisionId(item);
+                return {
+                  ...common,
+                  id: decisionId,
+                  title: String(item.title || decisionId),
+                  kind: 'DECISION',
+                  status: String(item.status || 'UNKNOWN'),
+                  priority: item.priority ? String(item.priority) : null,
+                  ownerId: item.authorityId ? String(item.authorityId) : null,
+                  dueAt: item.dueAt ? String(item.dueAt) : null,
+                  completedAt: item.decidedAt ? String(item.decidedAt) : null,
+                  slaAt: item.slaAt ? String(item.slaAt) : null,
+                  dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
+                  evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
+                  definitionOfDone: item.successCriteria ? String(item.successCriteria) : null,
+                  sourceVersion: Number.isFinite(Number(item.version))
+                    ? Number(item.version)
+                    : null,
+                };
+              });
+            const milestoneItems: WorkReportItem[] = arrayAt(milestones, 'items').map((item) => ({
               ...common,
-              id: String(item.decisionId),
-              title: String(item.title || item.decisionId),
-              kind: 'DECISION',
+              id: String(item.milestoneId),
+              title: String(item.title || item.milestoneId),
+              kind: 'MILESTONE',
               status: String(item.status || 'UNKNOWN'),
               priority: item.priority ? String(item.priority) : null,
-              ownerId: item.authorityId ? String(item.authorityId) : null,
-              dueAt: item.dueAt ? String(item.dueAt) : null,
-              completedAt: item.decidedAt ? String(item.decidedAt) : null,
-              slaAt: item.slaAt ? String(item.slaAt) : null,
-              dependencies: Array.isArray(item.dependencies) ? item.dependencies : [],
+              ownerId: item.ownerId ? String(item.ownerId) : null,
+              dueAt: item.targetAt ? String(item.targetAt) : null,
+              completedAt: item.completedAt ? String(item.completedAt) : null,
+              slaAt: null,
+              dependencies: [],
               evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
-              definitionOfDone: item.successCriteria ? String(item.successCriteria) : null,
+              definitionOfDone: null,
               sourceVersion: Number.isFinite(Number(item.version)) ? Number(item.version) : null,
             }));
-            const milestoneItems: WorkReportItem[] = arrayAt(milestones, 'items').map(
-              (item) => ({
-                ...common,
-                id: String(item.milestoneId),
-                title: String(item.title || item.milestoneId),
-                kind: 'MILESTONE',
-                status: String(item.status || 'UNKNOWN'),
-                priority: item.priority ? String(item.priority) : null,
-                ownerId: item.ownerId ? String(item.ownerId) : null,
-                dueAt: item.targetAt ? String(item.targetAt) : null,
-                completedAt: item.completedAt ? String(item.completedAt) : null,
-                slaAt: null,
-                dependencies: [],
-                evidenceRefs: Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [],
-                definitionOfDone: null,
-                sourceVersion: Number.isFinite(Number(item.version)) ? Number(item.version) : null,
-              })
-            );
             return [...tasks, ...decisions, ...milestoneItems];
           })
         );
@@ -293,7 +307,9 @@ export function WorkIntelligenceReport({
           );
           if (active) {
             setManagerProblems(
-              problemResults.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+              problemResults.flatMap((result) =>
+                result.status === 'fulfilled' ? result.value : []
+              )
             );
           }
         }
@@ -350,7 +366,9 @@ export function WorkIntelligenceReport({
             render: (row: TableRow) => {
               const code = String(row.priority || 'UNSET');
               return (
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}
+                >
                   {t(`execution.workAnalysis.priority.${code.toLowerCase()}`, humanizeCode(code))}
                 </span>
               );
@@ -374,7 +392,9 @@ export function WorkIntelligenceReport({
       render: (row: TableRow) => {
         const code = String(row.status || 'UNKNOWN');
         return (
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}>
+          <span
+            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass(code)}`}
+          >
             {initiativeStatusLabel(t, code)}
           </span>
         );
@@ -469,24 +489,29 @@ export function WorkIntelligenceReport({
         result.message || t('execution.workAnalysis.actionDone', 'Management action completed.')
       );
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.actionFailed', 'Management action failed.'));
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : t('execution.workAnalysis.actionFailed', 'Management action failed.')
+      );
     } finally {
       setBusyAction(null);
     }
   };
   const managerActionsFor = (row: (typeof attentionRows)[number]) =>
-    ([
-      ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
-      ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
-      ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
-    ] as const).flatMap(([actionId, label]) => {
+    (
+      [
+        ['escalate', t('execution.workAnalysis.actions.escalate', 'Escalate')],
+        ['reassign', t('execution.workAnalysis.actions.delegate', 'Delegate')],
+        ['set_capacity', t('execution.workAnalysis.actions.resources', 'Change resources')],
+      ] as const
+    ).flatMap(([actionId, label]) => {
       const binding = row.managerBindings.find((problem) =>
         problem.actions.some((action) => action.id === actionId)
       );
       return binding ? [{ actionId, label, binding }] : [];
     });
-  const selectedAttentionRow =
-    attentionRows.find((row) => row.id === selectedAttentionId) ?? null;
+  const selectedAttentionRow = attentionRows.find((row) => row.id === selectedAttentionId) ?? null;
   const canOpenSourceRecord = (row: (typeof attentionRows)[number]) =>
     (row.kind === 'TASK' || row.kind === 'DECISION') && Boolean(onOpenDocument);
   const openSourceRecord = (row: (typeof attentionRows)[number]) => {
@@ -500,18 +525,30 @@ export function WorkIntelligenceReport({
     });
   };
   const attentionColumns: TableColumn[] = [
-    { id: 'title', label: t('execution.workAnalysis.columns.record', 'Attention record'), primary: true, dataType: 'text' },
+    {
+      id: 'title',
+      label: t('execution.workAnalysis.columns.record', 'Attention record'),
+      primary: true,
+      dataType: 'text',
+    },
     {
       id: 'reasons',
       label: t('execution.workAnalysis.columns.reason', 'Reason'),
-      render: (row: TableRow) => ((row.reasons as string[]) || []).map((reason) =>
-        t(
-          `execution.workAnalysis.reasons.${String(reason).toLowerCase()}`,
-          ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
-        )
-      ).join(', '),
+      render: (row: TableRow) =>
+        ((row.reasons as string[]) || [])
+          .map((reason) =>
+            t(
+              `execution.workAnalysis.reasons.${String(reason).toLowerCase()}`,
+              ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
+            )
+          )
+          .join(', '),
     },
-    { id: 'projectTitle', label: t('execution.workAnalysis.columns.project', 'Project'), dataType: 'text' },
+    {
+      id: 'projectTitle',
+      label: t('execution.workAnalysis.columns.project', 'Project'),
+      dataType: 'text',
+    },
   ];
 
   return (
@@ -552,15 +589,24 @@ export function WorkIntelligenceReport({
               </label>
               <button
                 type="button"
-                onClick={() => void (async () => {
-                  setActionMessage(null);
-                  try {
-                    const result = await generateExecutionWorkAnalysis(selectedWeek);
-                    setGeneration({ id: result.id, created: result.created, asOf: result.asOf });
-                  } catch (error) {
-                    setActionMessage(error instanceof Error ? error.message : t('execution.workAnalysis.generateFailed', 'The analysis could not be generated.'));
-                  }
-                })()}
+                onClick={() =>
+                  void (async () => {
+                    setActionMessage(null);
+                    try {
+                      const result = await generateExecutionWorkAnalysis(selectedWeek);
+                      setGeneration({ id: result.id, created: result.created, asOf: result.asOf });
+                    } catch (error) {
+                      setActionMessage(
+                        error instanceof Error
+                          ? error.message
+                          : t(
+                              'execution.workAnalysis.generateFailed',
+                              'The analysis could not be generated.'
+                            )
+                      );
+                    }
+                  })()
+                }
                 className="rounded-lg border border-c-border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               >
                 {t('execution.workAnalysis.generate', 'Generate for this week')}
@@ -598,7 +644,11 @@ export function WorkIntelligenceReport({
                 })}
               </p>
             ) : null}
-            {actionMessage ? <p role="status" className="mt-2 text-sm text-c-text-secondary">{actionMessage}</p> : null}
+            {actionMessage ? (
+              <p role="status" className="mt-2 text-sm text-c-text-secondary">
+                {actionMessage}
+              </p>
+            ) : null}
             <div className="mt-3 min-h-[360px]">
               <div className="flex min-h-0 gap-3">
                 <div className="min-w-0 flex-1">
@@ -638,133 +688,142 @@ export function WorkIntelligenceReport({
                         // Those capabilities remain N/D instead of becoming dead placeholders.
                       };
                     }}
-                    empty={{ title: t('execution.workAnalysis.noAttention', 'No records require management attention') }}
+                    empty={{
+                      title: t(
+                        'execution.workAnalysis.noAttention',
+                        'No records require management attention'
+                      ),
+                    }}
                   />
                 </div>
-                {selectedAttentionRow ? (() => {
-                  const row = selectedAttentionRow;
-                  const actions = managerActionsFor(selectedAttentionRow);
-                  const canOpen = canOpenSourceRecord(row);
-                  return (
-                    <aside className="w-[min(420px,42%)] shrink-0 overflow-hidden rounded-xl border border-c-border bg-c-surface">
-                      <StandardPreview
-                        title={row.title}
-                        onClose={() => setSelectedAttentionId(null)}
-                        onOpenFull={canOpen ? () => openSourceRecord(row) : undefined}
-                        openDisabledReason={
-                          canOpen
-                            ? undefined
-                            : t(
-                                'execution.workAnalysis.preview.openDisabled',
-                                'This work item has no available source route.'
-                              )
-                        }
-                        meta={{
-                        pills: [
-                          {
-                            label: initiativeStatusLabel(t, row.status),
-                            tone: row.status === 'BLOCKED' ? 'danger' : 'neutral',
-                          },
-                          {
-                            label: trPair(
-                              t,
-                              KIND_LABEL_KEY[row.kind] ?? [row.kind, humanizeCode(row.kind)]
-                            ),
-                            tone: 'neutral',
-                          },
-                        ],
-                        trailing: row.dueAt
-                          ? new Date(row.dueAt).toLocaleDateString(i18n.language)
-                          : t('execution.workAnalysis.preview.noDueDate', 'No due date'),
-                      }}
-                        details={{
-                        label: t('execution.workAnalysis.preview.details', 'Work details'),
-                        text:
-                          row.definitionOfDone ||
-                          t(
-                            'execution.workAnalysis.preview.noDefinition',
-                            'No definition of done has been recorded.'
-                          ),
-                        properties: [
-                          {
-                            id: 'reason',
-                            label: t('execution.workAnalysis.columns.reason', 'Reason'),
-                            value: row.reasons
-                              .map((reason) =>
-                                t(
-                                  `execution.workAnalysis.reasons.${reason.toLowerCase()}`,
-                                  ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
-                                )
-                              )
-                              .join(', '),
-                          },
-                          {
-                            id: 'project',
-                            label: t('execution.workAnalysis.columns.project', 'Project'),
-                            value:
-                              row.projectTitle ||
-                              t('execution.workAnalysis.preview.noProject', 'No project assigned'),
-                          },
-                          {
-                            id: 'owner',
-                            label: t('execution.reports.intelligence.columns.owner', 'Owner'),
-                            value:
-                              row.ownerId
-                                ? memberNameOrUnknown(
-                                    resolveOwnerName,
-                                    row.ownerId,
-                                    i18n.language.startsWith('pl')
-                                  )
+                {selectedAttentionRow
+                  ? (() => {
+                      const row = selectedAttentionRow;
+                      const actions = managerActionsFor(selectedAttentionRow);
+                      const canOpen = canOpenSourceRecord(row);
+                      return (
+                        <aside className="w-[min(420px,42%)] shrink-0 overflow-hidden rounded-xl border border-c-border bg-c-surface">
+                          <StandardPreview
+                            title={row.title}
+                            onClose={() => setSelectedAttentionId(null)}
+                            onOpenFull={canOpen ? () => openSourceRecord(row) : undefined}
+                            openDisabledReason={
+                              canOpen
+                                ? undefined
                                 : t(
-                                    'execution.workAnalysis.preview.noOwner',
-                                    'No owner assigned'
+                                    'execution.workAnalysis.preview.openDisabled',
+                                    'This work item has no available source route.'
+                                  )
+                            }
+                            meta={{
+                              pills: [
+                                {
+                                  label: initiativeStatusLabel(t, row.status),
+                                  tone: row.status === 'BLOCKED' ? 'danger' : 'neutral',
+                                },
+                                {
+                                  label: trPair(
+                                    t,
+                                    KIND_LABEL_KEY[row.kind] ?? [row.kind, humanizeCode(row.kind)]
                                   ),
-                          },
-                        ],
-                        propertyLabel: t('standardPreview.property', 'Property'),
-                        valueLabel: t('standardPreview.value', 'Value'),
-                        onCopy: () => void navigator.clipboard?.writeText(row.title),
-                      }}
-                        relations={
-                        row.projectTitle
-                          ? [
-                              {
-                                id: row.projectId ?? undefined,
-                                label: row.projectTitle,
-                                type: 'project',
-                              },
-                            ]
-                          : []
-                      }
-                        actions={{
-                        informational: actions.map(({ actionId, label, binding }) => ({
-                          id: actionId,
-                          variant: actionId === 'escalate' ? 'warning' : 'neutral',
-                          label:
-                            busyAction === `${binding.id}:${actionId}`
-                              ? t('execution.workAnalysis.actions.running', 'Working…')
-                              : label,
-                          disabled: busyAction !== null,
-                          onClick: () => void runManagerAction(row, actionId),
-                        })),
-                      }}
-                        whatsNext={{
-                        items: [
-                          {
-                            id: 'open-source',
-                            label: t(
-                              'execution.workAnalysis.preview.openSource',
-                              'Open source record'
-                            ),
-                            disabled: !canOpen,
-                            onClick: () => openSourceRecord(row),
-                          },
-                        ],
-                      }}
-                      />
-                    </aside>
-                  );
-                })() : null}
+                                  tone: 'neutral',
+                                },
+                              ],
+                              trailing: row.dueAt
+                                ? new Date(row.dueAt).toLocaleDateString(i18n.language)
+                                : t('execution.workAnalysis.preview.noDueDate', 'No due date'),
+                            }}
+                            details={{
+                              label: t('execution.workAnalysis.preview.details', 'Work details'),
+                              text:
+                                row.definitionOfDone ||
+                                t(
+                                  'execution.workAnalysis.preview.noDefinition',
+                                  'No definition of done has been recorded.'
+                                ),
+                              properties: [
+                                {
+                                  id: 'reason',
+                                  label: t('execution.workAnalysis.columns.reason', 'Reason'),
+                                  value: row.reasons
+                                    .map((reason) =>
+                                      t(
+                                        `execution.workAnalysis.reasons.${reason.toLowerCase()}`,
+                                        ATTENTION_REASON_FALLBACK[reason] ?? humanizeCode(reason)
+                                      )
+                                    )
+                                    .join(', '),
+                                },
+                                {
+                                  id: 'project',
+                                  label: t('execution.workAnalysis.columns.project', 'Project'),
+                                  value:
+                                    row.projectTitle ||
+                                    t(
+                                      'execution.workAnalysis.preview.noProject',
+                                      'No project assigned'
+                                    ),
+                                },
+                                {
+                                  id: 'owner',
+                                  label: t('execution.reports.intelligence.columns.owner', 'Owner'),
+                                  value: row.ownerId
+                                    ? memberNameOrUnknown(
+                                        resolveOwnerName,
+                                        row.ownerId,
+                                        i18n.language.startsWith('pl')
+                                      )
+                                    : t(
+                                        'execution.workAnalysis.preview.noOwner',
+                                        'No owner assigned'
+                                      ),
+                                },
+                              ],
+                              propertyLabel: t('standardPreview.property', 'Property'),
+                              valueLabel: t('standardPreview.value', 'Value'),
+                              onCopy: () => void navigator.clipboard?.writeText(row.title),
+                            }}
+                            relations={
+                              row.projectTitle
+                                ? [
+                                    {
+                                      id: row.projectId ?? undefined,
+                                      label: row.projectTitle,
+                                      type: 'project',
+                                    },
+                                  ]
+                                : []
+                            }
+                            actions={{
+                              informational: actions.map(({ actionId, label, binding }) => ({
+                                id: actionId,
+                                variant: actionId === 'escalate' ? 'warning' : 'neutral',
+                                label:
+                                  busyAction === `${binding.id}:${actionId}`
+                                    ? t('execution.workAnalysis.actions.running', 'Working…')
+                                    : label,
+                                disabled: busyAction !== null,
+                                onClick: () => void runManagerAction(row, actionId),
+                              })),
+                            }}
+                            whatsNext={{
+                              items: [
+                                {
+                                  id: 'open-source',
+                                  label: t(
+                                    'execution.workAnalysis.preview.openSource',
+                                    'Open source record'
+                                  ),
+                                  disabled: !canOpen,
+                                  onClick: () => openSourceRecord(row),
+                                },
+                              ],
+                            }}
+                          />
+                        </aside>
+                      );
+                    })()
+                  : null}
               </div>
             </div>
           </section>
@@ -874,8 +933,7 @@ export function WorkIntelligenceReport({
                       {trPair(t, EPISTEMIC_LABEL_KEY.calculated)}
                     </span>
                   </>
-                )}
-                {' '}
+                )}{' '}
                 <span
                   className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
                     SEVERITY_BADGE_CLASS[metric.severity] ?? SEVERITY_BADGE_CLASS.unknown

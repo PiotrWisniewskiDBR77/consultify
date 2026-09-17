@@ -54,10 +54,7 @@ import { formatListDate, formatListDateTime, PUSTA_DATA } from '@/utils/listDate
 import { Banner } from '@/components/shared/Banner';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { ConfirmModal } from '@/components/ui/primitives/Modal';
-import {
-  MENU_2_FILTER_SELECT,
-  MENU_2_FILTERS_ROW,
-} from '@/components/shared/ModuleMenu3';
+import { MENU_2_FILTER_SELECT, MENU_2_FILTERS_ROW } from '@/components/shared/ModuleMenu3';
 
 import {
   countExecutionPresets,
@@ -165,7 +162,10 @@ const workStatusLabel: Record<string, string> = {
 
 /** Rodzaj elementu pracy w języku interfejsu (klucz `execution.work.kind.*`). */
 const etykietaRodzaju = (kind: string, t: (key: string, fallback: string) => string): string =>
-  t(`execution.work.kind.${String(kind ?? '').toLowerCase()}`, workKindLabel[kind as WorkKind] ?? String(kind ?? ''));
+  t(
+    `execution.work.kind.${String(kind ?? '').toLowerCase()}`,
+    workKindLabel[kind as WorkKind] ?? String(kind ?? '')
+  );
 /**
  * Nazwisko osoby — z KATALOGU OSÓB, nie z zamiany myślnika na spację.
  *
@@ -246,7 +246,9 @@ const actorLabel = (
 ) => actorLabelWithOrigin(value, t, resolveMemberName, isPolish).label;
 
 const userContent = (value: React.ReactNode): React.ReactNode => (
-  <span data-language-source="user-content" translate="no">{value}</span>
+  <span data-language-source="user-content" translate="no">
+    {value}
+  </span>
 );
 // i18n-reszta 20260903: kolumny przeniesione do funkcji wywoływanej z `t`
 // wewnątrz komponentu (patrz `useMemo` w ciele `ExecutionWorkSurface`) —
@@ -334,7 +336,9 @@ const buildCols = ({
   zapisz,
 }: KontekstKolumn): StandardTableColumn[] => {
   const podpowiedz = t('execution.work.edit.hint', 'Double-click to change');
-  const podpowiedzBrak = t('execution.work.edit.notEditable', 'This row comes from the canonical execution register — open the work item to change it.'
+  const podpowiedzBrak = t(
+    'execution.work.edit.notEditable',
+    'This row comes from the canonical execution register — open the work item to change it.'
   );
   const brakOsoby = t('execution.work.edit.unassigned', 'Unassigned');
 
@@ -357,9 +361,7 @@ const buildCols = ({
       // „—" nie mówi, czy danych brakuje, czy zadanie naprawdę nie należy do
       // żadnej inicjatywy. Tu wiadomo, że to drugie (pole jest puste w bazie).
       cellAttributes: (row) =>
-        row.initiativeName
-          ? { 'data-language-source': 'user-content', translate: 'no' }
-          : {},
+        row.initiativeName ? { 'data-language-source': 'user-content', translate: 'no' } : {},
       render: (row) =>
         (row.initiativeName as string) || (
           <span className="text-c-text-muted">
@@ -378,16 +380,10 @@ const buildCols = ({
       dataType: 'owner',
       cellAttributes: (row) => {
         const actor = actorLabelWithOrigin(row.owner as string, t, resolveMemberName, isPolish);
-        return actor.userContent
-          ? { 'data-language-source': 'user-content', translate: 'no' }
-          : {};
+        return actor.userContent ? { 'data-language-source': 'user-content', translate: 'no' } : {};
       },
-      render: (row) => actorLabelWithOrigin(
-        row.owner as string,
-        t,
-        resolveMemberName,
-        isPolish
-      ).label,
+      render: (row) =>
+        actorLabelWithOrigin(row.owner as string, t, resolveMemberName, isPolish).label,
       editable: {
         kind: 'select',
         ariaLabel: t('execution.work.edit.person', 'Change assignee'),
@@ -495,8 +491,7 @@ const workPresets = ['all', 'overdue', 'blocked'] as const;
  * `Intl.DateTimeFormat('pl-PL', { month: 'short' })`, więc konto angielskie
  * dostawało „05 lut 2026" w KAŻDYM wierszu kolumny „Due".
  */
-const formatDateTime = (value: string | null | undefined) =>
-  formatListDateTime(value, PUSTA_DATA);
+const formatDateTime = (value: string | null | undefined) => formatListDateTime(value, PUSTA_DATA);
 /** Sam termin, bez godziny — kolumna „Termin" ma być czytelna, nie precyzyjna do minuty. */
 const formatDate = (value: string | null | undefined) => formatListDate(value);
 
@@ -527,22 +522,27 @@ const mapRuntimeWorkRows = (
     slipDays: taskSlipDays({ status: item.status, dueDate: item.dueAt }),
     source: item,
   })),
-  ...((work?.decisions ?? []) as any[]).map((item) => ({
-    id: item.decisionId,
-    title: item.title,
-    kind: 'DECISION' as const,
-    status: item.status,
-    owner: typeof item.authorityId === 'string' ? item.authorityId : '',
-    dueAt: formatDate(item.dueAt),
-    rawDueAt: item.dueAt ?? null,
-    version: item.version,
-    executionCaseId,
-    initiativeId,
-    origin: 'runtime' as const,
-    initiativeName,
-    slipDays: taskSlipDays({ status: item.status, dueDate: item.dueAt }),
-    source: item,
-  })),
+  ...((work?.decisions ?? []) as any[])
+    .filter((item) => {
+      const decisionId = String(item.id ?? item.decisionId ?? '').trim();
+      return Boolean(decisionId) && !decisionId.toUpperCase().startsWith('TOOL_');
+    })
+    .map((item) => ({
+      id: item.id ?? item.decisionId,
+      title: item.title,
+      kind: 'DECISION' as const,
+      status: item.status,
+      owner: typeof item.authorityId === 'string' ? item.authorityId : '',
+      dueAt: formatDate(item.dueAt),
+      rawDueAt: item.dueAt ?? null,
+      version: item.version,
+      executionCaseId,
+      initiativeId,
+      origin: 'runtime' as const,
+      initiativeName,
+      slipDays: taskSlipDays({ status: item.status, dueDate: item.dueAt }),
+      source: item,
+    })),
 ];
 
 /**
@@ -768,19 +768,19 @@ export const ExecutionWorkSurface = ({
     return (
       <div data-testid="execution-work-degraded-banner">
         <Banner
-        variant="degraded"
-        icon={<AlertTriangle size={16} aria-hidden="true" />}
-        className="mb-3"
-        title={t('execution.work.degraded', {
-          count,
-          unit: isPolish
-            ? liczebnik(count, ['realizacja', 'realizacje', 'realizacji'])
-            : count === 1
-              ? 'delivery'
-              : 'deliveries',
-          defaultValue: 'Incomplete data: {{count}} {{unit}} not responding',
-        })}
-        message={unreachableCaseIds.join(', ')}
+          variant="degraded"
+          icon={<AlertTriangle size={16} aria-hidden="true" />}
+          className="mb-3"
+          title={t('execution.work.degraded', {
+            count,
+            unit: isPolish
+              ? liczebnik(count, ['realizacja', 'realizacje', 'realizacji'])
+              : count === 1
+                ? 'delivery'
+                : 'deliveries',
+            defaultValue: 'Incomplete data: {{count}} {{unit}} not responding',
+          })}
+          message={unreachableCaseIds.join(', ')}
         />
       </div>
     );
@@ -991,7 +991,9 @@ export const ExecutionWorkSurface = ({
         }) as unknown as string;
       }
       if (/Blocking decisions/i.test(surowy)) {
-        return t('execution.work.edit.blockedByDecision', 'The task can\'t be closed: it is waiting on a decision to be resolved.'
+        return t(
+          'execution.work.edit.blockedByDecision',
+          "The task can't be closed: it is waiting on a decision to be resolved."
         );
       }
       if (/Blocked reason is required/i.test(surowy)) {
@@ -1033,7 +1035,9 @@ export const ExecutionWorkSurface = ({
       if (!slownikStatusow)
         return {
           mozna: false,
-          powod: t('execution.work.edit.dictionaryMissing', 'The status dictionary hasn\'t loaded yet.'
+          powod: t(
+            'execution.work.edit.dictionaryMissing',
+            "The status dictionary hasn't loaded yet."
           ),
         };
       if (!(slownikStatusow.transitions?.[biezacy] ?? []).includes('done'))
@@ -1346,6 +1350,10 @@ export const ExecutionWorkSurface = ({
     // Zero nowego ekranu, zero nowego przycisku — ten sam podgląd, który
     // otwiera wiersz jednym kliknięciem.
     if (row.origin === 'tasks') {
+      if (onOpenDocument && !documentId) {
+        onOpenDocument(row);
+        return;
+      }
       setSelectedId(row.id);
       setShowWorkspace(false);
       setEdycjaPodgladu(null);
@@ -1669,7 +1677,10 @@ export const ExecutionWorkSurface = ({
   // propa `onRegisterFilterControl` powyżej. Rejestruje `null` w widoku
   // dokumentu (documentId) — tam nie ma listy do filtrowania.
   return (
-    <section aria-label={t('execution.work.aria.executionWork', 'Execution Work')} className="flex h-full min-h-0 flex-col p-4">
+    <section
+      aria-label={t('execution.work.aria.executionWork', 'Execution Work')}
+      className="flex h-full min-h-0 flex-col p-4"
+    >
       {/* Cichy pasek informacyjny — JEDNO miejsce na komunikaty o stanie
           danych w tej zakładce, tuż pod Menu 3 i nad tabelą (nigdy w Menu 2). */}
       {degradedBanner}
@@ -1720,9 +1731,7 @@ export const ExecutionWorkSurface = ({
                   }
                   className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <option value="">
-                    {t('execution.work.withoutInitiative', 'No initiative')}
-                  </option>
+                  <option value="">{t('execution.work.withoutInitiative', 'No initiative')}</option>
                   {inicjatywy.map((inicjatywa) => (
                     <option key={inicjatywa.id} value={inicjatywa.id}>
                       {inicjatywa.name}
@@ -1914,245 +1923,256 @@ export const ExecutionWorkSurface = ({
                   r.source.nextAction ?? (powodZamkniecia.mozna ? null : powodZamkniecia.powod),
               });
               return (
-              <StandardPreview
-                embedded
-                title={r.title}
-                onClose={() => setSelectedId(null)}
-                meta={glowa.meta}
-                details={{
-                  label: t('execution.work.preview.details', 'Work details'),
-                  text: zlozProzeBloku3(
-                    r.source.description ||
-                      t('execution.work.preview.noDescription', 'No additional description.'),
-                    glowa.detailsNote
-                  ),
-                  textContentOrigin: r.source.description ? 'user-content' : undefined,
-                  properties: [
-                    {
-                      id: 'owner',
-                      label: t('execution.work.field.owner', 'Owner'),
-                      value: (() => {
-                        const label = businessLabel(
-                          r.owner,
-                          t('execution.work.unassigned', 'Unassigned'),
-                          t,
-                          resolveMemberName,
-                          isPolish
-                        );
-                        const origin = actorLabelWithOrigin(r.owner, t, resolveMemberName, isPolish);
-                        return origin.userContent ? userContent(label) : label;
-                      })(),
-                    },
-                    // 1.12-R1 (B): „Termin / SLA" rozdzielone — SLA było puste
-                    // w każdym wierszu realnych danych (tabela `tasks` nie ma
-                    // `slaAt`), więc podgląd pisał „· SLA brak" jako fakt.
-                    {
-                      id: 'due',
-                      label: t('execution.work.field.due', 'Due date'),
-                      value: r.dueAt || t('execution.work.noDue', 'No due date'),
-                    },
-                    {
-                      id: 'slip',
-                      // Ta sama nazwa co kolumna w tabeli — podgląd i wiersz
-                      // nie mogą nazywać tej samej liczby dwoma słowami.
-                      label: t('execution.work.columns.daysOverdue', 'Days overdue'),
-                      value:
-                        r.slipDays == null
-                          ? '—'
-                          : `${r.slipDays} ${
-                              isPolish
-                                ? liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])
-                                : r.slipDays === 1
-                                  ? 'day'
-                                  : 'days'
-                            }`,
-                    },
-                    {
-                      id: 'case',
-                      label:
-                        r.origin === 'tasks'
-                          ? t('execution.work.field.initiative', 'Initiative')
-                          : t('execution.work.field.case', 'Delivery'),
-                      value:
-                        r.origin === 'tasks'
-                          ? r.initiativeName
-                            ? userContent(r.initiativeName)
-                            : t('execution.work.noInitiative', 'Without initiative')
-                          : caseLabel(r.executionCaseId),
-                    },
-                    {
-                      id: 'evidence',
-                      label: t('execution.work.field.evidenceShort', 'Evidence'),
-                      value: r.source.evidenceRefs?.length
-                        ? `${r.source.evidenceRefs.length} ${
+                <StandardPreview
+                  embedded
+                  title={r.title}
+                  onClose={() => setSelectedId(null)}
+                  meta={glowa.meta}
+                  details={{
+                    label: t('execution.work.preview.details', 'Work details'),
+                    text: zlozProzeBloku3(
+                      r.source.description ||
+                        t('execution.work.preview.noDescription', 'No additional description.'),
+                      glowa.detailsNote
+                    ),
+                    textContentOrigin: r.source.description ? 'user-content' : undefined,
+                    properties: [
+                      {
+                        id: 'owner',
+                        label: t('execution.work.field.owner', 'Owner'),
+                        value: (() => {
+                          const label = businessLabel(
+                            r.owner,
+                            t('execution.work.unassigned', 'Unassigned'),
+                            t,
+                            resolveMemberName,
                             isPolish
-                              ? liczebnik(r.source.evidenceRefs.length, [
-                                  'powiązany dowód',
-                                  'powiązane dowody',
-                                  'powiązanych dowodów',
-                                ])
-                              : r.source.evidenceRefs.length === 1
-                                ? 'linked evidence item'
-                                : 'linked evidence items'
-                          }`
-                        : t('execution.work.noEvidence', 'No evidence required'),
-                    },
-                  ],
-                  onCopy: () => void navigator.clipboard?.writeText(r.title),
-                }}
-                relations={
-                  r.origin === 'tasks'
-                    ? r.initiativeName
-                      ? [{ label: r.initiativeName, contentOrigin: 'user-content' as const, onClick: () => undefined }]
-                      : []
-                    : [
-                        { label: caseLabel(r.executionCaseId), onClick: () => undefined },
-                        {
-                          label: t('execution.work.linkedInitiative', 'Linked initiative'),
-                          onClick: () => undefined,
-                        },
-                      ]
-                }
-                relationsEmptyLabel={t('execution.work.noRelations', 'No relations')}
-                /*
-                 * D5 — te same trzy akcje co w wierszu, w bloku akcji podglądu.
-                 * „Otwórz" ZNIKA z paska: nagłówek podglądu ma już swój
-                 * przycisk otwarcia (`onOpenFull`), a kanon podglądu zabrania
-                 * dublowania go w stopce.
-                 */
-                actions={
-                  r.origin === 'tasks'
-                    ? {
-                        informational: [
+                          );
+                          const origin = actorLabelWithOrigin(
+                            r.owner,
+                            t,
+                            resolveMemberName,
+                            isPolish
+                          );
+                          return origin.userContent ? userContent(label) : label;
+                        })(),
+                      },
+                      // 1.12-R1 (B): „Termin / SLA" rozdzielone — SLA było puste
+                      // w każdym wierszu realnych danych (tabela `tasks` nie ma
+                      // `slaAt`), więc podgląd pisał „· SLA brak" jako fakt.
+                      {
+                        id: 'due',
+                        label: t('execution.work.field.due', 'Due date'),
+                        value: r.dueAt || t('execution.work.noDue', 'No due date'),
+                      },
+                      {
+                        id: 'slip',
+                        // Ta sama nazwa co kolumna w tabeli — podgląd i wiersz
+                        // nie mogą nazywać tej samej liczby dwoma słowami.
+                        label: t('execution.work.columns.daysOverdue', 'Days overdue'),
+                        value:
+                          r.slipDays == null
+                            ? '—'
+                            : `${r.slipDays} ${
+                                isPolish
+                                  ? liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])
+                                  : r.slipDays === 1
+                                    ? 'day'
+                                    : 'days'
+                              }`,
+                      },
+                      {
+                        id: 'case',
+                        label:
+                          r.origin === 'tasks'
+                            ? t('execution.work.field.initiative', 'Initiative')
+                            : t('execution.work.field.case', 'Delivery'),
+                        value:
+                          r.origin === 'tasks'
+                            ? r.initiativeName
+                              ? userContent(r.initiativeName)
+                              : t('execution.work.noInitiative', 'Without initiative')
+                            : caseLabel(r.executionCaseId),
+                      },
+                      {
+                        id: 'evidence',
+                        label: t('execution.work.field.evidenceShort', 'Evidence'),
+                        value: r.source.evidenceRefs?.length
+                          ? `${r.source.evidenceRefs.length} ${
+                              isPolish
+                                ? liczebnik(r.source.evidenceRefs.length, [
+                                    'powiązany dowód',
+                                    'powiązane dowody',
+                                    'powiązanych dowodów',
+                                  ])
+                                : r.source.evidenceRefs.length === 1
+                                  ? 'linked evidence item'
+                                  : 'linked evidence items'
+                            }`
+                          : t('execution.work.noEvidence', 'No evidence required'),
+                      },
+                    ],
+                    onCopy: () => void navigator.clipboard?.writeText(r.title),
+                  }}
+                  relations={
+                    r.origin === 'tasks'
+                      ? r.initiativeName
+                        ? [
+                            {
+                              label: r.initiativeName,
+                              contentOrigin: 'user-content' as const,
+                              onClick: () => undefined,
+                            },
+                          ]
+                        : []
+                      : [
+                          { label: caseLabel(r.executionCaseId), onClick: () => undefined },
                           {
-                            id: 'change-person',
-                            label: t('execution.work.edit.person', 'Change assignee'),
-                            variant: 'neutral',
-                            icon: UserCog,
-                            onClick: () => setEdycjaPodgladu('owner'),
+                            label: t('execution.work.linkedInitiative', 'Linked initiative'),
+                            onClick: () => undefined,
                           },
-                          {
-                            id: 'change-due',
-                            label: t('execution.work.edit.due', 'Change due date'),
-                            variant: 'neutral',
-                            icon: CalendarClock,
-                            onClick: () => setEdycjaPodgladu('due'),
-                          },
-                          /*
-                           * E3/P2 — „Zmień status". Wyłączona, gdy słownik
-                           * serwera nie daje z bieżącego statusu ANI JEDNEGO
-                           * przejścia: pusta lista do wyboru jest gorsza niż
-                           * uczciwie wyłączona akcja z powodem pod spodem.
-                           */
-                          {
-                            id: 'change-status',
-                            label: t('execution.work.edit.status', 'Change status'),
-                            variant: 'neutral',
-                            icon: ListChecks,
-                            disabled: dozwolonePrzejscia(r).length === 0,
-                            onClick: () => setEdycjaPodgladu('status'),
-                          },
-                          {
-                            id: 'close-task',
-                            label: t('execution.work.edit.close', 'Close task'),
-                            variant: 'positive',
-                            icon: CheckCircle2,
-                            disabled: !powodZamkniecia.mozna,
-                            onClick: () => void zapiszPoleZadania(r, 'status', 'done'),
-                          },
-                        ],
-                      }
-                    : /*
-                       * K5-5 — wiersz dostawy nie dostaje własnego „Open work
-                       * item" w bloku akcji. Kanon §7.3 pkt 4.3 (anty-
-                       * duplikacja): „NIE dubluj »Open« — jest w nagłówku".
-                       * Nagłówek podglądu (rysowany przez
-                       * `TableWithPreviewLayout`) ma ten przycisk i prowadzi
-                       * dokładnie tam samo (`onOpenFull` → `openWorkspace`),
-                       * więc zostawał drugi, zielony przycisk robiący to samo.
-                       * Po odjęciu duplikatu nie zostaje żadna akcja, więc
-                       * cały pasek jest pomijany — tak jak każe kanon.
-                       */
-                      undefined
-                }
-              >
-                {r.origin === 'tasks' && (
-                  <div className="mt-3 space-y-2" data-testid="execution-work-preview-edit">
-                    {edycjaPodgladu === 'owner' && (
-                      <label className="block text-xs text-c-text-secondary">
-                        {t('execution.work.edit.person', 'Change assignee')}
-                        <select
-                          autoFocus
-                          aria-label={t('execution.work.edit.person', 'Change assignee')}
-                          defaultValue={String(r.owner ?? '')}
-                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          onChange={(event) => {
-                            setEdycjaPodgladu(null);
-                            if (event.target.value !== String(r.owner ?? ''))
-                              void zapiszPoleZadania(r, 'assigneeId', event.target.value || null);
-                          }}
-                        >
-                          <option value="">
-                            {t('execution.work.edit.unassigned', 'Unassigned')}
-                          </option>
-                          {osoby.map((osoba) => (
-                            <option key={osoba.id} value={osoba.id}>
-                              {osoba.label}
+                        ]
+                  }
+                  relationsEmptyLabel={t('execution.work.noRelations', 'No relations')}
+                  /*
+                   * D5 — te same trzy akcje co w wierszu, w bloku akcji podglądu.
+                   * „Otwórz" ZNIKA z paska: nagłówek podglądu ma już swój
+                   * przycisk otwarcia (`onOpenFull`), a kanon podglądu zabrania
+                   * dublowania go w stopce.
+                   */
+                  actions={
+                    r.origin === 'tasks'
+                      ? {
+                          informational: [
+                            {
+                              id: 'change-person',
+                              label: t('execution.work.edit.person', 'Change assignee'),
+                              variant: 'neutral',
+                              icon: UserCog,
+                              onClick: () => setEdycjaPodgladu('owner'),
+                            },
+                            {
+                              id: 'change-due',
+                              label: t('execution.work.edit.due', 'Change due date'),
+                              variant: 'neutral',
+                              icon: CalendarClock,
+                              onClick: () => setEdycjaPodgladu('due'),
+                            },
+                            /*
+                             * E3/P2 — „Zmień status". Wyłączona, gdy słownik
+                             * serwera nie daje z bieżącego statusu ANI JEDNEGO
+                             * przejścia: pusta lista do wyboru jest gorsza niż
+                             * uczciwie wyłączona akcja z powodem pod spodem.
+                             */
+                            {
+                              id: 'change-status',
+                              label: t('execution.work.edit.status', 'Change status'),
+                              variant: 'neutral',
+                              icon: ListChecks,
+                              disabled: dozwolonePrzejscia(r).length === 0,
+                              onClick: () => setEdycjaPodgladu('status'),
+                            },
+                            {
+                              id: 'close-task',
+                              label: t('execution.work.edit.close', 'Close task'),
+                              variant: 'positive',
+                              icon: CheckCircle2,
+                              disabled: !powodZamkniecia.mozna,
+                              onClick: () => void zapiszPoleZadania(r, 'status', 'done'),
+                            },
+                          ],
+                        }
+                      : /*
+                         * K5-5 — wiersz dostawy nie dostaje własnego „Open work
+                         * item" w bloku akcji. Kanon §7.3 pkt 4.3 (anty-
+                         * duplikacja): „NIE dubluj »Open« — jest w nagłówku".
+                         * Nagłówek podglądu (rysowany przez
+                         * `TableWithPreviewLayout`) ma ten przycisk i prowadzi
+                         * dokładnie tam samo (`onOpenFull` → `openWorkspace`),
+                         * więc zostawał drugi, zielony przycisk robiący to samo.
+                         * Po odjęciu duplikatu nie zostaje żadna akcja, więc
+                         * cały pasek jest pomijany — tak jak każe kanon.
+                         */
+                        undefined
+                  }
+                >
+                  {r.origin === 'tasks' && (
+                    <div className="mt-3 space-y-2" data-testid="execution-work-preview-edit">
+                      {edycjaPodgladu === 'owner' && (
+                        <label className="block text-xs text-c-text-secondary">
+                          {t('execution.work.edit.person', 'Change assignee')}
+                          <select
+                            autoFocus
+                            aria-label={t('execution.work.edit.person', 'Change assignee')}
+                            defaultValue={String(r.owner ?? '')}
+                            className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            onChange={(event) => {
+                              setEdycjaPodgladu(null);
+                              if (event.target.value !== String(r.owner ?? ''))
+                                void zapiszPoleZadania(r, 'assigneeId', event.target.value || null);
+                            }}
+                          >
+                            <option value="">
+                              {t('execution.work.edit.unassigned', 'Unassigned')}
                             </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                    {edycjaPodgladu === 'due' && (
-                      <label className="block text-xs text-c-text-secondary">
-                        {t('execution.work.edit.due', 'Change due date')}
-                        <input
-                          autoFocus
-                          type="date"
-                          aria-label={t('execution.work.edit.due', 'Change due date')}
-                          defaultValue={naWartoscDaty(r.rawDueAt)}
-                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          onChange={(event) => {
-                            setEdycjaPodgladu(null);
-                            if (event.target.value !== naWartoscDaty(r.rawDueAt))
-                              void zapiszPoleZadania(r, 'dueDate', event.target.value || null);
-                          }}
-                        />
-                      </label>
-                    )}
-                    {/*
-                     * E3/P2 — edytor statusu w stopce podglądu. Lista zawiera
-                     * WYŁĄCZNIE przejścia dopuszczone przez serwer dla statusu
-                     * bieżącego (`GET /api/tasks/workflow-config`), plus sam
-                     * status bieżący jako wartość wyjściowa selecta.
-                     */}
-                    {edycjaPodgladu === 'status' && (
-                      <label className="block text-xs text-c-text-secondary">
-                        {t('execution.work.edit.status', 'Change status')}
-                        <select
-                          autoFocus
-                          aria-label={t('execution.work.edit.status', 'Change status')}
-                          data-testid="execution-work-preview-status"
-                          defaultValue={String(r.status ?? '').toLowerCase()}
-                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          onChange={(event) => {
-                            setEdycjaPodgladu(null);
-                            if (event.target.value !== String(r.status ?? '').toLowerCase())
-                              void zapiszPoleZadania(r, 'status', event.target.value);
-                          }}
-                        >
-                          <option value={String(r.status ?? '').toLowerCase()}>
-                            {etykietaStatusu(String(r.status ?? ''), t)}
-                          </option>
-                          {dozwolonePrzejscia(r).map((docelowy) => (
-                            <option key={docelowy} value={docelowy}>
-                              {etykietaStatusu(docelowy, t)}
+                            {osoby.map((osoba) => (
+                              <option key={osoba.id} value={osoba.id}>
+                                {osoba.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {edycjaPodgladu === 'due' && (
+                        <label className="block text-xs text-c-text-secondary">
+                          {t('execution.work.edit.due', 'Change due date')}
+                          <input
+                            autoFocus
+                            type="date"
+                            aria-label={t('execution.work.edit.due', 'Change due date')}
+                            defaultValue={naWartoscDaty(r.rawDueAt)}
+                            className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            onChange={(event) => {
+                              setEdycjaPodgladu(null);
+                              if (event.target.value !== naWartoscDaty(r.rawDueAt))
+                                void zapiszPoleZadania(r, 'dueDate', event.target.value || null);
+                            }}
+                          />
+                        </label>
+                      )}
+                      {/*
+                       * E3/P2 — edytor statusu w stopce podglądu. Lista zawiera
+                       * WYŁĄCZNIE przejścia dopuszczone przez serwer dla statusu
+                       * bieżącego (`GET /api/tasks/workflow-config`), plus sam
+                       * status bieżący jako wartość wyjściowa selecta.
+                       */}
+                      {edycjaPodgladu === 'status' && (
+                        <label className="block text-xs text-c-text-secondary">
+                          {t('execution.work.edit.status', 'Change status')}
+                          <select
+                            autoFocus
+                            aria-label={t('execution.work.edit.status', 'Change status')}
+                            data-testid="execution-work-preview-status"
+                            defaultValue={String(r.status ?? '').toLowerCase()}
+                            className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            onChange={(event) => {
+                              setEdycjaPodgladu(null);
+                              if (event.target.value !== String(r.status ?? '').toLowerCase())
+                                void zapiszPoleZadania(r, 'status', event.target.value);
+                            }}
+                          >
+                            <option value={String(r.status ?? '').toLowerCase()}>
+                              {etykietaStatusu(String(r.status ?? ''), t)}
                             </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                    {/*
+                            {dozwolonePrzejscia(r).map((docelowy) => (
+                              <option key={docelowy} value={docelowy}>
+                                {etykietaStatusu(docelowy, t)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {/*
                       K5-5: powód „nie da się zamknąć" był tu ZDANIEM LUZEM pod
                       tabelą właściwości („The task is already closed."), czyli
                       prozą w bloku 3, gdzie kanon chce treści encji. To samo
@@ -2160,14 +2180,14 @@ export const ExecutionWorkSurface = ({
                       (`buildExecutionPreviewHead`), razem z następnym krokiem —
                       jedno miejsce na „co dalej z tym zadaniem", nie dwa.
                     */}
-                    {bladWiersza?.rowId === r.id && (
-                      <p role="alert" className="text-xs text-c-danger">
-                        {bladWiersza.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </StandardPreview>
+                      {bladWiersza?.rowId === r.id && (
+                        <p role="alert" className="text-xs text-c-danger">
+                          {bladWiersza.message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </StandardPreview>
               );
             }}
           >
@@ -2334,7 +2354,10 @@ export const ExecutionWorkSurface = ({
       )}
       {showWorkspace && selected && (
         <section
-          aria-label={t('execution.work.aria.executionWorkItemWorkspace', 'Execution Work item workspace')}
+          aria-label={t(
+            'execution.work.aria.executionWorkItemWorkspace',
+            'Execution Work item workspace'
+          )}
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between">
@@ -2383,8 +2406,7 @@ export const ExecutionWorkSurface = ({
                 <li key={m.milestoneId} className="rounded border border-c-border p-3 text-sm">
                   <strong>{m.title}</strong> · {m.milestoneId} v{m.version}
                   <div>
-                    {etykietaStatusu(m.status, t)} ·{' '}
-                    {t('execution.work.readiness', 'readiness')}{' '}
+                    {etykietaStatusu(m.status, t)} · {t('execution.work.readiness', 'readiness')}{' '}
                     {etykietaStatusu(m.readiness, t)}
                   </div>
                   <div>

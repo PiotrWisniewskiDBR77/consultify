@@ -3,9 +3,9 @@
  *
  * UCZCIWOŚĆ NAZEWNICZA (brief §D): to są lokalne PROPOSAL DRAFTY audytu, NIE
  * zarejestrowane Inicjatywy modułu Initiatives. `registeredInitiativeId`
- * istnieje w kernelu dopiero po jawnej rejestracji (poza zakresem tego
- * ekranu) — dopóki go nie ma, draft żyje wyłącznie tutaj. EmptyState i nagłówek
- * mówią to wprost, żeby nikt nie policzył tych wierszy jako Initiatives.
+ * istnieje dopiero po jawnej rejestracji — dopóki go nie ma, draft żyje
+ * wyłącznie tutaj. Gdy backend zwraca ID inicjatywy, ekran pokazuje jawne
+ * „Open initiative”; wcześniej nie udaje linku do nieistniejącego obiektu.
  *
  * DEC-2026-08-25-66 (Piotr, werdykt partii D, uwaga 4 — parytet z Tools/
  * Assessment): tabela nie miała kebaba wiersza w ogóle. Dodano kanoniczny
@@ -14,10 +14,18 @@
  * (`proposalService.ts`) — plus podgląd (StandardPreview) i uczciwie
  * disabled Edit/Archive/Delete z powodem.
  */
-import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
+import { Ban, CheckCircle2, Clock3, ExternalLink, Lightbulb } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import {
+  type StandardRowMenu,
+  StandardPreview,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
+import type { StandardPreviewAction } from '@/components/standard/StandardPreview';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
@@ -74,6 +82,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
+  const navigate = useNavigate();
   const [items, setItems] = useState<AuditProposalSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +96,12 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     listProposals()
       .then((result) => setItems(result.items))
       .catch((e: any) =>
-        setError(e?.message || (isPolish ? 'Nie udało się wczytać szkiców propozycji' : 'Failed to load Proposal drafts'))
+        setError(
+          e?.message ||
+            (isPolish
+              ? 'Nie udało się wczytać szkiców propozycji'
+              : 'Failed to load Proposal drafts')
+        )
       )
       .finally(() => setLoading(false));
   }, [isPolish]);
@@ -110,13 +124,24 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     [items, statusFilter]
   );
 
+  const openRegisteredInitiative = useCallback(
+    (initiativeId: string) => {
+      navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
+    },
+    [navigate]
+  );
+
   const runTransition = useCallback(
     async (id: string, action: 'register' | 'dismiss' | 'defer') => {
       setTransitioning(`${id}:${action}`);
       setTransitionError(null);
       try {
         const updated =
-          action === 'register' ? await registerProposal(id) : action === 'dismiss' ? await dismissProposal(id) : await deferProposal(id);
+          action === 'register'
+            ? await registerProposal(id)
+            : action === 'dismiss'
+              ? await dismissProposal(id)
+              : await deferProposal(id);
         if (updated) {
           setItems((prev) => prev.map((p) => (p.id === id ? updated : p)));
         } else {
@@ -125,7 +150,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       } catch (e: any) {
         setTransitionError(
           e?.message ||
-            (isPolish ? 'Nie udało się zmienić statusu szkicu propozycji' : 'Failed to change the Proposal draft status')
+            (isPolish
+              ? 'Nie udało się zmienić statusu szkicu propozycji'
+              : 'Failed to change the Proposal draft status')
         );
       } finally {
         setTransitioning(null);
@@ -152,7 +179,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       label: isPolish ? 'Ustalenia źródłowe' : 'Source findings',
       width: '160px',
       render: (row: AuditProposalSummary) => (
-        <span className="text-xs text-c-text-muted tabular-nums">{row.sourceFindingIds.length}</span>
+        <span className="text-xs text-c-text-muted tabular-nums">
+          {row.sourceFindingIds.length}
+        </span>
       ),
     },
     {
@@ -181,7 +210,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
         label: proposalStatusLabel(value, isPolish),
       })),
       render: (row: AuditProposalSummary) => (
-        <StatusChip label={proposalStatusLabel(row.status, isPolish)} tone={proposalStatusTone(row.status)} />
+        <StatusChip
+          label={proposalStatusLabel(row.status, isPolish)}
+          tone={proposalStatusTone(row.status)}
+        />
       ),
     },
     {
@@ -191,7 +223,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       dataType: 'date',
       sortable: true,
       render: (row: AuditProposalSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -202,7 +236,18 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     const isDismissed = row.status === 'dismissed';
     const canRegister = !isRegistered && !isDismissed;
     const canDismissOrDefer = !isRegistered;
+    const registeredInitiativeId = row.registeredInitiativeId;
     return {
+      primary: registeredInitiativeId
+        ? [
+            {
+              id: 'open-initiative',
+              label: openInitiativeLabel,
+              icon: ExternalLink,
+              onClick: () => openRegisteredInitiative(registeredInitiativeId),
+            },
+          ]
+        : undefined,
       statusTransitions: [
         {
           id: 'register',
@@ -261,7 +306,20 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     };
   };
 
+  const openInitiativeLabel = isPolish ? 'Otwórz inicjatywę' : 'Open initiative';
+
   const selected = items.find((p) => p.id === selectedId) || null;
+  const selectedOpenInitiativeAction: StandardPreviewAction | null =
+    selected?.registeredInitiativeId
+      ? {
+          id: 'open-initiative',
+          label: openInitiativeLabel,
+          icon: ExternalLink,
+          variant: 'neutral',
+          onClick: () => openRegisteredInitiative(selected.registeredInitiativeId as string),
+        }
+      : null;
+
   const selectedProperties: ArtifactPropertyRow[] | undefined = selected
     ? [
         {
@@ -292,7 +350,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     return (
       <div className="p-4">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać szkiców propozycji' : 'Could not load Proposal drafts'}
+          title={
+            isPolish ? 'Nie udało się wczytać szkiców propozycji' : 'Could not load Proposal drafts'
+          }
           description={error}
           onRetry={load}
         />
@@ -336,30 +396,36 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
         </div>
         <JedenPrawyPanel
           className="border-l border-c-border-subtle"
-          rekord={selected ? (
-            <StandardPreview
-              title={selected.title}
-              onClose={() => setSelectedId(null)}
-              meta={{
-                pills: [
-                  {
-                    label: 'Status',
-                    value: proposalStatusLabel(selected.status, isPolish),
-                    tone: proposalStatusTone(selected.status),
-                  },
-                ],
-              }}
-              details={{
-                properties: selectedProperties,
-                label: isPolish ? 'Szczegóły' : 'Details',
-                propertyLabel: isPolish ? 'Właściwość' : 'Property',
-                valueLabel: isPolish ? 'Wartość' : 'Value',
-              }}
-            />
-          ) : null}
+          rekord={
+            selected ? (
+              <StandardPreview
+                title={selected.title}
+                onClose={() => setSelectedId(null)}
+                meta={{
+                  pills: [
+                    {
+                      label: 'Status',
+                      value: proposalStatusLabel(selected.status, isPolish),
+                      tone: proposalStatusTone(selected.status),
+                    },
+                  ],
+                }}
+                details={{
+                  properties: selectedProperties,
+                  label: isPolish ? 'Szczegóły' : 'Details',
+                  propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                  valueLabel: isPolish ? 'Wartość' : 'Value',
+                }}
+                actions={
+                  selectedOpenInitiativeAction
+                    ? { informational: [selectedOpenInitiativeAction] }
+                    : undefined
+                }
+              />
+            ) : null
+          }
         />
       </div>
-
     </div>
   );
 };

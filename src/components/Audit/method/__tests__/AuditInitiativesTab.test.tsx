@@ -6,6 +6,7 @@
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../auditsMethodApi', async () => {
@@ -25,30 +26,47 @@ import { listProposals, registerProposal, type AuditProposalSummary } from '../a
 const mockedListProposals = vi.mocked(listProposals);
 const mockedRegisterProposal = vi.mocked(registerProposal);
 
+function renderTab(props: React.ComponentProps<typeof AuditInitiativesTab> = { isPolish: false }) {
+  return render(
+    <MemoryRouter>
+      <AuditInitiativesTab {...props} />
+    </MemoryRouter>
+  );
+}
+
+const DRAFT_TITLE = 'Fix intake process gap';
+const REGISTERED_TITLE = 'Registered initiative proposal';
+
 const draftProposal: AuditProposalSummary = {
   id: 'prop-1',
   programId: 'prog-1',
   programName: 'Q3 Compliance Audit',
-  title: 'Fix intake process gap',
+  title: DRAFT_TITLE,
   sourceFindingIds: ['f-1', 'f-2'],
   priority: 'high',
   status: 'draft',
   updatedAt: '2026-08-10',
 };
 
-const registeredProposal: AuditProposalSummary = { ...draftProposal, id: 'prop-2', status: 'registered' };
+const registeredProposal: AuditProposalSummary = {
+  ...draftProposal,
+  id: 'prop-2',
+  status: 'registered',
+};
 
 async function openKebab(index = 0) {
   const triggers = await screen.findAllByRole('button', { name: /row actions/i });
   fireEvent.click(triggers[index]);
-  return screen.findByRole('menu');
+  await waitFor(() => expect(screen.getAllByRole('menu').length).toBeGreaterThan(0));
+  const menus = screen.getAllByRole('menu');
+  return menus[menus.length - 1];
 }
 
 describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
   it('renders a working kebab with Register enabled for a draft proposal', async () => {
     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
-    render(<AuditInitiativesTab isPolish={false} />);
-    await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+    renderTab();
+    await waitFor(() => expect(screen.getByText(DRAFT_TITLE)).toBeInTheDocument());
 
     const menu = await openKebab();
     const registerItem = within(menu).getByText('Register as initiative');
@@ -57,8 +75,8 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
 
   it('disables Register/Defer/Dismiss for an already-registered proposal, with a real reason', async () => {
     mockedListProposals.mockResolvedValue({ items: [registeredProposal], total: 1 });
-    render(<AuditInitiativesTab isPolish={false} />);
-    await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+    renderTab();
+    await waitFor(() => expect(screen.getByText(DRAFT_TITLE)).toBeInTheDocument());
 
     const menu = await openKebab();
     expect(within(menu).getByText('Register as initiative').closest('button')).toBeDisabled();
@@ -69,8 +87,8 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
   it('calls the real registerProposal endpoint and reflects the returned status', async () => {
     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
     mockedRegisterProposal.mockResolvedValue({ ...draftProposal, status: 'registered' });
-    render(<AuditInitiativesTab isPolish={false} />);
-    await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+    renderTab();
+    await waitFor(() => expect(screen.getByText(DRAFT_TITLE)).toBeInTheDocument());
 
     const menu = await openKebab();
     fireEvent.click(within(menu).getByText('Register as initiative'));
@@ -79,10 +97,31 @@ describe('AuditInitiativesTab — row kebab (DEC-2026-08-25-66)', () => {
     await waitFor(() => expect(screen.getByText('Registered')).toBeInTheDocument());
   });
 
+  it('shows Open initiative only when the backend returned registeredInitiativeId', async () => {
+    const registeredWithInitiative: AuditProposalSummary = {
+      ...registeredProposal,
+      title: REGISTERED_TITLE,
+      registeredInitiativeId: 'init-registered-1',
+    };
+    mockedListProposals.mockResolvedValue({
+      items: [draftProposal, registeredWithInitiative],
+      total: 2,
+    });
+    renderTab();
+    await waitFor(() => expect(screen.getByText(REGISTERED_TITLE)).toBeInTheDocument());
+
+    const draftMenu = await openKebab(0);
+    expect(within(draftMenu).queryByText('Open initiative')).not.toBeInTheDocument();
+    fireEvent.click(document.body);
+
+    const registeredMenu = await openKebab(1);
+    expect(within(registeredMenu).getByText('Open initiative')).toBeInTheDocument();
+  });
+
   it('shows Delete disabled with a real reason — never a silent no-op', async () => {
     mockedListProposals.mockResolvedValue({ items: [draftProposal], total: 1 });
-    render(<AuditInitiativesTab isPolish={false} />);
-    await waitFor(() => expect(screen.getByText('Fix intake process gap')).toBeInTheDocument());
+    renderTab();
+    await waitFor(() => expect(screen.getByText(DRAFT_TITLE)).toBeInTheDocument());
 
     const menu = await openKebab();
     const deleteItem = within(menu).getByText('Delete');

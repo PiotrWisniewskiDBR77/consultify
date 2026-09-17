@@ -112,6 +112,7 @@ import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV
 import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { InitiativeLifecycleActions } from '../Initiatives/lifecycle/InitiativeLifecycleActions';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
+import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   FilterChip,
   HubWorkAreaLoadError,
@@ -2227,11 +2228,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           matchesAttentionPreset(
             i,
             (isMissingDatesFilter ? 'missing_dates' : filter.value) as
-              | 'blocked'
-              | 'missing_dates'
-              | 'overdue'
-              | 'overdue_decisions'
-              | 'due_soon_tasks'
+              'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
           )
         );
       }
@@ -3021,9 +3018,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const projectNameById = new Map<string, string>();
     for (const initiative of initiatives) {
       const projectId = String(initiative.projectId || '').trim();
-      const projectName = String(
-        initiative.projectName || initiative.project?.name || ''
-      ).trim();
+      const projectName = String(initiative.projectName || initiative.project?.name || '').trim();
       if (projectId && projectName) projectNameById.set(projectId, projectName);
     }
     for (const executionCase of executionCases) {
@@ -5931,12 +5926,28 @@ Please return:
       // aktywna (ten sam wzorzec co `report:`/`execution-intelligence:`
       // wyżej).
       if (activeDocumentId.startsWith('work:')) {
+        const activeDoc = openDocuments.find((d) => d.id === activeDocumentId);
         const [, , ...workIdParts] = activeDocumentId.split(':');
+        const workRecordId = workIdParts.join(':');
+        if (activeDoc?.type === 'task') {
+          return (
+            <TaskDetailView
+              taskId={workRecordId}
+              onClose={handleShowList}
+              onSaved={() => handleRefresh()}
+              // W205/W101: Realizacja → Praca „Open task" ma otwierać
+              // managerowy widok zadania, nie owner-scoped My Work.
+              // `ownerScoped={false}` wymusza kanoniczne `GET /api/tasks/:id`,
+              // tak jak w InitiativesHub i AssessmentHub dla cudzych zadań.
+              ownerScoped={false}
+            />
+          );
+        }
         return (
           <ExecutionWorkSurface
             activePreset="all"
             onCountsChange={menu3CountHandlers.work}
-            documentId={workIdParts.join(':')}
+            documentId={workRecordId}
             onRegisterFilterControl={setWorkFilterControl}
             onRegisterPrimaryCta={setWorkPrimaryCta}
             onRegisterMenu3Control={setWorkMenu3Control}
@@ -6372,27 +6383,29 @@ Please return:
                      * Pracy, Zarządzaniu ryzykiem i Raportach — góra podglądu
                      * nie ma już czterech różnych kształtów w jednym module.
                      */
-                    meta={buildExecutionPreviewHead({
-                      pills: [
-                        {
-                          label: raidTypeLabel(selectedSummaryRisk.type, isPolish),
-                          tone: 'neutral',
+                    meta={
+                      buildExecutionPreviewHead({
+                        pills: [
+                          {
+                            label: raidTypeLabel(selectedSummaryRisk.type, isPolish),
+                            tone: 'neutral',
+                          },
+                          {
+                            label:
+                              selectedSummaryRisk.score != null
+                                ? `${t('execution.summary.riskLevel', 'Level')} ${selectedSummaryRisk.score}`
+                                : (selectedSummaryRisk.severityLabel ?? '—'),
+                            tone: selectedSummaryRiskLevelTone,
+                          },
+                        ],
+                        term: {
+                          label: t('execution.governance.columns.due', 'Due'),
+                          value: selectedSummaryRisk.dueDate
+                            ? formatListDate(selectedSummaryRisk.dueDate)
+                            : t('execution.governance.preview.noDueShort', 'No due date'),
                         },
-                        {
-                          label:
-                            selectedSummaryRisk.score != null
-                              ? `${t('execution.summary.riskLevel', 'Level')} ${selectedSummaryRisk.score}`
-                              : (selectedSummaryRisk.severityLabel ?? '—'),
-                          tone: selectedSummaryRiskLevelTone,
-                        },
-                      ],
-                      term: {
-                        label: t('execution.governance.columns.due', 'Due'),
-                        value: selectedSummaryRisk.dueDate
-                          ? formatListDate(selectedSummaryRisk.dueDate)
-                          : t('execution.governance.preview.noDueShort', 'No due date'),
-                      },
-                    }).meta}
+                      }).meta
+                    }
                     details={{
                       label: t('execution.governance.columns.type', 'Typ'),
                       text:
