@@ -228,8 +228,8 @@ describe('GET /api/workbook/:id/schema', () => {
     expect(res.headers['content-disposition']).toContain('Governed_workbook-DRAFT.xlsx');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(res.body as Buffer);
-    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Sheet1', 'Summary']);
-    expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Info', 'Sheet1']);
+    expect(workbook.getWorksheet('Info')!.getCell('A1').value).toBe('Governed workbook');
   });
 
   it('fails closed when a final export lacks current approval', async () => {

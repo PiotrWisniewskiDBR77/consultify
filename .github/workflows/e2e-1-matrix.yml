@@ -84,6 +84,8 @@ jobs:
           pattern: e2e-1-*
           path: test-results/e2e-1-matrix
           merge-multiple: false
+      - name: Verify workflow-to-contract wiring
+        run: node --test scripts/e2e-1-matrix/contract.test.mjs
       - run: node scripts/e2e-1-matrix/aggregate.mjs test-results/e2e-1-matrix test-results/e2e-1-aggregate
       - if: always()
         run: cat test-results/e2e-1-aggregate/REPORT.md >> "$GITHUB_STEP_SUMMARY"

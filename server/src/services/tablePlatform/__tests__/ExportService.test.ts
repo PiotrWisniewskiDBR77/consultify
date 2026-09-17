@@ -275,11 +275,22 @@ describe('ExportService', () => {
       const fields = [
         { id: 'f1', name: 'Name', type: 'single_line_text', options: null },
         { id: 'f2', name: 'Score', type: 'number', options: null },
+        { id: 'f3', name: 'Tags', type: 'multiSelect', options: null },
+        { id: 'f4', name: 'Owner', type: 'linkedRecord', options: null },
       ];
       mockQuery.mockResolvedValueOnce({ rows: fields });
 
       mockExecuteQuery.mockResolvedValueOnce({
-        records: [{ data: { f1: 'Alice', f2: 42 } }],
+        records: [
+          {
+            data: {
+              f1: 'Alice',
+              f2: 42,
+              f3: ['Quality', 'Urgent'],
+              f4: [{ id: 'u1', displayName: 'Alice Example With A Long Display Name' }],
+            },
+          },
+        ],
         cursor: undefined,
         hasMore: false,
       });
@@ -294,6 +305,11 @@ describe('ExportService', () => {
       expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Data', 'Summary']);
       expect(workbook.getWorksheet('Data')!.getCell('B2').value).toBe(42);
       expect(workbook.getWorksheet('Data')!.getCell('B2').numFmt).toBe('#,##0.##');
+      expect(workbook.getWorksheet('Data')!.getCell('C2').value).toBe('Quality, Urgent');
+      expect(workbook.getWorksheet('Data')!.getCell('D2').value).toBe(
+        'Alice Example With A Long Display Name'
+      );
+      expect(workbook.getWorksheet('Data')!.getColumn(4).width).toBeGreaterThan(30);
       expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
       expect(workbook.getWorksheet('Summary')!.getCell('B5').type).toBe(ExcelJS.ValueType.Formula);
       expect(workbook.getWorksheet('Data')!.headerFooter.oddHeader).toContain('Northwind');
