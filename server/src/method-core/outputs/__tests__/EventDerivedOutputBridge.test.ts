@@ -53,7 +53,8 @@ function makeEvent(overrides: Partial<MethodEvent> = {}): MethodEvent {
 describe('deriveFindingsFromEvents (pure)', () => {
   it('builds a finding only for units that have >=1 EVIDENCE_ATTACHED event', () => {
     const events: MethodEvent[] = [
-      makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2 }),
+      makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 1 }),
+      makeEvent({ id: 'e1b', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2 }),
       makeEvent({
         id: 'e2',
         type: 'EVIDENCE_ATTACHED',
@@ -85,19 +86,22 @@ describe('deriveFindingsFromEvents (pure)', () => {
     expect(findings[0].recommendation.length).toBeGreaterThan(0);
   });
 
-  it('later ANSWER_CONFIRMED for the same unit overwrites the level (last-write-wins, chronological)', () => {
+  it('DEC-544: a later yes above a no/help gap never raises currentLevel', () => {
     const events: MethodEvent[] = [
-      makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2 }),
-      makeEvent({ id: 'e2', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 3 }),
+      makeEvent({ id: 'e1', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 1, payload: { questionId: 'q1', answerState: 'confirmed' } }),
+      makeEvent({ id: 'e2', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2, payload: { questionId: 'q2', answerState: 'confirmed' } }),
+      makeEvent({ id: 'e3', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 3, payload: { questionId: 'q3', answerState: 'no' } }),
+      makeEvent({ id: 'e4', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 5, payload: { questionId: 'q5', answerState: 'confirmed' } }),
       makeEvent({
-        id: 'e3',
+        id: 'e5',
         type: 'EVIDENCE_ATTACHED',
         unitId: '1A',
         payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' },
       }),
     ];
-    const { current } = deriveFindingsFromEvents(events);
-    expect(current['1A']).toBe(3);
+    const { current, findings } = deriveFindingsFromEvents(events);
+    expect(current['1A']).toBe(2);
+    expect(findings[0].currentLevel).toBe(2);
   });
 });
 

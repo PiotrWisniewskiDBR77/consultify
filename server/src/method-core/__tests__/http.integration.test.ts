@@ -293,6 +293,18 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(replay.status).toBe(201);
     expect(replay.body.event.id).toBe(first.body.event.id);
 
+    const oldAnswerState = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `k02-old-answer-state:${randomUUID()}`)
+      .send({
+        ...answer,
+        expectedVersion: 2,
+        payload: { questionId: '1A-L1-Q1', answerState: 'partial', text: 'Old draft state' },
+      });
+    expect(oldAnswerState.status).toBe(400);
+    expect(oldAnswerState.body).toMatchObject({ code: 'INVALID_DRD_ANSWER_STATE' });
+
     const stale = await request(app)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -300,7 +312,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .send({
         ...answer,
         type: 'ANSWER_DRAFTED',
-        payload: { questionId: '1A-L1-Q1', answerState: 'partial', text: 'Stale draft' },
+        payload: { questionId: '1A-L1-Q1', answerState: 'dont_know', text: 'Stale draft' },
       });
     expect(stale.status).toBe(409);
     expect(stale.body).toMatchObject({ error: 'version_conflict', currentVersion: 2 });
@@ -312,6 +324,99 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       [sessionId]
     );
     expect(readback.rows[0]).toMatchObject({ version: 2, event_count: 1 });
+  });
+
+  it('DEC-544: HTTP events, matrix derivation, freeze Output, and report keep currentLevel at the gap', async () => {
+    const createRes = await createSession(ownerToken, {
+      methodPackId: 'drd',
+      methodPackVersion: '2.0.0-methodpack.1',
+    });
+    expect(createRes.status).toBe(201);
+    const sessionId = createRes.body.session.id as string;
+
+    async function appendAnswer(level: number, answerState: 'confirmed' | 'no', expectedVersion: number) {
+      const res = await request(app)
+        .post(`/api/method/sessions/${sessionId}/events`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .set('Idempotency-Key', `dec544-answer:${level}:${randomUUID()}`)
+        .send({
+          type: 'ANSWER_CONFIRMED',
+          unitId: '1A',
+          level,
+          expectedVersion,
+          payload: { questionId: `1A-L${level}-Q1`, answerState, text: `${answerState} ${level}` },
+        });
+      expect(res.status).toBe(201);
+    }
+
+    await appendAnswer(1, 'confirmed', 1);
+    await appendAnswer(2, 'confirmed', 2);
+    await appendAnswer(3, 'no', 3);
+    await appendAnswer(5, 'confirmed', 4);
+
+    const evidence = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `dec544-evidence:${randomUUID()}`)
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-dec544-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
+    expect(evidence.status).toBe(201);
+
+    const target = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `dec544-target:${randomUUID()}`)
+      .send({
+        type: 'DECISION_APPROVED',
+        unitId: '1A',
+        level: 5,
+        payload: { decisionId: `dec544-target-${randomUUID()}`, subject: 'target_level', rationale: 'DEC-544 target' },
+      });
+    expect(target.status).toBe(201);
+
+    const eventsRes = await request(app)
+      .get(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(eventsRes.status).toBe(200);
+    const { deriveFindingsFromEvents } = await import('../outputs/index.js');
+    const matrix = deriveFindingsFromEvents(eventsRes.body.events);
+    expect(matrix.current['1A']).toBe(2);
+    expect(matrix.findings[0].currentLevel).toBe(2);
+
+    await driveToInReview(sessionId);
+    await pool.query(
+      `INSERT INTO method_session_roles (id, organization_id, session_id, user_id, role, created_at)
+       VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
+      [randomUUID(), ORG, sessionId, APPROVER]
+    );
+
+    const freeze = await request(app)
+      .post(`/api/method/sessions/${sessionId}/freeze`)
+      .set('Authorization', `Bearer ${approverToken}`)
+      .set('Idempotency-Key', `dec544-freeze:${randomUUID()}`)
+      .send({});
+    expect(freeze.status).toBe(200);
+    expect(freeze.body.output.current['1A']).toBe(2);
+    expect(freeze.body.output.findings[0].currentLevel).toBe(2);
+    expect(freeze.body.output.gap['1A']).toBe(3);
+
+    const reportContent = {
+      executiveSummary: 'DEC-544 gap-aware report proof',
+      findings: freeze.body.output.findings.map((f: { unitId: string; currentLevel: number | null; gap: number | null }) => ({
+        unitId: f.unitId,
+        currentLevel: f.currentLevel,
+        gap: f.gap,
+      })),
+    };
+    const reportRes = await request(app)
+      .post(`/api/method/outputs/${freeze.body.output.id}/report`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ title: 'DEC-544 report', content: reportContent });
+    expect(reportRes.status).toBe(201);
+    expect(reportRes.body.report.content.findings[0]).toMatchObject({ unitId: '1A', currentLevel: 2, gap: 3 });
   });
 
   it('K-02: an event INSERT failure rolls back the session-version increment on the same connection', async () => {

@@ -36,6 +36,7 @@ import type { EvidenceLocatorInput, FreezeOutputInput, OutputFindingInput } from
 import type { MethodOutputService } from './MethodOutputService.js';
 import type { MethodEvent } from '../contracts/index.js';
 import { unitNameResolverForPack, type UnitNameResolver } from './outputUnitNames.js';
+import { deriveDrdRampByUnitFromEvents } from '../../domain/drd/drdRampProgression.js';
 
 interface UnitAccumulator {
   unitId: string;
@@ -140,11 +141,6 @@ export function deriveFindingsFromEvents(
     const bucket = unitBucket(byUnit, event.unitId);
 
     if (event.type === 'ANSWER_CONFIRMED' && typeof event.level === 'number') {
-      // Chronological order guaranteed by MethodEventStore.listBySession —
-      // last confirmed level for the unit wins (an honest correction, not a
-      // max()/min() guess).
-      bucket.currentLevel = event.level;
-      bucket.answerEventIds.push(event.id);
       const payload = event.payload as { text?: string } | undefined;
       if (payload?.text) bucket.lastAnswerText = payload.text;
     }
@@ -170,6 +166,13 @@ export function deriveFindingsFromEvents(
     ) {
       bucket.targetLevel = event.level;
     }
+  }
+
+  const rampByUnit = deriveDrdRampByUnitFromEvents(events);
+  for (const [unitId, ramp] of Object.entries(rampByUnit)) {
+    const bucket = unitBucket(byUnit, unitId);
+    bucket.currentLevel = ramp.currentLevel;
+    bucket.answerEventIds = ramp.answerEventIds;
   }
 
   const findings: OutputFindingInput[] = [];

@@ -65,6 +65,7 @@ import {
 
 import { compileDrdPack, DRD_METHOD_PACK_ID } from './compileDrdPack';
 import { currentDrdPackLanguage } from './drdPackLanguage';
+import { deriveDrdRampByUnitFromEvents } from '../../../../server/src/domain/drd/drdRampProgression';
 
 export const DRD_DEMO_SESSION_NOTICE =
   'Metodyka DRD jest w statusie „w przeglądzie" (methodology_review) — canStartSession() ' +
@@ -191,7 +192,7 @@ export interface RecordAnswerInput {
   readonly unitId: string;
   readonly level: number;
   readonly questionId: string;
-  readonly answerState: 'confirmed' | 'partial' | 'no' | 'dont_know' | 'no_evidence' | 'not_applicable';
+  readonly answerState: 'confirmed' | 'no' | 'dont_know';
   readonly text?: string;
   readonly justification?: string;
   readonly actorUserId: string;
@@ -533,8 +534,7 @@ export class DrdSessionRuntime {
       if (!event.unitId) continue;
       const b = bucket(event.unitId);
       if (event.type === 'ANSWER_CONFIRMED' && typeof event.level === 'number') {
-        b.currentLevel = event.level;
-        b.answerEventIds.push(event.id);
+        // currentLevel is assigned after the loop by the shared DRD ramp.
       }
       if (event.type === 'EVIDENCE_ATTACHED') {
         const payload = event.payload as { evidenceId?: string; evidenceType?: string; strength?: string };
@@ -554,6 +554,13 @@ export class DrdSessionRuntime {
       ) {
         b.targetLevel = event.level;
       }
+    }
+
+    const rampByUnit = deriveDrdRampByUnitFromEvents(events);
+    for (const [unitId, ramp] of Object.entries(rampByUnit)) {
+      const acc = bucket(unitId);
+      acc.currentLevel = ramp.currentLevel;
+      acc.answerEventIds = ramp.answerEventIds;
     }
 
     const current: Record<string, number | null> = {};

@@ -544,6 +544,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * domknięcie z renderu sprzed wyboru (patrz komentarz przy `save`).
    */
   const chosenAnswerStateRef = useRef<Record<string, InterviewFocusQuestion['answerState']>>({});
+  const toDrdAnswerState = (state: InterviewFocusQuestion['answerState'] | undefined): 'confirmed' | 'no' | 'dont_know' => {
+    if (state === 'confirmed' || state === 'no' || state === 'dont_know') return state;
+    return 'dont_know';
+  };
   const eventsRef = useRef<readonly MethodEvent[]>([]);
   const answerWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
   const savedHelpDecisionRef = useRef<Record<string, string>>({});
@@ -819,18 +823,16 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       // wybrany. Czytamy go z refów (`chosenAnswerStateRef` / `eventsRef`), bo
       // `markDirty()` zamraża `save` z renderu sprzed wyboru — odczyt ze stałej
       // domknięcia dawałby znów „partial".
-      const currentState =
-        chosenAnswerStateRef.current[questionId] ??
-        questionAnswerState(eventsRef.current, questionId).state ??
-        'partial';
+      const currentState = toDrdAnswerState(
+        chosenAnswerStateRef.current[questionId] ?? questionAnswerState(eventsRef.current, questionId).state
+      );
       try {
         await queueAnswerWrite(() =>
           runtime.recordAnswer({
             unitId: activeArea.id,
             level: focusLevelFallback,
             questionId,
-            answerState:
-              chosenAnswerStateRef.current[questionId] ?? currentState,
+            answerState: currentState,
             text,
             draft: true,
           })
@@ -880,7 +882,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           unitId: activeArea.id,
           level: focusLevelFallback,
           questionId,
-          answerState,
+          answerState: toDrdAnswerState(answerState),
           text: draftAnswerText[questionId],
           justification,
         })
@@ -1203,7 +1205,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             unitId: activeArea.id,
             level: focusLevelFallback,
             questionId,
-            answerState: 'no_evidence',
+            answerState: 'dont_know',
             text: draftAnswerText[questionId],
             justification: formatSkipJustification(reasonCode),
           }),

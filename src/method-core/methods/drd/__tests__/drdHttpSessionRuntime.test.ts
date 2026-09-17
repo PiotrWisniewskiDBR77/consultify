@@ -360,7 +360,7 @@ describe('K-02 RED — concurrent answer writes', () => {
         unitId: '1A',
         level: 1,
         questionId: '1A-L1-Q1',
-        answerState: 'partial',
+        answerState: 'dont_know',
         text: 'Stale draft',
         draft: true,
       });

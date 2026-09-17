@@ -215,6 +215,24 @@ describe('DrdSessionRuntime — freeze authority + Output bridge (requirements 4
 });
 
 describe('DrdSessionRuntime — Output immutability (requirement 6)', () => {
+  it('DEC-544: local freeze uses the same gap-aware ramp as the workspace and matrix', () => {
+    const storage = makeMemoryStorage();
+    const runtime = makeStartedSession(storage);
+    runtime.recordAnswer({ unitId: '1A', level: 1, questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'yes 1', actorUserId: 'owner-1' });
+    runtime.recordAnswer({ unitId: '1A', level: 2, questionId: '1A-L2-Q1', answerState: 'confirmed', text: 'yes 2', actorUserId: 'owner-1' });
+    runtime.recordAnswer({ unitId: '1A', level: 3, questionId: '1A-L3-Q1', answerState: 'no', text: 'no 3', actorUserId: 'owner-1' });
+    runtime.recordAnswer({ unitId: '1A', level: 5, questionId: '1A-L5-Q1', answerState: 'confirmed', text: 'yes 5', actorUserId: 'owner-1' });
+    runtime.recordEvidence({ unitId: '1A', level: 2, evidenceId: 'ev-gap-1', evidenceType: 'document', strength: 'E2', actorUserId: 'owner-1' });
+    runtime.recordTargetDecision({ unitId: '1A', level: 5, rationale: 'Target.', actorUserId: 'owner-1' });
+    runtime.transition('in_review', 'owner-1');
+    const frozen = runtime.transition('frozen', 'approver-1');
+    expect(frozen.ok, JSON.stringify(frozen)).toBe(true);
+    const output = runtime.currentOutputRecord()!.content;
+    expect(output.current['1A']).toBe(2);
+    expect(output.gap['1A']).toBe(3);
+    expect(output.findings[0].currentLevel).toBe(2);
+  });
+
   it('the frozen AssessmentOutput cannot be mutated — assigning to a field throws (deepFreeze, strict mode)', () => {
     const storage = makeMemoryStorage();
     const runtime = driveToInReviewWithEvidence(storage);

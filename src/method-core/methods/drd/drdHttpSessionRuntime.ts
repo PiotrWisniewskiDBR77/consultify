@@ -308,7 +308,7 @@ export class DrdHttpSessionRuntime {
     unitId: string;
     level: number;
     questionId: string;
-    answerState: 'confirmed' | 'partial' | 'no' | 'dont_know' | 'no_evidence' | 'not_applicable';
+    answerState: 'confirmed' | 'no' | 'dont_know';
     text?: string;
     justification?: string;
     draft?: boolean;

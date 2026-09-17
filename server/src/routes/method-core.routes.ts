@@ -1437,6 +1437,21 @@ router.post(
       return;
     }
 
+    if (isDrdAnswerWrite) {
+      const answerState =
+        typeof payload === 'object' && payload !== null
+          ? (payload as Record<string, unknown>).answerState
+          : undefined;
+      if (answerState !== 'confirmed' && answerState !== 'no' && answerState !== 'dont_know') {
+        res.status(400).json({
+          error: 'invalid_drd_answer_state',
+          code: 'INVALID_DRD_ANSWER_STATE',
+          allowed: ['confirmed', 'no', 'dont_know'],
+        });
+        return;
+      }
+    }
+
     // --- DEC-137 (P1): DRD target_level must stay on the pinned scale ------
     // Assessment-owned, NOT a kernel rule (Z16/Z17: the method-core event
     // contract — server/src/method-core/contracts/events.ts — is shared with

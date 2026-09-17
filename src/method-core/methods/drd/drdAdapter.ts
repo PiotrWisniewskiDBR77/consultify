@@ -32,6 +32,7 @@ import {
   type DrdPackLanguage,
 } from './compileDrdPack';
 import { currentDrdPackLanguage } from './drdPackLanguage';
+import { resolveDrdRampProgression } from '../../../../server/src/domain/drd/drdRampProgression';
 
 // ---------------------------------------------------------------------------
 // Evidence strength ordering (E0 < E1 < E2 < E3 < E4)
@@ -123,28 +124,11 @@ function resolveOpenLevels(input: ProgressionInput): ProgressionResult {
     return { currentLevel: null, blockedAtLevel: null, openLevels: [], aboveGapLevels: [] };
   }
 
-  const scale = [...unit.levelScale].sort((a, b) => a - b);
-  const confirmed = new Set(input.confirmedLevels);
-
-  let currentLevel: number | null = null;
-  let blockedAtLevel: number | null = null;
-
-  for (const lvl of scale) {
-    if (confirmed.has(lvl)) {
-      // Only climbs while the ramp from the bottom is unbroken. Once a level
-      // above the first gap is "confirmed" out of order, it does NOT touch
-      // currentLevel — that's the aboveGap rule.
-      if (blockedAtLevel === null) currentLevel = lvl;
-    } else if (blockedAtLevel === null) {
-      blockedAtLevel = lvl;
-    }
-  }
-
-  const openLevels = blockedAtLevel === null ? [] : scale.filter((lvl) => lvl <= (blockedAtLevel as number));
-  const aboveGapLevels =
-    blockedAtLevel === null ? [] : scale.filter((lvl) => lvl > (blockedAtLevel as number) && confirmed.has(lvl));
-
-  return { currentLevel, blockedAtLevel, openLevels, aboveGapLevels };
+  return resolveDrdRampProgression({
+    unitId: input.unitId,
+    confirmedLevels: input.confirmedLevels,
+    levelScale: unit.levelScale,
+  });
 }
 
 // ---------------------------------------------------------------------------
