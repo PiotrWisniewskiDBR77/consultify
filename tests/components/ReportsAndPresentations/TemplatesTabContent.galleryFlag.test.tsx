@@ -22,7 +22,6 @@
  */
 import React, { useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TemplatesTabContent } from '../../../src/components/ReportsAndPresentations/TemplatesTabContent';
@@ -35,7 +34,8 @@ vi.mock('react-i18next', async () => {
   return {
     ...actual,
     useTranslation: () => ({
-      t: (_k: string, fallback?: string) => fallback || _k,
+      t: (_k: string, fallback?: string | { defaultValue?: string }) =>
+        (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _k,
       i18n: { language: 'pl' },
     }),
   };
@@ -138,11 +138,18 @@ const TEMPLATES: TemplateItem[] = [
 // Mirrors how the real parent (ReportsAndPresentationsHub) owns
 // `activeFilters` via useState and passes it down as a controlled prop —
 // TemplatesTabContent itself holds no filter state.
-function TabHarness() {
-  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+function TabHarness({
+  innerView,
+  initialFilters = [],
+}: {
+  innerView?: 'gallery' | 'table';
+  initialFilters?: FilterChip[];
+}) {
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>(initialFilters);
   return (
     <TemplatesTabContent
       viewMode="table"
+      innerView={innerView}
       searchQuery=""
       activeFilters={activeFilters}
       onFilterChange={setActiveFilters}
@@ -154,8 +161,8 @@ function TabHarness() {
   );
 }
 
-function renderTab() {
-  return render(<TabHarness />);
+function renderTab(props: React.ComponentProps<typeof TabHarness> = {}) {
+  return render(<TabHarness {...props} />);
 }
 
 describe('TemplatesTabContent — Galeria ↔ Tabela (ff_galeria_szablonow)', () => {
@@ -175,19 +182,15 @@ describe('TemplatesTabContent — Galeria ↔ Tabela (ff_galeria_szablonow)', ()
     mockFlag.mockReturnValue(true);
     renderTab();
 
-    expect(screen.getByTestId('templates-gallery-view-toggle')).toBeInTheDocument();
     for (const tpl of TEMPLATES) {
       expect(screen.getByTestId(`template-gallery-tile-${tpl.id}`)).toBeInTheDocument();
     }
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('(c) toggling to "Tabela" renders the real StandardTable', async () => {
+  it('(c) host-selected "Tabela" renders the real StandardTable', () => {
     mockFlag.mockReturnValue(true);
-    renderTab();
-    const user = userEvent.setup();
-
-    await user.click(screen.getByTestId('templates-gallery-view-toggle-table'));
+    renderTab({ innerView: 'table' });
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.queryByTestId('template-gallery-filters')).not.toBeInTheDocument();
@@ -197,22 +200,21 @@ describe('TemplatesTabContent — Galeria ↔ Tabela (ff_galeria_szablonow)', ()
     mockFlag.mockReturnValue(true);
     renderTab();
 
-    const disabledCta = screen.getByTestId('template-gallery-use-disabled-tpl-orphan-1');
+    const disabledCta = screen.getByTestId('template-gallery-use-tpl-orphan-1');
     expect(disabledCta).toBeDisabled();
     const tile = screen.getByTestId('template-gallery-tile-tpl-orphan-1');
-    expect(within(tile).getByText(/Brak kanonicznego rekordu wzorca/i)).toBeInTheDocument();
+    expect(within(tile).getByText(/No canonical template record/i)).toBeInTheDocument();
     expect(within(tile).getByTestId('template-gallery-orphaned-badge')).toBeInTheDocument();
 
     // Non-orphaned tiles keep an ENABLED primary action.
     expect(screen.getByTestId('template-gallery-use-tpl-report-1')).not.toBeDisabled();
   });
 
-  it('(e) the "Prezentacje" format chip narrows the tile set to presentations only', async () => {
+  it('(e) the host format filter narrows the tile set to presentations only', () => {
     mockFlag.mockReturnValue(true);
-    renderTab();
-    const user = userEvent.setup();
-
-    await user.click(screen.getByRole('button', { name: /Prezentacje/ }));
+    renderTab({
+      initialFilters: [{ column: 'type', value: 'presentation', label: 'Prezentacje' }],
+    });
 
     expect(screen.getByTestId('template-gallery-tile-tpl-deck-1')).toBeInTheDocument();
     expect(screen.queryByTestId('template-gallery-tile-tpl-report-1')).not.toBeInTheDocument();
@@ -225,7 +227,7 @@ describe('TemplatesTabContent — Galeria ↔ Tabela (ff_galeria_szablonow)', ()
     renderTab();
 
     const tile = screen.getByTestId('template-gallery-tile-tpl-deprecated-1');
-    expect(within(tile).getByTestId('template-gallery-use-disabled-tpl-deprecated-1')).toBeDisabled();
-    expect(within(tile).getByText(/Wycofany wzorzec nie może być użyty/i)).toBeInTheDocument();
+    expect(within(tile).getByTestId('template-gallery-use-tpl-deprecated-1')).toBeDisabled();
+    expect(within(tile).getByText(/A deprecated template cannot be used/i)).toBeInTheDocument();
   });
 });

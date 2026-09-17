@@ -22,6 +22,14 @@ vi.mock('../../../src/hooks/useOpenChatWithContext', () => ({
   useOpenChatWithContext: () => vi.fn(),
 }));
 
+vi.mock('@/services/api', () => ({
+  Api: { post: vi.fn(), buildWorkbookTemplate: vi.fn() },
+}));
+
+vi.mock('@/services/presentationTemplateArchitect', () => ({
+  clonePresentationTemplate: vi.fn(),
+}));
+
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
   GridView: ({ items, onItemAction }: any) => (
     <div>
@@ -93,9 +101,7 @@ describe('TemplatesTabContent presentation brief modal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Use Presentation 201' }));
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
 
-    expect(navigateMock).toHaveBeenCalledWith(
-      '/prezentacje?templateArtifactId=deck%20index%2F201'
-    );
+    expect(navigateMock).toHaveBeenCalledWith('/prezentacje?templateArtifactId=deck%20index%2F201');
   });
 
   it('report templates navigate immediately without the modal', () => {
