@@ -421,6 +421,11 @@ export interface AppendEventRequest {
   readonly level?: number;
   readonly actorKind?: Extract<MethodActorKind, 'human' | 'teresa'>;
   readonly supersedes?: string;
+  /**
+   * Session revision observed by the caller. DRD answer writes require this
+   * so a delayed autosave cannot overwrite a newer explicit decision.
+   */
+  readonly expectedVersion?: number;
   readonly payload: unknown;
 }
 

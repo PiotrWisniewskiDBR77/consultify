@@ -294,6 +294,12 @@ export class DrdHttpSessionRuntime {
         throw err;
       }
       this.handleFailure(err);
+      if (isVersionConflict(err)) {
+        // The server refused the stale write before appending it. Rehydrate
+        // immediately so the confirmed answer from the winning writer is the
+        // state shown after this rejected autosave.
+        await this.refresh();
+      }
       throw err;
     }
   }
@@ -307,11 +313,23 @@ export class DrdHttpSessionRuntime {
     justification?: string;
     draft?: boolean;
   }): Promise<void> {
+    const expectedVersion = this.state.session?.version;
     const idemKey = `answer:${input.questionId}:${input.draft ? 'draft' : 'confirmed'}:${newIdempotencyKey()}`;
     const type: MethodEventType = input.draft ? 'ANSWER_DRAFTED' : 'ANSWER_CONFIRMED';
     const payload = { questionId: input.questionId, answerState: input.answerState, text: input.text, justification: input.justification };
     await this.runWrite('event', idemKey, { type, unitId: input.unitId, level: input.level, payload }, () =>
-      appendEvent(this.sessionId, { type, unitId: input.unitId, level: input.level, actorKind: 'human', payload }, idemKey).then(() => undefined)
+      appendEvent(
+        this.sessionId,
+        {
+          type,
+          unitId: input.unitId,
+          level: input.level,
+          actorKind: 'human',
+          expectedVersion,
+          payload,
+        },
+        idemKey
+      ).then(() => undefined)
     );
   }
 

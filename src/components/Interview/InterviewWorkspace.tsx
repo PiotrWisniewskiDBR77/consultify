@@ -265,6 +265,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
+  const questionsRef = useRef<InterviewQuestion[]>([]);
+  questionsRef.current = questions;
+  const questionWriteChainsRef = useRef<Map<string, Promise<void>>>(new Map());
+  const saveCurrentQuestionRef = useRef<(() => Promise<boolean>) | null>(null);
   const [notes, setNotes] = useState<InterviewNote[]>([]);
   const [evidence, setEvidence] = useState<InterviewEvidence[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>({});
@@ -305,6 +309,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedAnswer, setHasUnsavedAnswer] = useState(false);
   const [isSubmittingSession, setIsSubmittingSession] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -1196,19 +1201,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const handleUpdateQuestion = useCallback(
     async (questionId: string, updates: Partial<InterviewQuestion>) => {
       if (!session || isQuestionReadOnly(questionId)) return;
-      setIsSaving(true);
-
-      try {
+      const previousWrite = questionWriteChainsRef.current.get(questionId) ?? Promise.resolve();
+      const write = previousWrite.catch(() => undefined).then(async () => {
+        setIsSaving(true);
+        try {
         // INT-DELIVERY-OPS-001: answer writes are never last-write-wins. A
         // legacy/cached object without a token is refreshed before mutation;
         // if the server still cannot provide a token, fail locally instead of
         // sending an unguarded write that the backend correctly rejects (428).
-        let current = questions.find((q) => q.id === questionId);
+        let current = questionsRef.current.find((q) => q.id === questionId);
         if (!current?.updatedAt) {
           const refreshed = (await Api.get(
             `/interview/sessions/${session.id}/questions`
           )) as InterviewQuestion[];
           current = refreshed.find((q) => q.id === questionId);
+          questionsRef.current = refreshed;
           setQuestions(refreshed);
         }
         if (!current?.updatedAt) {
@@ -1216,9 +1223,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         }
         const payload = { ...updates, expectedUpdatedAt: current.updatedAt };
         const updated = await Api.patch(`/interview/questions/${questionId}`, payload);
-        const nextQuestions = questions.map((q) =>
+        const nextQuestions = questionsRef.current.map((q) =>
           q.id === questionId ? { ...q, ...updated } : q
         );
+        questionsRef.current = nextQuestions;
         setQuestions(nextQuestions);
         const answeredQuestions = nextQuestions.filter((q) => q.status === 'answered').length;
         setSession((prev) => {
@@ -1231,7 +1239,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           onSessionChange?.(nextSession);
           return nextSession;
         });
-      } catch (error: any) {
+        } catch (error: any) {
         console.error('[InterviewWorkspace] Failed to update question:', error);
         if (error?.status === 409) {
           toast.error(
@@ -1248,12 +1256,26 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         } else {
           toast.error(t('interview.workspace.failedToSave'));
         }
+          throw error;
+        } finally {
+          setIsSaving(false);
+        }
+      });
+      questionWriteChainsRef.current.set(questionId, write);
+      try {
+        await write;
       } finally {
-        setIsSaving(false);
+        if (questionWriteChainsRef.current.get(questionId) === write) {
+          questionWriteChainsRef.current.delete(questionId);
+        }
       }
     },
-    [session, isQuestionReadOnly, questions, isPolish, onSessionChange]
+    [session, isQuestionReadOnly, isPolish, onSessionChange]
   );
+
+  const registerSaveCurrentQuestion = useCallback((save: (() => Promise<boolean>) | null) => {
+    saveCurrentQuestionRef.current = save;
+  }, []);
 
   const handleAnswerDecision = useCallback(
     async (
@@ -1632,6 +1654,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     setIsSaving(true);
 
     try {
+      const answerSaved = await (saveCurrentQuestionRef.current?.() ?? Promise.resolve(true));
+      if (!answerSaved) return;
       await Api.patch(`/interview/sessions/${session.id}`, { name: sessionName });
       toast.success(t('interview.workspace.saved'));
       // Keep local session state in sync (used for isDirty and title)
@@ -2300,7 +2324,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // MAIN RENDER
   // ==========================================
 
-  const isDirty = Boolean(session) && sessionName !== (session?.name || '');
+  const isDirty =
+    Boolean(session) && (sessionName !== (session?.name || '') || hasUnsavedAnswer);
 
   const handleNextMissing = () => {
     const first = questions.find((q) => q.status !== 'answered');
@@ -3069,6 +3094,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               }
             >
               <InterviewSingleQuestionRuntime
+                sessionId={session?.id}
+                registerSaveCurrentQuestion={registerSaveCurrentQuestion}
+                onDraftDirtyChange={setHasUnsavedAnswer}
                 questions={questions}
                 evidence={evidence}
                 activeCategory={activeCategory || 'strategy'}
@@ -3944,6 +3972,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime
+                sessionId={session?.id}
+                registerSaveCurrentQuestion={registerSaveCurrentQuestion}
+                onDraftDirtyChange={setHasUnsavedAnswer}
                 questions={questions}
                 evidence={evidence}
                 activeCategory={activeCategory || questions[0]?.category || 'strategy'}
