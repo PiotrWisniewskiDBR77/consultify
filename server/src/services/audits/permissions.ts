@@ -232,6 +232,14 @@ const ORG_MEMBER_CAPABILITIES: AuditCapability[] = ['pack.read', 'program.create
 /**
  * Czynności, których nie odblokuje żadna rola platformowa — wymagają jawnego
  * przypisania roli audytowej w konkretnym programie.
+ *
+ * WYJĄTEK (U-31, DEC-572): `report.draft` jest tu celowo. Właściciel platformy
+ * (`owner`/`admin`/`superadmin`) musi móc WYTWORZYĆ szkic raportu audytu bez
+ * wpisu w `audit_program_members` — inaczej moduł zamyka się w błędnym kole
+ * (rolę audytową nadaje się w programie, więc bez programu nikt jej nie ma).
+ * Kosztowne czynności raportowe — `report.approve`, `report.publish` — oraz
+ * `evidence.*` i `finding.*` NIE są tu i nadal wymagają roli audytowej, więc
+ * segregacja obowiązków (autor ≠ zatwierdzający) zostaje zachowana.
  */
 const PLATFORM_ADMIN_CAPABILITIES: AuditCapability[] = [
   'pack.read',
@@ -242,6 +250,7 @@ const PLATFORM_ADMIN_CAPABILITIES: AuditCapability[] = [
   'program.update',
   'program.delete',
   'program.manage_members',
+  'report.draft',
 ];
 
 // ---------------------------------------------------------------------------

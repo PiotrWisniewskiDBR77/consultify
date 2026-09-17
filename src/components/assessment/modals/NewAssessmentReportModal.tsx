@@ -12,6 +12,12 @@ type AssessmentOption = {
   name: string;
   type?: string;
   status?: string;
+  /**
+   * U-25 (DEC-572): id legacy bliźniaka `assessments` = `sourceId` dla
+   * `/report-builder`. `null` = sesja Method Core bez bliźniaka (brak źródła
+   * raportu); `undefined` = lista legacy, gdzie `id` już jest `assessments.id`.
+   */
+  reportSourceId?: string | null;
 };
 
 type ReportTemplate = {
@@ -70,13 +76,23 @@ export function NewAssessmentReportModal(props: {
     [assessments, assessmentId]
   );
 
+  // U-25 (DEC-572): `sourceId` dla `/report-builder` to id legacy bliźniaka
+  // `assessments`, NIE `method_sessions.id`. `reportSourceId === null` = sesja
+  // Method Core bez bliźniaka → brak źródła (modal pokaże „freeze it first");
+  // `undefined` = lista legacy, gdzie `id` już jest `assessments.id`.
+  const selectedSourceId = useMemo(() => {
+    if (!selectedAssessment) return null;
+    if (selectedAssessment.reportSourceId === null) return null;
+    return selectedAssessment.reportSourceId ?? selectedAssessment.id ?? null;
+  }, [selectedAssessment]);
+
   // Only approved assessments can have reports created from them (backend requirement)
   const approvedAssessments = useMemo(
     () => assessments.filter((a) => a.status?.toUpperCase() === 'APPROVED'),
     [assessments]
   );
 
-  const canCreate = Boolean(assessmentId && template?.id && !busy);
+  const canCreate = Boolean(assessmentId && template?.id && selectedSourceId && !busy);
 
   if (!isOpen) return null;
 
@@ -145,6 +161,17 @@ export function NewAssessmentReportModal(props: {
                 )}
               </p>
             )}
+            {selectedAssessment && !selectedSourceId && (
+              <p
+                data-testid="new-assessment-report-no-source"
+                className="mt-2 text-xs text-amber-600 dark:text-amber-400"
+              >
+                {t(
+                  `${NS}.noReportSource`,
+                  'This session has no report source yet — freeze it first'
+                )}
+              </p>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/40 p-4">
@@ -196,6 +223,18 @@ export function NewAssessmentReportModal(props: {
               disabled={!canCreate}
               onClick={async () => {
                 if (!assessmentId || !template?.id) return;
+                if (!selectedSourceId) {
+                  // U-25 (DEC-572): sesja Method Core bez legacy bliźniaka nie ma
+                  // źródła raportu. Czytelny komunikat zamiast backendowego
+                  // „Assessment not found" (które myliło, bo sesja ISTNIEJE).
+                  toast.error(
+                    t(
+                      `${NS}.noReportSource`,
+                      'This session has no report source yet — freeze it first'
+                    )
+                  );
+                  return;
+                }
                 setBusy(true);
                 const toastId = toast.loading(t(`${NS}.toast.creatingReport`, 'Creating report…'));
                 try {
@@ -206,7 +245,7 @@ export function NewAssessmentReportModal(props: {
                     : t(`${NS}.reportTitleFallback`, 'Report');
                   const created: any = await Api.post('/report-builder', {
                     sourceType: 'ASSESSMENT',
-                    sourceId: assessmentId,
+                    sourceId: selectedSourceId,
                     title,
                     description: '',
                     templateId: template.id,

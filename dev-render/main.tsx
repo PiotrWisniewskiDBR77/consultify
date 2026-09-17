@@ -74,6 +74,7 @@ const PrezentacjeTemplateStatesScreen = React.lazy(
 const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
+const Rg1ReportSourceModalScreen = React.lazy(() => import('./screens/rg1-report-source-modal'));
 // GRAFIKA (2026-09-01, zadanie 3 — audyt rodziny): plik ekranu istniał i miał
 // ocenę w docs/program/grafika/status.json (materials-registry, ocena B, z
 // realną listą "naprawione"), ale main.tsx nigdy go nie importował ani nie
@@ -1218,6 +1219,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'REPORT BUILDER — „Użyj wzorca" z Biblioteki (report_template, R1 2026-07-26): sukces (modal, pole zablokowane) + stany blokujące. ?variant=success|orphaned|deprecated|forbidden',
     render: () => <ReportBuilderLibraryTemplateScreen />,
+  },
+  'rg1-report-source-modal': {
+    label:
+      'RG-1 / U-25 (DEC-572) — REALNY NewAssessmentReportModal po naprawie reportSourceId: sesja Z bliźniakiem (Create draft aktywny) vs BEZ bliźniaka (komunikat „freeze it first", przycisk zablokowany). ?variant=twin|nosource',
+    render: () => <Rg1ReportSourceModalScreen />,
   },
   'materials-registry': {
     label:

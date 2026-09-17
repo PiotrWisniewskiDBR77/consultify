@@ -235,6 +235,15 @@ interface AssessmentFromAPI {
   confidenceAvg?: number;
   projectId?: string | null;
   project_id?: string | null;
+  /**
+   * U-25 (DEC-572): identyfikator ŹRÓDŁA raportu = id legacy bliźniaka
+   * `assessments`, którego `/report-builder` oczekuje jako `sourceId`. Dla
+   * wierszy Method Core to id bliźniaka albo `null`, gdy sesja nie ma bliźniaka
+   * (wtedy modal pokazuje czytelny komunikat zamiast „Assessment not found").
+   * Dla wierszy legacy pozostaje `undefined` — modal używa wtedy `id`, które
+   * i tak jest już `assessments.id`.
+   */
+  reportSourceId?: string | null;
 }
 
 interface ReportBuilderReportFromAPI {
@@ -347,6 +356,10 @@ function methodSessionToAssessment(
     organizationId: session.organizationId,
     createdBy: session.ownerUserId,
     source: 'method-core',
+    // U-25 (DEC-572): źródło raportu = id legacy bliźniaka. Brak bliźniaka →
+    // null, co modal rozpoznaje i pokazuje „freeze it first" zamiast wysyłać
+    // `session.id` do `/report-builder` (który zna tylko `assessments.id`).
+    reportSourceId: typeof twin?.id === 'string' && twin.id ? twin.id : null,
   };
 }
 
@@ -3086,6 +3099,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           name: a.name,
           type: a.type,
           status: a.status,
+          reportSourceId: a.reportSourceId,
         }))}
         onCreated={(reportId) => navigate(`/reports/builder/${reportId}`)}
       />

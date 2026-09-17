@@ -35,6 +35,7 @@
 import React from 'react';
 
 import { AuditReportDocumentView } from '../../src/components/Audit/method/AuditReportDocumentView';
+import i18n from '../../src/i18n';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { DRDAuditReportView } from '../../src/views/DRDAuditReportView';
@@ -45,6 +46,9 @@ import { seedRealisticSession } from '../mocks/seedStore';
 import AudytyPiecPowierzchniScreen from './audyty-piec-powierzchni';
 
 seedRealisticSession();
+// Zrzuty dowodowe RG-1 (DEC-572) muszą być kanonicznie EN (DEC-461); bez tego
+// i18next bierze navigator/localStorage i hub renderuje się po polsku.
+void i18n.changeLanguage('en');
 try {
   window.localStorage.setItem('ff.drdReport', '1');
 } catch {
