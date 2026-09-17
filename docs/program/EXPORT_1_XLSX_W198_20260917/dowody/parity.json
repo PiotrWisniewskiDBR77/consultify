@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "sheetCount": true,
+    "sheetNames": true,
+    "headers": true,
+    "formats": true,
+    "dataFormulas": true,
+    "totalFormulas": true,
+    "templateFieldMap": true,
+    "freeze": true,
+    "portableFont": true,
+    "coBranding": true,
+    "noLegacyCrimson": true,
+    "conditionalFormatting": true,
+    "validTrendRules": true,
+    "libreOfficeDxf": true,
+    "libreOfficeTrendRedPixels": true,
+    "libreOfficeTrendGreenPixels": true
+  },
+  "render": {
+    "redPixels": 6798,
+    "greenPixels": 6756
+  }
+}
