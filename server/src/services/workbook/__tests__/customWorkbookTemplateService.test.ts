@@ -28,9 +28,9 @@ describe('customWorkbookTemplateService', () => {
     const [sql, params] = queryAllMock.mock.calls[0];
     expect(sql).toContain('organization_id = ?');
     expect(sql).toContain('created_by IS NULL');
-    expect(sql).toContain("visibility = 'private' AND created_by = ?");
+    expect(sql).toContain('COALESCE(owner_user_id, created_by) = ?');
     expect(sql).toContain("status <> 'deprecated'");
-    expect(params).toEqual(['org-1', 'user-1']);
+    expect(params).toEqual(['org-1', 'user-1', 'org-1', 'user-1', 'org-1', 'user-1']);
   });
 
   it('converts the legacy TemplateBuilder columns snapshot, including formulas', () => {
@@ -101,6 +101,41 @@ describe('customWorkbookTemplateService', () => {
     expect(consulting.sheets[0].columns[1].validation?.values).toEqual(['Open', 'Closed']);
   });
 
+  it('converts the accepted SHEET-BASE visual snapshot into two buildable workbook sheets', () => {
+    const schema = convertCustomTemplateSnapshot(
+      {
+        family: 'SHEET-BASE',
+        sheets: [
+          {
+            name: 'Supplier scorecard',
+            headers: ['Supplier', 'Receipts', 'NC rate'],
+            formulas: { C7: 'IF(B7=0,"",1/B7)' },
+            dimensions: { columns: { A: 30, B: 12, C: 13 } },
+            autoFilter: 'A6:C12',
+          },
+          {
+            name: 'Template fields',
+            rows: [
+              ['Cell / range', 'What it is'],
+              ['A1', 'Template field'],
+            ],
+          },
+        ],
+      },
+      'Supplier scorecard workbook',
+      'System base'
+    );
+
+    expect(schema.sheets).toHaveLength(2);
+    expect(schema.sheets[0].columns.map((column) => column.header)).toEqual([
+      'Supplier',
+      'Receipts',
+      'NC rate',
+    ]);
+    expect(schema.sheets[0].rows[5].cells.C.formula).toBe('IF(B7=0,"",1/B7)');
+    expect(schema.sheets[1].rows[0].cells.A.value).toBe('A1');
+  });
+
   it('resolves a visible system, org or owned private template', async () => {
     queryOneMock.mockResolvedValue({
       id: 'tpl-1',
@@ -112,8 +147,9 @@ describe('customWorkbookTemplateService', () => {
     expect(result?.id).toBe('tpl-1');
     const [sql, params] = queryOneMock.mock.calls[0];
     expect(sql).toContain('organization_id = ?');
+    expect(sql).toContain("organization_id = '__system__'");
     expect(sql).toContain('created_by IS NULL');
-    expect(sql).toContain("visibility = 'private' AND created_by = ?");
-    expect(params).toEqual(['tpl-1', 'org-1', 'user-1']);
+    expect(sql).toContain('COALESCE(owner_user_id, created_by) = ?');
+    expect(params).toEqual(['tpl-1', 'org-1', 'user-1', 'org-1', 'user-1', 'org-1', 'user-1']);
   });
 });

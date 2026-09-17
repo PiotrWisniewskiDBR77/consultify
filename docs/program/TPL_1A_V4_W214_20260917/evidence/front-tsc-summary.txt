@@ -1,0 +1,4 @@
+front tsc exit code: 2
+error diagnostics: 167
+diagnostics in touched package files: 0
+server tsc exit code: 0

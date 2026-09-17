@@ -1,0 +1,5 @@
+
+> consultinity@0.0.1 check:jezyk:staged
+> node scripts/i18n/pomiar-jezyka.mjs --baseline docs/program/JEZYK_EN_PL_20260908/baseline.json --staged
+
+BRAMKA JĘZYKOWA (szybki tryb — tylko dotknięte pliki): OK.

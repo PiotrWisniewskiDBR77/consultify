@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v4-w214-20260917
+
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v4-w214-20260917
+
+ ✓ src/components/ReportsAndPresentations/__tests__/templateDuplicateService.test.ts > duplicateTemplateFromLibrary > creates DOC, DECK and SHEET copies through three real runtime endpoints 155ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateDuplicateService.test.ts > duplicateTemplateFromLibrary > fails closed before a write for an orphaned template 17ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateDuplicateService.test.ts (2 tests) 177ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > lists system, organization and owned private templates without cross-tenant access 102ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > converts the legacy TemplateBuilder columns snapshot, including formulas 11ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > rejects an incompatible snapshot with actionable validation detail 10ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > converts seeded fields and consulting tables fields into workbook columns 11ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > resolves a visible system, org or owned private template 38ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts (5 tests) 205ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > system SHEET-BASE is read-only, explains unavailable Use, and remains duplicable 147ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > organization copy exposes Build / Edit as a working action 29ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx (2 tests) 199ms
+stdout | tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+stdout | tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ✓ tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx > TemplatesTabContent deep-link selection > selects matching template id from initialArtifactId deep link 175ms
+ ✓ tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx > TemplatesTabContent deep-link selection > keeps the 912px preview lane readable and explains disabled SHEET Use in both preview actions 26ms
+ ✓ tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx (2 tests) 210ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  13:45:27
+   Duration  12.52s (transform 9.33s, setup 4.53s, import 11.35s, tests 791ms, environment 10.42s)
+
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  13:45:27
+   Duration  12.53s (transform 9.33s, setup 4.53s, import 11.35s, tests 791ms, environment 10.42s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v4-w214-20260917/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v4-w214-20260917/junit.xml
