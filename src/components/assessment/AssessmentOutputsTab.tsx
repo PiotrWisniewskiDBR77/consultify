@@ -37,7 +37,7 @@
  * mirroring the existing `TableTabStrip` pattern used elsewhere in this repo
  * for in-surface tab strips.
  */
-import { FileText, GitBranch, Lightbulb, Package, Presentation } from 'lucide-react';
+import { ArrowRight, FileText, GitBranch, Lightbulb, Package, Presentation } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -99,6 +99,21 @@ function statusLabel(isPolish: boolean, isSuperseded: boolean | null): string {
   if (isSuperseded === false) return isPolish ? 'Aktualny' : 'Current';
   if (isSuperseded === true) return isPolish ? 'Zastąpiony' : 'Superseded';
   return isPolish ? 'Status nieznany' : 'Status unknown';
+}
+
+function frameworkPathForMethodPack(methodPackId: unknown): string {
+  const value = String(methodPackId || '').toLowerCase();
+  if (value.includes('siri')) return 'siri';
+  if (value.includes('adma')) return 'adma';
+  if (value.includes('cmmi')) return 'cmmi';
+  if (value.includes('lean')) return 'lean';
+  return 'drd';
+}
+
+function sessionEditorPath(row: Pick<OutputRow, 'sessionId' | 'methodPackId'>): string | null {
+  const sessionId = typeof row.sessionId === 'string' && row.sessionId.trim() ? row.sessionId.trim() : '';
+  if (!sessionId) return null;
+  return `/assessment/${frameworkPathForMethodPack(row.methodPackId)}/${encodeURIComponent(sessionId)}`;
 }
 
 /** Oceny z magazynu ZASTANEGO (`GET /api/assessments` → tabela `assessments`),
@@ -517,6 +532,15 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
           },
         };
       }
+      const sessionPath = sessionEditorPath(row as OutputRow);
+      if (sessionPath) {
+        primary.push({
+          id: 'open-session',
+          label: t('assessment.outputs.rowMenu.openSession', 'Open session'),
+          icon: ArrowRight,
+          onClick: () => navigate(sessionPath),
+        });
+      }
       if (sessionId) {
         primary.push({
           id: 'view-lineage',
@@ -601,6 +625,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
             defaultSort={{ columnId: 'frozenAt', direction: 'desc' }}
             selectedRowId={selectedOutputId}
             onRowClick={(row) => {
+              const sessionPath = sessionEditorPath(row as OutputRow);
+              if (sessionPath) {
+                navigate(sessionPath);
+                return;
+              }
               jedenPanel.otworz();
               setSelectedOutputId(String(row.id));
             }}
@@ -741,6 +770,16 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                           navigate(`/conclusions?id=${encodeURIComponent(idWniosku)}`),
                       },
                     ];
+                  }
+                  const sessionPath = sessionEditorPath(selectedRow);
+                  if (sessionPath) {
+                    informational.push({
+                      id: 'open-session',
+                      variant: 'neutral',
+                      label: t('assessment.outputs.rowMenu.openSession', 'Open session'),
+                      icon: ArrowRight,
+                      onClick: () => navigate(sessionPath),
+                    });
                   }
                   if (selectedRow.sessionId) {
                     informational.push({

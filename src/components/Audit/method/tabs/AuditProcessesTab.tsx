@@ -379,12 +379,12 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         {
           id: 'scope',
           label: isPolish ? 'Zakres' : 'Scope',
-          value: detail.scopeText || (isPolish ? '— nie podano —' : '— not provided —'),
+          value: detail.scopeText || (isPolish ? 'Brak opisu zakresu.' : 'No scope description yet.'),
         },
         {
           id: 'objective',
           label: isPolish ? 'Cele' : 'Objective',
-          value: detail.objective || (isPolish ? '— nie podano —' : '— not provided —'),
+          value: detail.objective || (isPolish ? 'Brak opisu celu.' : 'No objective description yet.'),
         },
         {
           id: 'coverage',

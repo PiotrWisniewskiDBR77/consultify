@@ -392,12 +392,12 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'purpose',
           label: isPolish ? 'Cel' : 'Purpose',
-          value: detail.purpose || (isPolish ? '— nie podano —' : '— not provided —'),
+          value: detail.purpose || (isPolish ? 'Brak opisu celu pakietu.' : 'No pack purpose description yet.'),
         },
         {
           id: 'scope',
           label: isPolish ? 'Zakres' : 'Scope',
-          value: detail.scope || (isPolish ? '— nie podano —' : '— not provided —'),
+          value: detail.scope || (isPolish ? 'Brak opisu zakresu pakietu.' : 'No pack scope description yet.'),
         },
         {
           id: 'source',
