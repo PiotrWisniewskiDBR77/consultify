@@ -33,9 +33,18 @@ Branch: `codex/dec583-v2-w200-20260917`.
 - Server TSC: exit 0; TypeScript errors 0, node_modules 0, changed-file hits 0.
 - Front TSC: exit 2; TypeScript errors 169, node_modules 5, changed-file hits 0.
 
+## W200 stage-2 RealPG measurement
+
+Local database: `consultify_dec583_w200` on local-only Postgres `127.0.0.1:6454` in container `cx-codex-dec583-realpg`. The database was created only for this measurement and populated by the existing repository migration runner on a fresh schema.
+
+Commands and results:
+
+- `NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...@127.0.0.1:6454/consultify_dec583_w200 npm exec vitest -- run tests/security/initiative-object-ownership.mounted.pg.test.ts tests/security/task-object-ownership.mounted.pg.test.ts tests/security/decision-object-ownership.mounted.pg.test.ts --retry=0 --no-file-parallelism` — PASS, 3 files / 29 tests.
+- `NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...@127.0.0.1:6454/consultify_dec583_w200 npm exec vitest -- run --config vitest.acceptance.config.ts tests/acceptance/admin-members-active.mounted.pg.test.ts --retry=0 --no-file-parallelism` — PASS, 1 file / 3 tests.
+- Tenant-guard mutation: temporarily changed `OrganizationController.getMembers` from `getActiveMembers(orgId)` to `getMembers(orgId)`, then reran `admin-members-active.mounted.pg.test.ts`; expected RED observed, 1 file failed, 2 failed / 1 passed. Failures proved revoked membership leaked into the body and a revoked JWT-admin received 200 instead of 403. The mutation was reverted immediately.
+
 ## Limits
 
-- RealPG `RUN_DB_TESTS=1` was not run in this package before this receipt; this remains the CTO W200 stage-2 measurement item.
 - No screenshots per current channel rule.
 - No staging/demo/Railway/deploy/protected-ref push.
-- No migrations.
+- No package migration was authored; only the existing migration runner was executed against the local disposable test database above.
