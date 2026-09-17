@@ -103,10 +103,19 @@ describe('UserController', () => {
   });
 
   describe('getUserById', () => {
-    it('should return user details', async () => {
+    it('returns a minimized person payload to a member', async () => {
       mockReq.params.id = 'u1';
-      const mockUser = { id: 'u1', email: 'test@test.com' };
-      (queryHelpers.queryOne as any).mockResolvedValue(mockUser);
+      mockReq.user.role = 'MEMBER';
+      (queryHelpers.queryOne as any).mockResolvedValue({
+        id: 'u1',
+        email: 'test@test.com',
+        first_name: 'Test',
+        last_name: 'User',
+        role: 'OWNER',
+        password: 'secret-hash',
+        mfa_secret: 'secret',
+        mfa_backup_codes: ['backup'],
+      });
 
       await UserController.getUserById(mockReq, mockRes, vi.fn());
 
@@ -114,7 +123,55 @@ describe('UserController', () => {
         'u1',
         'org-1',
       ]);
-      expect(jsonFn).toHaveBeenCalledWith(mockUser);
+      const payload = jsonFn.mock.calls[0][0];
+      expect(payload).toEqual({
+        id: 'u1',
+        userId: 'u1',
+        displayName: 'Test User',
+        name: 'Test User',
+        avatar: null,
+        avatarUrl: null,
+      });
+      expect(payload).not.toHaveProperty('email');
+      expect(payload).not.toHaveProperty('password');
+      expect(payload).not.toHaveProperty('mfa_secret');
+      expect(payload).not.toHaveProperty('mfa_backup_codes');
+    });
+
+    it('returns private person fields to an owner without credentials', async () => {
+      mockReq.params.id = 'u1';
+      mockReq.user.role = 'OWNER';
+      (queryHelpers.queryOne as any).mockResolvedValue({
+        id: 'u1',
+        email: 'test@test.com',
+        first_name: 'Test',
+        last_name: 'User',
+        role: 'OWNER',
+        avatar_url: null,
+        status: 'active',
+        created_at: '2026-09-17T00:00:00.000Z',
+        organization_id: 'org-1',
+        password: 'secret-hash',
+        mfa_secret: 'secret',
+        mfa_backup_codes: ['backup'],
+      });
+
+      await UserController.getUserById(mockReq, mockRes, vi.fn());
+
+      const payload = jsonFn.mock.calls[0][0];
+      expect(payload).toEqual(
+        expect.objectContaining({
+          id: 'u1',
+          email: 'test@test.com',
+          firstName: 'Test',
+          lastName: 'User',
+          displayName: 'Test User',
+          organizationId: 'org-1',
+        })
+      );
+      expect(payload).not.toHaveProperty('password');
+      expect(payload).not.toHaveProperty('mfa_secret');
+      expect(payload).not.toHaveProperty('mfa_backup_codes');
     });
 
     it('should return 404 if user not found', async () => {
@@ -323,10 +380,11 @@ describe('UserController', () => {
 
       await UserController.updateUser(mockReq, mockRes, vi.fn());
 
-      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE id = ?'),
-        ['Jane', expect.any(String), 'user-1']
-      );
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(expect.stringContaining('WHERE id = ?'), [
+        'Jane',
+        expect.any(String),
+        'user-1',
+      ]);
       expect(String((queryHelpers.queryRun as any).mock.calls[0][0])).not.toContain(
         'organization_id = ?'
       );
