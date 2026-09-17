@@ -1129,7 +1129,6 @@
     "src/components/Reports/EnterpriseReportStyles.css": 54,
     "src/components/Reports/ExecutiveReport.tsx": 60,
     "src/components/Reports/FinancialImpact.tsx": 63,
-    "src/components/Reports/GanttChart.tsx": 24,
     "src/components/Reports/GeneratedReportView.tsx": 66,
     "src/components/Reports/HeatmapMatrix.tsx": 66,
     "src/components/Reports/ImportReportModal.tsx": 62,

@@ -9,7 +9,6 @@ export { TableOfContents } from './TableOfContents';
 
 // New Enterprise Components
 export { FinancialImpact } from './FinancialImpact';
-export { GanttChart } from './GanttChart';
 export { HeatmapMatrix } from './HeatmapMatrix';
 export { IndustryBenchmark } from './IndustryBenchmark';
 export { KeyTakeaways, QuickStats } from './KeyTakeaways';

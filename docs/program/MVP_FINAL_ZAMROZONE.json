@@ -2431,7 +2431,6 @@
     "src/components/Reports/EmbeddedMatrix.tsx",
     "src/components/Reports/ExecutiveReport.tsx",
     "src/components/Reports/FinancialImpact.tsx",
-    "src/components/Reports/GanttChart.tsx",
     "src/components/Reports/GeneratedReportView.tsx",
     "src/components/Reports/HeatmapMatrix.tsx",
     "src/components/Reports/ImportReportModal.tsx",
