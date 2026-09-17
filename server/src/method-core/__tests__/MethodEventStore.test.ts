@@ -101,4 +101,55 @@ describe('MethodEventStore', () => {
     const events = await store.listBySession(organizationId, sessionId);
     expect(events.map((e) => e.id)).toEqual([e2.id, e1.id]);
   });
+
+  it('CAS append uses only the explicitly pinned client and advances the session before inserting', async () => {
+    const storedRow = {
+      id: 'event-cas-1', organization_id: organizationId, session_id: sessionId,
+      type: 'ANSWER_CONFIRMED', unit_id: '1A', level: 1, actor_kind: 'human',
+      actor_user_id: 'user-1', method_pack_version: '1.0.0',
+      occurred_at: '2026-09-17T00:00:00.000Z', supersedes: null,
+      idempotency_key: 'cas-1', payload_json: { questionId: 'q1', answerState: 'confirmed' },
+    };
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [{ version: 2 }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [storedRow], rowCount: 1 });
+    const store = new MethodEventStore();
+
+    const result = await store.appendWithExpectedSessionVersion(
+      { query },
+      baseEvent({ type: 'ANSWER_CONFIRMED', idempotencyKey: 'cas-1' }),
+      1
+    );
+
+    expect(result).toMatchObject({ ok: true, idempotentReplay: false });
+    expect(query.mock.calls.map(([sql]) => String(sql).trim().split(/\s+/).slice(0, 2).join(' ')))
+      .toEqual(['SELECT *', 'UPDATE method_sessions', 'INSERT INTO', 'SELECT *']);
+    expect(testDb.getRows('method_events')).toHaveLength(0);
+  });
+
+  it('a concurrent same-key replay is recovered after losing CAS instead of returning a conflict', async () => {
+    const storedRow = {
+      id: 'event-replay-1', organization_id: organizationId, session_id: sessionId,
+      type: 'ANSWER_CONFIRMED', unit_id: '1A', level: 1, actor_kind: 'human',
+      actor_user_id: 'user-1', method_pack_version: '1.0.0',
+      occurred_at: '2026-09-17T00:00:00.000Z', supersedes: null,
+      idempotency_key: 'same-key', payload_json: { questionId: 'q1', answerState: 'confirmed' },
+    };
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [storedRow], rowCount: 1 });
+    const store = new MethodEventStore();
+
+    const result = await store.appendWithExpectedSessionVersion(
+      { query },
+      baseEvent({ type: 'ANSWER_CONFIRMED', idempotencyKey: 'same-key' }),
+      1
+    );
+
+    expect(result).toMatchObject({ ok: true, idempotentReplay: true });
+    expect(query).toHaveBeenCalledTimes(3);
+  });
 });

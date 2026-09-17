@@ -46,6 +46,7 @@ import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import {
   DRD_HELP_JUSTIFICATION_MARKER,
+  DrdLevelDecisionSaveError,
   DrdLevelInterviewWorkspace,
   drdLevelDecisions,
   pickDrdEvidenceOwnerId,
@@ -542,6 +543,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    */
   const chosenAnswerStateRef = useRef<Record<string, InterviewFocusQuestion['answerState']>>({});
   const eventsRef = useRef<readonly MethodEvent[]>([]);
+  const answerWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const savedHelpDecisionRef = useRef<Record<string, string>>({});
+  const queueAnswerWrite = useCallback((write: () => Promise<void>) => {
+    const queued = answerWriteQueueRef.current.catch(() => undefined).then(write);
+    answerWriteQueueRef.current = queued.catch(() => undefined);
+    return queued;
+  }, []);
   /** Panel „Analizuj" z „Pracuj z AI" — ocena gotowości sesji, zero zapisu. */
   const [analizaOtwarta, setAnalizaOtwarta] = useState(false);
   // True for the duration of an explicit reconciliation call (refresh() from
@@ -783,6 +791,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     errorMessage: saveErrorMessage,
     markDirty,
     saveNow,
+    cancelPending,
     acknowledgeFailure,
   } = useMethodWorkspaceSave({
     isOnline,
@@ -813,14 +822,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         questionAnswerState(eventsRef.current, questionId).state ??
         'partial';
       try {
-        await runtime.recordAnswer({
-          unitId: activeArea.id,
-          level: focusLevelFallback,
-          questionId,
-          answerState: currentState,
-          text,
-          draft: true,
-        });
+        await queueAnswerWrite(() =>
+          runtime.recordAnswer({
+            unitId: activeArea.id,
+            level: focusLevelFallback,
+            questionId,
+            answerState:
+              chosenAnswerStateRef.current[questionId] ?? currentState,
+            text,
+            draft: true,
+          })
+        );
         return { ok: true };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : 'Zapis nieudany.' };
@@ -860,16 +872,27 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       // P-P04: zapamiętaj wybór NATYCHMIAST, żeby autozapis szkicu (debounce
       // ze starego domknięcia) go nie cofnął, zanim zdarzenie wróci z serwera.
       chosenAnswerStateRef.current[questionId] = answerState;
-      await runtime.recordAnswer({
-        unitId: activeArea.id,
-        level: focusLevelFallback,
-        questionId,
-        answerState,
-        text: draftAnswerText[questionId],
-        justification,
-      });
+      cancelPending();
+      await queueAnswerWrite(() =>
+        runtime.recordAnswer({
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          questionId,
+          answerState,
+          text: draftAnswerText[questionId],
+          justification,
+        })
+      );
     },
-    [runtime, canWrite, activeArea.id, focusLevelFallback, draftAnswerText]
+    [
+      runtime,
+      canWrite,
+      activeArea.id,
+      focusLevelFallback,
+      draftAnswerText,
+      cancelPending,
+      queueAnswerWrite,
+    ]
   );
 
   const handleEvidenceDrop = useCallback(
@@ -1056,42 +1079,62 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       const questionId = focusQuestions[0]?.questionId;
       if (!questionId || !runtime || !canWrite || !state?.session) return;
 
-      if (decision === 'help') {
-        const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
-        const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
-        await Api.post('/tasks', {
-          title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
-            area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+      const answerState = decision === 'yes' ? 'confirmed' : decision === 'no' ? 'no' : 'dont_know';
+      const helpDecisionSignature = JSON.stringify({ answerState, text });
+      chosenAnswerStateRef.current[questionId] = answerState;
+      cancelPending();
+      if (
+        decision !== 'help' ||
+        savedHelpDecisionRef.current[questionId] !== helpDecisionSignature
+      ) {
+        await queueAnswerWrite(() =>
+          runtime.recordAnswer({
+            unitId: activeArea.id,
             level: focusLevelFallback,
-          }),
-          description: t(
-            'assessment.drd.levelInterview.helpTaskDescription',
-            'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
-            { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
-          ),
-          status: 'todo',
-          priority: 'medium',
-          projectId: state.session.projectId ?? null,
-          assigneeId: evidenceOwnerId,
-          source: 'assessment',
-          sourceType: 'method_session',
-          sourceId: state.session.id,
-          idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
-        });
+            questionId,
+            answerState,
+            text,
+            justification:
+              decision === 'help'
+                ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
+                : undefined,
+          })
+        );
+        if (decision === 'help') {
+          savedHelpDecisionRef.current[questionId] = helpDecisionSignature;
+        }
       }
 
-      const answerState = decision === 'yes' ? 'confirmed' : decision === 'no' ? 'no' : 'dont_know';
-      await runtime.recordAnswer({
-        unitId: activeArea.id,
-        level: focusLevelFallback,
-        questionId,
-        answerState,
-        text,
-        justification:
-          decision === 'help'
-            ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
-            : undefined,
-      });
+      if (decision === 'help') {
+        try {
+          const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
+          const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
+          await Api.post('/tasks', {
+            title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
+              area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+              level: focusLevelFallback,
+            }),
+            description: t(
+              'assessment.drd.levelInterview.helpTaskDescription',
+              'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
+              { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
+            ),
+            status: 'todo',
+            priority: 'medium',
+            projectId: state.session.projectId ?? null,
+            assigneeId: evidenceOwnerId,
+            source: 'assessment',
+            sourceType: 'method_session',
+            sourceId: state.session.id,
+            idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
+          });
+        } catch {
+          throw new DrdLevelDecisionSaveError(
+            `${t('common.saved')}. ${t('documents.taskCreateFailed')}`
+          );
+        }
+        delete savedHelpDecisionRef.current[questionId];
+      }
 
       if (decision === 'yes') {
         const nextLevel = activeArea.levels.find((item) => item.level === focusLevelFallback + 1);
@@ -1107,11 +1150,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     [
       activeArea,
       canWrite,
+      cancelPending,
       focusLevelFallback,
       focusQuestions,
       handleUnitNav,
       isPolish,
       runtime,
+      queueAnswerWrite,
       state?.session,
       t,
     ]

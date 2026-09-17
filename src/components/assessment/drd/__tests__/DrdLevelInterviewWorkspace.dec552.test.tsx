@@ -12,8 +12,15 @@ import {
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string, values?: Record<string, unknown>) =>
-      Object.entries(values ?? {}).reduce((text, [key, value]) => text.replace(`{{${key}}}`, String(value)), fallback),
+    t: (key: string, fallback?: string, values?: Record<string, unknown>) => {
+      const messages: Record<string, string> = {
+        'common.saveError': 'Save failed',
+      };
+      return Object.entries(values ?? {}).reduce(
+        (text, [name, value]) => text.replace(`{{${name}}}`, String(value)),
+        fallback ?? messages[key] ?? key
+      );
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -71,5 +78,20 @@ describe('DRD-2 DEC-552 level interview', () => {
 
     rerender(<DrdLevelInterviewWorkspace {...baseProps} events={[event(2, 'no')]} selectedLevel={2} />);
     expect(screen.getByRole('button', { name: /L3/ })).toBeDisabled();
+  });
+
+  it('shows a save error and keeps the decision selected when persistence fails', async () => {
+    const onSaveDecision = vi.fn(async () => {
+      throw new Error('write failed');
+    });
+    render(<DrdLevelInterviewWorkspace {...baseProps} onSaveDecision={onSaveDecision} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save & next level' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed');
+    expect(screen.getByRole('button', { name: 'Yes' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Save & next level' })).toBeEnabled();
+    expect(onSaveDecision).toHaveBeenCalledTimes(1);
   });
 });
