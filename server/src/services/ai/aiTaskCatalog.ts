@@ -98,6 +98,21 @@ const TASK_DEFINITIONS: AITaskDefinition[] = [
     description: 'Grounded chat over attached files and extracted chunks.',
   },
   {
+    purpose: 'chat_with_image',
+    kind: 'TEXT_LLM',
+    defaultTier: 'BUDGET',
+    useCase: 'chat',
+    businessOwner: 'AI Chat',
+    qualityProfile: 'balanced',
+    maxLatencyMs: 16000,
+    costProfile: 'balanced',
+    // Every fallback remains subject to this hard requirement in ModelRouter;
+    // unknown/text-only models fail closed instead of silently dropping pixels.
+    fallbackPurposes: ['chat_with_pdf'],
+    requirements: { vision: true },
+    description: 'Multimodal chat over one or more user-provided images.',
+  },
+  {
     purpose: 'document_extract',
     aliases: ['vision_extract'],
     kind: 'TEXT_LLM',
@@ -702,11 +717,18 @@ export function inferChatTaskPurpose(params: {
   const hasAttachmentIds =
     Array.isArray(params.attachmentDocIds) && params.attachmentDocIds.length > 0;
   const hasAttachments = attachments.length > 0 || hasAttachmentIds;
+  const hasImage = attachments.some((att) => {
+    const mime = String(att?.mimeType || '').toLowerCase();
+    const name = String(att?.name || '').toLowerCase();
+    return mime.startsWith('image/') || /\.(png|jpe?g|webp|gif)$/.test(name);
+  });
   const hasPdf = attachments.some((att) => {
     const mime = String(att?.mimeType || '').toLowerCase();
     const name = String(att?.name || '').toLowerCase();
     return mime === 'application/pdf' || name.endsWith('.pdf');
   });
+
+  if (hasImage) return 'chat_with_image';
 
   if (hasAttachments) {
     if (/(compare|difference|diff|versus|vs\\b|porown|różnic|roznic)/i.test(text)) {

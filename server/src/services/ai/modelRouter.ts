@@ -31,6 +31,7 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
   chat_complex: 'STANDARD',
   chat_with_pdf: 'PREMIUM',
   chat_with_files: 'STANDARD',
+  chat_with_image: 'BUDGET',
   document_extract: 'STANDARD',
   document_compare: 'REASONING',
   document_answer: 'PREMIUM',
@@ -779,7 +780,11 @@ export class ModelRouter {
     // Static fallback (OpenRouter-only)
     const staticCandidates = [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
     for (const staticPick of staticCandidates) {
-      if (!modelMeetsRequirements(String(staticPick || ''), requirements)) continue;
+      const capabilityId =
+        requirements?.vision === true
+          ? this.normalizeModelIdForCapabilities(String(staticPick || ''))
+          : String(staticPick || '');
+      if (!modelMeetsRequirements(capabilityId, requirements)) continue;
       const evaluated = await this.evaluateRoutingCandidate(
         {
           ...(await this.getProviderConfig(staticPick, tier)),

@@ -11,7 +11,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
-import { featureFlags } from '../config/FeatureFlags.js';
+import { featureFlags, isChatImagesEnabled } from '../config/FeatureFlags.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -29,6 +29,12 @@ import {
 import { buildCitationStatusPayload } from '../services/ai/citationAccessStatus.js';
 import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
+import {
+  ImageProcessingError,
+  processImageForVision,
+  toDataUrl,
+  validateImage,
+} from '../services/ai/imageService.js';
 import {
   numericConfidenceFromVerification,
   verifyRuntimeCitations,
@@ -427,6 +433,94 @@ const attachmentsUpload = multer({
   },
 });
 
+const MAX_CHAT_IMAGE_BYTES = 5 * 1024 * 1024;
+const CHAT_IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+
+const chatImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_CHAT_IMAGE_BYTES, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (CHAT_IMAGE_MIME_TYPES.has(String(file.mimetype || '').toLowerCase())) {
+      return cb(null, true);
+    }
+    return cb(new AppError('UNSUPPORTED_MEDIA_TYPE', 415, 'UNSUPPORTED_MEDIA_TYPE'));
+  },
+});
+
+function chatImageUploadMiddleware(req: AuthRequest, res: Response, next: (error?: unknown) => void) {
+  chatImageUpload.single('file')(req, res, (error: unknown) => {
+    if (!error) return next();
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        error: 'CHAT_IMAGE_TOO_LARGE',
+        code: 'CHAT_IMAGE_TOO_LARGE',
+        maxBytes: MAX_CHAT_IMAGE_BYTES,
+      });
+    }
+    if (error instanceof AppError) {
+      return res.status(error.statusCode || 415).json({
+        error: error.message,
+        code: error.code || 'UNSUPPORTED_MEDIA_TYPE',
+      });
+    }
+    return res.status(400).json({ error: 'CHAT_IMAGE_UPLOAD_FAILED', code: 'CHAT_IMAGE_UPLOAD_FAILED' });
+  });
+}
+
+type ChatImageInput = { name?: unknown; mimeType?: unknown; dataUrl?: unknown };
+
+export async function prepareChatImages(raw: unknown): Promise<
+  Array<{
+    name: string;
+    mimeType: string;
+    base64: string;
+    originalSize: number;
+    processedSize: number;
+    width: number;
+    height: number;
+  }>
+> {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  if (raw.length > 1) {
+    throw new AppError('CHAT_IMAGE_LIMIT', 400, 'CHAT_IMAGE_LIMIT');
+  }
+
+  const output = [];
+  for (const candidate of raw as ChatImageInput[]) {
+    const dataUrl = typeof candidate?.dataUrl === 'string' ? candidate.dataUrl : '';
+    const declaredMime = typeof candidate?.mimeType === 'string' ? candidate.mimeType.toLowerCase() : undefined;
+    const validation = validateImage(dataUrl, declaredMime);
+    if (!validation.valid || !validation.size) {
+      throw new AppError('UNSUPPORTED_MEDIA_TYPE', 415, 'UNSUPPORTED_MEDIA_TYPE');
+    }
+    if (validation.size > MAX_CHAT_IMAGE_BYTES) {
+      throw new AppError(
+        'CHAT_IMAGE_TOO_LARGE',
+        413,
+        'CHAT_IMAGE_TOO_LARGE',
+        { maxBytes: MAX_CHAT_IMAGE_BYTES }
+      );
+    }
+    let processed;
+    try {
+      processed = await processImageForVision(dataUrl, {
+        maxSize: MAX_CHAT_IMAGE_BYTES,
+        maxDimension: 2048,
+      });
+    } catch (error) {
+      if (error instanceof ImageProcessingError) {
+        throw new AppError('INVALID_IMAGE_DATA', 415, 'INVALID_IMAGE_DATA');
+      }
+      throw error;
+    }
+    output.push({
+      name: String(candidate?.name || 'image').slice(0, 255),
+      ...processed,
+    });
+  }
+  return output;
+}
+
 // ==================== SHARED AI HANDLER PRELUDE (standard formula) ====================
 // Single source of truth for the provider-availability + access-policy gate that
 // every direct LLM endpoint needs. Returns an error descriptor to send, or null
@@ -501,6 +595,76 @@ function mapLlmCallError(error: any): { status: number; body: Record<string, unk
   logger.error('[AI] LLM call failed', { errorCode: mapped.errorCode, detail: mapped.logMessage });
   return { status: mapped.httpStatus, body: toSafeErrorBody(mapped) };
 }
+
+router.post(
+  '/chat/images',
+  verifyToken,
+  requireActiveTenantMembership,
+  (req: AuthRequest, res: Response, next) => {
+    if (!isChatImagesEnabled()) {
+      return res.status(404).json({ code: 'CHAT_IMAGES_DISABLED', error: 'CHAT_IMAGES_DISABLED' });
+    }
+    return chatImageUploadMiddleware(req, res, next);
+  },
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.organizationId || !req.userId) {
+      return res.status(401).json({ code: 'UNAUTHORIZED', error: 'UNAUTHORIZED' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ code: 'CHAT_IMAGE_REQUIRED', error: 'CHAT_IMAGE_REQUIRED' });
+    }
+
+    const declaredMime = String(req.file.mimetype || '').toLowerCase();
+    if (!CHAT_IMAGE_MIME_TYPES.has(declaredMime)) {
+      return res.status(415).json({
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: 'UNSUPPORTED_MEDIA_TYPE',
+      });
+    }
+    if (req.file.size > MAX_CHAT_IMAGE_BYTES) {
+      return res.status(413).json({
+        code: 'CHAT_IMAGE_TOO_LARGE',
+        error: 'CHAT_IMAGE_TOO_LARGE',
+        maxBytes: MAX_CHAT_IMAGE_BYTES,
+      });
+    }
+
+    const validation = validateImage(req.file.buffer, declaredMime);
+    if (!validation.valid) {
+      return res.status(415).json({
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: 'UNSUPPORTED_MEDIA_TYPE',
+      });
+    }
+
+    let processed;
+    try {
+      processed = await processImageForVision(req.file.buffer, {
+        maxSize: MAX_CHAT_IMAGE_BYTES,
+        maxDimension: 2048,
+      });
+    } catch (error) {
+      if (error instanceof ImageProcessingError) {
+        return res.status(415).json({
+          code: 'INVALID_IMAGE_DATA',
+          error: 'INVALID_IMAGE_DATA',
+        });
+      }
+      throw error;
+    }
+    return res.status(201).json({
+      success: true,
+      image: {
+        name: String(req.file.originalname || 'image'),
+        mimeType: processed.mimeType,
+        dataUrl: toDataUrl(processed.base64, processed.mimeType),
+        width: processed.width,
+        height: processed.height,
+        size: processed.processedSize,
+      },
+    });
+  })
+);
 
 router.post(
   '/attachments/ingest',
@@ -1709,6 +1873,22 @@ router.post(
       responseStyle,
     } = body;
 
+    const rawChatImages = (context as any)?.chatImages ?? (context as any)?.images;
+    const hasRequestedChatImages = Array.isArray(rawChatImages) && rawChatImages.length > 0;
+    if (hasRequestedChatImages && !isChatImagesEnabled()) {
+      return res.status(404).json({
+        code: 'CHAT_IMAGES_DISABLED',
+        error: 'CHAT_IMAGES_DISABLED',
+      });
+    }
+    const preparedChatImages = hasRequestedChatImages
+      ? await prepareChatImages(rawChatImages)
+      : [];
+    // Never retain the client-owned raw payload alongside the server-validated
+    // representation. The latter is scoped to this authenticated request only.
+    const { chatImages: _rawChatImages, images: _rawImages, ...contextWithoutRawImages } =
+      (context || {}) as Record<string, unknown>;
+
     // DEC-511 SSOT: `body.language` niesie język WĄTKU (front:
     // `chatLanguageByConversationId`), a nie wybór użytkownika — traktowanie go
     // jak jawnego override'u sprawiało, że `users.language` nigdy nie było
@@ -2788,9 +2968,10 @@ router.post(
       const resolvedChatPurpose = inferChatTaskPurpose({
         capability: 'chat',
         message,
-        attachments: Array.isArray((context as any)?.attachments)
-          ? (context as any).attachments
-          : [],
+        attachments: [
+          ...(Array.isArray((context as any)?.attachments) ? (context as any).attachments : []),
+          ...preparedChatImages.map((image) => ({ mimeType: image.mimeType, name: image.name })),
+        ],
         attachmentDocIds: attachmentDocIdsForPurpose,
         deepResearch: Boolean(aiModes?.deepResearch),
       });
@@ -2810,7 +2991,8 @@ router.post(
         screenContext, // Full screen context for AI awareness
         focusMode, // Focus mode for context filtering
         context: {
-          ...(context || {}),
+          ...contextWithoutRawImages,
+          ...(preparedChatImages.length > 0 ? { chatImages: preparedChatImages } : {}),
           userId: req.userId,
           organizationId: req.organizationId,
           projectId,

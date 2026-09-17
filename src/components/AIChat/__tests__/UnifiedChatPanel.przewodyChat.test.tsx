@@ -3,55 +3,58 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { UseAIStreamReturn } from '../../../hooks/useAIStream';
+
 const harness = vi.hoisted(() => {
   const navigate = vi.fn();
   const clearKickoff = vi.fn();
   const addChatMessage = vi.fn();
-  const startStream = vi.fn(async (_prompt: string): Promise<void> => undefined);
+  const addConversationMessage = vi.fn(async () => undefined);
+  const startStream = vi.fn<UseAIStreamReturn['startStream']>(async () => undefined);
   const featureFlags = new Map<string, boolean>();
   const appState: Record<string, unknown> = {
-  currentStreamContent: '',
-  isBotTyping: false,
-  addChatMessage,
-  deleteChatMessage: vi.fn(),
-  setIsBotTyping: vi.fn(),
-  aiFreezeStatus: { isFrozen: false },
-  aiConfig: { selectedTier: 'STANDARD', selectedModelId: null, autoMode: false },
-  setAIConfig: vi.fn(),
-  currentUser: { id: 'user-368', firstName: 'Piotr', role: 'OWNER' },
-  currentOrganization: { id: 'org-368', name: 'Day 368' },
-  isAuthInitializing: false,
-  chatModuleIntent: null,
-  chatKickoffMessage: undefined,
-  clearChatKickoffMessage: clearKickoff,
-  chatOutputTool: 'auto',
-  setChatKickoffMessage: vi.fn(),
-  setChatOutputTool: vi.fn(),
+    currentStreamContent: '',
+    isBotTyping: false,
+    addChatMessage,
+    deleteChatMessage: vi.fn(),
+    setIsBotTyping: vi.fn(),
+    aiFreezeStatus: { isFrozen: false },
+    aiConfig: { selectedTier: 'STANDARD', selectedModelId: null, autoMode: false },
+    setAIConfig: vi.fn(),
+    currentUser: { id: 'user-368', firstName: 'Piotr', role: 'OWNER' },
+    currentOrganization: { id: 'org-368', name: 'Day 368' },
+    isAuthInitializing: false,
+    chatModuleIntent: null,
+    chatKickoffMessage: undefined,
+    clearChatKickoffMessage: clearKickoff,
+    chatOutputTool: 'auto',
+    setChatKickoffMessage: vi.fn(),
+    setChatOutputTool: vi.fn(),
   };
   const conversationState: Record<string, unknown> = {
-  activeConversationId: null,
-  activeMessages: [],
-  isLoading: false,
-  isSidebarOpen: false,
-  displayMode: 'full',
-  createConversation: vi.fn(async () => ({ id: 'conversation-368' })),
-  addMessage: vi.fn(async () => undefined),
-  setActiveConversation: vi.fn(),
-  fetchConversation: vi.fn(),
-  clearActiveChat: vi.fn(),
-  truncateFromMessage: vi.fn(),
-  toggleSidebar: vi.fn(),
-  setDisplayMode: vi.fn(),
-  expandToFullScreen: vi.fn(),
-  collapseToSplit: vi.fn(),
-  draftChatLanguage: 'pl',
-  chatLanguageByConversationId: {},
-  _activeConversationState: null,
-  _activeConversationStateMessage: null,
-  notifyModelChange: vi.fn(),
-  exportConversation: vi.fn(),
-  purgeConversation: vi.fn(),
-  teresaEntityContext: null,
+    activeConversationId: null,
+    activeMessages: [],
+    isLoading: false,
+    isSidebarOpen: false,
+    displayMode: 'full',
+    createConversation: vi.fn(async () => ({ id: 'conversation-368' })),
+    addMessage: addConversationMessage,
+    setActiveConversation: vi.fn(),
+    fetchConversation: vi.fn(),
+    clearActiveChat: vi.fn(),
+    truncateFromMessage: vi.fn(),
+    toggleSidebar: vi.fn(),
+    setDisplayMode: vi.fn(),
+    expandToFullScreen: vi.fn(),
+    collapseToSplit: vi.fn(),
+    draftChatLanguage: 'pl',
+    chatLanguageByConversationId: {},
+    _activeConversationState: null,
+    _activeConversationStateMessage: null,
+    notifyModelChange: vi.fn(),
+    exportConversation: vi.fn(),
+    purgeConversation: vi.fn(),
+    teresaEntityContext: null,
   };
   const useAppStoreMock = Object.assign(
     (selector?: (state: typeof appState) => unknown) => (selector ? selector(appState) : appState),
@@ -66,6 +69,7 @@ const harness = vi.hoisted(() => {
     navigate,
     clearKickoff,
     addChatMessage,
+    addConversationMessage,
     startStream,
     featureFlags,
     appState,
@@ -102,6 +106,12 @@ vi.mock('../../../contexts/TeresaVoiceContext', () => ({
 vi.mock('../../../hooks/useAIStream', () => ({
   useAIStream: () => ({
     startStream: harness.startStream,
+    abortStream: vi.fn(() => false),
+    retryLastStream: vi.fn(async () => undefined),
+    lastError: null,
+    clearLastError: vi.fn(),
+    checkPartialResponse: vi.fn(async () => null),
+    resumeFromPartial: vi.fn(async () => undefined),
     stopStream: vi.fn(),
     isStreaming: false,
     streamedContent: '',
@@ -115,6 +125,21 @@ vi.mock('../../../hooks/useAIStream', () => ({
     policyNotices: [],
     memoryCandidate: null,
     error: null,
+    citations: [],
+    sourceLedger: null,
+    trustBundle: null,
+    teresaProposal: null,
+    deepThinkingHint: null,
+    interimInsight: null,
+    agentAuditState: null,
+    agentAuditVerdict: null,
+    agentReviewProgressByAgentId: {},
+    agentSourcesByAgentId: {},
+    artifacts: [],
+    progress: 0,
+    retryInfo: null,
+    streamStartedAt: null,
+    streamCompletedSignal: false,
   }),
 }));
 vi.mock('../../../hooks/useUniversalVoice', () => ({
@@ -157,13 +182,55 @@ vi.mock('../../../store/useAIActionsStore', () => ({
   useAIActionsStore: (selector: (state: { pendingCount: number }) => unknown) =>
     selector({ pendingCount: 0 }),
 }));
-vi.mock('../../../store/useArtifactsStore', () => ({
-  useArtifactsStore: () => ({ addArtifact: vi.fn(), togglePanel: vi.fn(), exportArtifact: vi.fn() }),
+vi.mock('../../../store/useArtifactsStore', () => {
+  const state = {
+    addArtifact: vi.fn(),
+    togglePanel: vi.fn(),
+    exportArtifact: vi.fn(),
+    loadConversationArtifacts: vi.fn(),
+  };
+  return { useArtifactsStore: Object.assign(() => state, { getState: () => state }) };
+});
+vi.mock('../../../store/useProposalLifecycleStore', () => {
+  const state = {
+    proposals: [],
+    updateProposal: vi.fn(),
+    loadForConversation: vi.fn(async () => undefined),
+  };
+  return {
+    useProposalLifecycleStore: Object.assign(() => state, { getState: () => state }),
+  };
+});
+vi.mock('../EnhancedChatInput', () => ({
+  EnhancedChatInput: (props: { onSend: (message: string, attachments?: File[]) => void }) => (
+    <div data-testid="chat-input">
+      <button
+        type="button"
+        onClick={() =>
+          props.onSend('Describe this image', [
+            new File(['png'], 'screen.png', { type: 'image/png' }),
+          ])
+        }
+      >
+        send-test-image
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          props.onSend('Describe one image', [
+            new File(['one'], 'one.png', { type: 'image/png' }),
+            new File(['two'], 'two.png', { type: 'image/png' }),
+          ])
+        }
+      >
+        send-two-test-images
+      </button>
+      <button type="button" onClick={() => props.onSend('What else can you see?')}>
+        send-text-only
+      </button>
+    </div>
+  ),
 }));
-vi.mock('../../../store/useProposalLifecycleStore', () => ({
-  useProposalLifecycleStore: () => ({ proposals: [], updateProposal: vi.fn() }),
-}));
-vi.mock('../EnhancedChatInput', () => ({ EnhancedChatInput: () => <div data-testid="chat-input" /> }));
 vi.mock('../ChatSlidingPanel', () => ({ ChatSlidingPanel: () => null }));
 vi.mock('../MessageRenderer', () => ({ MessageRenderer: () => null }));
 vi.mock('../ChatSignalsPanel', () => ({ ChatSignalsPanel: () => null }));
@@ -179,16 +246,171 @@ vi.mock('../../Chat/ChatSmartSuggestions', () => ({ ChatSmartSuggestions: () => 
 vi.mock('@/components/MyWork/table/ChatToSchemaPanel', () => ({ ChatToSchemaPanel: () => null }));
 
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
+import { Api } from '../../../services/api';
 
 describe('UnifiedChatPanel chat route wiring', () => {
   beforeEach(() => {
     harness.navigate.mockReset();
     harness.clearKickoff.mockReset();
     harness.addChatMessage.mockReset();
+    harness.addConversationMessage.mockReset();
+    harness.addConversationMessage.mockResolvedValue(undefined);
     harness.startStream.mockReset();
     harness.startStream.mockResolvedValue(undefined);
     harness.featureFlags.clear();
     harness.appState.chatKickoffMessage = undefined;
+    harness.conversationState.activeConversationId = null;
+    harness.conversationState.activeMessages = [];
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('uploads an enabled image outside document ingest and forwards it in context.images', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const imagePayload = {
+      name: 'screen.png',
+      mimeType: 'image/png',
+      dataUrl: 'data:image/png;base64,cG5n',
+      width: 20,
+      height: 10,
+      size: 3,
+    };
+    const imageUpload = vi.spyOn(Api, 'uploadChatImage').mockResolvedValue({
+      success: true,
+      image: imagePayload,
+    });
+    const documentUpload = vi.spyOn(Api, 'uploadChatAttachment');
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(imageUpload).toHaveBeenCalledWith(expect.any(File));
+    expect(documentUpload).not.toHaveBeenCalled();
+    expect(harness.startStream.mock.calls[0]?.[3]).toEqual(
+      expect.objectContaining({
+        images: [imagePayload],
+        hasAttachments: true,
+        attachmentFileNames: ['screen.png'],
+      })
+    );
+  });
+
+  it('never transports more than one image in context.images', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const imageUpload = vi.spyOn(Api, 'uploadChatImage').mockResolvedValue({
+      success: true,
+      image: {
+        name: 'one.png',
+        mimeType: 'image/png',
+        dataUrl: 'data:image/png;base64,b25l',
+        width: 1,
+        height: 1,
+        size: 3,
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-two-test-images' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(imageUpload).toHaveBeenCalledTimes(1);
+    expect(harness.startStream.mock.calls[0]?.[3]?.images).toHaveLength(1);
+  });
+
+  it('persists the image on its user turn and reuses it on the next turn in the same conversation', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const imagePayload = {
+      name: 'persistent.png',
+      mimeType: 'image/png' as const,
+      dataUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      width: 1,
+      height: 1,
+      size: 68,
+    };
+    vi.spyOn(Api, 'uploadChatImage').mockResolvedValue({ success: true, image: imagePayload });
+    vi.spyOn(Api, 'getConversationBranches').mockResolvedValue({ branches: [], isBranch: false });
+    harness.conversationState.activeConversationId = 'conversation-368';
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalledTimes(1));
+    expect(harness.addConversationMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ images: [imagePayload] }),
+      })
+    );
+    unmount();
+
+    harness.startStream.mockClear();
+    harness.conversationState.activeMessages = [
+      {
+        id: 'persisted-image-turn',
+        conversationId: 'conversation-368',
+        role: 'user',
+        content: 'Describe this image',
+        messageType: 'text',
+        metadata: { images: [imagePayload] },
+        createdAt: new Date('2026-09-17T00:00:00Z'),
+      },
+    ];
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-text-only' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalledTimes(1));
+    expect(harness.startStream.mock.calls[0]?.[3]).toEqual(
+      expect.objectContaining({
+        images: [imagePayload],
+        hasAttachments: true,
+        attachmentFileNames: ['persistent.png'],
+      })
+    );
+  });
+
+  it('maps a server image error code to localized copy before transport', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    vi.spyOn(Api, 'uploadChatImage').mockRejectedValue({
+      message: 'Invalid or corrupted image data',
+      data: {
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: 'Invalid or corrupted image data',
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(harness.startStream.mock.calls[0]?.[3]?.failedAttachments).toEqual([
+      expect.objectContaining({
+        filename: 'screen.png',
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: expect.not.stringContaining('Invalid or corrupted image data'),
+      }),
+    ]);
   });
 
   it('keeps Business Actions hidden with the flag at its default OFF value', () => {

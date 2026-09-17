@@ -7,6 +7,7 @@
  */
 
 import { buildPersonaPrompt } from '../../ai/persona.js';
+import type { ModelMessage } from 'ai';
 import { featureFlags } from '../../config/FeatureFlags.js';
 import type {
   AIArtifact,
@@ -25,16 +26,56 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
-import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
-import {
-  resolveAiLanguage,
-  withResolvedLocaleInstruction,
-} from './languagePolicy.js';
+import { filterDocumentsByVisibility } from './documentGovernance.js';
+import { buildMultimodalContent, type ProcessedImage } from './imageService.js';
+import { resolveAiLanguage, withResolvedLocaleInstruction } from './languagePolicy.js';
 import { llmService } from './llmService.js';
+import { modelMeetsRequirements } from './modelCapabilities.js';
 import modelRouter from './modelRouter.js';
 import { buildNavigationHonestyInstruction } from './navigationHonesty.js';
 import { isQaAiMode } from './qaAiRuntime.js';
+
+type ProviderChatMessage = {
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: any;
+};
+
+/**
+ * The contract seam between chat orchestration and llmService. Keeping this
+ * pure makes it possible to prove that pixels, rather than a filename or
+ * placeholder sentence, reach the provider message payload.
+ */
+export function attachChatImagesToLastUserMessage(
+  messages: ProviderChatMessage[],
+  images: ProcessedImage[]
+): ProviderChatMessage[] {
+  const output = messages.map((message) => ({ ...message }));
+  if (images.length === 0) return output;
+
+  let lastUserIndex = -1;
+  for (let index = output.length - 1; index >= 0; index -= 1) {
+    if (output[index].role === 'user') {
+      lastUserIndex = index;
+      break;
+    }
+  }
+  if (lastUserIndex < 0) throw new Error('CHAT_IMAGE_USER_MESSAGE_MISSING');
+  output[lastUserIndex].content = buildMultimodalContent(
+    String(output[lastUserIndex].content || ''),
+    images
+  );
+  return output;
+}
+
+export function assertVisionCapableModel(modelId: string): void {
+  const providerNativeModelId = String(modelId || '').includes('/')
+    ? String(modelId).split('/').pop() || String(modelId)
+    : String(modelId);
+  if (!modelMeetsRequirements(providerNativeModelId, { vision: true })) {
+    throw new Error(`CHAT_IMAGE_MODEL_UNSUPPORTED:${modelId}`);
+  }
+}
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -321,12 +362,19 @@ export class AIPipeline {
       // Check if streaming is requested
       if ((request as any).stream) {
         let systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
-        const nonSystemMsgs = prompt
+        let nonSystemMsgs: Array<{
+          role: 'user' | 'assistant' | 'system' | 'tool';
+          content: any;
+        }> = prompt
           .filter((m) => m.role !== 'system')
           .map((m) => ({
             role: m.role as 'user' | 'assistant' | 'system' | 'tool',
             content: m.content,
           }));
+        const chatImages = Array.isArray((request.context as any)?.chatImages)
+          ? ((request.context as any).chatImages as ProcessedImage[])
+          : [];
+        nonSystemMsgs = attachChatImagesToLastUserMessage(nonSystemMsgs, chatImages);
 
         // "Show reasoning" wiring. When on, we ask llmService to surface the
         // model's native reasoning deltas via onReasoning(); we collect them in
@@ -530,6 +578,7 @@ export class AIPipeline {
             }
           : undefined;
 
+        const requiresVision = chatImages.length > 0;
         for (const candidateModelId of candidateModelIds) {
           try {
             const cfg = await modelRouter.getProviderConfig(candidateModelId, tierForFallback);
@@ -545,6 +594,14 @@ export class AIPipeline {
             if (!isConfigured) {
               logger.info(`[AIPipeline] Skipping unconfigured fallback: ${providerId}/${modelId}`);
               continue;
+            }
+            if (requiresVision) {
+              try {
+                assertVisionCapableModel(modelId);
+              } catch {
+                logger.info(`[AIPipeline] Skipping non-vision fallback: ${providerId}/${modelId}`);
+                continue;
+              }
             }
 
             await enforceBudgetsAndPerms(providerId, modelId);
@@ -2504,10 +2561,15 @@ export class AIPipeline {
     const explicitModel = request.options?.selectedModelId || request.options?.model;
     const explicitProvider = request.options?.provider;
     const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
+    const requiresVision =
+      Array.isArray((request.context as any)?.chatImages) &&
+      (request.context as any).chatImages.length > 0;
+    const requirements = requiresVision ? ({ vision: true } as const) : undefined;
 
     if (explicitModel) {
       // Fast-path for local inference: user-provided Ollama does not require a DB provider row.
       if (String(explicitProvider || '').toLowerCase() === 'ollama') {
+        if (requiresVision) assertVisionCapableModel(String(explicitModel));
         const endpointOverride = (request.options as any)?.endpoint as string | undefined;
         const endpoint = endpointOverride || 'http://localhost:11434/v1';
         logger.info(`[AIPipeline] Selected explicit model (local): ollama/${explicitModel}`);
@@ -2544,6 +2606,7 @@ export class AIPipeline {
       // If provider not provided, let ModelRouter infer provider & resolve endpoint/apiKey.
       const tierForConfig = (selectedTier || 'STANDARD') as any;
       const cfg = await modelRouter.getProviderConfig(explicitModel, tierForConfig);
+      if (requiresVision) assertVisionCapableModel(String(cfg.id));
       const provider = explicitProvider || cfg.provider;
       const endpointOverride = (request.options as any)?.endpoint as string | undefined;
       const isOllama = String(provider || '').toLowerCase() === 'ollama';
@@ -2580,6 +2643,7 @@ export class AIPipeline {
         organizationId: request.organizationId,
         tier: tierForConfig,
         options: { tier: tierForConfig },
+        requirements,
       };
       return {
         provider,
@@ -2616,6 +2680,7 @@ export class AIPipeline {
       organizationId: request.organizationId,
       options: { tier: selectedTier },
       tier: selectedTier,
+      requirements,
     } as any);
     (request as any)._routingTrace = (routed as any).routingTrace || null;
     (request as any)._routingParams = {
@@ -2625,6 +2690,7 @@ export class AIPipeline {
       organizationId: request.organizationId,
       options: { tier: selectedTier },
       tier: selectedTier,
+      requirements,
     };
 
     logger.info(
@@ -2668,7 +2734,13 @@ export class AIPipeline {
     cached?: boolean;
   }> {
     const systemMessage = messages.find((m) => m.role === 'system');
-    const nonSystemMessages = messages.filter((m) => m.role !== 'system');
+    let nonSystemMessages: Array<{ role: any; content: any }> = messages
+      .filter((m) => m.role !== 'system')
+      .map((message) => ({ ...message }));
+    const chatImages = Array.isArray((request.context as any)?.chatImages)
+      ? ((request.context as any).chatImages as ProcessedImage[])
+      : [];
+    nonSystemMessages = attachChatImagesToLastUserMessage(nonSystemMessages, chatImages);
 
     const callOnce = async (cfg: {
       provider: string;
@@ -2685,10 +2757,7 @@ export class AIPipeline {
           apiKey: cfg.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
-        messages: nonSystemMessages.map((m) => ({
-          role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-          content: m.content,
-        })),
+        messages: nonSystemMessages.map((m) => ({ role: m.role, content: m.content })),
         maxTokens: modelConfig.maxTokens,
         temperature: options?.temperature ?? 0.7,
         cache: (options as any)?.cache ?? true,
@@ -2783,6 +2852,30 @@ export class AIPipeline {
     try {
       const systemMessage = messages.find((m) => m.role === 'system');
       const nonSystemMessages = messages.filter((m) => m.role !== 'system');
+      const providerMessages: ModelMessage[] = nonSystemMessages.map((message) => {
+        if (message.role === 'assistant') {
+          return { role: 'assistant', content: message.content };
+        }
+        if (message.role === 'tool' || message.role === 'function') {
+          const toolName = message.name || 'legacy_tool';
+          const toolCallId =
+            'tool_call_id' in message && typeof message.tool_call_id === 'string'
+              ? message.tool_call_id
+              : toolName;
+          return {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId,
+                toolName,
+                output: { type: 'text', value: message.content },
+              },
+            ],
+          };
+        }
+        return { role: 'user', content: message.content };
+      });
 
       const response = await llmService.callStream({
         type: 'chat',
@@ -2793,10 +2886,7 @@ export class AIPipeline {
           apiKey: modelConfig.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
-        messages: nonSystemMessages.map((m) => ({
-          role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-          content: m.content,
-        })),
+        messages: providerMessages,
         maxTokens: modelConfig.maxTokens,
         temperature: options?.temperature ?? 0.7,
         stream: true,

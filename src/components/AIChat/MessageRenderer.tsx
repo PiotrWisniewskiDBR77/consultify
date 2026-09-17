@@ -46,6 +46,7 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { AiProviderErrorNotice } from './AiProviderErrorNotice';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ArtifactChip } from './ArtifactChip';
+import { isChatImagesEnabled, normalizeChatImagePayload } from './chatAttachmentSupport';
 import { shouldOfferDocumentEmission } from './canvasEmissionHeuristic';
 import { CaseIntakeConfirmCard } from './CaseIntakeConfirmCard';
 import { ChatCodeBlock } from './ChatCodeBlock';
@@ -515,6 +516,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
   const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
   const metadata = (msg as any).metadata || {};
+  const persistedChatImage =
+    msg.role === 'user' && isChatImagesEnabled() && Array.isArray(metadata.images)
+      ? normalizeChatImagePayload(metadata.images[0])
+      : null;
   const isDeepSearchAnswer = Boolean(metadata?.deepThinking?.kind === 'report');
   const visibleCitations = Array.isArray(msg.citations) ? msg.citations : [];
   const hasVisibleCitations = visibleCitations.length > 0;
@@ -1632,6 +1637,19 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 // crammed into the bubble corner). Matches Claude/Grok/Gemini.
                 <span>{userVisibleContent}</span>
               )}
+              {persistedChatImage ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <img
+                    src={persistedChatImage.dataUrl}
+                    alt={persistedChatImage.name}
+                    title={persistedChatImage.name}
+                    className="h-10 w-10 rounded-md border border-c-border object-cover"
+                  />
+                  <span className="max-w-48 truncate text-[11px] font-medium text-c-text-secondary">
+                    {persistedChatImage.name}
+                  </span>
+                </div>
+              ) : null}
               {/* Chat P0-4 — render the attachments the composer captured on
                   this user message. Previously stored on metadata.attachments
                   but never displayed; users couldn't tell whether their
