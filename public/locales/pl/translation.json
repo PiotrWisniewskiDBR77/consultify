@@ -50048,6 +50048,9 @@
     "previewRelations": {
       "noLinkedDocuments": "Brak powiązań"
     },
+    "relationKind": {
+      "project": "Powiązany projekt"
+    },
     "previewCompletenessRing": {
       "missingFields": "Brakujące pola"
     },

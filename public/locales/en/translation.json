@@ -49685,6 +49685,9 @@
     "previewRelations": {
       "noLinkedDocuments": "No linked documents"
     },
+    "relationKind": {
+      "project": "Linked project"
+    },
     "previewCompletenessRing": {
       "missingFields": "Missing fields"
     },

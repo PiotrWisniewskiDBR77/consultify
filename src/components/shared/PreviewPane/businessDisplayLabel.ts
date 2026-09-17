@@ -7,6 +7,8 @@
  * becoming a plausible but potentially false business name.
  */
 
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TECHNICAL_PREFIX_PATTERN =
   /^(?:aco|ie|initiative|execution|case|task|decision|scenario|allocation|signal|intervention|report|project)(?:[-_:])/i;
@@ -67,6 +69,17 @@ export const resolveBusinessDisplayLabel = ({
   return fallback;
 };
 
+/**
+ * Kindy z parą EN/PL w `public/locales/{en,pl}/translation.json`
+ * (`sharedComponents.relationKind.*`) — wartość żyje w locale, nie w kodzie.
+ * `RELATION_KIND_LABELS` poniżej to zastany dług PL sprzed DEC-461: w tej
+ * naprawie dopisujemy tylko kind, którego realnie używa podgląd (Wpis 70 P2),
+ * reszty mapy i samego fallbacku nie ruszamy.
+ */
+const RELATION_KIND_I18N: Readonly<Record<string, { klucz: string; en: string }>> = Object.freeze({
+  project: { klucz: 'sharedComponents.relationKind.project', en: 'Linked project' },
+});
+
 const RELATION_KIND_LABELS: Readonly<Record<string, string>> = Object.freeze({
   initiative: 'Powiązana inicjatywa',
   execution: 'Powiązana realizacja',
@@ -79,12 +92,15 @@ const RELATION_KIND_LABELS: Readonly<Record<string, string>> = Object.freeze({
   signal: 'Powiązany sygnał',
   intervention: 'Powiązana interwencja',
   report: 'Powiązany raport',
-  project: 'Powiązany projekt',
   source: 'Powiązane źródło',
 });
 
-export const relationFallbackLabel = (type?: string): string =>
-  RELATION_KIND_LABELS[String(type ?? '').toLowerCase()] ?? 'Powiązany rekord';
+export const relationFallbackLabel = (type?: string): string => {
+  const kind = String(type ?? '').toLowerCase();
+  const para = RELATION_KIND_I18N[kind];
+  if (para) return tlumaczPozaHookiem(para.klucz, para.en);
+  return RELATION_KIND_LABELS[kind] ?? 'Powiązany rekord';
+};
 
 /** Detects an identifier even when a screen prefixes it, e.g. `Realizacja · <uuid>`. */
 export const containsTechnicalIdentifier = (value: unknown): boolean => {

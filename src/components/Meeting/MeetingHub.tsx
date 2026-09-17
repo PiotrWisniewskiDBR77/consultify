@@ -1017,6 +1017,8 @@ export const MeetingHub: React.FC = () => {
                     selectedMeeting.projectId
                       ? [
                           {
+                            id: selectedMeeting.projectId,
+                            type: 'project',
                             label: `${t('meeting.project', 'Project')}: ${selectedMeeting.projectId.slice(0, 8)}…`,
                           },
                         ]
