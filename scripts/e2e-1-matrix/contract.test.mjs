@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -13,8 +14,9 @@ import {
   routeMatchesModule,
   variantKey,
 } from './contract.mjs';
-import { computeDelta, validateVariantResult } from './evidence.mjs';
+import { computeDelta, validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
 import { isDomainMutationRequest } from './network.mjs';
+import { onboardingDoneKey } from './onboarding.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -141,5 +143,54 @@ test('web-vitals beacon is whitelisted by exact path+method, not a blanket /api/
     isDomainMutationRequest({ url: `${base}/api/analytics/web-vitals`, method: 'PUT' }, base),
     true,
     'web-vitals under a non-whitelisted method must count as a domain write'
+  );
+});
+
+test('variant artifact carries per-module settle telemetry (spinnerGone/elapsedMs)', () => {
+  const variant = buildVariants()[0];
+  const settle = [
+    { route: '/admin/people', elapsedMs: 15_000, spinnerGone: false },
+    { route: '/admin/people', elapsedMs: 900, spinnerGone: true },
+  ];
+  const result = {
+    variant: variantKey(variant),
+    base: 'https://staging.consultify.ai',
+    sha: 'TEST',
+    modules: MODULES.map(({ id, route }) => ({ id, route, settle: id === '14-admin' ? settle : [] })),
+    cells: MODULES.flatMap((module) =>
+      SURFACE_KINDS.map((kind) => ({ module: module.id, kind, status: 'PASS' }))
+    ),
+    cleanup: { verified: true, mutatingRequests: [] },
+    flags: {},
+  };
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e1-artifact-'));
+  writeVariantArtifacts({ outDir, result, previous: null });
+
+  const written = JSON.parse(fs.readFileSync(path.join(outDir, 'result.json'), 'utf8'));
+  const admin = written.modules.find((module) => module.id === '14-admin');
+  assert.equal(admin.settle.length, 2, 'settle outcomes must survive into result.json');
+  assert.equal(admin.settle[0].spinnerGone, false);
+  assert.equal(admin.settle[0].elapsedMs, 15_000);
+
+  const report = fs.readFileSync(path.join(outDir, 'REPORT.md'), 'utf8');
+  assert.match(report, /## Settle \(spinner-aware wait\)/);
+  assert.match(report, /14-admin \| 2 \| 1\/2 \| \/admin\/people \| 15000/);
+  fs.rmSync(outDir, { recursive: true, force: true });
+});
+
+test('onboarding guard key matches the front-end doneKey builder exactly (gap D)', () => {
+  // DEC-590 (Wpis 47): run.mjs used to inline this template with no test, so a
+  // mutation silently re-covered every screen with the onboarding modal.
+  assert.equal(onboardingDoneKey('u-42'), 'consultify_onboarding_done:u-42');
+  const front = fs.readFileSync(
+    path.join(repoRoot, 'src/components/Onboarding/useFirstRunOnboarding.ts'),
+    'utf8'
+  );
+  const literal = front.match(/consultify_onboarding_done:/);
+  assert.ok(literal, 'front-end guard literal must exist');
+  assert.equal(
+    onboardingDoneKey('PROBE'),
+    `consultify_onboarding_done:PROBE`,
+    'harness key must equal the front-end template'
   );
 });

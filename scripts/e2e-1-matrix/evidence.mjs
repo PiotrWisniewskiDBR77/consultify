@@ -72,6 +72,19 @@ export function summarize(result) {
   };
 }
 
+// DEC-590 (Wpis 47): settle outcomes used to be thrown away by run.mjs. Reducing
+// them here keeps the spinner/wait telemetry in the variant artifact so a run that
+// scored cells against a stuck spinner is visible in the evidence.
+export function summarizeSettle(settle) {
+  const runs = Array.isArray(settle) ? settle : [];
+  return {
+    runs: runs.length,
+    spinnerGone: runs.filter((item) => item.spinnerGone).length,
+    stuckRoutes: runs.filter((item) => !item.spinnerGone).map((item) => item.route),
+    maxElapsedMs: runs.reduce((max, item) => Math.max(max, item.elapsedMs || 0), 0),
+  };
+}
+
 function esc(value) {
   return String(value ?? '—')
     .replaceAll('|', '\\|')
@@ -110,6 +123,19 @@ export function writeVariantArtifacts({ outDir, result, previous }) {
     const errors = [...(cell.consoleErrors || []), ...(cell.httpErrors || [])].join('; ') || '—';
     lines.push(
       `| ${esc(cell.module)} | ${esc(cell.kind)} | ${esc(cell.control)} | ${esc(cell.status)} | ${esc(cell.screenshot)} | ${esc(errors)} |`
+    );
+  }
+  lines.push('');
+  lines.push('## Settle (spinner-aware wait)');
+  lines.push('');
+  lines.push('| Module | Settle runs | Spinner gone | Stuck routes | Max elapsed (ms) |');
+  lines.push('| --- | --- | --- | --- | --- |');
+  for (const module of result.modules || []) {
+    const stats = summarizeSettle(module.settle);
+    lines.push(
+      `| ${esc(module.id)} | ${stats.runs} | ${stats.spinnerGone}/${stats.runs} | ${esc(
+        stats.stuckRoutes.join(', ') || '—'
+      )} | ${stats.maxElapsedMs} |`
     );
   }
   lines.push('');
