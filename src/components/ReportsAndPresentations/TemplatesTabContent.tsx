@@ -59,8 +59,8 @@ import {
   resolveTemplateEditPath,
   resolveTemplateUsePath,
 } from './artifactNavigation';
-import { templateScopeLabel, TemplatesGalleryView } from './TemplatesGalleryView';
 import { duplicateTemplateFromLibrary } from './templateDuplicateService';
+import { templateScopeLabel, TemplatesGalleryView } from './TemplatesGalleryView';
 import {
   TEMPLATE_CATEGORY_META,
   TEMPLATE_STATUS_META,
