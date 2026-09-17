@@ -165,7 +165,11 @@ describe('T25 Initiatives Portfolio table preview Details', () => {
     expect(tableSlice).toContain('selectedId={previewInitiativeId}');
     expect(tableSlice).toContain('onSelect={(row) =>');
     expect(tableSlice).toContain('onOpen={handleOpenInitiativeDocument}');
-    expect(tableSlice).toContain('persistKey="initiatives.canonical-register.v1"');
+    expect(tableSlice).toContain(
+      "persistKey={PMO_QUEUES_ENABLED ? 'initiatives.pmo-register.v1' : 'initiatives.canonical-register.v1'}"
+    );
+    expect(tableSlice).toContain('initiatives.canonical-register.v1');
+    expect(tableSlice).toContain('initiatives.pmo-register.v1');
     expect(tableSlice).toContain('relationForRow={(row) =>');
     expect(tableSlice).not.toContain('tablePreviewDetailsText');
     const order = [
