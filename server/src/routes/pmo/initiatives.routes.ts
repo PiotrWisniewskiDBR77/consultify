@@ -1208,6 +1208,8 @@ router.delete(
  */
 router.get('/', InitiativeController.getInitiatives);
 
+router.get('/eligible-owners', InitiativeController.getEligibleInitiativeOwners);
+
 /**
  * GET /api/initiatives/raci-results-summary?ids=id1,id2,id3
  * Faza2 gap #5 (audyt endpointów READ) — batched READ dla LISTY inicjatyw: RACI
