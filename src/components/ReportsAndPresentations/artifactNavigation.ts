@@ -1,3 +1,4 @@
+import { isDocumentViewerEnabled } from '@/components/documents/documentViewerFlag';
 import type { TemplateOriginRuntime } from '@/types/materials';
 import { getArtifactPath } from '@/utils/artifactLinks';
 
@@ -37,6 +38,58 @@ export function resolveArtifactOpenPath(params: {
   if (params.kind === 'presentation') return getArtifactPath('presentation', id);
   if (params.kind === 'sheet') return getArtifactPath('sheet', id);
   return null;
+}
+
+/**
+ * DOC-0 etap 1 (b) (DEC-593) — REALNE rozwidlenie otwarcia z listy.
+ *
+ * Powyższe `:36` (`kind === 'document'` → `getArtifactPath('report', id)`) kieruje
+ * każdy dokument do Report Buildera. Przy fladze `VITE_DOC0_DOCUMENT_VIEWER` ON
+ * ZATWIERDZONY dokument otwiera się zamiast tego w JEDNYM `DocumentViewer`
+ * (read-only); Report Builder zostaje osiągalny wyłącznie przez jawne „Edit"
+ * z viewera. Flag OFF / szkic / prezentacja / arkusz / brak `artifactId` —
+ * `mode: 'path'` z DOKŁADNIE dotychczasową trasą (parytet bajt w bajt).
+ *
+ * „Zatwierdzony" = pozytywny słownik statusów dostarczenia zmierzony w karcie
+ * wiersza (OutputsAggregateTabContent `statusLabel`: draft | generated | editing |
+ * ready | exported | shared | archived). Fail-closed: status nieznany albo
+ * roboczy NIE otwiera viewera, tylko starą trasę — tak samo jak flaga.
+ */
+const APPROVED_DOCUMENT_STATUS_KEYS = new Set([
+  'ready',
+  'exported',
+  'shared',
+  'published',
+  'approved',
+  'final',
+]);
+
+export type ArtifactOpenTarget =
+  | { mode: 'viewer'; artifactId: string }
+  | { mode: 'path'; path: string | null };
+
+export function resolveArtifactOpenTarget(params: {
+  kind: ArtifactNavigationKind;
+  originRecordId: string;
+  artifactId?: string | null;
+  statusKey?: string | null;
+  governance?: ArtifactGovernanceSummary | null;
+}): ArtifactOpenTarget {
+  if (params.kind === 'document' && isDocumentViewerEnabled()) {
+    const artifactId = String(params.artifactId || '').trim();
+    const statusKey = String(params.statusKey || '').trim().toLowerCase();
+    if (artifactId && APPROVED_DOCUMENT_STATUS_KEYS.has(statusKey)) {
+      return { mode: 'viewer', artifactId };
+    }
+  }
+  return {
+    mode: 'path',
+    path: resolveArtifactOpenPath({
+      kind: params.kind,
+      originRecordId: params.originRecordId,
+      governance: params.governance,
+    }),
+  };
 }
 
 /**

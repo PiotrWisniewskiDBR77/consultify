@@ -393,25 +393,43 @@ describe.skipIf(!realPg)('DOC-0 documentRegistryBackfillService (real PostgreSQL
 
     const state = await withDb(async (db) => {
       const result = await db.query(
-        `SELECT delivery_state FROM v8_output_artifacts WHERE artifact_id = $1`,
+        `SELECT delivery_state, origin_summary_json FROM v8_output_artifacts WHERE artifact_id = $1`,
         [LIST.orphan]
       );
-      return result.rows[0].delivery_state;
+      return result.rows[0];
     });
-    expect(state).toBe('archived');
+    expect(state.delivery_state).toBe('archived');
+    // DEC-595: the orphan label is stamped into the EXISTING origin_summary_json
+    // column (no DDL) — this is exactly what `matchesViewFilters` keys on to hide
+    // the row from the document list.
+    const label = JSON.parse(state.origin_summary_json || '{}') as {
+      doc0Orphan?: unknown;
+      doc0OrphanReason?: unknown;
+      doc0OrphanArchivedAt?: unknown;
+    };
+    expect(label.doc0Orphan).toBe(true);
+    expect(typeof label.doc0OrphanReason).toBe('string');
+    expect(label.doc0OrphanArchivedAt).toBeTruthy();
 
     const second = await archiveContentlessDocumentRows({ organizationId: ORG });
     expect(second).toMatchObject({ scanned: 2, archived: 0, alreadyArchived: 2 });
 
     const restored = await restoreArchivedDocumentRows(archived.entries);
     expect(restored).toEqual({ restored: 1, failed: 0 });
-    const restoredState = await withDb(async (db) => {
+    const restoredRow = await withDb(async (db) => {
       const result = await db.query(
-        `SELECT delivery_state FROM v8_output_artifacts WHERE artifact_id = $1`,
+        `SELECT delivery_state, origin_summary_json FROM v8_output_artifacts WHERE artifact_id = $1`,
         [LIST.orphan]
       );
-      return result.rows[0].delivery_state;
+      return result.rows[0];
     });
-    expect(restoredState).toBe('draft');
+    expect(restoredRow.delivery_state).toBe('draft');
+    // Positive control: restore reverts delivery_state but KEEPS the label, so the
+    // (archived + doc0Orphan) pair breaks and the row is listable again — while the
+    // label survives as an audit trail.
+    const restoredLabel = JSON.parse(restoredRow.origin_summary_json || '{}') as {
+      doc0Orphan?: unknown;
+    };
+    expect(restoredLabel.doc0Orphan).toBe(true);
   });
 });

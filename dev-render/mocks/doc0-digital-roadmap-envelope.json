@@ -1,0 +1,80 @@
+{
+  "artifactId": "4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+  "origin": {
+    "originRuntime": "report",
+    "originRecordId": "cd81551c-5c33-52b4-abb4-878fde387949"
+  },
+  "originRevision": "report:Wed Sep 16 2026 01:07:55 GMT-0500 (Central Daylight Time):64911092bc1a4fc5b2cbafb8a03a75e1217b076eda182b2d05467db75c45be77",
+  "contentHash": "c3ee952dcf6443bc50d3e0c76f887dd8d1cad2f19435eaf5678830aaf7204fed",
+  "resolvedAt": "2026-09-17T20:31:53.979Z",
+  "etag": "\"a850e4cf3e400d2e8282d94dab82e32cc435f9622e01e4ada991c86e04458914\"",
+  "envelope": {
+    "envelopeVersion": "artifact-content/v1",
+    "canonicalFormat": "json",
+    "canonicalKind": "document",
+    "contentSchemaVersion": "report-builder/v1",
+    "contentMd": "## Vision\n\n# Vision\n\nBy the end of 2028, every shopfloor role at Leeds and Rotherham works from digital work instructions, every critical asset is covered by predictive maintenance, and Rotherham Line 3 runs a validated digital twin used for what-if planning ahead of every changeover.\n\n## Roadmap by Horizon\n\n## Roadmap by horizon\n\n**2026** — Digital work instructions pilot (2 lines); Line 3 digital twin pilot; predictive maintenance sensors on critical assets.\n\n**2027** — Digital work instructions to 80% of shopfloor roles; predictive maintenance rollout across both plants; warehouse automation wave 1 live.\n\n**2028** — Digital twin extended to 2 additional lines; closed-loop quality data from supplier gate through to shopfloor.\n\n## Investment Summary\n\n## Investment summary\n\n| Workstream | 2026 | 2027 | 2028 |\n|---|---:|---:|---:|\n| Digital work instructions | £120k | £180k | £60k |\n| Predictive maintenance | £340k | £260k | £80k |\n| Digital twin | £210k | £90k | £140k |\n\n## Risks & Dependencies\n\n## Risks & dependencies\n\n- Shopfloor Wi-Fi coverage must be upgraded at Rotherham before the digital twin pilot can scale\n- Predictive maintenance sensor lead times run 8-10 weeks\n- Depends on the warehouse automation wave 1 business case being approved",
+    "contentJson": {
+      "reportId": "cd81551c-5c33-52b4-abb4-878fde387949",
+      "title": "Digital Roadmap 2026–2028",
+      "sections": [
+        {
+          "id": "0f76deed-07d0-5534-9edd-7c59b4958038",
+          "key": "vision",
+          "title": "Vision",
+          "order": 0,
+          "format": "markdown",
+          "content": "# Vision\n\nBy the end of 2028, every shopfloor role at Leeds and Rotherham works from digital work instructions, every critical asset is covered by predictive maintenance, and Rotherham Line 3 runs a validated digital twin used for what-if planning ahead of every changeover.",
+          "source": "edited",
+          "updatedAt": "2026-09-16T06:07:55.527Z"
+        },
+        {
+          "id": "f8aee97b-6ccc-5e07-a392-88441da5f596",
+          "key": "horizons",
+          "title": "Roadmap by Horizon",
+          "order": 1,
+          "format": "markdown",
+          "content": "## Roadmap by horizon\n\n**2026** — Digital work instructions pilot (2 lines); Line 3 digital twin pilot; predictive maintenance sensors on critical assets.\n\n**2027** — Digital work instructions to 80% of shopfloor roles; predictive maintenance rollout across both plants; warehouse automation wave 1 live.\n\n**2028** — Digital twin extended to 2 additional lines; closed-loop quality data from supplier gate through to shopfloor.",
+          "source": "edited",
+          "updatedAt": "2026-09-16T06:07:55.527Z"
+        },
+        {
+          "id": "73e1cf5b-8b6c-5ebe-be59-fae3621984b6",
+          "key": "investment",
+          "title": "Investment Summary",
+          "order": 2,
+          "format": "markdown",
+          "content": "## Investment summary\n\n| Workstream | 2026 | 2027 | 2028 |\n|---|---:|---:|---:|\n| Digital work instructions | £120k | £180k | £60k |\n| Predictive maintenance | £340k | £260k | £80k |\n| Digital twin | £210k | £90k | £140k |",
+          "source": "edited",
+          "updatedAt": "2026-09-16T06:07:55.527Z"
+        },
+        {
+          "id": "03137d55-be03-5fc7-b530-053013b465ce",
+          "key": "risks",
+          "title": "Risks & Dependencies",
+          "order": 3,
+          "format": "markdown",
+          "content": "## Risks & dependencies\n\n- Shopfloor Wi-Fi coverage must be upgraded at Rotherham before the digital twin pilot can scale\n- Predictive maintenance sensor lead times run 8-10 weeks\n- Depends on the warehouse automation wave 1 business case being approved",
+          "source": "edited",
+          "updatedAt": "2026-09-16T06:07:55.527Z"
+        }
+      ]
+    },
+    "projection": {
+      "status": "synced",
+      "projectedAt": null,
+      "error": null,
+      "completeness": "full",
+      "projectedFromRevision": "report:Wed Sep 16 2026 01:07:55 GMT-0500 (Central Daylight Time):64911092bc1a4fc5b2cbafb8a03a75e1217b076eda182b2d05467db75c45be77",
+      "projectedFromHash": "64911092bc1a4fc5b2cbafb8a03a75e1217b076eda182b2d05467db75c45be77"
+    },
+    "provenance": {
+      "originRuntime": "report",
+      "originRecordId": "cd81551c-5c33-52b4-abb4-878fde387949",
+      "originRevision": "report:Wed Sep 16 2026 01:07:55 GMT-0500 (Central Daylight Time):64911092bc1a4fc5b2cbafb8a03a75e1217b076eda182b2d05467db75c45be77",
+      "originHash": "64911092bc1a4fc5b2cbafb8a03a75e1217b076eda182b2d05467db75c45be77"
+    },
+    "artifactType": "report",
+    "markdownProjectionStatus": "synced"
+  }
+}

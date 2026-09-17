@@ -42,6 +42,7 @@ import {
 } from '@/utils/sheetArtifactOpen';
 
 import { API_URL, getHeaders } from '../../services/api';
+import { DocumentViewer } from '../documents/DocumentViewer';
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
   StandardPreview,
@@ -51,7 +52,7 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '../standard';
-import { resolveArtifactOpenPath } from './artifactNavigation';
+import { resolveArtifactOpenPath, resolveArtifactOpenTarget } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { MATERIAL_FILE_FORMATS } from './materialFileFormat';
 import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
@@ -238,6 +239,10 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   // bulk-akcje podepniemy razem z tamtą migracją.
   const [selectedOutputIds, setSelectedOutputIds] = useState<Set<string>>(new Set());
   const deepLinkConsumed = useRef(false);
+  // DOC-0 etap 1 (b) (DEC-593): przy fladze VITE_DOC0_DOCUMENT_VIEWER ON
+  // zatwierdzony dokument z listy otwiera się w JEDNYM DocumentViewer jako
+  // nakładka; Report Builder tylko przez jawne „Edit" z viewera (onEdit niżej).
+  const [viewerRow, setViewerRow] = useState<UnifiedOutputRow | null>(null);
   // selectedGovernance is provided by useTrustState hook below
   const [lineageOpen, setLineageOpen] = useState(false);
   const [lineageLoading, setLineageLoading] = useState(false);
@@ -646,13 +651,25 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       void openGovernedSheetRow(row.originRecordId, row.sheetOrigin);
       return;
     }
-    const openPath = resolveArtifactOpenPath({
+    // DOC-0 etap 1 (b) (DEC-593): rozwidlenie żyje w `artifactNavigation.ts`
+    // (`resolveArtifactOpenTarget`) — flaga ON + ZATWIERDZONY dokument → JEDEN
+    // DocumentViewer (nakładka), w każdym innym przypadku DOKŁADNIE dotychczasowa
+    // trasa (`resolveArtifactOpenPath`). Wszystkie wejścia „otwórz" tej listy
+    // (2-klik, „Open full", kebab „Open") idą przez ten jeden `openRow`;
+    // 1-klik zostaje podglądem (tylko `setSelectedId`).
+    const target = resolveArtifactOpenTarget({
       kind: row.kind,
       originRecordId: row.originRecordId,
+      artifactId: row.artifactId,
+      statusKey: row.statusKey,
       governance: row.governance,
     });
-    if (openPath) {
-      navigate(openPath);
+    if (target.mode === 'viewer') {
+      setViewerRow(row);
+      return;
+    }
+    if (target.path) {
+      navigate(target.path);
     }
   };
 
@@ -1347,6 +1364,35 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           </aside>
         ) : null}
       </div>
+
+      {/* DEC-593: JEDEN DocumentViewer dla zatwierdzonego dokumentu z listy —
+          read-only, pełny ekran; „Edit" = jawne przejście do edytora tą samą
+          dotychczasową trasą (resolveArtifactOpenPath, z hotfixem assessmentu). */}
+      {viewerRow?.artifactId ? (
+        <div
+          className="fixed inset-0 z-50 bg-c-surface-raised"
+          data-testid="doc0-document-viewer-overlay"
+        >
+          <DocumentViewer
+            artifactId={viewerRow.artifactId}
+            originRecordId={viewerRow.originRecordId}
+            title={viewerRow.title}
+            statusLabel={statusLabel(viewerRow.statusKey)}
+            ownerName={viewerRow.owner}
+            updatedAt={viewerRow.updatedAt}
+            onClose={() => setViewerRow(null)}
+            onEdit={() => {
+              const editPath = resolveArtifactOpenPath({
+                kind: viewerRow.kind,
+                originRecordId: viewerRow.originRecordId,
+                governance: viewerRow.governance,
+              });
+              setViewerRow(null);
+              if (editPath) navigate(editPath);
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };

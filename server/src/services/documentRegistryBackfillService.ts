@@ -356,11 +356,40 @@ export async function archiveContentlessDocumentRows(
       summary.archived += 1;
       continue;
     }
+    // DEC-595: etykieta sieroty w ISTNIEJĄCEJ kolumnie `origin_summary_json`
+    // (zero DDL). Czyta ją `matchesViewFilters` (v8/artifactRegistryService.ts),
+    // żeby para (delivery_state='archived' + doc0Orphan) znikała z listy
+    // dokumentów — sam 'archived' NIE wystarcza, bo archiwum z wyboru użytkownika
+    // pozostaje widoczne (filtr statusu 'archived' w Outputs). `--restore` celowo
+    // NIE usuwa etykiety: przywrócony wiersz ma etykietę, ale delivery_state sprzed
+    // archiwizacji — para filtrująca rozpada się i wiersz wraca na listę.
+    const nowIso = new Date().toISOString();
+    const current = await dbGet<{ origin_summary_json: string | null }>(
+      `SELECT origin_summary_json FROM v8_output_artifacts
+        WHERE artifact_id = ? AND organization_id = ?`,
+      [row.artifactId, row.organizationId],
+      { fallback: true }
+    );
+    let summaryJson: Record<string, unknown> = {};
+    try {
+      const parsed = current?.origin_summary_json ? JSON.parse(current.origin_summary_json) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        summaryJson = parsed as Record<string, unknown>;
+      }
+    } catch {
+      summaryJson = {};
+    }
+    const stamped = JSON.stringify({
+      ...summaryJson,
+      doc0Orphan: true,
+      doc0OrphanReason: row.reason ?? null,
+      doc0OrphanArchivedAt: nowIso,
+    });
     const result = await dbRun(
       `UPDATE v8_output_artifacts
-          SET delivery_state = 'archived', last_transition_at = ?
+          SET delivery_state = 'archived', origin_summary_json = ?, last_transition_at = ?
         WHERE artifact_id = ? AND organization_id = ? AND delivery_state <> 'archived'`,
-      [new Date().toISOString(), row.artifactId, row.organizationId]
+      [stamped, nowIso, row.artifactId, row.organizationId]
     );
     if (result?.success === false) {
       summary.entries.pop();

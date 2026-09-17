@@ -3018,6 +3018,21 @@ export function matchesViewFilters(
   // Doctrine: don't delete the data, just stop indexing/showing the duplicate.
   if (item.artifactFamily === 'template' && !item.originRuntime) return false;
 
+  // DEC-595 (DOC-0 etap 1): sieroty 404 — wiersze `document` zarchiwizowane PRZEZ
+  // `archiveContentlessDocumentRows` (treść nie istnieje w żadnym rejestrze) i
+  // oznaczone w `origin_summary_json` etykietą `doc0Orphan` — nie wchodzą do listy
+  // dokumentów. Sam `delivery_state='archived'` NIE wystarcza: archiwum z wyboru
+  // użytkownika pozostaje widoczne (filtr statusu 'archived' w Outputs). Odwracalne
+  // bez śladu w danych: `restoreArchivedDocumentRows` cofa delivery_state i PARA
+  // (archived + etykieta) rozpada się — wiersz wraca na listę.
+  if (
+    item.artifactFamily === 'document' &&
+    item.deliveryState === 'archived' &&
+    (item.originSummary as { doc0Orphan?: unknown } | null)?.doc0Orphan === true
+  ) {
+    return false;
+  }
+
   // Templates are included when explicitly requested via artifactFamily filter,
   // in review lanes, or in recent/mixed lanes via includeTemplates flag.
   if (
