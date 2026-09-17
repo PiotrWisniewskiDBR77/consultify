@@ -40,12 +40,16 @@ vi.mock('@/store/useConversationStore', () => {
   };
   storeFn.getState = () => ({
     activeConversationId: mockActiveConversationId,
+    _activeConversationState: mockActiveConversationId ? 'active' : null,
     conversations: mockConversations,
     createConversation,
     setWorkspaceContext,
     setActiveConversation,
   });
-  return { useConversationStore: storeFn };
+  return {
+    useConversationStore: storeFn,
+    isConversationMarkedMissing: () => false,
+  };
 });
 
 vi.mock('@/store/useAppStore', () => {

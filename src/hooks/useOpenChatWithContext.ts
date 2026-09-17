@@ -20,12 +20,9 @@ import { AppView } from '@/types';
 
 import type { SidekickContextEventDetail } from '../components/MyWork/mindmap/aiSidekickContext';
 import { getRouteFromAppView } from '../routes/routeConfig';
-import { useAppStore } from '../store/useAppStore';
 import { trimPinnedEntityData } from '../store/teresaEntityContext';
-import {
-  isConversationMarkedMissing,
-  useConversationStore,
-} from '../store/useConversationStore';
+import { useAppStore } from '../store/useAppStore';
+import { isConversationMarkedMissing, useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
   /** Type of entity: initiative, task, assessment, decision, report, idea, etc. */
@@ -131,6 +128,46 @@ export function useOpenChatWithContext() {
         }
       };
 
+      // Deliver the caller's prompt on EVERY invocation, including when we
+      // reuse the active Teresa conversation. Previously this lived only
+      // after `createConversation`; the reuse branch returned earlier, so a
+      // second "Ask Teresa" click opened the dock but silently dropped the
+      // new question.
+      const queueTeresaPrompt = (conversationId: string) => {
+        try {
+          let teresaPrompt = (contextData as any)?.teresaPrompt;
+
+          // Sidekick bridge (M06 Fala 2 §2.1): when opening chat for the idea the
+          // mind map is currently reporting on, append its detected intent/prompt
+          // hint so Teresa's kickoff reflects what the user was doing on the map.
+          if (mindmapBridgeEnabled && entityType === 'idea') {
+            const sidekick = latestSidekickContextRef.current;
+            if (sidekick && sidekick.ideaId === entityId && sidekick.promptHint) {
+              teresaPrompt = teresaPrompt
+                ? `${teresaPrompt}\n\n(${sidekick.promptHint})`
+                : sidekick.promptHint;
+            }
+          }
+
+          if (teresaPrompt && typeof teresaPrompt === 'string' && typeof window !== 'undefined') {
+            window.sessionStorage.setItem(
+              'consultify.teresa.pendingPrompt',
+              JSON.stringify({
+                prompt: teresaPrompt,
+                entityType,
+                entityId,
+                entityName: entityName || null,
+                conversationId,
+                ts: Date.now(),
+              })
+            );
+            window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
+          }
+        } catch {
+          // Prompt prefill is non-critical; the chat must still open.
+        }
+      };
+
       // Check if current conversation already has this entity's context
       const activeConv = conversations.find((c) => c.id === activeConversationId);
       const existingPmoCtx = (activeConv as any)?.pmoContext;
@@ -174,12 +211,32 @@ export function useOpenChatWithContext() {
       // `not_found`, zamiast po prostu założyć nową rozmowę z kontekstem
       // pytania. Dlatego wskaźnik z sessionStorage musi być ZWERYFIKOWANY, a
       // nieudana reaktywacja MUSI spaść do ścieżki tworzenia nowej rozmowy.
-      let reusableConversationId = activeConversationId;
+      // Read the store at click time. The callback can outlive the render that
+      // created it, while a failed fetch can quarantine the captured active id
+      // in the meantime. Reusing that stale closure is what surfaced as
+      // "No such session" on the second DRD hand-off.
+      const liveAtOpen = useConversationStore.getState();
+      let reusableConversationId = liveAtOpen.activeConversationId;
+      let rejectedConversationId: string | null = null;
+      if (
+        reusableConversationId &&
+        (isConversationMarkedMissing(reusableConversationId) ||
+          (liveAtOpen.activeConversationId === reusableConversationId &&
+            liveAtOpen._activeConversationState === 'not_found'))
+      ) {
+        rejectedConversationId = reusableConversationId;
+        reusableConversationId = null;
+      }
       if (!reusableConversationId && options.reuseActiveConversation) {
         try {
           const stored = window.sessionStorage.getItem('teresa.lastActiveConversationId');
-          reusableConversationId =
-            stored && !isConversationMarkedMissing(stored) ? stored : null;
+          if (stored && !rejectedConversationId) {
+            if (isConversationMarkedMissing(stored)) {
+              rejectedConversationId = stored;
+            } else {
+              reusableConversationId = stored;
+            }
+          }
         } catch {
           reusableConversationId = null;
         }
@@ -187,14 +244,25 @@ export function useOpenChatWithContext() {
 
       if ((alreadyHasContext || options.reuseActiveConversation) && reusableConversationId) {
         let reusable = true;
-        if (reusableConversationId !== activeConversationId) {
+        if (reusableConversationId !== liveAtOpen.activeConversationId) {
           setActiveConversation(reusableConversationId);
           await fetchConversation(reusableConversationId);
           const after = useConversationStore.getState();
           const state = after._activeConversationState;
-          reusable =
-            after.activeConversationId === reusableConversationId &&
-            (state === null || state === 'active');
+          if (
+            after.activeConversationId &&
+            after.activeConversationId !== reusableConversationId &&
+            (state === null || state === 'active')
+          ) {
+            // A newer user choice won the race while the stored conversation
+            // was being verified. The delayed click is now superseded: do not
+            // inject its context or prompt into the conversation the user chose.
+            return after.activeConversationId;
+          } else {
+            reusable =
+              after.activeConversationId === reusableConversationId &&
+              (state === null || state === 'active');
+          }
         }
 
         if (reusable) {
@@ -206,17 +274,34 @@ export function useOpenChatWithContext() {
             entityData: contextData || {},
           } as any);
           pinEntityContext(reusableConversationId);
+          queueTeresaPrompt(reusableConversationId);
           return reusableConversationId;
         }
 
-        // Wskaźnik prowadził donikąd — sprzątamy go i zakładamy nową rozmowę
-        // niżej, zamiast zostawiać testera z komunikatem o usuniętym wątku.
+        rejectedConversationId = reusableConversationId;
+      }
+
+      if (rejectedConversationId) {
+        // Wskaźnik prowadził donikąd — sprzątamy wyłącznie tę wartość. Podczas
+        // await użytkownik mógł już wybrać nowszą rozmowę; nie wolno jej
+        // wyczyścić razem ze starym 404.
         try {
-          window.sessionStorage.removeItem('teresa.lastActiveConversationId');
+          if (
+            window.sessionStorage.getItem('teresa.lastActiveConversationId') ===
+            rejectedConversationId
+          ) {
+            window.sessionStorage.removeItem('teresa.lastActiveConversationId');
+          }
         } catch {
           // brak sessionStorage nie może blokować otwarcia czatu
         }
-        useConversationStore.getState().clearActiveChat();
+        const liveAfterRejection = useConversationStore.getState();
+        if (
+          liveAfterRejection.activeConversationId === rejectedConversationId ||
+          liveAfterRejection.activeConversationId === null
+        ) {
+          liveAfterRejection.clearActiveChat();
+        }
       }
 
       // Create new conversation with entity context
@@ -265,46 +350,7 @@ export function useOpenChatWithContext() {
         entityData: contextData || {},
       } as any);
       pinEntityContext(conv.id);
-
-      // Module-level Teresa prompts (e.g. FinanceHub.buildFinanceTeresaPrompt) live in
-      // contextData.teresaPrompt. Stash them so the chat composer can pick them up as a
-      // pre-filled opener instead of dropping them on the floor.
-      try {
-        let teresaPrompt = (contextData as any)?.teresaPrompt;
-
-        // Sidekick bridge (M06 Fala 2 §2.1): when opening chat for the idea the
-        // mind map is currently reporting on, append its detected intent/prompt
-        // hint so Teresa's kickoff reflects what the user was doing on the map
-        // (e.g. "expanding_branch" → "Expand this branch with more ideas").
-        // The graph itself is NOT carried here — that still flows exclusively
-        // through ideaMapToMarkdown at the "Discuss with Teresa" call site.
-        if (mindmapBridgeEnabled && entityType === 'idea') {
-          const sidekick = latestSidekickContextRef.current;
-          if (sidekick && sidekick.ideaId === entityId && sidekick.promptHint) {
-            teresaPrompt = teresaPrompt
-              ? `${teresaPrompt}\n\n(${sidekick.promptHint})`
-              : sidekick.promptHint;
-          }
-        }
-
-        if (teresaPrompt && typeof teresaPrompt === 'string' && typeof window !== 'undefined') {
-          window.sessionStorage.setItem(
-            'consultify.teresa.pendingPrompt',
-            JSON.stringify({
-              prompt: teresaPrompt,
-              entityType,
-              entityId,
-              entityName: entityName || null,
-              conversationId: conv.id,
-              ts: Date.now(),
-            })
-          );
-          // Notify any mounted composer to consume the pending prompt
-          window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
-        }
-      } catch {
-        // Non-critical
-      }
+      queueTeresaPrompt(conv.id);
 
       return conv.id;
     },
