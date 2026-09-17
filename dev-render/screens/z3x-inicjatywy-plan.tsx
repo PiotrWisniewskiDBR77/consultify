@@ -41,15 +41,16 @@ const NORTHWIND: Array<{
   exec: boolean;
   dependsOn: string[];
   priority: 'HIGH' | 'MEDIUM';
+  role: string;
 }> = [
-  { id: 'energy', name: 'Energy Monitoring and ISO 50001', start: '2026-09-28', end: '2026-10-26', exec: false, dependsOn: [], priority: 'HIGH' },
-  { id: 'supplier', name: 'Supplier Quality Gate', start: '2026-11-02', end: '2026-11-30', exec: false, dependsOn: ['energy'], priority: 'HIGH' },
-  { id: 'scrap', name: 'Scrap Reduction Programme', start: '2027-01-12', end: '2027-06-30', exec: false, dependsOn: [], priority: 'MEDIUM' },
-  { id: 'shift', name: 'Shift Handover Digitisation', start: '2026-11-09', end: '2026-12-07', exec: false, dependsOn: ['cnc'], priority: 'MEDIUM' },
-  { id: 'cnc', name: 'Predictive Maintenance for CNC Line', start: '2026-06-02', end: '2026-11-02', exec: true, dependsOn: [], priority: 'HIGH' },
-  { id: 'mes', name: 'MES Rollout Line 3', start: '2026-04-07', end: '2027-03-01', exec: true, dependsOn: [], priority: 'HIGH' },
-  { id: 'warehouse', name: 'Warehouse Automation Pilot', start: '2026-07-21', end: '2026-10-26', exec: true, dependsOn: [], priority: 'MEDIUM' },
-  { id: 'skills', name: 'Skills Matrix and Upskilling', start: '2026-09-21', end: '2026-11-30', exec: true, dependsOn: [], priority: 'MEDIUM' },
+  { id: 'energy', name: 'Energy Monitoring and ISO 50001', start: '2026-09-28', end: '2026-10-26', exec: false, dependsOn: [], priority: 'HIGH', role: 'Energy lead' },
+  { id: 'supplier', name: 'Supplier Quality Gate', start: '2026-11-02', end: '2026-11-30', exec: false, dependsOn: ['energy'], priority: 'HIGH', role: 'Quality lead' },
+  { id: 'scrap', name: 'Scrap Reduction Programme', start: '2027-01-12', end: '2027-06-30', exec: false, dependsOn: [], priority: 'MEDIUM', role: 'Ops lead' },
+  { id: 'shift', name: 'Shift Handover Digitisation', start: '2026-11-09', end: '2026-12-07', exec: false, dependsOn: ['cnc'], priority: 'MEDIUM', role: 'Ops lead' },
+  { id: 'cnc', name: 'Predictive Maintenance for CNC Line', start: '2026-06-02', end: '2026-11-02', exec: true, dependsOn: [], priority: 'HIGH', role: 'Maintenance' },
+  { id: 'mes', name: 'MES Rollout Line 3', start: '2026-04-07', end: '2027-03-01', exec: true, dependsOn: [], priority: 'HIGH', role: 'IT / MES' },
+  { id: 'warehouse', name: 'Warehouse Automation Pilot', start: '2026-07-21', end: '2026-10-26', exec: true, dependsOn: [], priority: 'MEDIUM', role: 'Logistics' },
+  { id: 'skills', name: 'Skills Matrix and Upskilling', start: '2026-09-21', end: '2026-11-30', exec: true, dependsOn: [], priority: 'MEDIUM', role: 'Quality lead' },
 ];
 
 const initiatives = empty
@@ -86,6 +87,9 @@ const windows = NORTHWIND.map((row) => ({
   rationale: 'PLAN_REASON:{"code":"DEPENDENCIES_PRECEDE"}',
   dependencySnapshot: row.dependsOn,
   constraintSnapshot: [],
+  // P3 (Wpis 74): rola z makiety (`.lmeta` „Planned · <rola>") — bez tego druga
+  // linia etykiety w kolumnie nazw nigdy się nie renderowała w dowodzie.
+  roleDemand: [{ roleId: `role-${row.id}`, roleLabel: row.role, fte: 1 }],
 }));
 const scenario = {
   scenarioId: 'plan-us-launch',

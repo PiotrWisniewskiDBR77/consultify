@@ -113,8 +113,13 @@ const CRITICAL_RING = 'ring-2 ring-c-chart-2 ring-offset-1 ring-offset-c-surface
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ROW_H = 32; // px — must match the h-8 grid row below.
-/** DEC-615: plan rows are taller so the name column fits name + role. */
-const PLAN_ROW_H = 40;
+/**
+ * DEC-615 etap 1b (P2-2): plan rows are tall enough for a TWO-line clamped name
+ * (SPEC §3.1 `line-clamp:2`, 11.6px/1.22 ≈ 28px) PLUS the role meta line
+ * (9.8px ≈ 13px) and the cell's py-1 — at the old 40px the second name line and
+ * the meta overflowed the fixed-height label cell. 52px fits name(2)+meta.
+ */
+const PLAN_ROW_H = 52;
 /** Mockup `.bar` height (22px) and name-column width (208px). */
 const PLAN_BAR_H = 22;
 
@@ -397,7 +402,17 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   const totalDays = range.weeks * 7;
   const axisStartDay = calendarDayStart(range.min);
   const rangeEndMs = addDays(range.min, totalDays);
-  const gridMinWidth = Math.max(480, Math.round(totalDays * PX_PER_DAY[zoom]));
+  /**
+   * DEC-615 etap 1b (P2-1): the plan timeline FILLS the track — its columns are
+   * flex:1 shares of it (mockup `.tcol{flex:1}`), so there is NO horizontal
+   * scroll at horizon 1/3/6/12 and the right-anchored „outside horizon" badge
+   * stays in view. Imposing a px-per-day minWidth here made the 14-week grid
+   * (~882px at week zoom) wider than the track at 1440×900, scrolled it, and hid
+   * the badge. The legacy task axis keeps its px minWidth (day zoom needs it).
+   */
+  const gridMinWidth = planMode
+    ? undefined
+    : Math.max(480, Math.round(totalDays * PX_PER_DAY[zoom]));
   /**
    * Pozycja na osi w DNIACH kalendarzowych, nie w milisekundach: pasek z datą
    * 2026-09-28 ma stać na 16.667% osi 12-tygodniowej (makieta PL3) niezależnie
@@ -665,7 +680,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
                 >
                   <span className={`h-[7px] w-[7px] shrink-0 rounded-[2px] ${dot}`} aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11.6px] font-semibold leading-[1.22] text-c-text">
+                    <span className="block line-clamp-2 text-[11.6px] font-semibold leading-[1.22] text-c-text">
                       {label?.name ?? row.item.title}
                     </span>
                     {label?.meta ? (
@@ -680,7 +695,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
           </div>
         )}
 
-        <div className={planMode ? 'min-w-0 flex-1 overflow-x-auto' : 'overflow-x-auto'}>
+        <div className={planMode ? 'min-w-0 flex-1 overflow-hidden' : 'overflow-x-auto'}>
           {/* Time header */}
           <div
             className={`relative flex border-b ${

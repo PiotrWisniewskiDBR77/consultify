@@ -303,6 +303,44 @@ describe('InitiativeGantt — oś czasu planu (DEC-615, etap 1)', () => {
     // I nie udaje paska.
     expect(barOf(container, 'scrap')).toBeNull();
   });
+
+  it('etap 1b P2-1: siatka planu wypełnia tor (bez px minWidth, bez overflow-x) — plakietka „poza horyzontem" w viewport', () => {
+    const { container } = renderPlan({ planStatus: 'DRAFT' });
+    const track = container.querySelector(NAME_COLUMN)!.nextElementSibling as HTMLElement;
+    // Tor nie przewija się poziomo w trybie planu (makieta `.track{flex:1}`).
+    expect(track.className).not.toContain('overflow-x-auto');
+    // Nagłówek i siatka NIE narzucają pikselowego minWidth — to ono pchało siatkę
+    // tygodniową poza tor i chowało prawą krawędź z plakietką (Wpis 74 P2-1).
+    const header = track.firstElementChild as HTMLElement;
+    const grid = header.nextElementSibling as HTMLElement;
+    expect(header.style.minWidth).toBe('');
+    expect(grid.style.minWidth).toBe('');
+
+    // jsdom nie liczy boxów, więc test SYMULUJE szerokość siatki jako
+    // max(px minWidth, szerokość toru) — dokładnie warunek przepełnienia. Po
+    // naprawie minWidth jest puste → siatka = tor → plakietka right:4px mieści
+    // się w viewport. Mutacja (przywróć px minWidth w planMode) → right >
+    // clientWidth → RED.
+    const TRACK_W = 700;
+    Object.defineProperty(track, 'clientWidth', { value: TRACK_W, configurable: true });
+    const gridWidth = () => Math.max(Number.parseInt(grid.style.minWidth || '0', 10) || 0, TRACK_W);
+    const badge = screen
+      .getByText('Starts Jan 12 — outside this horizon')
+      .closest('.absolute') as HTMLElement;
+    expect(badge.className).toContain('right-1');
+    // Plakietka zakotwiczona right-1 (4px) → jej prawa krawędź = gridWidth - 4.
+    expect(gridWidth() - 4).toBeLessThanOrEqual(track.clientWidth);
+  });
+
+  it('etap 1b P2-2: nazwa w kolumnie ma line-clamp-2 (nie 1-liniowy truncate) — SPEC §3.1', () => {
+    renderPlan({ planStatus: 'DRAFT' });
+    const name = screen.getByText('Energy Monitoring and ISO 50001');
+    expect(name.className).toContain('line-clamp-2');
+    expect(name.className).not.toContain('truncate');
+    // Rola (druga linia) zostaje 1-liniowa z elipsą wg SPEC §3.1.
+    const meta = screen.getByText('Planned · Energy lead');
+    expect(meta.className).toContain('truncate');
+  });
 });
 
 describe('PlanCard — centrum karty planu pod flagą VITE_PLAN_TIMELINE_V2 (pkt 7)', () => {

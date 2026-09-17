@@ -1,4 +1,4 @@
-# RECEIPT — C6 etap 1: oś czasu planu (DEC-615, SPEC §8) + bramka §7.5
+# RECEIPT — C6 etap 1 + etap 1b: oś czasu planu (DEC-615, SPEC §8) + bramka §7.5
 
 Data: 2026-09-17 · Stanowisko: C · Gałąź: `qoder/plan-timeline-v2-20260917`
 Baza gałęzi: `origin/integracja/20260911` = `e7b784b5c0` (punkt wyjścia); po rebase: `fa075366be`.
@@ -139,3 +139,95 @@ MARTWE — do czystki, nie do adopcji: `src/components/RoadmapGantt.tsx` (1136),
 `src/components/Portfolio/PortfolioTimelineView.tsx` (403, tylko barrel),
 `src/components/Execution/ExecutionWorkloadView.tsx` (772, import bez użycia).
 **Nie wykonywano żadnej unifikacji w tym zleceniu.**
+
+---
+
+# ETAP 1b (Wpis 74) — domknięcie 2×P2 + P3 po odbiorze CTO
+
+Zakres: wyłącznie `InitiativeGantt.tsx` (P2-1, P2-2) i fikstura harnessu (P3). `PlanCard.tsx`
+NIE dotknięty (P2-1 naprawione w Gantcie, zgodnie ze zleceniem).
+
+## P2-1 — overflow poziomy chował dowód „poza horyzontem"
+
+Przyczyna zmierzona: `gridMinWidth = max(480, totalDays × PX_PER_DAY[zoom])` dawał przy 14 kolumnach
+(98 dni × 9px) ≈ 882px minWidth na torze ~700px, a kontener `overflow-x-auto` przewijał prawą krawędź
+z plakietką poza widok. Naprawa: w trybie planu `gridMinWidth = undefined` (siatka flex wypełnia tor,
+kolumny = szerokość/N) i kontener `overflow-hidden` zamiast `overflow-x-auto`; oś legacy (bez
+`rowLabels`) bez zmian (minWidth + przewijanie zostają).
+Test: „etap 1b P2-1" — przy 8 inicjatywach i horyzoncie 3 mies. brak `overflow-x-auto`, brak px
+`minWidth`, a symulowana szerokość siatki = max(px minWidth, szerokość toru) mieści plakietkę
+(`gridWidth − 4 ≤ track.clientWidth`, plakietka ma `right-1`).
+Mutacja: przywrócenie px `minWidth` → `minWidth='756px'` → 752 > 700 → test CZERWONY. ZABITA.
+
+## P2-2 — kolumna nazw: `truncate` → `line-clamp-2`
+
+Zgodnie ze SPEC §3.1 (nazwa 11.6px/600, `line-clamp:2`). Konsekwencja: `PLAN_ROW_H` 40 → 52px,
+bo dwuliniowa nazwa (~28px) + linia roli (~13px) + `py-1` nie mieściły się w 40px i druga linia
+wylewała się z komórki o stałej wysokości.
+Test: „etap 1b P2-2" — asercja klasy `line-clamp-2` (i brak `truncate`) na nazwie oraz `truncate`
+na linii roli (meta ma zostać jednoliniowa z elipsą, SPEC §3.1).
+Mutacja: przywrócenie `truncate` na nazwie → test CZERWONY. ZABITA.
+
+## P3 — fikstura bez `roleDemand`
+
+`z3x-inicjatywy-plan.tsx`: dodane `role` do 8 inicjatyw i `roleDemand[].roleLabel` do okien, dzięki
+czemu drugi wiersz etykiety („Planned · Energy lead" itd.) renderuje się w dowodzie jak w makiecie.
+`ganttRowLabels` w `PlanCard.tsx:359–382` czyta `roleDemand[].roleLabel` — bez zmian.
+
+## Testy etapu 1b
+
+| Plik | Testy | Wynik |
+|---|---|---|
+| `InitiativeGantt.planTimeline.test.tsx` | 10 (8 z etapu 1 + 2 nowe) | 10 passed |
+| `InitiativeGantt.frozenWindows.test.tsx` | 6 | 6 passed |
+| `InitiativeGantt.planHorizon.test.tsx` | 1 | 1 passed |
+| `planTimelineV2Flag.test.ts` | 1 | 1 passed |
+| **RAZEM (4 pliki)** | **18** | **18 passed** |
+
+Czerwone ZASTANE (6, identyczne na bazie `27f6bb5ea9`): `tests/components/Initiatives/`
+{render, features, drag-reschedule, rollback}.test.tsx — asercje legacy (`bg-primary-500`,
+today-marker) sprzed tokenizacji; moja zmiana dodaje 0 nowych czerwonych.
+
+## Zrzuty etapu 1b + porównanie z makietą
+
+4 zrzuty 1440×900 EN, ten sam harness, motyw przez zustand, `--bez-chrome`, konsola czysta
+(`KONSOLA-BLEDY` brak we wszystkich 4): `evidence/qoder-gantt-pl3-etap1b-20260917/pl3-{light,dark}-{draft,published}.png`.
+Zrzut obejmuje oś (sekcja „Dependencies and conflicts" przewinięta do siatki), więc dowody są widoczne:
+
+- **Plakietka „Starts Jan 12 — outside this horizon →"** widoczna przy PRAWEJ krawędzi toru we
+  wszystkich 4 zrzutach (zmierzone: `badge.right = 1048 ≤ 1440`); w etapie 1 była za przewinięciem.
+- **Nazwy w 2 liniach** (`line-clamp-2`): „Energy Monitoring and ISO 50001" i „Predictive Maintenance
+  for CNC Line" łamią się na 2 linie, nic nie ucięte elipsą.
+- **Role widoczne**: „Planned · Energy lead", „Planned · Quality lead", „In execution · Maintenance" itd.
+- **14 kolumn tygodniowych (Sep 14 – Dec 14) mieści się w całości bez przewijania poziomego** —
+  jak makieta mieści swoje 12; geometria w DNIACH bez zmian (tabela etapu 1 nadal ważna).
+- PUBLISHED: notice read-only + „Create a new version (draft)", zero uchwytów drag (bez zmian).
+
+Różnice wobec makiety pozostające (wypisane, poza zakresem 1b): horyzont 14 vs 12 kolumn
+(`ganttRange` = dziś + 3 mies., `PlanCard.tsx:295–301`, poza dozwolonym zakresem → propozycja etapu 2);
+wysokość wiersza 52px stałe vs makieta `.lrow{flex:1}`; legenda 5 vs 6 pozycji („Conflict" = etap 3).
+
+## Kontrast ponownie dla zmienionych miejsc (próg 4.5:1)
+
+| Miejsce (zmienione w 1b) | Jasny | Ciemny |
+|---|---|---|
+| nazwa w kolumnie (`line-clamp-2`) | 17.85 (#0f172a na #ffffff) | 16.61 (#f4f7fb na #0f172a) |
+| linia roli (nowo widoczna) | 4.76 (#64748b na #ffffff) | 6.18 (#8a99b0 na #0f172a) |
+| plakietka „poza horyzontem" (nowo widoczna) | 4.76 (#64748b na #ffffff) | 6.18 (#8a99b0 na #0f172a) |
+
+Metoda: próbka pikselowa zrzutu (modalny kolor tekstu vs modalne tło) dla nazwy i roli; dla
+plakietki (tekst 10px, silny antyaliasing zniekształca próbkę modalną) kolor tekstu z computed
+style (`rgb(100,116,139)` / `rgb(138,153,176)`) na tle powierzchni, liczony `scripts/contrast-ratio.mjs`.
+Wszystkie ≥4.5:1 w obu motywach.
+
+## Bramki etapu 1b (obie liczby)
+
+| Bramka | Wynik |
+|---|---|
+| `cd server && npx tsc --noEmit -p tsconfig.json` | exit 0 (0 błędów) |
+| front `tsc --noEmit` | 167 = baza 167 (delta 0) |
+| `bash scripts/check-list-canon.sh` | 346 / baseline 346 |
+| `bash scripts/check-artefakt.sh` | 8 / baseline 8 |
+| `npm run check:jezyk:ci` | OK (nic nie wzrosło; spadki K4obj −4, K5en −1, K8sen −3) |
+| `npm run check:flagi:dockerfile` | `analyzedFlags=198 brakujace=0` |
+| `NODE_OPTIONS=--max-old-space-size=8192 npm run build` | exit 0 |
