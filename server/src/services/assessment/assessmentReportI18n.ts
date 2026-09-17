@@ -373,6 +373,12 @@ export interface ReportI18nShape {
    * eksportów przez `methodologySourceLegacy`/deck "Methodology:" bullet. */
   legacyMethodVersionLabel: string;
 
+  /** Jedyne `limitations[]` oceny ZASTANEJ — zdanie wstawiane dotąd na sztywno
+   * PO POLSKU w `assessmentLegacyReportContractService.ts`. Silnik narracji
+   * cytuje je dosłownie do `finalConclusions`, więc w raporcie EN wyciekało 6
+   * polskich diakrytyków. Rodzeństwo długu `legacyMethodVersionLabel` — DEC-461/R1. */
+  legacyLimitation: string;
+
   sectionPlaceholder: string;
   areaNotAssessedSentence: (unitId: string) => string;
   areaCommentPlaceholder: (unitId: string) => string;
@@ -545,6 +551,8 @@ const pl: ReportI18nShape = {
   methodologyName: 'Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD',
   legacyMethodVersionLabel:
     'DRD 7 osi / 39 obszarów (ocena zastana — bez przypiętej wersji paczki)',
+  legacyLimitation:
+    'Wynik pochodzi z oceny prowadzonej w warsztacie DRD (magazyn zastany), nie z zamrożonego Outputu jądra metodycznego — poziomy są zadeklarowane, bez załączonych dowodów.',
 
   sectionPlaceholder:
     'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.',
@@ -732,6 +740,8 @@ const en: ReportI18nShape = {
   methodologyName: 'Digital Pathfinder — DRD digital maturity assessment methodology',
   legacyMethodVersionLabel:
     'DRD 7 axes / 39 areas (legacy-store assessment — no method-pack version pinned)',
+  legacyLimitation:
+    'The result comes from an assessment run in the DRD workshop (legacy store), not from a frozen method-core Output — the levels are declared, without attached evidence.',
 
   sectionPlaceholder:
     'No content in this section — the assessment does not contain the data needed to write it.',

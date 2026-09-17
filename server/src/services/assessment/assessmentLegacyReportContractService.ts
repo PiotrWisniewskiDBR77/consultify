@@ -243,10 +243,10 @@ export class AssessmentLegacyReportContractService {
 
     // Ograniczenie NIE jest ozdobnikiem — to jedyne miejsce, w którym dokument
     // mówi czytelnikowi, że ma przed sobą projekcję oceny warsztatowej, a nie
-    // zamrożony wynik jądra z dowodami.
-    const limitations = [
-      'Wynik pochodzi z oceny prowadzonej w warsztacie DRD (magazyn zastany), nie z zamrożonego Outputu jądra metodycznego — poziomy są zadeklarowane, bez załączonych dowodów.',
-    ];
+    // zamrożony wynik jądra z dowodami. Treść żyje w `reportI18n` (DEC-461/R1):
+    // zaszyta tu na sztywno PO POLSKU wyciekała do `finalConclusions` raportu
+    // EN — silnik narracji cytuje `limitations` dosłownie, niezależnie od języka.
+    const limitations = [reportI18n(language).legacyLimitation];
 
     const input: ReportContractInput = {
       sessionId: assessment.id,

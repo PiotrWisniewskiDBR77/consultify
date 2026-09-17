@@ -50,6 +50,7 @@ import {
   type ReportContractInput,
 } from '../assessmentReportContractComposer.js';
 import { formatEmployeeCount } from '../assessmentReportContractService.js';
+import { reportI18n } from '../assessmentReportI18n.js';
 
 const POLSKIE_DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/gu;
 
@@ -288,5 +289,98 @@ describe('K3 / W73 — narracja oceny z findingami jest zgodna z językiem rapor
     expect(createHash('sha256').update(JSON.stringify(blocks)).digest('hex')).toBe(
       'dd2ed604dc34e2ae3b9f2c78646e00506ba2dcfdba90e061a641f918ad762074'
     );
+  });
+});
+
+/**
+ * [ODMROZENIE 03_ASSESSMENT DEC-461] R1 — OGRANICZENIE OCENY ZASTANEJ NIE
+ * WYCIEKA PO POLSKU DO RAPORTU EN.
+ *
+ * ★ POMIAR, KTÓRY TEN BLOK PILNUJE. `assessmentLegacyReportContractService.ts`
+ * wstawiał na sztywno POLSKIE zdanie do `limitations[]`; silnik narracji cytuje
+ * je dosłownie do `finalConclusions` niezależnie od `language`, więc raport
+ * legacy EN drukował **6 polskich diakrytyków** w syntezie (zmierzone na
+ * kontrakcie `language:'en'` z niepustym `limitations`). Fixture G1 wyżej tego
+ * nie łapał, bo używa `limitations: []`. Treść żyje teraz w
+ * `reportI18n(language).legacyLimitation` — PL bajt w bajt jak dotąd.
+ *
+ * DOWÓD MUTACYJNY: podmiana `narrativeEn`/`en.legacyLimitation` na polski wariant
+ * (albo powrót serwisu do literału) robi test EN czerwonym.
+ */
+const LEGACY_LIMITATION_PL_HISTORYCZNY =
+  'Wynik pochodzi z oceny prowadzonej w warsztacie DRD (magazyn zastany), nie z ' +
+  'zamrożonego Outputu jądra metodycznego — poziomy są zadeklarowane, bez załączonych dowodów.';
+
+describe('R1 / DEC-461 — ograniczenie legacy zgodne z językiem raportu', () => {
+  const zOgraniczeniem = (language: 'pl' | 'en'): AssessmentReportContract =>
+    kontrakt({
+      language,
+      limitations: [reportI18n(language).legacyLimitation],
+      findings: AXIS_IDS.map((axisId) => ({
+        id: `legacy:assess-r1:${axisId}A`,
+        outputId: 'legacy:assess-r1',
+        unitId: `${axisId}A`,
+        unitName: `Area ${axisId}A`,
+        currentLevel: 2,
+        targetLevel: 5,
+        gap: 3,
+        supportingEvidence: [],
+        contradictingEvidence: [],
+        businessMeaning: '',
+        rootCauseHypothesis: null,
+        riskOrOpportunity: null,
+        recommendation: '',
+        prerequisite: null,
+        expectedOutcome: null,
+        kpiProposal: null,
+        confidence: 'medium' as const,
+        priorityRationale: null,
+        sourceLocators: [],
+        createdAt: '2026-09-06T06:29:09.104Z',
+      })),
+    });
+
+  it('slot i18n: PL bajt w bajt jak historyczny literał, EN bez polskich znaków', () => {
+    expect(reportI18n('pl').legacyLimitation).toBe(LEGACY_LIMITATION_PL_HISTORYCZNY);
+    expect(reportI18n('en').legacyLimitation).not.toMatch(POLSKIE_DIAKRYTYKI);
+  });
+
+  it('EN: finalConclusions z niepustym limitations ma 0 polskich diakrytyków', () => {
+    const finalConclusions = zOgraniczeniem('en').finalConclusions;
+    expect(finalConclusions).toBeTruthy();
+    expect(finalConclusions).not.toMatch(POLSKIE_DIAKRYTYKI);
+    // Ograniczenie MUSI trafić do syntezy — inaczej test niczego nie pilnuje.
+    expect(finalConclusions).toContain(reportI18n('en').legacyLimitation);
+  });
+
+  it('PL: finalConclusions cytuje ograniczenie dosłownie (bez zmiany treści)', () => {
+    const finalConclusions = zOgraniczeniem('pl').finalConclusions;
+    expect(finalConclusions).toBeTruthy();
+    expect(finalConclusions).toContain(LEGACY_LIMITATION_PL_HISTORYCZNY);
+  });
+
+  it('DOCX EN z niepustym limitations ma 0 polskich znaków', async () => {
+    const xml = await tekstDokumentu(zOgraniczeniem('en'), 'Northwind Manufacturing Ltd.');
+    expect(xml.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
+  });
+
+  it('PPTX i PDF EN z niepustym limitations mają 0 polskich znaków w warstwie tekstowej', async () => {
+    const model = buildAssessmentDeckModel(zOgraniczeniem('en'), 'Northwind Manufacturing Ltd.');
+    const pptx = await renderAssessmentDeckPptx(model);
+    const zip = await JSZip.loadAsync(pptx);
+    const slideNames = Object.keys(zip.files).filter((name) =>
+      /^ppt\/slides\/slide\d+\.xml$/u.test(name)
+    );
+    const slideXml = (
+      await Promise.all(slideNames.map((name) => zip.file(name)!.async('string')))
+    ).join('\n');
+
+    const pdf = await renderAssessmentDeckPdf(model);
+    const parser = new PDFParse({ data: pdf });
+    const pdfText = String((await parser.getText()).text ?? '');
+    await parser.destroy();
+
+    expect(slideXml.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
+    expect(pdfText.match(POLSKIE_DIAKRYTYKI) ?? []).toHaveLength(0);
   });
 });
