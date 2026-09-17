@@ -29,6 +29,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createMeetingAgendaItem,
   deleteMeetingAgendaItem,
+  getMeetingAgendaItem,
   listMeetingAgendaItems,
   MeetingLifecycleTransitionError,
   setMeetingLifecycle,
@@ -58,6 +59,14 @@ if (IN_CI && !DB_TESTS_DEMANDED) {
 const ORG = 'org-mtg1-agenda';
 const CREATOR = 'user-mtg1-creator';
 const MEETING = 'meeting-mtg1-agenda';
+
+// P2 (KANAL Wpis 48): druga organizacja z własnym spotkaniem i punktem agendy.
+// Każdy odczyt/zapis serwisu wywołany z `organizationId` org A na tych danych
+// musi być pusty / null / 0 zmian.
+const ORG_B = 'org-mtg1-agenda-other';
+const CREATOR_B = 'user-mtg1-creator-other';
+const MEETING_B = 'meeting-mtg1-agenda-other';
+let agendaItemB = '';
 
 let adminPool: pg.Pool | null = null;
 let sharedPool: pg.Pool | null = null;
@@ -166,6 +175,42 @@ beforeAll(async () => {
      ON CONFLICT (id) DO UPDATE SET lifecycle_state = 'scheduled'`,
     [MEETING, ORG, CREATOR]
   );
+
+  // ---- (B2) druga organizacja: cel próby izolacji org (P2) ----
+  await sharedPool.query(
+    `INSERT INTO organizations (id, name, created_at) VALUES ($1, 'MTG1 Agenda Other', now())
+     ON CONFLICT (id) DO NOTHING`,
+    [ORG_B]
+  );
+  await sharedPool.query(
+    `INSERT INTO users (id, organization_id, email, first_name, last_name, role, status)
+     VALUES ($1, $2, 'mtg1-other@example.invalid', 'Mtg', 'Other', 'ADMIN', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [CREATOR_B, ORG_B]
+  );
+  await sharedPool.query(
+    `INSERT INTO meetings (id, organization_id, title, start_at, end_at, status, created_by, lifecycle_state)
+     VALUES ($1, $2, 'MTG1 other-org meeting', '2026-09-23T09:00:00Z', '2026-09-23T10:00:00Z', 'scheduled', $3, 'scheduled')
+     ON CONFLICT (id) DO UPDATE SET lifecycle_state = 'scheduled'`,
+    [MEETING_B, ORG_B, CREATOR_B]
+  );
+  const existingB = await sharedPool.query(
+    `SELECT id FROM meeting_agenda_items WHERE organization_id = $1 AND meeting_id = $2 LIMIT 1`,
+    [ORG_B, MEETING_B]
+  );
+  agendaItemB =
+    existingB.rows[0]?.id ||
+    (
+      await createMeetingAgendaItem({
+        organizationId: ORG_B,
+        meetingId: MEETING_B,
+        title: 'Other-org confidential agenda point',
+        durationMinutes: 20,
+        purpose: 'decision',
+        leadUserId: CREATOR_B,
+      })
+    ).id;
+
   usable = true;
 }, 180_000);
 
@@ -174,10 +219,18 @@ afterAll(async () => {
     await sharedPool
       .query(`DELETE FROM meeting_agenda_items WHERE organization_id = $1`, [ORG])
       .catch(() => undefined);
+    await sharedPool
+      .query(`DELETE FROM meeting_agenda_items WHERE organization_id = $1`, [ORG_B])
+      .catch(() => undefined);
     await sharedPool.query(`DELETE FROM meetings WHERE id = $1`, [MEETING]).catch(() => undefined);
+    await sharedPool.query(`DELETE FROM meetings WHERE id = $1`, [MEETING_B]).catch(() => undefined);
     await sharedPool.query(`DELETE FROM users WHERE id = $1`, [CREATOR]).catch(() => undefined);
+    await sharedPool.query(`DELETE FROM users WHERE id = $1`, [CREATOR_B]).catch(() => undefined);
     await sharedPool
       .query(`DELETE FROM organizations WHERE id = $1`, [ORG])
+      .catch(() => undefined);
+    await sharedPool
+      .query(`DELETE FROM organizations WHERE id = $1`, [ORG_B])
       .catch(() => undefined);
     await sharedPool.end().catch(() => undefined);
     sharedPool = null;
@@ -300,6 +353,43 @@ describe('MTG-1 agenda + lifecycle (real PG)', () => {
     await expect(
       setMeetingLifecycle({ organizationId: ORG, meetingId: MEETING, nextState: 'scheduled' })
     ).rejects.toBeInstanceOf(MeetingLifecycleTransitionError);
+  });
+
+  // P2 (KANAL Wpis 48): mutacja „usuń `organization_id = ?` z
+  // listMeetingAgendaItems" zostawała ZIELONA, bo żaden test nie mierzył
+  // izolacji org na poziomie serwisu. Kontrola pozytywna (te same wywołania z
+  // org B widzą punkt) jest częścią testu — bez niej puste wyniki mogłyby być
+  // fałszywą zielenią z niesprawnych fixture'ów.
+  guard('agenda service never crosses the organization boundary', async () => {
+    expect(agendaItemB).not.toBe('');
+
+    // Kontrola pozytywna: właściciel danych je widzi.
+    await expect(
+      listMeetingAgendaItems({ organizationId: ORG_B, meetingId: MEETING_B })
+    ).resolves.toHaveLength(1);
+    const own = await getMeetingAgendaItem({ organizationId: ORG_B, itemId: agendaItemB });
+    expect(own?.title).toBe('Other-org confidential agenda point');
+
+    // Obca organizacja: pusto / null / 0 zmian.
+    await expect(
+      listMeetingAgendaItems({ organizationId: ORG, meetingId: MEETING_B })
+    ).resolves.toEqual([]);
+    await expect(
+      getMeetingAgendaItem({ organizationId: ORG, itemId: agendaItemB })
+    ).resolves.toBeNull();
+    await expect(
+      updateMeetingAgendaItem({ organizationId: ORG, itemId: agendaItemB, title: 'Hijacked' })
+    ).resolves.toBeNull();
+    await expect(
+      deleteMeetingAgendaItem({ organizationId: ORG, itemId: agendaItemB })
+    ).resolves.toBe(false);
+
+    const untouched = await sharedPool!.query(
+      `SELECT title FROM meeting_agenda_items WHERE id = $1`,
+      [agendaItemB]
+    );
+    expect(untouched.rows).toHaveLength(1);
+    expect(untouched.rows[0].title).toBe('Other-org confidential agenda point');
   });
 
   // DbPromise's default `fallback: true` swallows a DB error into [] / null, so
