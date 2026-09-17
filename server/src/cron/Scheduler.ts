@@ -316,6 +316,17 @@ export const Scheduler = {
     this.jobs.push(registerWorkSignalProducerJob());
     this.jobs.push(registerWorkSignalInterpreterJob());
 
+    // SR-1 Showcase Date-Roll — nightly, default OFF behind ENABLE_SHOWCASE_DATE_ROLL.
+    // Registration only; the tick itself gates on the flag and SHOWCASE_ORG_IDS.
+    try {
+      const { registerShowcaseDateRollJob } = await import(
+        '../services/showcase/showcaseDateRollScheduler.js'
+      );
+      this.jobs.push(registerShowcaseDateRollJob());
+    } catch (err: any) {
+      logger.warn('[Scheduler] Showcase date-roll job not registered:', err?.message || err);
+    }
+
     // 7c. Initiative Auto-Start by timeline - Run every 5 minutes
     const job7c = cron.schedule('*/5 * * * *', async () => {
       try {

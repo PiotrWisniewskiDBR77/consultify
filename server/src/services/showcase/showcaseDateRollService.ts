@@ -14,27 +14,35 @@
  * Adding a group-(c) column to SHOWCASE_DATE_FIELDS requires a new [A] entry.
  */
 
+import { all as dbAll, transaction as dbTransaction } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
+
 /**
- * Storage kind of a planning column. The roll needs three write paths because
- * the group-(a) columns are heterogeneous on the live schema:
- *  - 'text'      → UTC ISO-8601 string ('YYYY-MM-DDTHH:MM:SS.sssZ'); shifted by
- *                  parsing, adding days, and re-serializing byte-for-byte so the
- *                  lexical range filters (start_at < E, deadline >= S AND < E)
- *                  keep working.
- *  - 'timestamp' → timestamp / timestamptz; shifted with `col + (n days)`.
- *  - 'date'      → date; shifted with `col + (n days)`.
+ * Storage kind of a planning column. The roll needs distinct write paths
+ * because the group-(a) columns are heterogeneous on the live schema:
+ *  - 'text'        → UTC ISO-8601 string. Shifted by parsing, adding days and
+ *                    re-serializing byte-for-byte so the lexical range filters
+ *                    (start_at < E, deadline >= S AND < E) keep working. Both
+ *                    canonical forms are preserved: date-only stays date-only,
+ *                    an ISO timestamp stays 'YYYY-MM-DDTHH:MM:SS.sssZ'. Anything
+ *                    else is left untouched (defensive — never corrupt/crash).
+ *  - 'timestamp'   → timestamp WITHOUT time zone; `col + make_interval(days)`.
+ *  - 'timestamptz' → timestamp WITH time zone; normalized to UTC wall time,
+ *                    shifted by whole calendar days, re-anchored as UTC so the
+ *                    result is independent of the session TimeZone (DST-safe).
+ *  - 'date'        → date; `col + integer` (whole days, no time component).
  */
-export type ShowcaseDateColumnKind = 'text' | 'timestamp' | 'date';
+export type ShowcaseDateColumnKind = 'text' | 'timestamp' | 'timestamptz' | 'date';
 
 export interface ShowcaseDateColumn {
   /** Physical column name. */
   column: string;
-  /** Which of the three write paths shifts this column. */
+  /** Which write path shifts this column. */
   kind: ShowcaseDateColumnKind;
 }
 
 export interface ShowcaseDateTable {
-  /** Physical table name. */
+  /** Physical table name (all group-(a) tables live in the `public` schema). */
   table: string;
   /** Column that scopes rows to an organization (all group-(a) tables use this). */
   orgColumn: string;
@@ -53,7 +61,7 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
     table: 'tasks',
     orgColumn: 'organization_id',
     columns: [
-      { column: 'due_date', kind: 'timestamp' },
+      { column: 'due_date', kind: 'timestamptz' },
       { column: 'milestone_target_date', kind: 'date' },
       { column: 'sla_due_at', kind: 'text' },
     ],
@@ -80,8 +88,8 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
     columns: [
       { column: 'planned_start_date', kind: 'text' },
       { column: 'planned_end_date', kind: 'text' },
-      { column: 'start_date', kind: 'timestamp' },
-      { column: 'end_date', kind: 'timestamp' },
+      { column: 'start_date', kind: 'timestamptz' },
+      { column: 'end_date', kind: 'timestamptz' },
       { column: 'baseline_start_date', kind: 'text' },
       { column: 'baseline_end_date', kind: 'text' },
       { column: 'forecast_start_date', kind: 'text' },
@@ -133,7 +141,7 @@ export interface ShowcaseRollOrgResult {
   deltaDays: number;
   /** Rows shifted per physical table (delta 0 → every count 0). */
   perTable: Record<string, number>;
-  /** Set when the org was not rolled (e.g. first run initialized the watermark, or dry-run). */
+  /** Set when the org was not rolled (first run / up-to-date / dry-run / error). */
   skipped?: string;
 }
 
@@ -145,26 +153,251 @@ export interface RollShowcaseDatesInput {
   today: Date;
   /** Showcase org IDs to roll (from SHOWCASE_ORG_IDS — by ID, never by name). */
   orgIds: string[];
-  /** When true, compute the delta and counts without writing any row. */
+  /** When true, compute the delta and candidate counts without writing any row. */
   dryRun?: boolean;
 }
 
-/**
- * Rolls planning dates forward for the given showcase orgs.
- *
- * Contract (mechanics land in Wpis 31 §4.2):
- *  - delta = floor((today − last_rolled_on) / 1 day); first run (no watermark row)
- *    initializes last_rolled_on = today WITHOUT shifting (delta 0, skipped).
- *  - one transaction per org; all group-(a) columns shifted by the same delta.
- *  - idempotent: a second pass the same day has delta 0 → 0 changes.
- *  - never touches orgs outside `orgIds`.
- */
-export async function rollShowcaseDates(
-  _input: RollShowcaseDatesInput
-): Promise<ShowcaseRollResult> {
-  // Contract stub; real mechanics land in Wpis 31 §4.2. Technical (snake_case)
-  // code on purpose so the J0 language gate does not count it as EN prose.
-  throw new Error('showcase_date_roll_not_implemented');
+// ---------------------------------------------------------------------------
+// Dependency injection (the service must be testable with an injected
+// connection — Wpis 31 §4.2). Structurally compatible with utils/DbPromise.
+// ---------------------------------------------------------------------------
+
+export interface ShowcaseRollStatement {
+  sql: string;
+  params: unknown[];
 }
 
-export default { rollShowcaseDates, SHOWCASE_DATE_FIELDS };
+export interface ShowcaseRollRunResult {
+  success: boolean;
+  changes?: number;
+  error?: string;
+}
+
+export interface ShowcaseRollTransactionResult {
+  success: boolean;
+  results: ShowcaseRollRunResult[];
+  error?: string;
+}
+
+export interface ShowcaseRollDb {
+  all<T = any>(sql: string, params?: unknown[]): Promise<T[]>;
+  transaction(statements: ShowcaseRollStatement[]): Promise<ShowcaseRollTransactionResult>;
+}
+
+const defaultDb: ShowcaseRollDb = {
+  all: <T,>(sql: string, params?: unknown[]): Promise<T[]> => dbAll<T>(sql, params),
+  transaction: (statements: ShowcaseRollStatement[]) => dbTransaction(statements),
+};
+
+// ---------------------------------------------------------------------------
+// Date helpers (all arithmetic in UTC whole days — deterministic, DST-safe).
+// ---------------------------------------------------------------------------
+
+const MS_PER_DAY = 86_400_000;
+
+/** Format a Date as a UTC 'YYYY-MM-DD' date-only string. */
+export function toUtcDateOnly(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Coerce a stored watermark (DATE → string 'YYYY-MM-DD' or a Date) to UTC midnight. */
+function parseWatermark(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
+
+/**
+ * delta = today − lastRolledOn, in whole UTC days (floored). Exposed for unit
+ * tests. Both operands are reduced to UTC midnight so the time-of-day of `today`
+ * never changes the result.
+ */
+export function computeDeltaDays(today: Date, lastRolledOn: Date): number {
+  const t = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const l = Date.UTC(
+    lastRolledOn.getUTCFullYear(),
+    lastRolledOn.getUTCMonth(),
+    lastRolledOn.getUTCDate()
+  );
+  return Math.floor((t - l) / MS_PER_DAY);
+}
+
+// ---------------------------------------------------------------------------
+// SQL builders. $1 = orgId, $2 = delta (whole days, integer).
+// ---------------------------------------------------------------------------
+
+/** Canonical date-only text: '2026-09-17'. */
+const TEXT_DATE_ONLY = String.raw`^\d{4}-\d{2}-\d{2}$`;
+/** Canonical UTC ISO timestamp with an explicit Z/offset: '2026-09-17T00:00:00.000Z'. */
+const TEXT_ISO_TS = String.raw`^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})$`;
+
+function shiftExpression(col: string, kind: ShowcaseDateColumnKind): string {
+  const q = `"${col}"`;
+  switch (kind) {
+    case 'date':
+      return `(${q} + $2::int)`;
+    case 'timestamp':
+      return `(${q} + make_interval(days => $2::int))`;
+    case 'timestamptz':
+      return `(((${q} AT TIME ZONE 'UTC') + make_interval(days => $2::int)) AT TIME ZONE 'UTC')`;
+    case 'text':
+      return (
+        `(CASE` +
+        ` WHEN ${q} ~ '${TEXT_DATE_ONLY}' THEN to_char((${q}::date + $2::int), 'YYYY-MM-DD')` +
+        ` WHEN ${q} ~ '${TEXT_ISO_TS}' THEN to_char(((${q}::timestamptz AT TIME ZONE 'UTC') + make_interval(days => $2::int)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')` +
+        ` ELSE ${q} END)`
+      );
+  }
+}
+
+function anyNotNull(columns: ShowcaseDateColumn[]): string {
+  return columns.map((c) => `"${c.column}" IS NOT NULL`).join(' OR ');
+}
+
+/** One UPDATE per table shifting every group-(a) column by $2 for org $1. */
+function buildTableUpdateSql(t: ShowcaseDateTable): string {
+  const sets = t.columns.map((c) => `"${c.column}" = ${shiftExpression(c.column, c.kind)}`).join(', ');
+  return (
+    `UPDATE public."${t.table}" SET ${sets} ` +
+    `WHERE "${t.orgColumn}" = $1 AND (${anyNotNull(t.columns)})`
+  );
+}
+
+/** dryRun candidate count: org rows with at least one non-null group-(a) column. */
+function buildTableCountSql(t: ShowcaseDateTable): string {
+  return (
+    `SELECT count(*)::int AS n FROM public."${t.table}" ` +
+    `WHERE "${t.orgColumn}" = $1 AND (${anyNotNull(t.columns)})`
+  );
+}
+
+const UPSERT_WATERMARK_SQL =
+  `INSERT INTO public.showcase_date_roll (org_id, last_rolled_on, updated_at) ` +
+  `VALUES ($1, $2::date, now()) ` +
+  `ON CONFLICT (org_id) DO UPDATE SET last_rolled_on = EXCLUDED.last_rolled_on, updated_at = now()`;
+
+// ---------------------------------------------------------------------------
+// Per-org roll.
+// ---------------------------------------------------------------------------
+
+async function rollOne(
+  db: ShowcaseRollDb,
+  orgId: string,
+  today: Date,
+  dryRun: boolean
+): Promise<ShowcaseRollOrgResult> {
+  const todayIso = toUtcDateOnly(today);
+
+  // Cast to text so the DATE always arrives as 'YYYY-MM-DD' — the pg driver
+  // otherwise returns a local-midnight Date whose UTC parts can be off by one
+  // day for timezones ahead of UTC.
+  const rows = await db.all<{ last_rolled_on: unknown }>(
+    'SELECT last_rolled_on::text AS last_rolled_on FROM public.showcase_date_roll WHERE org_id = $1',
+    [orgId]
+  );
+  const last = rows.length > 0 ? parseWatermark(rows[0]?.last_rolled_on) : null;
+
+  // First run for this org: initialize the watermark WITHOUT shifting anything.
+  if (!last) {
+    if (!dryRun) {
+      await db.transaction([{ sql: UPSERT_WATERMARK_SQL, params: [orgId, todayIso] }]);
+    }
+    return {
+      orgId,
+      lastRolledOn: todayIso,
+      deltaDays: 0,
+      perTable: {},
+      skipped: dryRun ? 'initialized_dry_run' : 'initialized',
+    };
+  }
+
+  const lastIso = toUtcDateOnly(last);
+  const delta = computeDeltaDays(today, last);
+
+  // Idempotent: a second pass the same day has delta 0 → 0 changes, no write.
+  if (delta === 0) {
+    return { orgId, lastRolledOn: lastIso, deltaDays: 0, perTable: {}, skipped: 'up_to_date' };
+  }
+
+  // Defensive: never roll backwards (clock skew / manual watermark edit).
+  if (delta < 0) {
+    logger.warn(
+      `[ShowcaseRoll] org ${orgId}: negative delta ${delta} (today ${todayIso} < watermark ${lastIso}); skipping`
+    );
+    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'negative_delta' };
+  }
+
+  const perTable: Record<string, number> = {};
+
+  if (dryRun) {
+    for (const t of SHOWCASE_DATE_FIELDS) {
+      const r = await db.all<{ n: number }>(buildTableCountSql(t), [orgId]);
+      perTable[t.table] = Number(r[0]?.n ?? 0);
+    }
+    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable, skipped: 'dry_run' };
+  }
+
+  // One transaction per org: all table UPDATEs + the watermark upsert, atomically.
+  const statements: ShowcaseRollStatement[] = SHOWCASE_DATE_FIELDS.map((t) => ({
+    sql: buildTableUpdateSql(t),
+    params: [orgId, delta],
+  }));
+  statements.push({ sql: UPSERT_WATERMARK_SQL, params: [orgId, todayIso] });
+
+  const tx = await db.transaction(statements);
+  if (!tx.success) {
+    logger.error(`[ShowcaseRoll] org ${orgId}: transaction failed: ${tx.error}`);
+    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'error' };
+  }
+
+  // results[i] aligns with SHOWCASE_DATE_FIELDS[i]; the last result is the upsert.
+  SHOWCASE_DATE_FIELDS.forEach((t, i) => {
+    perTable[t.table] = Number(tx.results[i]?.changes ?? 0);
+  });
+  logger.info(`[ShowcaseRoll] org ${orgId}: rolled +${delta}d`, { perTable });
+
+  return { orgId, lastRolledOn: todayIso, deltaDays: delta, perTable };
+}
+
+/**
+ * Factory returning a `roll` bound to an injected connection — the seam used by
+ * unit tests (Wpis 31 §4.2: "testable via build/roll with an injected
+ * connection"). Production callers use `rollShowcaseDates` (default DbPromise).
+ */
+export function buildShowcaseDateRoll(db: ShowcaseRollDb = defaultDb) {
+  return {
+    async roll(input: RollShowcaseDatesInput): Promise<ShowcaseRollResult> {
+      const today = input.today instanceof Date ? input.today : new Date(input.today);
+      const orgIds = Array.from(new Set(input.orgIds ?? [])).filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      );
+      const dryRun = input.dryRun === true;
+      const out: ShowcaseRollResult = [];
+      for (const orgId of orgIds) {
+        out.push(await rollOne(db, orgId, today, dryRun));
+      }
+      return out;
+    },
+  };
+}
+
+/**
+ * Rolls planning dates forward for the given showcase orgs (group (a) only).
+ *
+ *  - delta = floor((today − last_rolled_on) / 1 day); first run (no watermark
+ *    row) initializes last_rolled_on = today WITHOUT shifting (delta 0).
+ *  - one transaction per org; all group-(a) columns shifted by the same delta.
+ *  - idempotent: a second pass the same day has delta 0 → 0 changes, no write.
+ *  - never touches orgs outside `orgIds` (every statement filters by org).
+ */
+export async function rollShowcaseDates(
+  input: RollShowcaseDatesInput
+): Promise<ShowcaseRollResult> {
+  return buildShowcaseDateRoll().roll(input);
+}
+
+export default { rollShowcaseDates, buildShowcaseDateRoll, SHOWCASE_DATE_FIELDS, computeDeltaDays };

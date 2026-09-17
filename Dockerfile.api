@@ -850,6 +850,13 @@ USER nodejs
 ENV NODE_ENV=production
 ENV PORT=3001
 
+# SR-1 Showcase Date-Roll (DEC-576): server-side runtime toggle for the nightly
+# planning-date roll. Default OFF (empty). Railway sets this at runtime; the ARG
+# is declared here for discoverability and build-arg injection. Companion config
+# SHOWCASE_ORG_IDS (comma-separated org IDs) is a plain runtime env, not baked.
+ARG ENABLE_SHOWCASE_DATE_ROLL
+ENV ENABLE_SHOWCASE_DATE_ROLL=${ENABLE_SHOWCASE_DATE_ROLL}
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:3001/api/health || exit 1
