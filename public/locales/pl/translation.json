@@ -12739,6 +12739,8 @@
       "ownerRequired": "Właściciel definicji musi utworzyć i zamrozić ten raport.",
       "pendingDecisions": "decyzje oczekujące",
       "overdueDecisions": "po terminie",
+      "definitionPurpose": "Raport z pracy inicjatyw · {{template}}",
+      "byStatus": "Wg statusu",
       "empty": "Brak raportów z pracy",
       "emptyDescription": "Utwórz pierwszy raport z aktualnych danych organizacji.",
       "noDefinition": "Brak opublikowanej definicji",
@@ -55553,7 +55555,9 @@
       "snapshot": "Zamrożona migawka — otwórz dokument, pobierz DOCX lub PDF."
     },
     "section": {
-      "metrics": "Mierniki"
+      "metrics": "Mierniki",
+      "decisionsIOwe": "Decyzje ode mnie",
+      "decisionsOwed": "Decyzje do domknięcia"
     },
     "error": {
       "download": "Nie udało się pobrać pliku.",

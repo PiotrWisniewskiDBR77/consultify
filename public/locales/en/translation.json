@@ -13527,6 +13527,8 @@
       "ownerRequired": "The definition owner must create and freeze this report.",
       "pendingDecisions": "pending decisions",
       "overdueDecisions": "overdue",
+      "definitionPurpose": "Initiative work report · {{template}}",
+      "byStatus": "By status",
       "empty": "No work reports yet",
       "emptyDescription": "Create the first report from current organization data.",
       "noDefinition": "No published definition",
@@ -55183,7 +55185,9 @@
       "snapshot": "Frozen snapshot — open the document, download DOCX or PDF."
     },
     "section": {
-      "metrics": "Metrics"
+      "metrics": "Metrics",
+      "decisionsIOwe": "Decisions I owe",
+      "decisionsOwed": "Decisions owed"
     },
     "error": {
       "download": "Could not download the file.",

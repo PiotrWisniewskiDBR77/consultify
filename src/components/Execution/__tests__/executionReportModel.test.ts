@@ -12,10 +12,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildExecutionReportSnapshot,
-  type ExecutionReportInputs,
-} from '../executionReportModel';
+import { buildExecutionReportSnapshot, type ExecutionReportInputs } from '../executionReportModel';
 
 // Uwaga: `new URL(..., import.meta.url)` wywraca się w środowisku jsdom
 // („'toString' called on an object that is not a valid instance of Location"),
@@ -176,6 +173,29 @@ describe('1.12-R4 — migawka na realnych kształtach danych', () => {
     const decisions = snapshot.sections.find((section) => section.id === 'decisions');
     expect(decisions?.table?.rows[0].overdue).toBe('12 dni');
     expect(decisions?.table?.rows[0].escalation).toBe('Czerwona');
+  });
+  it('Karta inicjatywy nie mówi „ode mnie”, gdy generator nie ma kontekstu zalogowanego użytkownika', () => {
+    const snapshot = build('initiative-card', 'Karta realizacji');
+    const decisions = snapshot.sections.find((section) => section.id === 'decisions');
+    expect(decisions?.title).toBe('Decyzje do domknięcia');
+    expect(decisions?.title).not.toBe('Decyzje ode mnie');
+  });
+
+  it('Karta inicjatywy mówi „ode mnie” tylko dla decyzji należących do widza', () => {
+    const snapshot = buildExecutionReportSnapshot({
+      definitionKey: 'initiative-card',
+      definitionName: 'Karta realizacji',
+      period,
+      asOf,
+      inputs: {
+        ...inputs,
+        decisions: inputs.decisions.map((decision) => ({ ...decision, ownerId: 'viewer-1' })),
+      },
+      t,
+      viewerUserId: 'viewer-1',
+    });
+    const decisions = snapshot.sections.find((section) => section.id === 'decisions');
+    expect(decisions?.title).toBe('Decyzje ode mnie');
   });
 
   it('RAG całego raportu jest czerwony, gdy są blokady i sygnały krytyczne', () => {

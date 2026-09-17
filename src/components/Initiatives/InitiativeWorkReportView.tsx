@@ -24,6 +24,7 @@ import { readMemberId, readMemberLabel } from '@/hooks/useOrganizationMemberName
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 import { isInitiativesWorkloadEnabled } from '@/utils/initiativesWorkloadFlag';
+import { initiativeStatusLabel } from './initiativeStatusLabels';
 import {
   createReportDefinition,
   createReportRun,
@@ -86,6 +87,16 @@ type ReportContent = {
 
 const itemsAt = (payload: any): any[] =>
   Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+
+export const initiativeWorkReportStatusBreakdown = (
+  t: Parameters<typeof initiativeStatusLabel>[0],
+  byStatus: Record<string, number> | null | undefined
+): Array<{ status: string; label: string; count: number }> =>
+  Object.entries(byStatus ?? {}).map(([status, count]) => ({
+    status,
+    label: initiativeStatusLabel(t, status),
+    count,
+  }));
 
 export function isEligibleWorkReportApprover(
   member: Record<string, unknown>,
@@ -228,7 +239,11 @@ export function InitiativeWorkReportView({
   const selectedDefinition = definitions.find(
     (definition) => `${definition.id}@${definition.version}` === form.definition
   );
+  const selectedTemplateLabel = workReportTemplateLabel(t, form.templateId);
   const projectIds = form.projectScope === 'CURRENT' && currentProjectId ? [currentProjectId] : [];
+  const previewStatusBreakdown = preview
+    ? initiativeWorkReportStatusBreakdown(t, preview.summary.byStatus)
+    : [];
   const canCreate = Boolean(
     form.title.trim() &&
     recipients.length &&
@@ -243,7 +258,13 @@ export function InitiativeWorkReportView({
       const definitionId = crypto.randomUUID();
       await createReportDefinition(definitionId, {
         name: form.title.trim(),
-        purpose: `Initiative work report · ${form.templateId}`,
+        purpose: t(
+          'initiatives.workReport.definitionPurpose',
+          'Initiative work report · {{template}}',
+          {
+            template: selectedTemplateLabel,
+          }
+        ),
         audience: recipients.length ? recipients : ['internal'],
         cadence: form.cadence,
         scope: {
@@ -1010,6 +1031,14 @@ export function InitiativeWorkReportView({
                   {t('initiatives.workReport.overdueDecisions', 'overdue')}:{' '}
                   {preview.summary.overdueDecisions}
                 </p>
+                {previewStatusBreakdown.length > 0 ? (
+                  <p className="mt-1 text-xs text-c-text-muted">
+                    {t('initiatives.workReport.byStatus', 'By status')}:{' '}
+                    {previewStatusBreakdown
+                      .map((item) => `${item.label}: ${item.count}`)
+                      .join(' · ')}
+                  </p>
+                ) : null}
               </div>
             )}
           </div>

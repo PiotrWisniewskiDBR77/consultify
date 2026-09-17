@@ -100,7 +100,13 @@ vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   transitionReportRun: vi.fn(),
 }));
 
-import { InitiativeWorkReportView } from '../InitiativeWorkReportView';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import * as runtimeApi from '@/services/initiatives-execution/runtimeApi';
+
+import {
+  InitiativeWorkReportView,
+  initiativeWorkReportStatusBreakdown,
+} from '../InitiativeWorkReportView';
 
 const renderView = () =>
   render(
@@ -227,5 +233,48 @@ describe('InitiativeWorkReportView — canon pass (RP1b)', () => {
       expect(select.id).toBeTruthy();
       expect(container.querySelector(`label[for="${select.id}"]`)).toBeTruthy();
     }
+  });
+
+  it('creates definition purpose with template label, not the raw template code', async () => {
+    vi.mocked(OrganizationApi.getOrganizationMembers).mockResolvedValueOnce([
+      {
+        userId: 'approver-1',
+        name: 'Approval Manager',
+        role: 'ADMIN',
+        status: 'active',
+      },
+    ] as any);
+
+    renderView();
+    await screen.findByText('Weekly team update — 8-14 Sep');
+    fireEvent.click(screen.getByTestId('work-report-creator-toggle'));
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Weekly report' } });
+    fireEvent.change(screen.getByLabelText('Recipients (comma-separated email addresses)'), {
+      target: { value: 'owner@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Independent approver'), {
+      target: { value: 'approver-1' },
+    });
+    fireEvent.change(screen.getByLabelText('Template'), {
+      target: { value: 'WEEKLY_TEAM_UPDATE' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));
+
+    await waitFor(() => {
+      expect(runtimeApi.createReportDefinition).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ purpose: 'Initiative work report · Weekly team update' })
+      );
+    });
+  });
+
+  it('maps preview byStatus keys to labels, not raw enum codes', () => {
+    const labels = initiativeWorkReportStatusBreakdown(
+      ((key: string, fallback: string) => fallback) as any,
+      { UNKNOWN: 5 }
+    );
+    expect(labels).toEqual([{ status: 'UNKNOWN', label: 'Unknown', count: 5 }]);
+    expect(labels.map((item) => `${item.label}: ${item.count}`).join(' · ')).toBe('Unknown: 5');
   });
 });

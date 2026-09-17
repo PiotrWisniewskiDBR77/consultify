@@ -19,7 +19,11 @@ import type {
   ExecutionReportSnapshot,
 } from '@/services/executionReports/executionReportsApi';
 
-export type Translator = (key: string, fallback: string, options?: Record<string, unknown>) => string;
+export type Translator = (
+  key: string,
+  fallback: string,
+  options?: Record<string, unknown>
+) => string;
 
 export interface ExecutionReportInputs {
   initiatives: any[];
@@ -170,9 +174,7 @@ function derive(
       const due = task?.dueDate ? new Date(task.dueDate).getTime() : NaN;
       return Number.isFinite(due) && due < asOfTime;
     })
-    .sort(
-      (a, b) => new Date(a.dueDate ?? 0).getTime() - new Date(b.dueDate ?? 0).getTime()
-    );
+    .sort((a, b) => new Date(a.dueDate ?? 0).getTime() - new Date(b.dueDate ?? 0).getTime());
   const blockedTasks = openTasks.filter(
     (task) => String(task?.status ?? '').toLowerCase() === 'blocked'
   );
@@ -273,6 +275,8 @@ export function buildExecutionReportSnapshot(args: {
   inputs: ExecutionReportInputs;
   t: Translator;
   locale?: string;
+  /** User whose personal report is being generated; without it, titles stay neutral. */
+  viewerUserId?: string | null;
 }): ExecutionReportSnapshot {
   const { definitionKey, definitionName, period, asOf, inputs, t } = args;
   const locale = args.locale ?? 'pl-PL';
@@ -303,6 +307,28 @@ export function buildExecutionReportSnapshot(args: {
     status: labelFor(t, 'taskStatus', task?.status, '—'),
   });
 
+  const decisionOwnerId = (decision: any): string =>
+    String(
+      decision?.ownerId ??
+        decision?.owner_id ??
+        decision?.authorityId ??
+        decision?.authority_id ??
+        decision?.responsibleUserId ??
+        ''
+    ).trim();
+  const decisionsBelongToViewer = (decisions: any[]): boolean => {
+    const viewerUserId = String(args.viewerUserId ?? '').trim();
+    return (
+      Boolean(viewerUserId) &&
+      decisions.length > 0 &&
+      decisions.every((decision) => decisionOwnerId(decision) === viewerUserId)
+    );
+  };
+  const decisionsSectionTitle = (fallback: string, decisions: any[]) =>
+    decisionsBelongToViewer(decisions)
+      ? t('executionReports.section.decisionsIOwe', 'Decisions I owe')
+      : t('executionReports.section.decisionsOwed', fallback);
+
   const decisionRow = (decision: any) => ({
     title: text(decision?.title),
     owner: nameOf(decision?.ownerName) || t('executionReports.value.unassigned', 'Unassigned'),
@@ -313,12 +339,7 @@ export function buildExecutionReportSnapshot(args: {
             count: Number(decision.daysOverdue),
           })
         : '—',
-    escalation: labelFor(
-      t,
-      'escalation',
-      decision?.escalationLevelName ?? decision?.status,
-      '—'
-    ),
+    escalation: labelFor(t, 'escalation', decision?.escalationLevelName ?? decision?.status, '—'),
   });
 
   const taskColumns = [
@@ -390,9 +411,7 @@ export function buildExecutionReportSnapshot(args: {
       id: 'onTime',
       label: t('executionReports.metric.onTime', 'On time'),
       value:
-        d.onTimeRatio == null
-          ? t('executionReports.value.noData', 'no data')
-          : `${d.onTimeRatio}%`,
+        d.onTimeRatio == null ? t('executionReports.value.noData', 'no data') : `${d.onTimeRatio}%`,
       tone: d.onTimeRatio == null ? ('GREY' as const) : ('NEUTRAL' as const),
     },
     {
@@ -407,17 +426,25 @@ export function buildExecutionReportSnapshot(args: {
   let ragReason = t('executionReports.rag.green', 'No blockers or overdue items.');
   if (!inputs.tasks.length && !inputs.decisions.length) {
     rag = 'GREY';
-    ragReason = t('executionReports.rag.grey', 'Cannot be assessed — no source data for this period.'
+    ragReason = t(
+      'executionReports.rag.grey',
+      'Cannot be assessed — no source data for this period.'
     );
   } else if (d.blockedTasks.length || d.criticalSignals.length) {
     rag = 'RED';
-    ragReason = t('executionReports.rag.red', '{{blocked}} blockers, {{signals}} critical signals.', {
-      blocked: d.blockedTasks.length,
-      signals: d.criticalSignals.length,
-    });
+    ragReason = t(
+      'executionReports.rag.red',
+      '{{blocked}} blockers, {{signals}} critical signals.',
+      {
+        blocked: d.blockedTasks.length,
+        signals: d.criticalSignals.length,
+      }
+    );
   } else if (d.overdueTasks.length || d.overdueDecisions.length) {
     rag = 'AMBER';
-    ragReason = t('executionReports.rag.amber', '{{tasks}} tasks and {{decisions}} decisions overdue.',
+    ragReason = t(
+      'executionReports.rag.amber',
+      '{{tasks}} tasks and {{decisions}} decisions overdue.',
       { tasks: d.overdueTasks.length, decisions: d.overdueDecisions.length }
     );
   }
@@ -431,8 +458,10 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, "Progress and schedule"),
-          narrative: t('executionReports.narrative.ownerProgress', '{{initiatives}} initiatives are in progress. Open tasks: {{open}}, of which {{overdue}} overdue. On-time rate: {{onTime}}.',
+          title: sectionTitle(0, 'Progress and schedule'),
+          narrative: t(
+            'executionReports.narrative.ownerProgress',
+            '{{initiatives}} initiatives are in progress. Open tasks: {{open}}, of which {{overdue}} overdue. On-time rate: {{onTime}}.',
             {
               initiatives: d.deliveryInitiatives.length,
               open: inputs.tasks.length - d.doneInPeriod.length,
@@ -449,16 +478,18 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(1, "Milestones"),
+          title: sectionTitle(1, 'Milestones'),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
-        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
+        t(
+          'executionReports.empty.milestones',
+          "No data — milestones don't exist yet as a separate object (Wave R3 package); showing initiative end dates instead."
         )
       ),
       emptyOr(
         {
           id: 'overdue',
-          title: sectionTitle(2, "Overdue tasks"),
+          title: sectionTitle(2, 'Overdue tasks'),
           table: { columns: taskColumns, rows: d.overdueTasks.slice(0, 20).map(taskRow) },
         },
         noData('tasks')
@@ -466,7 +497,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'blockers',
-          title: sectionTitle(3, "Blockers"),
+          title: sectionTitle(3, 'Blockers'),
           table: { columns: taskColumns, rows: d.blockedTasks.slice(0, 20).map(taskRow) },
         },
         noData('tasks')
@@ -474,7 +505,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, "Decisions I owe"),
+          title: decisionsSectionTitle('Decisions owed', d.openDecisions),
           table: { columns: decisionColumns, rows: d.openDecisions.slice(0, 20).map(decisionRow) },
         },
         noData('decisions')
@@ -485,8 +516,10 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, "Progress summary"),
-          narrative: t('executionReports.narrative.weeklyProgress', 'Period {{start}} – {{end}}. Tasks completed: {{done}}. Open and overdue: {{overdue}}. Blocked: {{blocked}}. Decisions awaiting resolution: {{decisions}}.',
+          title: sectionTitle(0, 'Progress summary'),
+          narrative: t(
+            'executionReports.narrative.weeklyProgress',
+            'Period {{start}} – {{end}}. Tasks completed: {{done}}. Open and overdue: {{overdue}}. Blocked: {{blocked}}. Decisions awaiting resolution: {{decisions}}.',
             {
               start: date(period.start),
               end: date(period.end),
@@ -502,23 +535,21 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'blockers',
-          title: sectionTitle(1, "Blockers and escalations"),
+          title: sectionTitle(1, 'Blockers and escalations'),
           table: { columns: taskColumns, rows: d.blockedTasks.slice(0, 20).map(taskRow) },
-          bullets: d.escalatedDecisions
-            .slice(0, 8)
-            .map((decision) =>
-              t('executionReports.bullet.escalated', 'Escalation: {{title}} ({{owner}})', {
-                title: text(decision?.title),
-                owner: nameOf(decision?.ownerName) || '—',
-              })
-            ),
+          bullets: d.escalatedDecisions.slice(0, 8).map((decision) =>
+            t('executionReports.bullet.escalated', 'Escalation: {{title}} ({{owner}})', {
+              title: text(decision?.title),
+              owner: nameOf(decision?.ownerName) || '—',
+            })
+          ),
         },
         noData('tasks')
       ),
       emptyOr(
         {
           id: 'overdue',
-          title: sectionTitle(2, "Overdue items"),
+          title: sectionTitle(2, 'Overdue items'),
           table: { columns: taskColumns, rows: d.overdueTasks.slice(0, 25).map(taskRow) },
         },
         noData('tasks')
@@ -526,16 +557,18 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(3, "Next milestones"),
+          title: sectionTitle(3, 'Next milestones'),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
-        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
+        t(
+          'executionReports.empty.milestones',
+          "No data — milestones don't exist yet as a separate object (Wave R3 package); showing initiative end dates instead."
         )
       ),
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, "Decisions needed"),
+          title: sectionTitle(4, 'Decisions needed'),
           table: {
             columns: decisionColumns,
             rows: d.overdueDecisions
@@ -578,7 +611,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'rag',
-          title: sectionTitle(0, "RAG per initiative"),
+          title: sectionTitle(0, 'RAG per initiative'),
           table: { columns: healthColumns, rows: healthRows },
         },
         noData('initiatives')
@@ -586,35 +619,35 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'alerts',
-          title: sectionTitle(1, "Priority alerts"),
-          bullets: d.criticalSignals
-            .slice(0, 12)
-            .map((signal) =>
-              t(
-                'executionReports.bullet.signal',
-                '{{name}} — {{type}}, {{days}} days deviation ({{reason}})',
-                {
-                  name: text(signal?.entityName),
-                  type: labelFor(t, 'deviation', signal?.deviationType, '—'),
-                  days: Number(signal?.daysDeviation ?? 0),
-                  // `detail` z API jest po angielsku („1 high/critical risk(s) active"),
-                  // więc etykietę bierzemy z KODU powodu, a nie z gotowego zdania.
-                  reason:
-                    asArray(signal?.whySlipReasons)
-                      .map((item: any) => labelFor(t, 'slipReason', item?.reason, ''))
-                      .filter(Boolean)
-                      .join('; ') || t('executionReports.value.noReason', 'without justification'),
-                }
-              )
-            ),
+          title: sectionTitle(1, 'Priority alerts'),
+          bullets: d.criticalSignals.slice(0, 12).map((signal) =>
+            t(
+              'executionReports.bullet.signal',
+              '{{name}} — {{type}}, {{days}} days deviation ({{reason}})',
+              {
+                name: text(signal?.entityName),
+                type: labelFor(t, 'deviation', signal?.deviationType, '—'),
+                days: Number(signal?.daysDeviation ?? 0),
+                // `detail` z API jest po angielsku („1 high/critical risk(s) active"),
+                // więc etykietę bierzemy z KODU powodu, a nie z gotowego zdania.
+                reason:
+                  asArray(signal?.whySlipReasons)
+                    .map((item: any) => labelFor(t, 'slipReason', item?.reason, ''))
+                    .filter(Boolean)
+                    .join('; ') || t('executionReports.value.noReason', 'without justification'),
+              }
+            )
+          ),
         },
         noData('delaySignals')
       ),
       emptyOr(
         {
           id: 'confidence',
-          title: sectionTitle(2, "Delivery confidence"),
-          narrative: t('executionReports.narrative.confidence', 'On time: {{onTime}}. Initiatives with a delay signal: {{withSignals}} of {{total}}. Open RAID items: {{risks}}, of which high-risk: {{highRisks}}.',
+          title: sectionTitle(2, 'Delivery confidence'),
+          narrative: t(
+            'executionReports.narrative.confidence',
+            'On time: {{onTime}}. Initiatives with a delay signal: {{withSignals}} of {{total}}. Open RAID items: {{risks}}, of which high-risk: {{highRisks}}.',
             {
               onTime:
                 d.onTimeRatio == null
@@ -636,8 +669,10 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'narrative',
-          title: sectionTitle(3, "Narrative"),
-          narrative: t('executionReports.narrative.program', 'Period rating: {{rag}} — {{reason}} Biggest deviation: {{worst}}. Recommendation: unblock {{blocked}} tasks and close {{overdueDecisions}} overdue decisions before the next review.',
+          title: sectionTitle(3, 'Narrative'),
+          narrative: t(
+            'executionReports.narrative.program',
+            'Period rating: {{rag}} — {{reason}} Biggest deviation: {{worst}}. Recommendation: unblock {{blocked}} tasks and close {{overdueDecisions}} overdue decisions before the next review.',
             {
               rag: ragLabel[rag],
               reason: ragReason,
@@ -656,7 +691,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, "Decisions to take"),
+          title: sectionTitle(4, 'Decisions to take'),
           table: {
             columns: decisionColumns,
             rows: d.escalatedDecisions.slice(0, 20).map(decisionRow),
@@ -676,8 +711,10 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, "Overall progress"),
-          narrative: t('executionReports.narrative.sponsorProgress', '{{initiatives}} initiatives in progress. Completed this period: {{done}} tasks. Overdue: {{overdue}}. Period rating: {{rag}}.',
+          title: sectionTitle(0, 'Overall progress'),
+          narrative: t(
+            'executionReports.narrative.sponsorProgress',
+            '{{initiatives}} initiatives in progress. Completed this period: {{done}} tasks. Overdue: {{overdue}}. Period rating: {{rag}}.',
             {
               initiatives: d.deliveryInitiatives.length,
               done: d.doneInPeriod.length,
@@ -691,7 +728,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'risks',
-          title: sectionTitle(1, "Top 3 risks"),
+          title: sectionTitle(1, 'Top 3 risks'),
           table: {
             columns: riskColumns,
             rows: d.openRisks.slice(0, 3).map((item) => ({
@@ -707,16 +744,18 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(2, "Next milestones"),
+          title: sectionTitle(2, 'Next milestones'),
           table: { columns: milestoneColumns, rows: milestoneRows.slice(0, 5) },
         },
-        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
+        t(
+          'executionReports.empty.milestones',
+          "No data — milestones don't exist yet as a separate object (Wave R3 package); showing initiative end dates instead."
         )
       ),
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(3, "Decisions required from sponsor"),
+          title: sectionTitle(3, 'Decisions required from sponsor'),
           table: {
             columns: decisionColumns,
             rows: d.escalatedDecisions.slice(0, 6).map(decisionRow),
@@ -727,7 +766,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'wins',
-          title: sectionTitle(4, "Key achievements"),
+          title: sectionTitle(4, 'Key achievements'),
           bullets: d.doneInPeriod.slice(0, 5).map((task) => text(task?.title)),
         },
         noData('tasks')
