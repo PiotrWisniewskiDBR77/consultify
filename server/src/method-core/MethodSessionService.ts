@@ -223,6 +223,29 @@ export interface MethodOutputBridge {
   }): Promise<void>;
 }
 
+function defaultMethodSessionName(input: {
+  readonly module: MethodSession['module'];
+  readonly methodPackId: string;
+  readonly organizationId: string;
+  readonly createdAt: string;
+}): string {
+  const packLabel = input.methodPackId === 'drd-method-pack-v1' ? 'DRD' : input.methodPackId.replace(/[-_]+/g, ' ').trim() || 'Method';
+  const orgLabel = input.organizationId.slice(0, 8);
+  const date = input.createdAt.slice(0, 10);
+  return `${packLabel} — ${orgLabel} — ${date}`.slice(0, 160);
+}
+
+function normalizeMethodSessionName(input: {
+  readonly name?: string | null;
+  readonly module: MethodSession['module'];
+  readonly methodPackId: string;
+  readonly organizationId: string;
+  readonly createdAt: string;
+}): string {
+  const explicit = typeof input.name === 'string' ? input.name.trim() : '';
+  return explicit || defaultMethodSessionName(input);
+}
+
 function toMethodSession(row: MethodSessionRow): MethodSession {
   return {
     id: row.id,
@@ -312,7 +335,13 @@ export class MethodSessionService {
     const now = nowIso();
     const row: MethodSessionRow = {
       id: genId(),
-      name: input.name ?? null,
+      name: normalizeMethodSessionName({
+        name: input.name,
+        module: input.module,
+        methodPackId: input.methodPackId,
+        organizationId: input.organizationId,
+        createdAt: now,
+      }),
       organization_id: input.organizationId,
       project_id: input.projectId,
       module: input.module,
@@ -797,12 +826,13 @@ export class MethodSessionService {
       };
       await runOrThrow(
         `INSERT INTO method_sessions
-           (id, organization_id, project_id, module, method_pack_id, method_pack_version,
+           (id, name, organization_id, project_id, module, method_pack_id, method_pack_version,
             state, domain_stage, mode, owner_user_id, version, frozen_snapshot_id,
             revision_of_session_id, created_at, updated_at, demo_bypass_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           revision.id,
+          revision.name,
           revision.organization_id,
           revision.project_id,
           revision.module,

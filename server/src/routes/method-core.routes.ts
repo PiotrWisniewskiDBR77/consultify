@@ -166,6 +166,35 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+async function readOrganizationDisplayName(organizationId: string): Promise<string | null> {
+  const candidates = [
+    'SELECT name FROM organizations WHERE id = ? LIMIT 1',
+    'SELECT company_name AS name FROM organizations WHERE id = ? LIMIT 1',
+  ];
+  for (const sql of candidates) {
+    try {
+      const row = await DbPromise.get<{ name?: string | null }>(sql, [organizationId]);
+      const value = typeof row?.name === 'string' ? row.name.trim() : '';
+      if (value) return value;
+    } catch {
+      // Older tenant schemas may not expose both candidate columns; service fallback still guarantees a visible name.
+    }
+  }
+  return null;
+}
+
+function methodSessionDefaultName(input: {
+  readonly methodPackId: string;
+  readonly organizationId: string;
+  readonly organizationName: string | null;
+  readonly now: Date;
+}): string {
+  const packLabel = input.methodPackId === DRD_METHOD_PACK_ID ? 'DRD' : input.methodPackId;
+  const orgLabel = input.organizationName || input.organizationId.slice(0, 8);
+  const date = input.now.toISOString().slice(0, 10);
+  return `${packLabel} — ${orgLabel} — ${date}`.slice(0, 160);
+}
+
 function sendAssessmentSkipReasonError(res: Response, error: unknown): void {
   if (error instanceof AssessmentSkipReasonError) {
     res.status(error.status).json({ error: error.code, code: error.code });
@@ -805,7 +834,7 @@ router.post(
     const methodPackVersion = body.methodPackVersion;
     const mode = body.mode;
     const projectId = isNonEmptyString(body.projectId) ? body.projectId : null;
-    const name = typeof body.name === 'string' ? body.name.trim() : null;
+    const requestedName = typeof body.name === 'string' ? body.name.trim() : '';
     const requestedBypass = body.demoBypass === true;
 
     if (module !== 'assessment' && module !== 'tools' && module !== 'audits') {
@@ -820,10 +849,18 @@ router.post(
       res.status(400).json({ error: 'mode must be guided_manual|teresa_led' });
       return;
     }
-    if (name !== null && name.length > 160) {
+    if (requestedName.length > 160) {
       res.status(400).json({ code: 'METHOD_SESSION_NAME_TOO_LONG', maxLength: 160 });
       return;
     }
+
+    const organizationName = requestedName ? null : await readOrganizationDisplayName(organizationId);
+    const sessionName = requestedName || methodSessionDefaultName({
+      methodPackId,
+      organizationId,
+      organizationName,
+      now: new Date(),
+    });
 
     // --- idempotency: same (org, key) replays the same session -------------
     const existingIdemRow = await DbPromise.get<{ session_id: string }>(
@@ -865,7 +902,7 @@ router.post(
       methodPackVersion,
       ownerUserId: actorUserId,
       mode,
-      name: name || null,
+      name: sessionName,
       demoBypassActive: bypassActive,
     });
 
