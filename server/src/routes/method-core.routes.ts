@@ -1383,6 +1383,61 @@ router.post(
     const idempotencyKey = req.get('Idempotency-Key') ?? undefined;
     const payload = body.payload ?? {};
 
+    // K-24: evidence removal is an append-only tombstone. The client may
+    // identify the event it currently renders, but it may not tombstone an
+    // event from another session, another organization, or a non-evidence
+    // event. The event store stays immutable; projections ignore the
+    // superseded EVIDENCE_ATTACHED row.
+    if (type === 'EVIDENCE_REMOVED') {
+      if (session.state === 'frozen' || session.state === 'closed' || session.state === 'archived') {
+        res.status(409).json({ error: 'METHOD_SESSION_READ_ONLY', code: 'METHOD_SESSION_READ_ONLY' });
+        return;
+      }
+      if (!supersedes) {
+        res.status(400).json({ error: 'EVIDENCE_REMOVE_TARGET_REQUIRED', code: 'EVIDENCE_REMOVE_TARGET_REQUIRED' });
+        return;
+      }
+      const payloadRecord =
+        typeof payload === 'object' && payload !== null
+          ? (payload as Record<string, unknown>)
+          : {};
+      const evidenceId = isNonEmptyString(payloadRecord.evidenceId)
+        ? payloadRecord.evidenceId
+        : undefined;
+      const removedEventId = isNonEmptyString(payloadRecord.removedEventId)
+        ? payloadRecord.removedEventId
+        : undefined;
+      if (!evidenceId || removedEventId !== supersedes) {
+        res.status(400).json({ error: 'EVIDENCE_REMOVE_INVALID', code: 'EVIDENCE_REMOVE_INVALID' });
+        return;
+      }
+      const events = await methodEventStore.listBySession(organizationId, session.id);
+      if (idempotencyKey) {
+        const replay = await methodEventStore.findByIdempotencyKey(
+          organizationId,
+          session.id,
+          idempotencyKey
+        );
+        if (replay?.type === 'EVIDENCE_REMOVED') {
+          res.status(201).json({ event: replay });
+          return;
+        }
+      }
+      const target = events.find((event) => event.id === supersedes);
+      const targetEvidenceId =
+        target && typeof target.payload === 'object' && target.payload !== null
+          ? (target.payload as Record<string, unknown>).evidenceId
+          : undefined;
+      if (target?.type !== 'EVIDENCE_ATTACHED' || targetEvidenceId !== evidenceId) {
+        res.status(404).json({ error: 'EVIDENCE_NOT_FOUND', code: 'EVIDENCE_NOT_FOUND' });
+        return;
+      }
+      if (events.some((event) => event.type === 'EVIDENCE_REMOVED' && event.supersedes === target.id)) {
+        res.status(409).json({ error: 'EVIDENCE_ALREADY_REMOVED', code: 'EVIDENCE_ALREADY_REMOVED' });
+        return;
+      }
+    }
+
     // --- DEC-137 (P1): DRD target_level must stay on the pinned scale ------
     // Assessment-owned, NOT a kernel rule (Z16/Z17: the method-core event
     // contract — server/src/method-core/contracts/events.ts — is shared with

@@ -107,6 +107,22 @@ describe('DrdSessionRuntime — event store + reload restores state (requirement
     expect(reloaded.getSession().id).toBe(sessionId);
   });
 
+  it('K-24 keeps attach+remove in history and excludes the removed evidence from the local freeze projection', () => {
+    const storage = makeMemoryStorage();
+    const runtime = makeStartedSession(storage);
+    runtime.recordAnswer({ unitId: '1A', level: 1, questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'x', actorUserId: 'owner-1' });
+    const removedAttachment = runtime.recordEvidence({ unitId: '1A', level: 1, evidenceId: 'ev-removed', evidenceType: 'document', strength: 'E4', actorUserId: 'owner-1', label: 'old.pdf' });
+    runtime.recordEvidence({ unitId: '1A', level: 1, evidenceId: 'ev-kept', evidenceType: 'observation', strength: 'E2', actorUserId: 'owner-1', label: 'kept.txt' });
+    runtime.removeEvidence(removedAttachment.id, 'owner-1');
+    runtime.recordTargetDecision({ unitId: '1A', level: 2, rationale: 'target', actorUserId: 'owner-1' });
+    runtime.transition('in_review', 'owner-1');
+    runtime.transition('frozen', 'approver-1');
+
+    expect(runtime.listEvents().map((event) => event.type)).toContain('EVIDENCE_REMOVED');
+    const finding = runtime.currentOutputRecord()!.content.findings.find((item) => item.unitId === '1A')!;
+    expect(finding.supportingEvidence.map((item) => item.evidenceId)).toEqual(['ev-kept']);
+  });
+
   it('idempotency: appendEvent with the same idempotencyKey twice resolves to the SAME stored event (never a duplicate)', () => {
     const storage = makeMemoryStorage();
     const runtime = makeStartedSession(storage);

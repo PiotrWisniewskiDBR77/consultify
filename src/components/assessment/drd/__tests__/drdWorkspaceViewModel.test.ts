@@ -21,6 +21,8 @@ import { DRD_STRUCTURE } from '@/services/drdStructure';
 import {
   buildMatrixRowsForAxis,
   confirmedLevelsFor,
+  evidenceEventsFor,
+  evidenceListFor,
   evidenceStrengthFor,
 } from '../drdWorkspaceViewModel';
 
@@ -84,6 +86,31 @@ describe('evidenceStrengthFor — strength is its own axis, independent of evide
       makeEvent({ type: 'EVIDENCE_ATTACHED', level: 3, payload: { evidenceId: 'ev-3', evidenceType: 'observation', strength: 'E2' } }),
     ];
     expect(evidenceStrengthFor(events, UNIT)).toBe('E3');
+  });
+});
+
+describe('K-24 — append-only evidence removal projection', () => {
+  it('keeps the audit history but removes only the superseded evidence from list, count and strength', () => {
+    const first = makeEvent({
+      id: 'attached-1', type: 'EVIDENCE_ATTACHED', level: 1,
+      payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E4', label: 'policy.pdf', linkedQuestionIds: ['q-1'] },
+    });
+    const second = makeEvent({
+      id: 'attached-2', type: 'EVIDENCE_ATTACHED', level: 1,
+      payload: { evidenceId: 'ev-2', evidenceType: 'observation', strength: 'E2', label: 'shopfloor note', linkedQuestionIds: ['q-2'] },
+    });
+    const removed = makeEvent({
+      id: 'removed-1', type: 'EVIDENCE_REMOVED', supersedes: first.id,
+      payload: { evidenceId: 'ev-1', removedEventId: first.id },
+    });
+    const events = [first, second, removed];
+
+    expect(events).toHaveLength(3);
+    expect(evidenceEventsFor(events, UNIT).map((event) => event.id)).toEqual(['attached-2']);
+    expect(evidenceListFor(events, UNIT)).toEqual([
+      expect.objectContaining({ eventId: 'attached-2', evidenceId: 'ev-2', label: 'shopfloor note', strength: 'E2' }),
+    ]);
+    expect(evidenceStrengthFor(events, UNIT)).toBe('E2');
   });
 });
 

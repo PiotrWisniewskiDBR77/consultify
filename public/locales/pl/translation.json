@@ -54939,7 +54939,12 @@
       "chooseReason": "Wybierz powód…",
       "confirm": "Potwierdź",
       "evidenceStrengthLabel": "Siła dowodu",
-      "previousStep": "Poprzedni krok"
+      "previousStep": "Poprzedni krok",
+      "evidenceList": "Dołączone dowody",
+      "removeEvidenceAria": "Usuń dowód {{name}}",
+      "removeEvidenceTitle": "Usunąć dowód?",
+      "removeEvidenceDescription": "Dowód zniknie z aktywnej oceny, a jego historia audytowa zostanie zachowana.",
+      "removeEvidenceError": "Nie udało się usunąć dowodu. Odśwież sesję i spróbuj ponownie."
     },
     "skipReason": {
       "outsideOperatingModel": "poza modelem operacyjnym",

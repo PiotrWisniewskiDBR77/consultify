@@ -36,7 +36,7 @@
  */
 
 /**
- * The 18 kernel events. This list is closed: a method may not invent an event,
+ * The 19 kernel events. This list is closed: a method may not invent an event,
  * it carries method meaning in `payload` behind its adapter.
  *
  * Ordering below mirrors the canonical work chain
@@ -50,6 +50,7 @@ export const METHOD_EVENT_TYPES = [
   'NOTE_ADDED',
   // --- evidence ------------------------------------------------------------
   'EVIDENCE_ATTACHED',
+  'EVIDENCE_REMOVED',
   'EVIDENCE_VERIFIED',
   // --- Teresa (propose → preview → commit) ---------------------------------
   'TERESA_PROPOSAL_CREATED',
@@ -166,6 +167,14 @@ export interface EvidenceEventPayload {
    */
   readonly strength: EvidenceStrength;
   readonly linkedQuestionIds?: readonly string[];
+  /** Human-readable source name shown in the evidence register. */
+  readonly label?: string;
+}
+
+/** Append-only tombstone for an attached evidence event. */
+export interface EvidenceRemovedEventPayload {
+  readonly evidenceId: string;
+  readonly removedEventId: string;
 }
 
 export const EVIDENCE_STRENGTHS = ['E0', 'E1', 'E2', 'E3', 'E4'] as const;

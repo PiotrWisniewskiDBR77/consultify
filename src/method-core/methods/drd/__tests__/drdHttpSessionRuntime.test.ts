@@ -283,6 +283,41 @@ describe('mounted production write contract — API confirmation is mandatory', 
     expect(storage.getItem('method-core:pending-writes:sess-1')).toBeNull();
     expect(runtime.getState().pendingWriteCount).toBe(0);
   });
+
+  it('K-24 removes evidence by appending a superseding tombstone and cold-reads both audit events', async () => {
+    const storage = makeMemoryStorage();
+    const attached = {
+      id: 'attached-1', type: 'EVIDENCE_ATTACHED' as const,
+      organizationId: 'org-1', sessionId: 'sess-1', unitId: 'unit-1', level: 2,
+      actorKind: 'human' as const, actorUserId: 'user-1', methodPackVersion: '2.0.0-methodpack.1',
+      occurredAt: '2026-09-17T10:00:00.000Z',
+      payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2', label: 'policy.pdf' },
+    };
+    const removed = {
+      id: 'removed-1', type: 'EVIDENCE_REMOVED' as const,
+      organizationId: 'org-1', sessionId: 'sess-1', unitId: 'unit-1', level: 2,
+      actorKind: 'human' as const, actorUserId: 'user-1', methodPackVersion: '2.0.0-methodpack.1',
+      occurredAt: '2026-09-17T10:01:00.000Z', supersedes: attached.id,
+      payload: { evidenceId: 'ev-1', removedEventId: attached.id },
+    };
+    hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValueOnce([attached]).mockResolvedValue([attached, removed]);
+    hoisted.appendEvent.mockResolvedValue(removed);
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+    await runtime.removeEvidence(attached.id);
+
+    expect(hoisted.appendEvent).toHaveBeenCalledWith(
+      'sess-1',
+      expect.objectContaining({
+        type: 'EVIDENCE_REMOVED', supersedes: attached.id,
+        payload: { evidenceId: 'ev-1', removedEventId: attached.id },
+      }),
+      expect.stringContaining(`evidence-remove:${attached.id}:`)
+    );
+    expect(runtime.getState().events).toEqual([attached, removed]);
+  });
 });
 
 describe('409 conflict — never silently overwritten', () => {

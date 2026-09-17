@@ -1,11 +1,13 @@
-import { Check, HelpCircle, Paperclip, Sparkles, X } from 'lucide-react';
+import { Check, HelpCircle, Paperclip, Sparkles, Trash2, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import type { MethodEvent, MethodLevel, MethodQuestion } from '@/method-core/contracts';
 import type { DRDArea, DRDAxis } from '@/services/drdStructure';
 import { nazwaWJezyku } from './drdNazwa';
+import { evidenceListFor } from './drdWorkspaceViewModel';
 
 export type DrdLevelDecision = 'yes' | 'no' | 'help';
 
@@ -55,6 +57,7 @@ interface Props {
   onSelectLevel: (level: number) => void;
   onSaveDecision: (decision: DrdLevelDecision, answerText: string) => Promise<void>;
   onEvidenceDrop: (questionId: string, files: FileList) => void;
+  onEvidenceRemove: (evidenceEventId: string) => Promise<void>;
   onAskTeresa: (questionId: string) => void;
 }
 
@@ -76,20 +79,26 @@ export function DrdLevelInterviewWorkspace({
   onSelectLevel,
   onSaveDecision,
   onEvidenceDrop,
+  onEvidenceRemove,
   onAskTeresa,
 }: Props): React.ReactElement {
   const { t, i18n } = useTranslation();
   const isPolish = (i18n.language || 'en').toLowerCase().startsWith('pl');
   const [decision, setDecision] = useState<DrdLevelDecision | null>(null);
   const [saving, setSaving] = useState(false);
+  const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const { dialog: confirmDialog, confirm: confirmEvidenceRemoval } = useConfirmDialog();
   const fileInput = useRef<HTMLInputElement>(null);
   const decisions = useMemo(() => drdLevelDecisions(events, area.id), [events, area.id]);
   const level = levels.find((item) => item.level === selectedLevel) ?? levels[0];
   const levelQuestions = questions.filter((question) => question.level === level?.level);
   const primaryQuestion = levelQuestions[0];
-  const evidenceCount = events.filter(
-    (event) => event.type === 'EVIDENCE_ATTACHED' && event.unitId === area.id && event.level === level?.level
-  ).length;
+  const evidence = useMemo(
+    () => evidenceListFor(events, area.id).filter((item) => item.level === level?.level),
+    [events, area.id, level?.level]
+  );
+  const evidenceCount = evidence.length;
   const firstNo = [...decisions.entries()].find(([, state]) => state === 'no')?.[0] ?? null;
   const areaName = nazwaWJezyku(area.namePL, area.name, isPolish);
   const axisName = nazwaWJezyku(axis.namePL, axis.name, isPolish);
@@ -179,6 +188,47 @@ export function DrdLevelInterviewWorkspace({
                   <button type="button" disabled={!primaryQuestion} onClick={() => primaryQuestion && onAskTeresa(primaryQuestion.questionId)} className="inline-flex items-center gap-1 text-[11px] font-medium text-c-text-secondary hover:text-c-text disabled:opacity-50"><Sparkles size={11} />{t('assessment.drd.levelInterview.askTeresa', 'Ask Teresa')}</button>
                 </span>
               </div>
+              {evidence.length > 0 && (
+                <ul className="mt-2 divide-y divide-c-border-subtle rounded-lg border border-c-border-subtle bg-c-surface" data-testid="drd-level-evidence-list">
+                  {evidence.map((item) => (
+                    <li key={item.eventId} className="flex items-center gap-2 px-3 py-2">
+                      <Paperclip size={12} className="shrink-0 text-c-text-muted" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate text-xs text-c-text" title={item.label}>{item.label}</span>
+                      <span className="text-[11px] text-c-text-muted">{item.strength ?? item.evidenceType}</span>
+                      {canWrite && (
+                        <button
+                          type="button"
+                          disabled={removingEvidenceId === item.eventId}
+                          aria-label={t('methodWorkspace.focus.removeEvidenceAria', 'Remove evidence {{name}}', { name: item.label })}
+                          onClick={async () => {
+                            const confirmed = await confirmEvidenceRemoval({
+                              title: t('methodWorkspace.focus.removeEvidenceTitle', 'Remove evidence?'),
+                              description: t('methodWorkspace.focus.removeEvidenceDescription', 'This removes the evidence from the active assessment while preserving its audit history.'),
+                              confirmLabel: t('common.remove', 'Remove'),
+                              cancelLabel: t('common.cancel', 'Cancel'),
+                              variant: 'danger',
+                            });
+                            if (!confirmed) return;
+                            setEvidenceError(null);
+                            setRemovingEvidenceId(item.eventId);
+                            try {
+                              await onEvidenceRemove(item.eventId);
+                            } catch {
+                              setEvidenceError(t('methodWorkspace.focus.removeEvidenceError', 'The evidence could not be removed. Refresh the session and try again.'));
+                            } finally {
+                              setRemovingEvidenceId(null);
+                            }
+                          }}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-muted hover:bg-c-danger/10 hover:text-c-danger disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          <Trash2 size={13} aria-hidden="true" />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {evidenceError && <p role="alert" className="mt-2 text-xs text-c-danger">{evidenceError}</p>}
             </div>
           </section>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3" data-testid="drd-level-decision-bar">
@@ -189,6 +239,7 @@ export function DrdLevelInterviewWorkspace({
           </div>
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 }

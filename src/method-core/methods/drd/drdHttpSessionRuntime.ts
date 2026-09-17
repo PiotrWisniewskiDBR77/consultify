@@ -322,6 +322,7 @@ export class DrdHttpSessionRuntime {
     evidenceType: string;
     strength: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
     linkedQuestionIds?: readonly string[];
+    label?: string;
   }): Promise<void> {
     const idemKey = `evidence:${input.evidenceId}`;
     const payload = {
@@ -329,6 +330,7 @@ export class DrdHttpSessionRuntime {
       evidenceType: input.evidenceType,
       strength: input.strength,
       linkedQuestionIds: input.linkedQuestionIds ?? [],
+      label: input.label?.trim() || undefined,
     };
     await this.runWrite(
       'event',
@@ -338,6 +340,39 @@ export class DrdHttpSessionRuntime {
         appendEvent(
           this.sessionId,
           { type: 'EVIDENCE_ATTACHED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          idemKey
+        ).then(() => undefined)
+    );
+  }
+
+  async removeEvidence(evidenceEventId: string): Promise<void> {
+    const target = this.state.events.find(
+      (event) => event.id === evidenceEventId && event.type === 'EVIDENCE_ATTACHED'
+    );
+    const evidenceId =
+      target && typeof target.payload === 'object' && target.payload !== null
+        ? (target.payload as { evidenceId?: unknown }).evidenceId
+        : undefined;
+    if (!target || typeof evidenceId !== 'string' || !evidenceId.trim()) {
+      throw new Error('Evidence is no longer available. Refresh the session and try again.');
+    }
+    const idemKey = `evidence-remove:${target.id}:${newIdempotencyKey()}`;
+    const payload = { evidenceId, removedEventId: target.id };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type: 'EVIDENCE_REMOVED', unitId: target.unitId, level: target.level, supersedes: target.id, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          {
+            type: 'EVIDENCE_REMOVED',
+            unitId: target.unitId,
+            level: target.level,
+            actorKind: 'human',
+            supersedes: target.id,
+            payload,
+          },
           idemKey
         ).then(() => undefined)
     );

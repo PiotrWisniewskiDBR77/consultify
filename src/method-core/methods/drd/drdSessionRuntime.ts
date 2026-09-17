@@ -206,6 +206,7 @@ export interface RecordEvidenceInput {
   readonly strength: EvidenceLocator['strength'];
   readonly actorUserId: string;
   readonly linkedQuestionIds?: readonly string[];
+  readonly label?: string;
 }
 
 export interface RecordTargetDecisionInput {
@@ -282,6 +283,7 @@ export class DrdSessionRuntime {
     level?: number;
     actorKind: MethodActorKind;
     actorUserId: string | null;
+    supersedes?: string;
     idempotencyKey?: string;
     payload: unknown;
   }): MethodEvent {
@@ -301,6 +303,7 @@ export class DrdSessionRuntime {
       actorUserId: input.actorUserId,
       methodPackVersion: state.session.methodPackVersion,
       occurredAt: nowIso(),
+      supersedes: input.supersedes,
       idempotencyKey: input.idempotencyKey,
       payload: input.payload,
     };
@@ -339,7 +342,31 @@ export class DrdSessionRuntime {
         evidenceType: input.evidenceType,
         strength: input.strength,
         linkedQuestionIds: input.linkedQuestionIds ?? [],
+        label: input.label?.trim() || undefined,
       },
+    });
+  }
+
+  removeEvidence(evidenceEventId: string, actorUserId: string): MethodEvent {
+    const target = this.listEvents().find(
+      (event) => event.id === evidenceEventId && event.type === 'EVIDENCE_ATTACHED'
+    );
+    const evidenceId =
+      target && typeof target.payload === 'object' && target.payload !== null
+        ? (target.payload as { evidenceId?: unknown }).evidenceId
+        : undefined;
+    if (!target || typeof evidenceId !== 'string' || !evidenceId.trim()) {
+      throw new Error('Evidence is no longer available.');
+    }
+    return this.appendEvent({
+      type: 'EVIDENCE_REMOVED',
+      unitId: target.unitId,
+      level: target.level,
+      actorKind: 'human',
+      actorUserId,
+      supersedes: target.id,
+      idempotencyKey: `evidence-remove:${target.id}:${genId()}`,
+      payload: { evidenceId, removedEventId: target.id },
     });
   }
 
@@ -513,6 +540,12 @@ export class DrdSessionRuntime {
   private freezeToOutput(actorUserId: string): AssessmentOutput {
     const state = this.read();
     const events = this.listEvents();
+    const removedEvidenceEventIds = new Set(
+      events
+        .filter((event) => event.type === 'EVIDENCE_REMOVED')
+        .map((event) => event.supersedes ?? (event.payload as { removedEventId?: string })?.removedEventId)
+        .filter((eventId): eventId is string => Boolean(eventId))
+    );
 
     interface UnitAcc {
       currentLevel: number | null;
@@ -536,7 +569,7 @@ export class DrdSessionRuntime {
         b.currentLevel = event.level;
         b.answerEventIds.push(event.id);
       }
-      if (event.type === 'EVIDENCE_ATTACHED') {
+      if (event.type === 'EVIDENCE_ATTACHED' && !removedEvidenceEventIds.has(event.id)) {
         const payload = event.payload as { evidenceId?: string; evidenceType?: string; strength?: string };
         if (payload?.evidenceId) {
           b.evidence.push({

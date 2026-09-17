@@ -13,6 +13,7 @@ import type { TableColumn } from '@/components/standard/StandardTable';
 import { rollupAnswerState } from '@/components/method-workspace/answerStateColors';
 import type {
   InterviewFocusQuestion,
+  MethodEvidenceListItem,
   MatrixRow,
   MethodAnswerState,
   MethodEvidenceState,
@@ -93,7 +94,49 @@ export function targetLevelFor(events: readonly MethodEvent[], unitId: string): 
 }
 
 export function evidenceEventsFor(events: readonly MethodEvent[], unitId: string): MethodEvent[] {
-  return events.filter((e) => e.type === 'EVIDENCE_ATTACHED' && e.unitId === unitId);
+  const removedEventIds = new Set(
+    events
+      .filter((event) => event.type === 'EVIDENCE_REMOVED')
+      .map((event) => event.supersedes ?? (event.payload as { removedEventId?: string })?.removedEventId)
+      .filter((eventId): eventId is string => Boolean(eventId))
+  );
+  return events.filter(
+    (event) =>
+      event.type === 'EVIDENCE_ATTACHED' &&
+      event.unitId === unitId &&
+      !removedEventIds.has(event.id)
+  );
+}
+
+export function evidenceListFor(
+  events: readonly MethodEvent[],
+  unitId: string,
+  questionId?: string
+): MethodEvidenceListItem[] {
+  return evidenceEventsFor(events, unitId)
+    .filter((event) => {
+      if (!questionId) return true;
+      const linked = (event.payload as { linkedQuestionIds?: readonly string[] })?.linkedQuestionIds;
+      return !linked?.length || linked.includes(questionId);
+    })
+    .map((event) => {
+      const payload = event.payload as {
+        evidenceId?: string;
+        evidenceType?: string;
+        strength?: EvidenceStrength;
+        label?: string;
+      };
+      const evidenceId = payload.evidenceId ?? event.id;
+      return {
+        eventId: event.id,
+        evidenceId,
+        label: payload.label?.trim() || evidenceId,
+        evidenceType: payload.evidenceType ?? 'document',
+        strength: payload.strength ?? null,
+        level: event.level,
+        occurredAt: event.occurredAt,
+      };
+    });
 }
 
 /**

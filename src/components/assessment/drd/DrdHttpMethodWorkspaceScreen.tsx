@@ -91,6 +91,7 @@ import {
   buildNavigatorNodes,
   confirmedLevelsFor,
   evidenceEventsFor,
+  evidenceListFor,
   evidenceStateFor,
   evidenceStrengthFor,
   getOutputUnitColumns,
@@ -756,6 +757,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       answerText: draftAnswerText[q.questionId] ?? text,
       evidenceState: evidenceStateFor(events, activeArea.id, activeProgression.blockedAtLevel),
       evidenceCount: evidenceCountForUnit,
+      evidence: evidenceListFor(events, activeArea.id),
       evidenceStrength: evidenceStrengthForUnit,
     };
   });
@@ -874,18 +876,28 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
 
   const handleEvidenceDrop = useCallback(
     async (questionId: string, files: FileList) => {
-      const file = files[0];
-      if (!file || !runtime || !canWrite) return;
-      await runtime.recordEvidence({
-        unitId: activeArea.id,
-        level: focusLevelFallback,
-        evidenceId: `${questionId}:${file.name}:${Date.now()}`,
-        evidenceType: 'document',
-        strength: 'E2',
-        linkedQuestionIds: [questionId],
-      });
+      if (!runtime || !canWrite) return;
+      for (const [index, file] of Array.from(files).entries()) {
+        await runtime.recordEvidence({
+          unitId: activeArea.id,
+          level: focusLevelFallback,
+          evidenceId: `${questionId}:${file.name}:${Date.now()}:${index}`,
+          evidenceType: 'document',
+          strength: 'E2',
+          linkedQuestionIds: [questionId],
+          label: file.name,
+        });
+      }
     },
     [runtime, canWrite, activeArea.id, focusLevelFallback]
+  );
+
+  const handleEvidenceRemove = useCallback(
+    async (evidenceEventId: string) => {
+      if (!runtime || !canWrite) return;
+      await runtime.removeEvidence(evidenceEventId);
+    },
+    [runtime, canWrite]
   );
 
   // ★ „Zapytaj Teresę" (uwaga właściciela 06.09 15:10: „on w ogóle nie jest
@@ -1861,6 +1873,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onAnswerStateChange: (qid, s, j) => void handleAnswerStateChange(qid, s, j),
             onResolutionAction: (qid, action) => void handleResolutionAction(qid, action),
             onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
+            onEvidenceRemove: handleEvidenceRemove,
             onBack: handleBack,
             onSave: () => void saveNow(),
             onNext: handleNext,
@@ -1893,6 +1906,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                 onSelectLevel={(level) => setPinnedFocus({ unitId: activeArea.id, level })}
                 onSaveDecision={handleLevelDecision}
                 onEvidenceDrop={(questionId, files) => void handleEvidenceDrop(questionId, files)}
+                onEvidenceRemove={handleEvidenceRemove}
                 onAskTeresa={(questionId) => void handleAskTeresa(questionId)}
               />
             ) : undefined

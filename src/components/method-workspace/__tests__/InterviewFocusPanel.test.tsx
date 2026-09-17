@@ -10,7 +10,7 @@
  *     a third axis, never folded into the evidenceState rollup badge;
  *  3. a long answer/question does not blow out the fixed-width layout.
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -130,5 +130,49 @@ describe('InterviewFocusPanel — long text does not break the layout', () => {
     // The command row (Wstecz/Zapisz/Dalej) survives regardless of content length.
     expect(screen.getByText('Next')).toBeInTheDocument();
     expect(screen.getByText('Back')).toBeInTheDocument();
+  });
+});
+
+describe('K-24 — active evidence register and governed removal', () => {
+  const questionWithEvidence = makeInterviewFocusQuestion({
+    evidenceState: 'complete',
+    evidenceCount: 1,
+    evidenceStrength: 'E2',
+    evidence: [{
+      eventId: 'event-1', evidenceId: 'evidence-1', label: 'policy.pdf',
+      evidenceType: 'document', strength: 'E2', level: 2,
+      occurredAt: '2026-09-17T10:00:00.000Z',
+    }],
+  });
+
+  it('lists the evidence and removes it only after explicit confirmation', async () => {
+    const onEvidenceRemove = vi.fn().mockResolvedValue(undefined);
+    render(<InterviewFocusPanel {...baseProps({ questions: [questionWithEvidence], onEvidenceRemove })} />);
+
+    expect(screen.getByText('policy.pdf')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove evidence policy.pdf' }));
+    expect(onEvidenceRemove).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(onEvidenceRemove).toHaveBeenCalledWith('event-1'));
+  });
+
+  it('cancel and read-only mode never call or expose the removal action', () => {
+    const onEvidenceRemove = vi.fn();
+    const { rerender } = render(<InterviewFocusPanel {...baseProps({ questions: [questionWithEvidence], onEvidenceRemove })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove evidence policy.pdf' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Cancel' }).at(-1)!);
+    expect(onEvidenceRemove).not.toHaveBeenCalled();
+
+    rerender(<InterviewFocusPanel {...baseProps({ questions: [questionWithEvidence], onEvidenceRemove, readOnly: true })} />);
+    expect(screen.queryByRole('button', { name: 'Remove evidence policy.pdf' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the row and shows an actionable error when the server rejects removal', async () => {
+    const onEvidenceRemove = vi.fn().mockRejectedValue(new Error('conflict'));
+    render(<InterviewFocusPanel {...baseProps({ questions: [questionWithEvidence], onEvidenceRemove })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove evidence policy.pdf' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('could not be removed');
+    expect(screen.getByText('policy.pdf')).toBeInTheDocument();
   });
 });

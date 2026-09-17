@@ -234,6 +234,107 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(rows.rows).toHaveLength(1);
   });
 
+  it('K-24 appends one governed evidence tombstone, rejects duplicate/foreign targets, and blocks removal after freeze', async () => {
+    const createRes = await createSession(ownerToken);
+    const sessionId = createRes.body.session.id;
+    const evidenceId = `ev-${randomUUID()}`;
+    const attached = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `evidence:${randomUUID()}`)
+      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', level: 1, payload: { evidenceId, evidenceType: 'document', strength: 'E2', label: 'policy.pdf' } });
+    expect(attached.status).toBe(201);
+
+    const removalKey = `evidence-remove:${randomUUID()}`;
+    const removeBody = {
+      type: 'EVIDENCE_REMOVED', unitId: '1A', level: 1, supersedes: attached.body.event.id,
+      payload: { evidenceId, removedEventId: attached.body.event.id },
+    };
+    const removed = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', removalKey)
+      .send(removeBody);
+    expect(removed.status).toBe(201);
+    expect(removed.body.event).toMatchObject({ type: 'EVIDENCE_REMOVED', supersedes: attached.body.event.id });
+
+    const replay = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', removalKey)
+      .send(removeBody);
+    expect(replay.status).toBe(201);
+    expect(replay.body.event.id).toBe(removed.body.event.id);
+
+    const duplicate = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `evidence-remove:${randomUUID()}`)
+      .send(removeBody);
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.code).toBe('EVIDENCE_ALREADY_REMOVED');
+
+    const unassigned = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${approverToken}`)
+      .set('Idempotency-Key', `evidence-remove:${randomUUID()}`)
+      .send(removeBody);
+    expect(unassigned.status).toBe(403);
+
+    const otherTenant = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${otherOrgToken}`)
+      .set('Idempotency-Key', `evidence-remove:${randomUUID()}`)
+      .send(removeBody);
+    expect(otherTenant.status).toBe(403);
+
+    const otherSession = await createSession(ownerToken);
+    const foreignTarget = await request(app)
+      .post(`/api/method/sessions/${otherSession.body.session.id}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `evidence-remove:${randomUUID()}`)
+      .send(removeBody);
+    expect(foreignTarget.status).toBe(404);
+    expect(foreignTarget.body.code).toBe('EVIDENCE_NOT_FOUND');
+
+    const rows = await pool.query(`SELECT type, supersedes FROM method_events WHERE session_id = $1 ORDER BY occurred_at, id`, [sessionId]);
+    expect(rows.rows.filter((row) => row.type === 'EVIDENCE_REMOVED')).toHaveLength(1);
+
+    await driveToInReview(otherSession.body.session.id);
+    await pool.query(
+      `INSERT INTO method_session_roles (id, organization_id, session_id, user_id, role, created_at)
+       VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
+      [randomUUID(), ORG, otherSession.body.session.id, APPROVER]
+    );
+    const liveEvidenceId = `ev-${randomUUID()}`;
+    const liveAttached = await request(app)
+      .post(`/api/method/sessions/${otherSession.body.session.id}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `evidence:${randomUUID()}`)
+      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', level: 1, payload: { evidenceId: liveEvidenceId, evidenceType: 'document', strength: 'E2' } });
+    await request(app)
+      .post(`/api/method/sessions/${otherSession.body.session.id}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `answer:${randomUUID()}`)
+      .send({ type: 'ANSWER_CONFIRMED', unitId: '1A', level: 1, payload: { questionId: 'q1', answerState: 'confirmed' } });
+    const frozen = await request(app)
+      .post(`/api/method/sessions/${otherSession.body.session.id}/freeze`)
+      .set('Authorization', `Bearer ${approverToken}`)
+      .set('Idempotency-Key', `freeze:${randomUUID()}`)
+      .send({});
+    expect(frozen.status).toBe(200);
+    const afterFreeze = await request(app)
+      .post(`/api/method/sessions/${otherSession.body.session.id}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `evidence-remove:${randomUUID()}`)
+      .send({
+        type: 'EVIDENCE_REMOVED', unitId: '1A', level: 1, supersedes: liveAttached.body.event.id,
+        payload: { evidenceId: liveEvidenceId, removedEventId: liveAttached.body.event.id },
+      });
+    expect(afterFreeze.status).toBe(409);
+    expect(afterFreeze.body.code).toBe('METHOD_SESSION_READ_ONLY');
+  });
+
   // ---------------------------------------------------------------------------
   // 3. stale version -> 409, zero write
   // ---------------------------------------------------------------------------

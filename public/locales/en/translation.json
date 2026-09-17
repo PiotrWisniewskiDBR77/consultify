@@ -54569,7 +54569,12 @@
       "chooseReason": "Choose a reason…",
       "confirm": "Confirm",
       "evidenceStrengthLabel": "Evidence strength",
-      "previousStep": "Previous step"
+      "previousStep": "Previous step",
+      "evidenceList": "Attached evidence",
+      "removeEvidenceAria": "Remove evidence {{name}}",
+      "removeEvidenceTitle": "Remove evidence?",
+      "removeEvidenceDescription": "This removes the evidence from the active assessment while preserving its audit history.",
+      "removeEvidenceError": "The evidence could not be removed. Refresh the session and try again."
     },
     "skipReason": {
       "outsideOperatingModel": "outside the operating model",

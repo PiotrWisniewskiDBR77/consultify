@@ -90,6 +90,8 @@ export interface InterviewFocusQuestion {
   readonly answerText: string;
   readonly evidenceState: MethodEvidenceState;
   readonly evidenceCount: number;
+  /** Active evidence entries linked to this question/unit. */
+  readonly evidence?: readonly MethodEvidenceListItem[];
   /**
    * Strongest evidence strength (E0-E4) recorded for this unit — a THIRD,
    * independent axis from the answer/approval state and from the level/band
@@ -99,6 +101,17 @@ export interface InterviewFocusQuestion {
    * it (e.g. SIRI) are unaffected.
    */
   readonly evidenceStrength?: EvidenceStrength | null;
+}
+
+export interface MethodEvidenceListItem {
+  /** Event id, used as the append-only removal target. */
+  readonly eventId: string;
+  readonly evidenceId: string;
+  readonly label: string;
+  readonly evidenceType: string;
+  readonly strength: EvidenceStrength | null;
+  readonly level?: number;
+  readonly occurredAt: string;
 }
 
 export interface ResolutionCardData {

@@ -8,7 +8,7 @@
  * write into the SAME `answerText`/`answerState` — there is no separate save
  * path per channel (A5 spec, cross-cutting requirement).
  */
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +20,7 @@ import { answerStateCardClass, answerStateDotClass } from './answerStateColors';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
 import { skipReasonOptionsUi, type DrdSkipReasonCode } from './skipReasonCodes';
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 
 export interface InterviewFocusPanelProps {
   /** Breadcrumb context — axis/pillar, area/dimension, level under consideration. */
@@ -33,6 +34,7 @@ export interface InterviewFocusPanelProps {
   onAnswerStateChange: (questionId: string, state: InterviewFocusQuestion['answerState'], justification?: string) => void;
   onResolutionAction: (questionId: string, action: ResolutionAction) => void;
   onEvidenceDrop: (questionId: string, files: FileList) => void;
+  onEvidenceRemove?: (evidenceEventId: string) => Promise<void>;
   onBack: () => void;
   onSave: () => void;
   onNext: () => void;
@@ -68,6 +70,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   onAnswerStateChange,
   onResolutionAction,
   onEvidenceDrop,
+  onEvidenceRemove,
   onBack,
   onSave,
   onNext,
@@ -92,6 +95,9 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   const [skipping, setSkipping] = useState(false);
   const [dragActive, setDragActive] = useState<string | null>(null);
   const [activeSequenceIndex, setActiveSequenceIndex] = useState(0);
+  const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const { dialog: confirmDialog, confirm: confirmEvidenceRemoval } = useConfirmDialog();
   const primary = questions[0];
 
   // Dyktowanie dopisuje do NAJŚWIEŻSZEJ treści pola, nie do tej, którą
@@ -344,6 +350,71 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             </span>
           </div>
 
+          {q.evidence && q.evidence.length > 0 && (
+            <div className="space-y-2" data-testid={`evidence-list-${q.question.questionId}`}>
+              <p className="text-xs font-semibold text-c-text-secondary">
+                {t('methodWorkspace.focus.evidenceList', 'Attached evidence')}
+              </p>
+              <ul className="divide-y divide-c-border-subtle rounded-lg border border-c-border-subtle bg-c-surface">
+                {q.evidence.map((item) => (
+                  <li key={item.eventId} className="flex items-center gap-3 px-3 py-2">
+                    <Paperclip size={14} className="shrink-0 text-c-text-muted" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate text-sm text-c-text" title={item.label}>
+                      {item.label}
+                    </span>
+                    <span className="shrink-0 text-xs text-c-text-muted">
+                      {item.strength ?? item.evidenceType}
+                    </span>
+                    {!readOnly && onEvidenceRemove && (
+                      <button
+                        type="button"
+                        disabled={removingEvidenceId === item.eventId}
+                        aria-label={t('methodWorkspace.focus.removeEvidenceAria', 'Remove evidence {{name}}', {
+                          name: item.label,
+                        })}
+                        onClick={async () => {
+                          const confirmed = await confirmEvidenceRemoval({
+                            title: t('methodWorkspace.focus.removeEvidenceTitle', 'Remove evidence?'),
+                            description: t(
+                              'methodWorkspace.focus.removeEvidenceDescription',
+                              'This removes the evidence from the active assessment while preserving its audit history.'
+                            ),
+                            confirmLabel: t('common.remove', 'Remove'),
+                            cancelLabel: t('common.cancel', 'Cancel'),
+                            variant: 'danger',
+                          });
+                          if (!confirmed) return;
+                          setEvidenceError(null);
+                          setRemovingEvidenceId(item.eventId);
+                          try {
+                            await onEvidenceRemove(item.eventId);
+                          } catch {
+                            setEvidenceError(
+                              t(
+                                'methodWorkspace.focus.removeEvidenceError',
+                                'The evidence could not be removed. Refresh the session and try again.'
+                              )
+                            );
+                          } finally {
+                            setRemovingEvidenceId(null);
+                          }
+                        }}
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-c-text-muted hover:bg-c-danger/10 hover:text-c-danger disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {evidenceError && (
+                <p role="alert" className="text-xs text-c-danger">
+                  {evidenceError}
+                </p>
+              )}
+            </div>
+          )}
+
           {questions.length > 1 && (
             <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle pt-3">
               <button
@@ -457,6 +528,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           </div>
         )}
       </div>
+      {confirmDialog}
     </section>
   );
 };

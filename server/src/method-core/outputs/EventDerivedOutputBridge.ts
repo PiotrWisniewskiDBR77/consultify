@@ -134,6 +134,12 @@ export function deriveFindingsFromEvents(
 } {
   const teksty = TEKSTY_ZNALEZISK[jezyk];
   const byUnit = new Map<string, UnitAccumulator>();
+  const removedEvidenceEventIds = new Set(
+    events
+      .filter((event) => event.type === 'EVIDENCE_REMOVED')
+      .map((event) => event.supersedes ?? (event.payload as { removedEventId?: string })?.removedEventId)
+      .filter((eventId): eventId is string => Boolean(eventId))
+  );
 
   for (const event of events) {
     if (!event.unitId) continue;
@@ -149,7 +155,7 @@ export function deriveFindingsFromEvents(
       if (payload?.text) bucket.lastAnswerText = payload.text;
     }
 
-    if (event.type === 'EVIDENCE_ATTACHED') {
+    if (event.type === 'EVIDENCE_ATTACHED' && !removedEvidenceEventIds.has(event.id)) {
       const payload = event.payload as
         | { evidenceId?: string; evidenceType?: string; strength?: string }
         | undefined;

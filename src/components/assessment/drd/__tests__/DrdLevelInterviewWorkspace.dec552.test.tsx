@@ -36,7 +36,7 @@ function event(level: number, answerState: string, justification?: string): Meth
 const baseProps = {
   axis, area, levels, questions, events: [] as MethodEvent[], selectedLevel: 2, currentLevel: 1, targetLevel: 3,
   answerText: 'Northwind evidence', canWrite: true, onAnswerChange: vi.fn(), onSelectLevel: vi.fn(),
-  onSaveDecision: vi.fn(async () => {}), onEvidenceDrop: vi.fn(), onAskTeresa: vi.fn(),
+  onSaveDecision: vi.fn(async () => {}), onEvidenceDrop: vi.fn(), onEvidenceRemove: vi.fn(async () => {}), onAskTeresa: vi.fn(),
 };
 
 describe('DRD-2 DEC-552 level interview', () => {
@@ -71,5 +71,21 @@ describe('DRD-2 DEC-552 level interview', () => {
 
     rerender(<DrdLevelInterviewWorkspace {...baseProps} events={[event(2, 'no')]} selectedLevel={2} />);
     expect(screen.getByRole('button', { name: /L3/ })).toBeDisabled();
+  });
+
+  it('K-24 renders and removes evidence on the V2 interview surface', async () => {
+    const onEvidenceRemove = vi.fn(async () => {});
+    const attached: MethodEvent = {
+      id: 'attached-1', type: 'EVIDENCE_ATTACHED', organizationId: 'o', sessionId: 's',
+      unitId: '1A', level: 2, actorKind: 'human', actorUserId: 'u', methodPackVersion: 'v',
+      occurredAt: '2026-09-17T00:00:00Z',
+      payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2', label: 'policy.pdf', linkedQuestionIds: ['q2'] },
+    };
+    render(<DrdLevelInterviewWorkspace {...baseProps} events={[attached]} onEvidenceRemove={onEvidenceRemove} />);
+
+    expect(screen.getByTestId('drd-level-evidence-list')).toHaveTextContent('policy.pdf');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove evidence policy.pdf' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(onEvidenceRemove).toHaveBeenCalledWith('attached-1'));
   });
 });

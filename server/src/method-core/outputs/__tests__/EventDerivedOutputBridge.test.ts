@@ -99,6 +99,19 @@ describe('deriveFindingsFromEvents (pure)', () => {
     const { current } = deriveFindingsFromEvents(events);
     expect(current['1A']).toBe(3);
   });
+
+  it('K-24 excludes a tombstoned evidence event from the frozen Output projection', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ id: 'answer', type: 'ANSWER_CONFIRMED', unitId: '1A', level: 2 }),
+      makeEvent({ id: 'attached-1', type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E4' } }),
+      makeEvent({ id: 'attached-2', type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: 'ev-2', evidenceType: 'observation', strength: 'E2' } }),
+      makeEvent({ id: 'removed-1', type: 'EVIDENCE_REMOVED', unitId: '1A', supersedes: 'attached-1', payload: { evidenceId: 'ev-1', removedEventId: 'attached-1' } }),
+    ];
+
+    const { findings } = deriveFindingsFromEvents(events);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].supportingEvidence.map((item) => item.evidenceId)).toEqual(['ev-2']);
+  });
 });
 
 describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)', () => {
