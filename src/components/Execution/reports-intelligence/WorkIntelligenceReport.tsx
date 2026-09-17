@@ -146,6 +146,10 @@ const EPISTEMIC_LABEL_KEY: Record<
 // wywołaniach t() (i18next ma przeciążone sygnatury — spread gubi typy).
 const trPair = (t: (key: string, fallback: string) => string, pair: [string, string]): string =>
   t(pair[0], pair[1]);
+const normalizeWorkReportLabel = (value: string): string =>
+  value
+    .replace(/\bCalculatedNeutral\b/g, 'Calculated · Neutral')
+    .replace(/\bCALCULATEDNeutral\b/g, 'Calculated · Neutral');
 // Kolumna TYP w rejestrze renderowała row.kind ('TASK'/'DECISION'/'MILESTONE')
 // bez żadnego mapowania — ten sam znany defekt co wyżej.
 const KIND_LABEL_KEY: Record<string, [string, string]> = {
@@ -871,7 +875,7 @@ export function WorkIntelligenceReport({
                     </strong>
                     <span className="text-xs text-c-text-muted">
                       {metric.value.numerator}/{metric.value.denominator} ·{' '}
-                      {trPair(t, EPISTEMIC_LABEL_KEY.calculated)}
+                      {normalizeWorkReportLabel(trPair(t, EPISTEMIC_LABEL_KEY.calculated))}
                     </span>
                   </>
                 )}
@@ -880,7 +884,9 @@ export function WorkIntelligenceReport({
                     SEVERITY_BADGE_CLASS[metric.severity] ?? SEVERITY_BADGE_CLASS.unknown
                   }`}
                 >
-                  {trPair(t, SEVERITY_LABEL_KEY[metric.severity] ?? SEVERITY_LABEL_KEY.unknown)}
+                  {normalizeWorkReportLabel(
+                    trPair(t, SEVERITY_LABEL_KEY[metric.severity] ?? SEVERITY_LABEL_KEY.unknown)
+                  )}
                 </span>
               </button>
             ))}

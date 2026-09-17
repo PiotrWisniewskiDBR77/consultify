@@ -65,6 +65,20 @@ describe('executionRiskSignal — sygnał wiersza', () => {
     expect(signal.worst).toBe(3);
     expect(signal.worstIconId).toBe('escalate');
     expect(signal.measuredAxes).toBe(2);
+    expect(signal.axes[2].reason).toBeNull();
+  });
+
+  it('czyta aliasy z API i niesie powód braku pomiaru', () => {
+    const signal = buildExecutionRiskSignal({
+      initiativeId: 'ini-alias',
+      schedule: { ratio: 0.82, rag: 'RED' },
+      impact: { ratio: null, rag: 'NA', reason: 'no-value-baseline' },
+      promise: { ratio: 0.96, rag: 'GREEN' },
+    });
+
+    expect(signal.axes.map((axis) => axis.level)).toEqual([2, 'UNKNOWN', 0]);
+    expect(signal.axes[1].reason).toBe('no-value-baseline');
+    expect(signal.measuredAxes).toBe(2);
   });
 
   it('każda oś niesie ikonę razem z poziomem — nigdy sam kolor', () => {

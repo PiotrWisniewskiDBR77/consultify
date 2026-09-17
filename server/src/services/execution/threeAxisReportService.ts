@@ -64,6 +64,7 @@ export interface AxisReading {
 export interface AxisRatio {
   ratio: number | null;
   rag: RagLabel;
+  reason?: string;
 }
 
 export interface ThreeAxisRow {
@@ -200,20 +201,34 @@ export function computeAxisW(
   return { pct: round1((value.current / value.target) * 100), dataQuality: 'ok', flags: [] };
 }
 
-export function computeScheduleHealth(evm: EvmResult | null): AxisRatio {
-  if (!evm || evm.spi === null) return { ratio: null, rag: 'NA' };
-  return { ratio: evm.spi, rag: computeCanonicalExecutionHealth({ spi: evm.spi }).rag };
+export function computeScheduleHealth(
+  T: AxisReading,
+  progressPct: number | null | undefined,
+  evm: EvmResult | null
+): AxisRatio {
+  if (evm?.spi !== null && evm?.spi !== undefined) {
+    return { ratio: evm.spi, rag: computeCanonicalExecutionHealth({ spi: evm.spi }).rag };
+  }
+  if (T.pct === null) return { ratio: null, rag: 'NA', reason: T.flags[0] ?? 'no-schedule-dates' };
+  const rawProgress = Number(progressPct);
+  if (!Number.isFinite(rawProgress)) return { ratio: null, rag: 'NA', reason: 'no-progress' };
+  if (T.pct <= 0) return { ratio: rawProgress > 0 ? 1 : 0, rag: rawProgress > 0 ? 'GREEN' : 'RED' };
+  const progressFraction = rawProgress > 1 ? rawProgress / 100 : rawProgress;
+  const ratio = progressFraction / (T.pct / 100);
+  return { ratio, rag: computeCanonicalExecutionHealth({ spi: ratio }).rag };
 }
 
 /** W-vs-Z — impact gap. Ratio, nie delta: Z=10%/W=8% ≠ Z=90%/W=88% jako sygnał. */
 export function computeImpactGap(W: AxisReading, Z: AxisReading): AxisRatio {
-  if (W.pct === null || Z.pct === null || Z.pct <= 0) return { ratio: null, rag: 'NA' };
+  if (W.pct === null) return { ratio: null, rag: 'NA', reason: W.flags[0] ?? 'no-value-baseline' };
+  if (Z.pct === null || Z.pct <= 0) return { ratio: null, rag: 'NA', reason: Z.flags[0] ?? 'no-work-progress' };
   const ratio = W.pct / Z.pct;
   return { ratio, rag: ratioRag(ratio) };
 }
 
 export function computeDeliveryPromise(W: AxisReading, T: AxisReading): AxisRatio {
-  if (W.pct === null || T.pct === null || T.pct <= 0) return { ratio: null, rag: 'NA' };
+  if (W.pct === null) return { ratio: null, rag: 'NA', reason: W.flags[0] ?? 'no-value-baseline' };
+  if (T.pct === null || T.pct <= 0) return { ratio: null, rag: 'NA', reason: T.flags[0] ?? 'no-schedule-dates' };
   const ratio = W.pct / T.pct;
   return { ratio, rag: ratioRag(ratio) };
 }
@@ -362,7 +377,7 @@ export async function buildThreeAxisReport(scope: ThreeAxisScope): Promise<Three
     const Z = computeAxisZ(evm);
     const value = valueByIni.get(String(ini.id));
     const W = computeAxisW(value);
-    const scheduleHealth = computeScheduleHealth(evm);
+    const scheduleHealth = computeScheduleHealth(T, ini.progress, evm);
     const impactGap = computeImpactGap(W, Z);
     const deliveryPromise = computeDeliveryPromise(W, T);
     return {

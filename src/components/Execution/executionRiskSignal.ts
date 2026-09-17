@@ -40,6 +40,7 @@ export type ExecutionRiskIconId = 'ok' | 'watch' | 'act' | 'escalate' | 'unknown
 export interface ExecutionRiskAxisRatioSource {
   ratio: number | null;
   rag?: 'GREEN' | 'AMBER' | 'RED' | 'NA' | string | null;
+  reason?: string | null;
 }
 
 /** Wiersz raportu 3 osi w kształcie, w jakim oddaje go trasa `/program-3axis/live`. */
@@ -48,6 +49,9 @@ export interface ExecutionRiskReportRowSource {
   scheduleHealth?: ExecutionRiskAxisRatioSource | null;
   impactGap?: ExecutionRiskAxisRatioSource | null;
   deliveryPromise?: ExecutionRiskAxisRatioSource | null;
+  schedule?: ExecutionRiskAxisRatioSource | null;
+  impact?: ExecutionRiskAxisRatioSource | null;
+  promise?: ExecutionRiskAxisRatioSource | null;
 }
 
 export interface ExecutionRiskAxis {
@@ -56,6 +60,7 @@ export interface ExecutionRiskAxis {
   iconId: ExecutionRiskIconId;
   /** Surowy wskaźnik (SPI / W-vs-Z / W-vs-T). `null` = nie policzono. */
   ratio: number | null;
+  reason: string | null;
 }
 
 export interface ExecutionRiskSignal {
@@ -138,14 +143,15 @@ function axis(id: ExecutionRiskAxisId, source: ExecutionRiskAxisRatioSource | nu
     level,
     iconId: executionRiskIconId(level),
     ratio: typeof source?.ratio === 'number' && Number.isFinite(source.ratio) ? source.ratio : null,
+    reason: typeof source?.reason === 'string' && source.reason.trim() ? source.reason.trim() : null,
   } satisfies ExecutionRiskAxis;
 }
 
 export function buildExecutionRiskSignal(row: ExecutionRiskReportRowSource): ExecutionRiskSignal {
   const axes = [
-    axis('schedule', row.scheduleHealth),
-    axis('impact', row.impactGap),
-    axis('promise', row.deliveryPromise),
+    axis('schedule', row.scheduleHealth ?? row.schedule),
+    axis('impact', row.impactGap ?? row.impact),
+    axis('promise', row.deliveryPromise ?? row.promise),
   ] as const;
   const worst = worstExecutionRiskLevel(axes.map((entry) => entry.level));
   return {

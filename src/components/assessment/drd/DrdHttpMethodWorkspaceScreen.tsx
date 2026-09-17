@@ -2350,8 +2350,12 @@ const FrozenOutputHttpView: React.FC<{
           </button>
         )}
         <h1 className="text-sm font-semibold text-c-text">
-          {t('assessment.drd.http.frozen.heading', 'Session {{id}} — {{state}}', {
-            id: session.id.slice(0, 8),
+          {t('assessment.drd.http.frozen.headingNamed', '{{name}} — {{state}}', {
+            name:
+              session.name?.trim() ||
+              t('assessment.drd.http.sessionFallbackName', 'Session {{id}}', {
+                id: session.id.slice(0, 8),
+              }),
             state:
               session.state === 'closed'
                 ? t('assessment.drd.http.frozen.stateClosed', 'Closed')

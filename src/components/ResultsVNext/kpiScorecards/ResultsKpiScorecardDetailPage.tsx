@@ -91,6 +91,7 @@ import {
   type ScorecardPeriodMatrixDto,
   type ScorecardStatusDistributionDto,
 } from './kpiScorecardApi';
+import { kpiCardFromSetPath } from '../kpiTool/kpiCardSetPath';
 import {
   buildKpiReportItemColumns,
   buildKpiReportItemRows,
@@ -550,11 +551,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
            miernika (poziom 3) — nie na jej środek i nie do listy odchyleń. */
         onOpenActionCards: (row) => {
           if (!row.kpiId) return;
-          navigate(
-            `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', row.kpiId)}?zbior=${encodeURIComponent(
-              scorecardId ?? ''
-            )}&sekcja=actionCards`
-          );
+          navigate(`${kpiCardFromSetPath(row.kpiId, scorecardId ?? '')}&sekcja=actionCards`);
         },
       }),
     [isPolish, periodMatrix, navigate, scorecardId]
@@ -892,9 +889,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
 
   /** Otwarcie karty miernika (poziom 3) z pamięcią raportu, z którego przyszedł. */
   const openKpiCard = (kpiId: string) =>
-    navigate(
-      `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId)}?zbior=${encodeURIComponent(scorecardId ?? '')}`
-    );
+    navigate(kpiCardFromSetPath(kpiId, scorecardId ?? ''));
 
   return (
     <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">

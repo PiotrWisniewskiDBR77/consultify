@@ -163,8 +163,8 @@ import {
 import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
 import {
   isUnassignedCardSetId,
-  KPI_CARD_SET_PARAM,
   kpiReportPath,
+  readKpiCardSetParam,
   withOwnerSampleData,
 } from './kpiCardSetPath';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -318,7 +318,7 @@ export const KpiToolPage: React.FC = () => {
   // „Rejestr KPI › <zestawienie> › <wskaźnik>", przeżywa odświeżenie i daje
   // się podlinkować (patrz `kpiCardSetPath.ts`).
   const [searchParams] = useSearchParams();
-  const fromCardSetId = searchParams.get(KPI_CARD_SET_PARAM);
+  const fromCardSetId = readKpiCardSetParam(searchParams);
   const [pathCardSetName, setPathCardSetName] = useState<string | null>(null);
 
   const [kpi, setKpi] = useState<KpiDefinitionDto | null>(null);
@@ -360,7 +360,7 @@ export const KpiToolPage: React.FC = () => {
    * raportu (`GET .../scorecards/:id/periods`) — karta bierze z tej odpowiedzi
    * SWÓJ wiersz, zamiast liczyć drugą, własną sumę. Dwie prawdy o YTD (jedna
    * na poziomie 2, druga na karcie) byłyby gorsze niż brak YTD na karcie.
-   * Bez `?zbior=` w adresie nie wiadomo, w którym raporcie liczyć — wtedy
+   * Bez `?set=` w adresie nie wiadomo, w którym raporcie liczyć — wtedy
    * kafelek pokazuje „—" z podpisem, a nie zgadniętą liczbę.
    */
   const [ytdWiersz, setYtdWiersz] = useState<ScorecardPeriodMatrixItemDto | null>(null);
@@ -600,7 +600,7 @@ export const KpiToolPage: React.FC = () => {
   }, [enabled, isPolish, kpiId]);
 
   // Nazwa zestawienia do ścieżki poziomów. Pobierana TYLKO gdy adres niesie
-  // `?zbior=<id>` i NIE jest to zestawienie systemowe „Bez zestawienia"
+  // `?set=<id>` i NIE jest to zestawienie systemowe „Bez zestawienia"
   // (tamto nie ma rekordu w bazie — pytanie o nie API byłoby żądaniem o
   // zasób, którego nie ma). Wejście bez parametru nie robi żadnego żądania
   // ekstra — nazwę zestawienia bierze wtedy z sekcji „Zestawienia", którą ta
@@ -1104,10 +1104,11 @@ export const KpiToolPage: React.FC = () => {
       ? `${definitionVersion.name} (v${definitionVersion.versionNumber})`
       : shortId(kpi.currentDefinitionVersionId);
 
+  const notSet = t('Nie ustawiono', 'Not set');
   const propertyRows: ArtifactPropertyRow[] = [
     { id: 'owner', label: t('Właściciel', 'Owner'), value: resolveMemberName(kpi.ownerUserId) },
-    { id: 'process', label: t('Proces', 'Process'), value: kpiU41Enabled ? (kpi.primaryProcessId ?? '—') : shortId(kpi.primaryProcessId) },
-    { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: kpiU41Enabled ? (kpi.responsePolicyId ?? '—') : shortId(kpi.responsePolicyId) },
+    { id: 'process', label: t('Proces', 'Process'), value: kpiU41Enabled ? (kpi.primaryProcessId?.trim() || notSet) : shortId(kpi.primaryProcessId) },
+    { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: kpiU41Enabled ? (kpi.responsePolicyId?.trim() || notSet) : shortId(kpi.responsePolicyId) },
     { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     {
       id: 'cardSets',
@@ -1922,7 +1923,7 @@ export const KpiToolPage: React.FC = () => {
   // ── ŚCIEŻKA POZIOMÓW (element ㉛ Menu 1, SPEC-A §9.2/§11.2) ──────────────
   // Trzy stopnie, dokładnie te, o które upomniał się właściciel 05.09:
   //   „Rejestr KPI (tabela zestawień) › <zestawienie> › <ten wskaźnik>".
-  // Stopień środkowy pochodzi z adresu (`?zbior=`), a gdy go nie ma — z
+  // Stopień środkowy pochodzi z adresu (`?set=`, legacy `?zbior=`), a gdy go nie ma — z
   // REALNEJ przynależności wskaźnika (`listKpiScorecardsForKpi`, już pobrane
   // na tę stronę). Gdy wskaźnik nie należy do żadnego widocznego zestawienia,
   // środkowym stopniem jest zestawienie systemowe „Bez zestawienia" — nigdy

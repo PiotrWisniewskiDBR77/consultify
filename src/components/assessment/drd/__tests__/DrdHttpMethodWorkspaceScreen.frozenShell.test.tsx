@@ -81,6 +81,7 @@ function makeMemoryStorage(): Storage {
 
 const FROZEN_SESSION = {
   id: 'sess-frozen-1',
+  name: 'Northwind 2027 — Digital Readiness Diagnosis · Leeds site',
   organizationId: 'org-1',
   projectId: null,
   module: 'assessment',
@@ -177,6 +178,8 @@ describe('sesja zamrożona — powłoka zamiast surowego kontraktu', () => {
 
     const szczegoly = await screen.findByTestId('drd-frozen-technical-details');
     const surowy = within(szczegoly).getByTestId('drd-http-frozen-output-view');
+    expect(within(surowy).getByRole('heading', { name: /Northwind 2027/i })).toBeInTheDocument();
+    expect(within(surowy).queryByRole('heading', { name: /Session sess-fro/i })).toBeNull();
     expect(within(surowy).getByText(/contentHash/)).toBeInTheDocument();
     expect(within(surowy).getByTestId('output-panel')).toHaveTextContent('AssessmentOutput');
   });

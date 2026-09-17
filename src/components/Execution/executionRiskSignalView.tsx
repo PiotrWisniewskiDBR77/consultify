@@ -103,8 +103,19 @@ export const executionRiskAxisSentence = (axis: ExecutionRiskAxis, t: RiskT): st
   const name = executionRiskAxisLabel(axis.id, t);
   const verdict = executionRiskLevelLabel(axis.level, t);
   if (axis.level === 'UNKNOWN' || axis.ratio === null) {
-    return t('execution.risk.axisSentenceUnknown', '{{axis}}: not measured — no baseline data', {
+    const reason =
+      axis.reason === 'no-value-baseline'
+        ? t('execution.risk.reason.noValueBaseline', 'no value baseline')
+        : axis.reason === 'no-cost-baseline'
+          ? t('execution.risk.reason.noCostBaseline', 'no cost baseline')
+          : axis.reason === 'no-schedule-dates'
+            ? t('execution.risk.reason.noScheduleDates', 'no schedule dates')
+            : axis.reason === 'no-progress'
+              ? t('execution.risk.reason.noProgress', 'no progress value')
+              : t('execution.risk.reason.noBaselineData', 'no baseline data');
+    return t('execution.risk.axisSentenceUnknownReason', '{{axis}}: not measured — {{reason}}', {
       axis: name,
+      reason,
     });
   }
   return t('execution.risk.axisSentence', '{{axis}}: {{verdict}} (index {{ratio}})', {

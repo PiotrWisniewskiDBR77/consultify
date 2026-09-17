@@ -15,7 +15,7 @@
  *      + TABELA mierników grupowana po obszarze, z parą CEL/Rezultat na każdy
  *      okres, YTD i STANEM (P7K, SSOT §6). Wcześniejsza siatka kafelków na
  *      osobnym, starym adresie została usunięta — raport jest tabelą.
- *   3. `/results/kpi/:kpiId?zbior=<scorecardId>`  — KARTA N wskaźnika
+ *   3. `/results/kpi/:kpiId?set=<scorecardId>`    — KARTA N wskaźnika
  *      (`KpiToolPage`), ścieżka „Rejestr KPI › <zestawienie> › <wskaźnik>".
  *
  * POPRZEDNIA (ODRZUCONA) FORMUŁA — czterostopniowa „tabela KPI → karta KPI →
@@ -33,7 +33,14 @@
  */
 
 /** Nazwa parametru niosącego id zestawienia (poziom 2), z którego przyszliśmy. */
-export const KPI_CARD_SET_PARAM = 'zbior';
+export const KPI_CARD_SET_PARAM = 'set';
+
+/**
+ * Kompatybilność z adresami wypuszczonymi przed W193. Nowe linki używają
+ * angielskiego `set`, ale stare `?zbior=` dalej czytamy, żeby nie zepsuć
+ * zapisanych linków użytkowników.
+ */
+export const KPI_CARD_SET_LEGACY_PARAM = 'zbior';
 
 /**
  * ZESTAWIENIE SYSTEMOWE „Bez zestawienia" — wskaźniki, które nie należą do
@@ -66,6 +73,10 @@ export function kpiCardFromSetPath(kpiId: string, scorecardId: string): string {
   const qs = new URLSearchParams();
   qs.set(KPI_CARD_SET_PARAM, scorecardId);
   return `/results/kpi/${encodeURIComponent(kpiId)}?${qs.toString()}`;
+}
+
+export function readKpiCardSetParam(searchParams: URLSearchParams): string | null {
+  return searchParams.get(KPI_CARD_SET_PARAM) ?? searchParams.get(KPI_CARD_SET_LEGACY_PARAM);
 }
 
 /**
