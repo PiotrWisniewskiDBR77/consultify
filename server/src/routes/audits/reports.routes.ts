@@ -21,7 +21,7 @@ import type { ReportKind } from '../../services/audits/types.js';
 import { requireCapability } from '../../services/audits/permissions.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { renderDocumentSchemaToDocxBuffer } from '../../services/documentStudio/documentDocxRenderer.js';
-import { renderDocumentSchemaToPdfBuffer } from '../../services/documentStudio/documentPdfRenderer.js';
+import { exportCanonicalDocumentPdf } from '../../services/export/pdf/CanonicalPdfExportService.js';
 
 import { auditActor, assertActor, route } from './context.js';
 
@@ -139,7 +139,7 @@ router.get(
     const document = requireReportPayloadShape(report.payload);
     const context = await resolveReportContext(actor.organizationId, report.programId);
     const schema = buildAuditReportDocumentSchema(report, document, context);
-    const buffer = await renderDocumentSchemaToPdfBuffer(schema);
+    const { buffer, receipt } = await exportCanonicalDocumentPdf(schema, 'audit_report');
     const safeTitle = report.title
       .normalize('NFC')
       .replace(/[^\p{L}\p{N}._-]+/gu, '_')
@@ -159,6 +159,8 @@ router.get(
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
         'Content-Length': String(buffer.length),
+        'X-Export-Engine': receipt.engine,
+        'X-Export-SHA256': receipt.sha256,
       })
       .send(buffer);
   }),

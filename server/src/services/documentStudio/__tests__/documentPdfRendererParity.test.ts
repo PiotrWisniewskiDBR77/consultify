@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 /**
  * Document Studio — PDF renderer parity smoke tests (Epic E8, Slice 8.4).
  *

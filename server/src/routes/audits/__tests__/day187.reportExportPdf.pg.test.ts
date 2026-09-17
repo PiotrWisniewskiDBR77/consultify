@@ -131,6 +131,8 @@ describe.skipIf(!REAL_PG)('Day 187 audit report HTTP PDF export', () => {
     const response = await download(REPORT);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.headers['content-type']).toContain('application/pdf');
+    expect(response.headers['x-export-engine']).toBe('document-schema-pdf-v1');
+    expect(response.headers['x-export-sha256']).toMatch(/^[a-f0-9]{64}$/);
     expect(Number(response.headers['content-length'])).toBeGreaterThan(0);
     expect(Buffer.from(response.body).subarray(0, 5).toString()).toBe('%PDF-');
     expect(response.headers['content-disposition']).toContain('filename="Raport_audytu_Lodz');

@@ -3077,9 +3077,11 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
  *           (ten sam silnik, którym raport DOCX renderuje jądro metodyczne —
  *            14 nazwanych stylów Word, natywny spis treści, radar, stopka)
  *   .pptx → buildAssessmentDeckModel → renderAssessmentDeckPptx
- *   .pdf  → buildAssessmentDeckModel → renderAssessmentDeckPdf
+ *   .pdf  → buildAssessmentDrdReportSchema → canonical PDF exporter
  *
- * PPTX i PDF czytają JEDEN model prezentacji, więc nie mogą się rozjechać.
+ * DOCX i PDF czytają JEDEN DocumentSchema raportu, więc zachowują te same
+ * sekcje, tabele, źródła i decyzje formatowania. PPTX pozostaje osobnym
+ * modelem prezentacji.
  *
  * PO CO OSOBNE TRASY OD `/api/method/sessions/:id/assessment-report.docx`:
  * tamta czyta wyłącznie jądro (`method_sessions`), a pomiar z 2026-09-06
@@ -3173,41 +3175,43 @@ const eksportOceny = (
       );
 
       let buffer: Buffer;
-      if (format === 'docx') {
+      if (format === 'docx' || format === 'pdf') {
         const { buildAssessmentDrdReportSchema } = await import(
           '../services/assessment/assessmentDrdReportSchemaService.js'
         );
-        const { renderDocumentSchemaToDocxBuffer } = await import(
-          '../services/documentStudio/documentDocxRenderer.js'
-        );
-        buffer = await renderDocumentSchemaToDocxBuffer(
-          buildAssessmentDrdReportSchema(contract, organizationName)
-        );
+        const schema = buildAssessmentDrdReportSchema(contract, organizationName);
+        if (format === 'docx') {
+          const { renderDocumentSchemaToDocxBuffer } = await import(
+            '../services/documentStudio/documentDocxRenderer.js'
+          );
+          buffer = await renderDocumentSchemaToDocxBuffer(schema);
+        } else {
+          const { exportCanonicalDocumentPdf } = await import(
+            '../services/export/pdf/CanonicalPdfExportService.js'
+          );
+          const result = await exportCanonicalDocumentPdf(schema, 'assessment_drd');
+          buffer = result.buffer;
+          res.setHeader('X-Export-Engine', result.receipt.engine);
+          res.setHeader('X-Export-SHA256', result.receipt.sha256);
+        }
       } else {
         const { buildAssessmentDeckModel } = await import(
           '../services/assessment/assessmentDeckModel.js'
         );
         const model = buildAssessmentDeckModel(contract, organizationName);
-        if (format === 'pptx') {
-          const { renderAssessmentDeckPptx } = await import(
-            '../services/assessment/assessmentDeckPptxRenderer.js'
-          );
-          buffer = await renderAssessmentDeckPptx(model);
-        } else {
-          const { renderAssessmentDeckPdf } = await import(
-            '../services/assessment/assessmentDeckPdfRenderer.js'
-          );
-          buffer = await renderAssessmentDeckPdf(model);
-        }
+        const { renderAssessmentDeckPptx } = await import(
+          '../services/assessment/assessmentDeckPptxRenderer.js'
+        );
+        buffer = await renderAssessmentDeckPptx(model);
       }
 
       const label = contract.sessionLabel.displayName ?? contract.sessionId;
       const rdzen =
         language === 'pl'
-          ? format === 'docx'
+          ? format === 'docx' || format === 'pdf'
             ? 'Raport_z_oceny'
             : 'Prezentacja_z_oceny'
-          : format === 'docx'
+          : format === 'docx' || format === 'pdf'
             ? 'Assessment_Report'
             : 'Assessment_Presentation';
       const safeLabel = label

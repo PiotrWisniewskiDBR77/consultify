@@ -1,0 +1,129 @@
+Consultify · DBR77
+
+
+
+
+CLIENT FINAL REPORT
+
+
+
+
+Northwind transformation
+report
+Northwind Manufacturing Ltd.
+Operational Maturity & Transformation Programme
+
+2026-09-16 · Version 1.0 · Confidential
+
+
+
+
+   PRE PARE D FO R                              P RE PA R ED BY           S O U RC E
+
+   Client Sponsor, Executive Team               Consultify · DBR77        Northwind steering snapshot
+
+
+
+
+Consultify · DBR77 · Northwind Manufacturing Ltd. · client confidential
+Northwind transformation report · Northwind Manufacturing Ltd.
+
+
+
+
+Table of Contents
+  1. Executive summary
+  2. Context and scope
+  3. Methodology
+  4. Findings by axis
+  5. Maturity matrix
+  6. Recommendations
+  7. Roadmap
+  Appendix A — Appendix
+
+
+
+
+Consultify · DBR77 · Northwind Manufacturing Ltd. · client confidential   Page 2 of 4
+Northwind transformation report · Northwind Manufacturing Ltd.
+
+
+
+
+1. Executive summary
+Key message
+Delivery confidence can recover within four weeks when capacity and blockers are reviewed
+weekly.
+ Measure                                     Current                      Target
+
+ OEE                                         76.2%                        78.0%
+
+ Critical milestones protected               5                            7
+
+Table 1
+
+
+2. Context and scope
+The review covers Line 3 delivery, capacity and weekly steering evidence.
+
+
+3. Methodology
+Review milestones and validate capacity by person and week.
+
+
+4. Findings by axis
+Delivery risk is concentrated in two work cells; three blockers need sponsor decisions.
+
+
+5. Maturity matrix
+ Axis                                        Current                      Target
+
+ Delivery governance                         2.8                          3.5
+
+ Data discipline                             3.1                          3.8
+
+Table 2
+
+
+6. Recommendations
+   • Protect the seven customer milestones.
+   • Review capacity constraints every Friday.
+
+
+7. Roadmap
+ Initiative                                  Owner                        Timing
+
+ MES Line 3 pilot                            COO                          Weeks 1–4
+
+ Capacity review                             PMO                          Weekly
+
+ Evidence readback                           Quality Lead                 Week 2
+
+Table 3
+
+
+
+
+Consultify · DBR77 · Northwind Manufacturing Ltd. · client confidential                   Page 3 of 4
+Northwind transformation report · Northwind Manufacturing Ltd.
+
+
+
+
+Appendix A — Appendix
+Decision log
+The steering team approved the four-week recovery sequence.
+
+Sources
+Northwind steering snapshot and decision log.
+
+
+Sources & traceability
+1. source_pack#northwind-steering-snapshot — Northwind steering snapshot
+2. decision_log#northwind-decision-log — Northwind decision log
+
+
+
+
+Consultify · DBR77 · Northwind Manufacturing Ltd. · client confidential    Page 4 of 4
+

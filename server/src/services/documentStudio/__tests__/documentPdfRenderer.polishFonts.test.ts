@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 /**
  * DEC-132/133 smoke test — real Document Studio PDF renderer call, Polish text.
  *

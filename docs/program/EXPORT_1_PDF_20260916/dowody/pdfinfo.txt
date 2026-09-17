@@ -1,0 +1,20 @@
+Title:           Northwind transformation report
+Subject:         client_final_report · executive
+Author:          Consultify Document Studio
+Creator:         PDFKit
+Producer:        PDFKit
+CreationDate:    Wed Sep 16 18:11:47 2026 CDT
+Custom Metadata: no
+Metadata Stream: no
+Tagged:          no
+UserProperties:  no
+Suspects:        no
+Form:            none
+JavaScript:      no
+Pages:           4
+Encrypted:       no
+Page size:       595.28 x 841.89 pts (A4)
+Page rot:        0
+File size:       33570 bytes
+Optimized:       no
+PDF version:     1.3

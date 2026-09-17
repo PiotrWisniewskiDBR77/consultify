@@ -420,6 +420,11 @@ function drawCover(
   options: DocumentPdfRenderOptions = {}
 ): void {
   const schema = ctx.schema;
+  if (schema.formattingSchema.colorTemplateId === 'consultify-client-final') {
+    drawClientFinalCover(doc, ctx, options);
+    doc.addPage();
+    return;
+  }
   // Slice E15.5.formatting.render — `coverPageDetailed` lets the
   // template suppress the density / confidentiality lines per
   // template policy. Default (no override) keeps the legacy full
@@ -470,6 +475,116 @@ function drawCover(
     .fillColor('#94A3B8')
     .text(`Generated: ${generatedAt}`, { align: 'center' });
   doc.addPage();
+}
+
+function drawClientFinalCover(
+  doc: PDFKit.PDFDocument,
+  ctx: PdfRenderContext,
+  options: DocumentPdfRenderOptions
+): void {
+  const schema = ctx.schema;
+  const coverCopy = schema.language.toLowerCase().startsWith('pl')
+    ? {
+        report: 'RAPORT KOŃCOWY DLA KLIENTA',
+        programme: 'Program dojrzałości operacyjnej i transformacji',
+        confidentiality: 'Poufne',
+        preparedFor: 'PRZYGOTOWANO DLA',
+        preparedBy: 'PRZYGOTOWANO PRZEZ',
+        source: 'ŹRÓDŁO',
+      }
+    : {
+        report: 'CLIENT FINAL REPORT',
+        programme: 'Operational Maturity & Transformation Programme',
+        confidentiality: 'Confidential',
+        preparedFor: 'PREPARED FOR',
+        preparedBy: 'PREPARED BY',
+        source: 'SOURCE',
+      };
+  const margins = marginsInPoints(schema.formattingSchema);
+  const width = doc.page.width - margins.left - margins.right;
+  const footerParts = (schema.formattingSchema.footers.content ?? '')
+    .split('·')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const organizationName = footerParts.at(-1) || schema.audience[0] || '—';
+  const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
+    .toISOString()
+    .slice(0, 10);
+  const sourceLabel = schema.sourceRefs[0]?.sourceTitle || schema.sourceRefs[0]?.sourceId || '—';
+
+  doc
+    .font(PDF_FONT.bold)
+    .fontSize(10)
+    .fillColor('#1B2A41')
+    .text('Consultify · DBR77', margins.left, 54);
+  if (options.coverLogoAsset) drawCoverLogo(doc, options.coverLogoAsset);
+  doc
+    .save()
+    .moveTo(margins.left, 78)
+    .lineTo(margins.left + width, 78)
+    .lineWidth(2)
+    .strokeColor('#2563EB')
+    .stroke()
+    .restore();
+
+  doc
+    .font(PDF_FONT.bold)
+    .fontSize(9)
+    .fillColor('#2563EB')
+    .text(coverCopy.report, margins.left, 165, {
+      characterSpacing: 1.4,
+    });
+  doc
+    .font(PDF_FONT.bold)
+    .fontSize(28)
+    .fillColor('#1B2A41')
+    .text(schema.title, margins.left, 198, { width: width * 0.82, lineGap: 4 });
+  doc
+    .font(PDF_FONT.regular)
+    .fontSize(14)
+    .fillColor('#475569')
+    .text(organizationName, margins.left, 290, { width });
+  doc
+    .fontSize(10)
+    .fillColor('#64748B')
+    .text(coverCopy.programme, margins.left, 318, { width })
+    .text(
+      `${generatedAt} · Version ${schema.templateRef?.templateVersion ?? '1.0'} · ${coverCopy.confidentiality}`,
+      margins.left,
+      338,
+      {
+        width,
+      }
+    );
+
+  const bandY = 525;
+  doc.save().roundedRect(margins.left, bandY, width, 92, 4).fill('#F1F4F8').restore();
+  const colWidth = width / 3;
+  const entries = [
+    [coverCopy.preparedFor, schema.audience.join(', ') || organizationName],
+    [coverCopy.preparedBy, 'Consultify · DBR77'],
+    [coverCopy.source, sourceLabel],
+  ] as const;
+  entries.forEach(([label, value], index) => {
+    const x = margins.left + index * colWidth + 14;
+    doc
+      .font(PDF_FONT.bold)
+      .fontSize(8)
+      .fillColor('#64748B')
+      .text(label, x, bandY + 18, {
+        width: colWidth - 24,
+        characterSpacing: 0.8,
+      });
+    doc
+      .font(PDF_FONT.regular)
+      .fontSize(9)
+      .fillColor('#1B2A41')
+      .text(value, x, bandY + 39, {
+        width: colWidth - 24,
+        height: 38,
+        ellipsis: true,
+      });
+  });
 }
 
 /**
@@ -1057,7 +1172,11 @@ function drawHeaderFooter(
 ): void {
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
-  if (formatting.headers.enabled) {
+  const clientFinalCover =
+    pageNumber === 1 &&
+    formatting.coverPage === true &&
+    formatting.colorTemplateId === 'consultify-client-final';
+  if (formatting.headers.enabled && !clientFinalCover) {
     // Slice E15.5.formatting.render — `headers.content` overrides
     // `schema.title` when set. Trimmed before use so accidental
     // whitespace-only overrides don't render an empty header band.
@@ -1095,19 +1214,26 @@ function drawHeaderFooter(
     const originalBottomMargin = doc.page.margins.bottom;
     doc.page.margins.bottom = 0;
     try {
-      if (formatting.footers.confidentialityLabel) {
+      const footerOverride = formatting.footers.content?.trim();
+      const confidentialityText = formatting.footers.confidentialityLabel
+        ? schema.confidentiality.replace(/_/g, ' ')
+        : '';
+      const footerText = [footerOverride, confidentialityText].filter(Boolean).join(' · ');
+      if (footerText) {
         doc
           .save()
           .fontSize(8)
           .fillColor('#94A3B8')
           .font(PDF_FONT.regular)
-          .text(schema.confidentiality.replace(/_/g, ' '), margins.left, footerY, {
+          .text(footerText, margins.left, footerY, {
             align: 'left',
-            width: doc.page.width - margins.left - margins.right,
+            width: (doc.page.width - margins.left - margins.right) * 0.72,
+            lineBreak: false,
+            ellipsis: true,
           })
           .restore();
       }
-      if (formatting.footers.pageNumbering) {
+      if (formatting.footers.pageNumbering && !clientFinalCover) {
         // Slice E15.5.formatting.render — `pageNumberingFormat` honors
         // a template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
         // (custom EN). `{N}` → pageNumber, `{M}` → totalPages. Default
