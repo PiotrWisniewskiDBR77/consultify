@@ -1,0 +1,80 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify-b[39m
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify-b[39m
+
+ [32m✓[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22m★ the ORIGINAL seed error propagates: startDemoSession rejects, no session is returned[32m 58[2mms[22m[39m
+ [31m×[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22m★ the partial tenant is purged: no orphan clone org, no demo_sessions row, no preferences[32m 8[2mms[22m[39m
+[31m   → expected [] to deeply equal [ 'demo-org-session-userd69-mu63ji7o' ][39m
+ [32m✓[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22m★ the compensating purge runs even when it itself throws — the seed error still propagates[32m 1[2mms[22m[39m
+ [32m✓[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22mthe curated base org is never purged, even when a caller passes it as the session org[32m 0[2mms[22m[39m
+ [32m✓[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22ma SUCCESSFUL seed still creates the session (control — the guard is not over-eager)[32m 1[2mms[22m[39m
+ [31m❯[39m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 72[2mms[22m[39m
+     [32m✓[39m ★ the ORIGINAL seed error propagates: startDemoSession rejects, no session is returned[32m 58[2mms[22m[39m
+[31m     [31m×[31m ★ the partial tenant is purged: no orphan clone org, no demo_sessions row, no preferences[39m[32m 8[2mms[22m[39m
+     [32m✓[39m ★ the compensating purge runs even when it itself throws — the seed error still propagates[32m 1[2mms[22m[39m
+     [32m✓[39m the curated base org is never purged, even when a caller passes it as the session org[32m 0[2mms[22m[39m
+     [32m✓[39m a SUCCESSFUL seed still creates the session (control — the guard is not over-eager)[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22m★ the partial tenant is purged: no orphan clone org, no demo_sessions row, no preferences
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'demo-org-session-userd69-mu63ji7o' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "demo-org-session-userd69-mu63ji7o",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts:[2m207:29[22m[39m
+    [90m205|[39m     [35mawait[39m [34mstartDemoSession[39m([33mUSER[39m)[33m.[39m[35mcatch[39m(() [33m=>[39m undefined)[33m;[39m
+    [90m206|[39m
+    [90m207|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs)[33m.[39m[34mtoEqual[39m([ctx[33m.[39mseedCalls[[34m0[39m]])[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m208|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs[[34m0[39m])[33m.[39mnot[33m.[39m[34mtoBe[39m([33mDEMO_ORG_ID[39m)[33m;[39m
+    [90m209|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m`[39m[36m${[39m[33mDEMO_ORG_ID[39m[36m}[39m[32m-session-`[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 17:23:43
+[2m   Duration [22m 2.37s[2m (transform 239ms, setup 559ms, import 96ms, tests 72ms, environment 1.39s)[22m
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts[2m > [22mD-69 — a throwing seed aborts provisioning and leaves no orphan org[2m > [22m★ the partial tenant is purged: no orphan clone org, no demo_sessions row, no preferences
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'demo-org-session-userd69-mu63ji7o' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "demo-org-session-userd69-mu63ji7o",[39m
+[32m- ][39m
+[31m+ [][39m
+
+[36m [2m❯[22m server/src/services/demo/__tests__/demoSessionSeedAbort.test.ts:[2m207:29[22m[39m
+    [90m205|[39m     [35mawait[39m [34mstartDemoSession[39m([33mUSER[39m)[33m.[39m[35mcatch[39m(() [33m=>[39m undefined)[33m;[39m
+    [90m206|[39m
+    [90m207|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs)[33m.[39m[34mtoEqual[39m([ctx[33m.[39mseedCalls[[34m0[39m]])[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m208|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs[[34m0[39m])[33m.[39mnot[33m.[39m[34mtoBe[39m([33mDEMO_ORG_ID[39m)[33m;[39m
+    [90m209|[39m     [34mexpect[39m(ctx[33m.[39mdeletedOrgs[[34m0[39m])[33m.[39m[34mtoContain[39m([32m`[39m[36m${[39m[33mDEMO_ORG_ID[39m[36m}[39m[32m-session-`[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 17:23:43
+[2m   Duration [22m 2.38s[2m (transform 239ms, setup 559ms, import 96ms, tests 72ms, environment 1.39s)[22m
+
+JSON report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify-b/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify-b/junit.xml

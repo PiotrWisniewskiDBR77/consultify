@@ -410,6 +410,31 @@ export async function cleanupExpiredDemoSessions(): Promise<number> {
 }
 
 /**
+ * Compensating action of the provisioning saga (MAT-006B): delete the freshly
+ * minted per-user tenant when a REQUIRED stage failed, so neither a
+ * half-provisioned nor a divergent clone survives. Safe by construction:
+ * `session_org_id` is minted in this call (`makeSessionOrgId` embeds
+ * `Date.now()`), so nothing pre-existing can share it, and the DEMO_ORG_ID guard
+ * mirrors `expireDemoSession` — the curated base org is never deletable here.
+ * Returns whether the purge succeeded; a failed purge is logged, never thrown,
+ * because the ORIGINAL stage error is what the caller must see.
+ */
+async function purgePartialDemoTenant(sessionOrgId: string, reason: string): Promise<boolean> {
+  try {
+    if (sessionOrgId && sessionOrgId !== DEMO_ORG_ID) {
+      await deleteDemoDatasetForOrganization(sessionOrgId);
+    }
+    return true;
+  } catch (cleanupError: unknown) {
+    logger.error(
+      `[demoSessionService] rollback of ${reason} demo tenant ${sessionOrgId} FAILED: ` +
+        (cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
+    );
+    return false;
+  }
+}
+
+/**
  * D-19 v3 (Wpis 77, DEC-539): the seed writes `initiatives.status` directly and
  * lands the canonical aggregate at REGISTERED_DRAFT, so EVERY fresh clone is
  * born divergent (the 2267-row staging finding). Repair it with the SAME planner
@@ -480,13 +505,32 @@ export async function startDemoSession(
     expires_at: new Date(Date.now() + demoSessionTtlMs()).toISOString(),
   };
 
-  const seed = await seedAtelierToysDemoDataset({
-    organizationId: session.session_org_id,
-    anchorDate: session.anchor_date,
-    source: 'session',
-    viewerUserId: userId,
-    locale: session.locale,
-  });
+  // D-69 (Wpis 86 · P1): the seed is not allowed to escape this function as an
+  // unhandled exception. Since migration 20262260 a seeded CLOSED initiative is
+  // rewritten to DRAFT by the trigger cascade, `ensureReceiptForMaterializedDone`
+  // then throws (`closureDeliveryReceiptService.ts:224`) and the throw used to
+  // bypass BOTH guards below — no purge, so every failed session left an orphan
+  // clone org with 15 initiatives behind. An exception is therefore exactly
+  // `seed.complete === false`: roll the partial tenant back, rethrow the ORIGINAL
+  // error so the caller fails the request.
+  let seed: Awaited<ReturnType<typeof seedAtelierToysDemoDataset>>;
+  try {
+    seed = await seedAtelierToysDemoDataset({
+      organizationId: session.session_org_id,
+      anchorDate: session.anchor_date,
+      source: 'session',
+      viewerUserId: userId,
+      locale: session.locale,
+    });
+  } catch (seedError: unknown) {
+    const cleanedUp = await purgePartialDemoTenant(session.session_org_id, 'failed-seed');
+    logger.error(
+      `[demoSessionService] demo session aborted for ${userId}: the seed threw, ` +
+        `tenant ${session.session_org_id} ${cleanedUp ? 'rolled back' : 'LEFT BEHIND (cleanup failed)'}: ` +
+        (seedError instanceof Error ? seedError.message : String(seedError))
+    );
+    throw seedError;
+  }
 
   // ★ PROVISIONING SAGA (MAT-006B). The seed is the FIRST step of provisioning a
   // per-user demo tenant; the `demo_sessions` / `demo_session_tenants` rows and
@@ -494,24 +538,11 @@ export async function startDemoSession(
   // committing the session rows here is exactly what leaves a half-provisioned
   // tenant that looks live and is missing content. Compensating action: delete
   // the partial dataset (children-first purge, org row last) and abort.
-  //
-  // Safe by construction: `session_org_id` is minted in THIS call
-  // (`makeSessionOrgId` embeds Date.now()), so nothing pre-existing can share it,
-  // and the DEMO_ORG_ID guard mirrors expireDemoSession — the curated base org is
-  // never deletable here.
   if (!seed.complete) {
-    let cleanedUp = false;
-    try {
-      if (session.session_org_id && session.session_org_id !== DEMO_ORG_ID) {
-        await deleteDemoDatasetForOrganization(session.session_org_id);
-      }
-      cleanedUp = true;
-    } catch (cleanupError: unknown) {
-      logger.error(
-        `[demoSessionService] rollback of half-provisioned demo tenant ${session.session_org_id} FAILED: ` +
-          (cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
-      );
-    }
+    const cleanedUp = await purgePartialDemoTenant(
+      session.session_org_id,
+      'half-provisioned'
+    );
     logger.error(
       `[demoSessionService] demo session aborted for ${userId}: ${seed.failures.length} required stage failure(s), ` +
         `tenant ${session.session_org_id} ${cleanedUp ? 'rolled back' : 'LEFT BEHIND (cleanup failed)'}`
@@ -535,18 +566,7 @@ export async function startDemoSession(
   try {
     await alignCloneAggregateAfterSeed(session.session_org_id);
   } catch (alignError: unknown) {
-    let cleanedUp = false;
-    try {
-      if (session.session_org_id && session.session_org_id !== DEMO_ORG_ID) {
-        await deleteDemoDatasetForOrganization(session.session_org_id);
-      }
-      cleanedUp = true;
-    } catch (cleanupError: unknown) {
-      logger.error(
-        `[demoSessionService] rollback of divergent demo tenant ${session.session_org_id} FAILED: ` +
-          (cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
-      );
-    }
+    const cleanedUp = await purgePartialDemoTenant(session.session_org_id, 'divergent');
     logger.error(
       `[demoSessionService] demo session aborted for ${userId}: live aggregate align failed, ` +
         `tenant ${session.session_org_id} ${cleanedUp ? 'rolled back' : 'LEFT BEHIND (cleanup failed)'}: ` +

@@ -1,0 +1,10 @@
+2026-09-17 17:18:28:1828 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 17:18:28:1828 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 17:18:28:1828 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 17:18:28:1828 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 17:18:28:1828 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 3
+→ 20262260_initiatives_lifecycle_stage.sql
+→ 20262300_showcase_date_roll.sql
+→ 20262301_meetings_agenda_lifecycle.sql
+✅ Postgres migrations complete

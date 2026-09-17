@@ -137,6 +137,92 @@ export function planAggregateAlignment(
   return { action: 'align', targetStage: target.stage };
 }
 
+/**
+ * D-66 (Wpis 86 · DEC-539) — the ONLY two statements that read/write one
+ * aggregate stage. `$n` placeholders on purpose: `pg.Client` takes them as-is and
+ * `DbPromise.translatePlaceholders` returns SQL that already contains `$n`
+ * unchanged, so the demo seed (DbPromise) and the CLI/live align (pg.Client) run
+ * the SAME text. The write is the exact merge shape the runtime engine uses
+ * (`initiativeTransitionService.ts:1262-1274`): `payload_json || patch` with a
+ * version bump, guarded by `IS DISTINCT FROM` so a re-run writes 0 rows.
+ */
+export const AGGREGATE_STAGE_READ_SQL = `SELECT payload_json->>'lifecycleState' AS current_stage
+     FROM ie_aggregate_state
+    WHERE organization_id = $1
+      AND aggregate_type = 'initiative'
+      AND aggregate_id = $2
+    LIMIT 1`;
+
+export const AGGREGATE_STAGE_WRITE_SQL = `UPDATE ie_aggregate_state
+          SET version = ie_aggregate_state.version + 1,
+              payload_json = ie_aggregate_state.payload_json || CAST($1 AS jsonb),
+              updated_at = NOW()
+        WHERE organization_id = $2
+          AND aggregate_type = 'initiative'
+          AND aggregate_id = $3
+          AND COALESCE(payload_json->>'lifecycleState', '') IS DISTINCT FROM $4`;
+
+/** Params of `AGGREGATE_STAGE_WRITE_SQL`, in order. */
+export function aggregateStageWriteParams(
+  organizationId: string,
+  initiativeId: string,
+  stage: InitiativeLifecycleStage
+): unknown[] {
+  return [JSON.stringify({ lifecycleState: stage }), organizationId, initiativeId, stage];
+}
+
+/** Minimal handle over the two statements above; both DB layers satisfy it. */
+export interface AggregateStageStore {
+  readStage(organizationId: string, initiativeId: string): Promise<string | null>;
+  writeStage(
+    organizationId: string,
+    initiativeId: string,
+    stage: InitiativeLifecycleStage
+  ): Promise<number>;
+}
+
+export interface SeedStageAlignment {
+  action: AlignAction;
+  targetStage: InitiativeLifecycleStage | null;
+  wrote: number;
+}
+
+/**
+ * D-66 (Wpis 86 · DEC-539) — repair ONE seeded initiative's aggregate stage from
+ * the status the seed INTENDED, immediately after the canonical register.
+ *
+ * WHY THE COLUMN CANNOT BE THE SOURCE OF TRUTH HERE (measured, Wpis 86 KROK 0)
+ * ---------------------------------------------------------------------------
+ * `processOrg` derives the target from `initiatives.status`. That is correct for
+ * a bulk repair of stored data, and useless inside the seed: STAGE-1's
+ * `20262260` cascade (`ie_aggregate_initiative_stage_sync` ->
+ * `sync_initiative_stage_from_aggregate` -> `initiatives_lifecycle_stage_sync`)
+ * rewrites the column FROM the aggregate the moment `registerInitiative` lands
+ * its hardcoded `REGISTERED_DRAFT`, so by the time anything reads it, a seeded
+ * `CLOSED` row already claims `DRAFT` and `planAggregateAlignment` answers
+ * `skip-aligned`. The seed therefore passes its own resolved seven-code status,
+ * and the same cascade puts the column back: writing the stage fires the
+ * aggregate trigger, whose first branch derives `status` from that stage.
+ *
+ * Dispositions (`REJECTED`, from a seeded `CANCELLED`) have NO engine stage
+ * (canon §5.3 / H1d), so this returns `skip-short-circuit` and the CALLER must
+ * re-assert the column itself — the aggregate stays at the stage where it died.
+ */
+export async function alignSeedInitiativeStage(
+  store: AggregateStageStore,
+  organizationId: string,
+  initiativeId: string,
+  seedStatus: string
+): Promise<SeedStageAlignment> {
+  const currentStage = await store.readStage(organizationId, initiativeId);
+  const plan = planAggregateAlignment(seedStatus, currentStage);
+  if (plan.action !== 'align' || plan.targetStage === null) {
+    return { action: plan.action, targetStage: plan.targetStage, wrote: 0 };
+  }
+  const wrote = await store.writeStage(organizationId, initiativeId, plan.targetStage);
+  return { action: plan.action, targetStage: plan.targetStage, wrote };
+}
+
 interface OrgRow {
   id: string;
   status: string;
@@ -250,17 +336,9 @@ export async function processOrg(
     counts.alignByStatus[row.status] = (counts.alignByStatus[row.status] || 0) + 1;
 
     if (!apply || !allowed) continue;
-    const patch = JSON.stringify({ lifecycleState: plan.targetStage });
     const res = await client.query(
-      `UPDATE ie_aggregate_state
-          SET version = ie_aggregate_state.version + 1,
-              payload_json = ie_aggregate_state.payload_json || CAST($1 AS jsonb),
-              updated_at = NOW()
-        WHERE organization_id = $2
-          AND aggregate_type = 'initiative'
-          AND aggregate_id = $3
-          AND COALESCE(payload_json->>'lifecycleState', '') IS DISTINCT FROM $4`,
-      [patch, orgId, row.id, plan.targetStage]
+      AGGREGATE_STAGE_WRITE_SQL,
+      aggregateStageWriteParams(orgId, row.id, plan.targetStage)
     );
     wrote += res.rowCount ?? 0;
   }

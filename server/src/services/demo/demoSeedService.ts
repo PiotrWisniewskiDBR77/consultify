@@ -4,6 +4,13 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { writeSeedInitiativeToCanon } from '../../domain/initiatives-execution/seedCanonicalInitiativeWriter.js';
 import {
+  AGGREGATE_STAGE_READ_SQL,
+  AGGREGATE_STAGE_WRITE_SQL,
+  type AggregateStageStore,
+  aggregateStageWriteParams,
+  alignSeedInitiativeStage,
+} from '../initiatives/alignInitiativeAggregateService.js';
+import {
   ensureReceiptForMaterializedDone,
   triggerImmediateDeliveryBestEffort,
 } from '../closureDeliveryReceiptService.js';
@@ -122,6 +129,33 @@ function resolveSeedInitiativeStatus(status: string | null | undefined): Initiat
   );
   return InitiativeStatus.DRAFT;
 }
+
+/**
+ * D-66 (Wpis 86 · DEC-539) — DbPromise adapter for the shared stage statements.
+ * The SQL lives ONCE, in `alignInitiativeAggregateService`; `$n` placeholders
+ * pass through `translatePlaceholders` untouched, so this and the `pg.Client`
+ * callers run the same text. `fallback: false` on purpose: a stage repair that
+ * fails must throw into `canonicalFailures` (-> `complete=false` -> the caller's
+ * compensating purge), never resolve as a silent no-op.
+ */
+const seedAggregateStageStore: AggregateStageStore = {
+  async readStage(organizationId, initiativeId) {
+    const row = await DbPromise.get<{ current_stage: string | null }>(
+      AGGREGATE_STAGE_READ_SQL,
+      [organizationId, initiativeId],
+      { fallback: false }
+    );
+    return row?.current_stage ?? null;
+  },
+  async writeStage(organizationId, initiativeId, stage) {
+    const result = await DbPromise.run(
+      AGGREGATE_STAGE_WRITE_SQL,
+      aggregateStageWriteParams(organizationId, initiativeId, stage),
+      { fallback: false }
+    );
+    return result.changes ?? 0;
+  },
+};
 
 function markdownBlocksToDocJson(markdown: string) {
   const paragraphs = String(markdown || '')
@@ -2213,6 +2247,9 @@ async function upsertInitiatives(
   for (const initiative of initiatives) {
     const initiativeId = makeId(organizationId, 'initiative', initiative.slug);
     initiativeMap[initiative.slug] = initiativeId;
+    // One resolution per initiative: the legacy INSERT, the D-66 aggregate-stage
+    // repair and the materialized-DONE receipt step must all agree on it.
+    const seededStatus = resolveSeedInitiativeStatus(initiative.status);
 
     const cols = ['id', 'organization_id', 'project_id', 'name', 'status'];
     const vals: Array<string | number | null> = [
@@ -2220,7 +2257,7 @@ async function upsertInitiatives(
       organizationId,
       projectMap[initiative.projectSlug],
       initiative.name,
-      resolveSeedInitiativeStatus(initiative.status),
+      seededStatus,
     ];
 
     if (hasArea) {
@@ -2340,6 +2377,37 @@ async function upsertInitiatives(
       });
       if (canonicalResult) {
         canonicalCount += 1;
+        // D-66 (Wpis 86 · DEC-539): the register above lands the aggregate at a
+        // hardcoded `REGISTERED_DRAFT` (`registerInitiative.ts:134`, domain —
+        // untouchable here). Since STAGE-1's `20262260`, writing that aggregate
+        // fires `ie_aggregate_initiative_stage_sync` ->
+        // `initiatives_lifecycle_stage_sync`, which DERIVES `initiatives.status`
+        // from the stage — so the row this seed just inserted as CLOSED/
+        // IN_EXECUTION/… is rewritten to DRAFT before the seed reaches the
+        // materialized-DONE receipt step below, and that step
+        // (`closureDeliveryReceiptService.ts:216-224`, requires
+        // `UPPER(status)='CLOSED'`) throws, killing EVERY new demo session.
+        // Repair the stage from the SEED's intent (the column is already
+        // corrupted, so it cannot be the source of truth); the same cascade then
+        // derives the status back from the stage. A disposition (seeded
+        // CANCELLED -> REJECTED) has no engine stage, so there is nothing to
+        // write and the column is re-asserted directly — the same sanctioned
+        // "USPOJNIENIE A3" exception the INSERT above already is. Fail-closed:
+        // any throw here lands in `canonicalFailures` -> `complete=false`.
+        const stageRepair = await alignSeedInitiativeStage(
+          seedAggregateStageStore,
+          organizationId,
+          initiativeId,
+          seededStatus
+        );
+        if (stageRepair.action === 'skip-short-circuit') {
+          await DbPromise.run(
+            `UPDATE initiatives SET status=?
+              WHERE id=? AND organization_id=? AND UPPER(COALESCE(status,'')) <> ?`,
+            [seededStatus, initiativeId, organizationId, seededStatus],
+            { fallback: false }
+          );
+        }
       } else {
         canonicalFailures.push({
           stage: 'canonical_initiative',
@@ -2369,7 +2437,7 @@ async function upsertInitiatives(
     // benefit row too. Persist a deterministic durable receipt before the
     // best-effort delivery, so a crash cannot turn this path into a silent
     // fire-and-forget bypass. Re-seeding reuses the same receipt.
-    if (resolveSeedInitiativeStatus(initiative.status) === InitiativeStatus.CLOSED) {
+    if (seededStatus === InitiativeStatus.CLOSED) {
       const receiptId = await ensureReceiptForMaterializedDone(organizationId, initiativeId, null);
       triggerImmediateDeliveryBestEffort(receiptId);
     }

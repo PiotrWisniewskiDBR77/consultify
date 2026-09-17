@@ -24,22 +24,19 @@
  * `alignCloneAggregateAfterSeed(...)` call from `startDemoSession` turns test 1
  * RED (divergent > 0).
  *
- * ENVIRONMENT (measured, Wpis 78): the GREEN proof (0 divergent rows + the
- * status-neutral trigger chain) was measured on a staging DUMP COPY
- * (`qoder-b-pg-dump`, DB `consultify_dump`), NOT on a fresh DB built from all
- * migrations. On a fresh migrated base the CLONE SEED ITSELF fails before it
- * ever reaches the align step, with a ZASTANY defect unrelated to D-19:
- * `closureDeliveryReceiptService.ensureReceiptForMaterializedDone` throws
- * "[ClosureDeliveryReceipt] materialized DONE receipt was not persisted"
- * (the materialized-DONE receipt INSERT ... SELECT matches 0 rows). So this
- * file SKIPS with that reason when the seed cannot run on the given base — a
- * RED therefore unambiguously means a D-19 regression, never the seed defect.
- * The skip is narrow: only that exact signature is treated as an environment
- * defect; any other seeding error is re-thrown (still RED).
+ * ENVIRONMENT (measured, Wpis 86 · D-66): the GREEN proof below runs on a COPY
+ * OF STAGING DUMP 22 (`staging-pre-wdrozenie22-20260917T1636.dump`, pg17
+ * container `qoder-b-pg-d66`, DB `consultify_dump`) with the 3 pending
+ * migrations applied — including `20262260_initiatives_lifecycle_stage.sql`,
+ * asserted present in `beforeAll`. Wpis 78 had to SKIP the seed on a migrated
+ * base because `ensureReceiptForMaterializedDone` threw "materialized DONE
+ * receipt was not persisted"; D-66 fixed that root cause (the seed now registers
+ * the canonical aggregate at the stage matching its own legacy status), so the
+ * skip guard was removed and ANY seed failure is a hard RED.
  *
  * URUCHOMIENIE:
  *   NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false \
- *   DATABASE_URL=postgresql://postgres:qoder@127.0.0.1:6611/consultify_dump \
+ *   DATABASE_URL=postgresql://postgres:qoder@127.0.0.1:6612/consultify_dump \
  *   npx vitest run server/src/services/demo/__tests__/demoSessionLiveAlign.pg.test.ts \
  *     --maxWorkers=1 --no-file-parallelism --retry=0
  */
@@ -87,23 +84,16 @@ function divergentRows(rows: AggregateRow[]): AggregateRow[] {
 }
 
 /**
- * The ZASTANY clone-seed environment defect (Wpis 78): on a fresh migrated base
- * the seed throws this BEFORE reaching the align step, for reasons unrelated to
- * D-19. Narrow on purpose — only this exact signature is an environment skip;
- * any other error must stay RED so a D-19 regression is never masked.
+ * Wpis 78 tolerated ONE clone-seed failure as an environment skip
+ * ("materialized DONE receipt was not persisted"), because it was a ZASTANY
+ * defect unrelated to D-19. D-66 (Wpis 86) fixed exactly that defect, so the
+ * skip is gone: a seed failure on a migrated base is now a hard RED.
  */
-const CLONE_SEED_ENV_DEFECT = /materialized DONE receipt was not persisted/i;
-
-function cloneSeedEnvDefectMessage(err: unknown): string | null {
-  const msg = err instanceof Error ? err.message : String(err);
-  return CLONE_SEED_ENV_DEFECT.test(msg) ? msg : null;
-}
 
 describe('D-19 v3 — live demo-clone path leaves aggregate and status aligned', NO_RETRY, () => {
   const userId = `d19v3-${randomUUID()}`;
   let sql: Client | undefined;
   let sessionOrgId = '';
-  let seedEnvSkipped = false;
 
   beforeAll(async () => {
     expect(process.env.DB_TYPE).toBe('postgres');
@@ -168,23 +158,9 @@ describe('D-19 v3 — live demo-clone path leaves aggregate and status aligned',
     }
   });
 
-  it('a fresh live demo session has 0 divergent status-vs-aggregate rows', async (ctx) => {
+  it('a fresh live demo session has 0 divergent status-vs-aggregate rows', async () => {
     if (!sql) throw new Error('beforeAll did not establish a SQL connection.');
-    let session: Awaited<ReturnType<typeof startDemoSession>>;
-    try {
-      session = await startDemoSession(userId, 'demo_toggle', 'en');
-    } catch (err) {
-      const envDefect = cloneSeedEnvDefectMessage(err);
-      if (envDefect) {
-        seedEnvSkipped = true;
-        ctx.skip(
-          `clone seed cannot run on this base (ZASTANY ClosureDeliveryReceipt defect, ` +
-            `not D-19): ${envDefect}`
-        );
-        return;
-      }
-      throw err;
-    }
+    const session = await startDemoSession(userId, 'demo_toggle', 'en');
     sessionOrgId = session.session_org_id;
     expect(session.datasetComplete).toBe(true);
 
@@ -193,31 +169,39 @@ describe('D-19 v3 — live demo-clone path leaves aggregate and status aligned',
     expect(divergentRows(rows)).toEqual([]);
   }, 180_000);
 
-  it('processOrg is status-neutral through the 20262260 trigger chain', async (ctx) => {
+  it('processOrg is status-neutral through the 20262260 trigger chain', async () => {
     if (!sql) throw new Error('beforeAll did not establish a SQL connection.');
-    if (seedEnvSkipped || !sessionOrgId) {
-      ctx.skip('clone seed did not run on this base (see test 1) — nothing to align.');
-      return;
-    }
+    if (!sessionOrgId) throw new Error('no clone org — the previous test did not create one.');
     const rows = await readAggregateRows(sql, sessionOrgId);
+    // A victim whose aggregate stage is NOT already IN_EXECUTION, so writing the
+    // column to IN_EXECUTION creates a real cross-group divergence.
     const victim = rows.find(
-      (r) => !['REJECTED', 'PROPOSED'].includes(r.status) && r.status !== 'DRAFT'
+      (r) =>
+        !['REJECTED', 'PROPOSED'].includes(r.status) &&
+        stageGroup(r.currentStage) !== 'IN_EXECUTION'
     );
     expect(victim).toBeDefined();
     if (!victim) return;
 
-    // Re-create the born-divergent shape the seed produces: column says
-    // e.g. IN_EXECUTION while the aggregate sits at REGISTERED_DRAFT.
-    await sql.query(
-      `UPDATE ie_aggregate_state
-          SET payload_json = payload_json || CAST($1 AS jsonb),
-              version = version + 1
-        WHERE organization_id=$2 AND aggregate_type='initiative' AND aggregate_id=$3`,
-      [JSON.stringify({ lifecycleState: 'REGISTERED_DRAFT' }), sessionOrgId, victim.id]
-    );
+    // Re-create the born-divergent shape the pre-D-66 seed produced THROUGH THE
+    // COLUMN: the legacy INSERT writes `initiatives.status` directly while the
+    // canonical aggregate is left behind at the register's stage. Writing the
+    // aggregate instead would be self-defeating — 20262260's cascade re-derives
+    // the column from it in the same statement, so nothing would stay divergent
+    // for `processOrg` to align (measured: counts.align === 0).
+    await sql.query(`UPDATE initiatives SET status='IN_EXECUTION' WHERE id=$1`, [victim.id]);
     const statusBefore = (
-      await sql.query<{ status: string }>(`SELECT status FROM initiatives WHERE id=$1`, [victim.id])
-    ).rows[0]?.status;
+      await sql.query<{ status: string; stage: string | null }>(
+        `SELECT i.status, a.payload_json->>'lifecycleState' AS stage
+           FROM initiatives i
+           JOIN ie_aggregate_state a
+             ON a.aggregate_type='initiative' AND a.aggregate_id=i.id AND a.organization_id=i.organization_id
+          WHERE i.id=$1`,
+        [victim.id]
+      )
+    ).rows[0];
+    expect(String(statusBefore?.status).toUpperCase()).toBe('IN_EXECUTION');
+    expect(stageGroup(statusBefore?.stage)).not.toBe('IN_EXECUTION');
 
     const { counts, wrote, allowed } = await processOrg(sql, sessionOrgId, true);
     expect(allowed).toBe(true);
@@ -236,7 +220,7 @@ describe('D-19 v3 — live demo-clone path leaves aggregate and status aligned',
     ).rows[0];
     // The trigger chain derived the status FROM the aligned stage and landed on
     // the value the column already held — no loop, no status change.
-    expect(after?.status).toBe(statusBefore);
-    expect(stageGroup(after?.stage)).toBe(String(statusBefore).toUpperCase());
+    expect(after?.status).toBe(statusBefore?.status);
+    expect(stageGroup(after?.stage)).toBe(String(statusBefore?.status).toUpperCase());
   }, 60_000);
 });

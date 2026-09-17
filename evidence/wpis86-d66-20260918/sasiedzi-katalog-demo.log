@@ -1,0 +1,23 @@
+exit=1 atelierFinanceCoherence.test.ts :: 
+exit=0 atelierFinanceDurableHold.test.ts :: 
+exit=0 atelierFinanceGoldenFlowCompleteness.test.ts :: 
+exit=0 atelierFinanceHostedWriteGate.test.ts :: 
+exit=0 atelierFinanceLateWriteFallback.test.ts :: 
+exit=0 atelierFinancePinnedFallback.test.ts :: 
+exit=0 atelierFinancePrimaryReadStructure.test.ts :: 
+exit=0 atelierFinancePromotionAtomicity.test.ts :: 
+exit=0 atelierFinanceSchemaGate.test.ts :: 
+exit=0 atelierFinanceSecondRunNoop.test.ts :: 
+exit=1 atelierPresentationDeckSeed.test.ts :: 
+exit=0 atelierPresentationDeckSeedPostgres.test.ts :: 
+exit=0 atelierRollbackReadFailure.test.ts :: 
+exit=1 atelierSeedIdempotency.test.ts :: 
+exit=1 atelierSpineCoherence.test.ts :: 
+exit=1 demoSeedFailurePropagation.test.ts :: 
+exit=0 demoSeedService.purgeList.test.ts :: 
+exit=0 demoSessionAlignAbort.test.ts :: 
+exit=0 demoSessionDatasetSignal.test.ts :: 
+exit=0 demoSessionSeedAbort.test.ts :: 
+exit=0 financeDemoCoherencePolicy.test.ts :: 
+exit=0 financeDemoManifestSignature.test.ts :: 
+DONE

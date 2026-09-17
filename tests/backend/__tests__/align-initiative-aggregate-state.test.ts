@@ -4,6 +4,8 @@ import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  type AggregateStageStore,
+  alignSeedInitiativeStage,
   isShowcaseOrg,
   planAggregateAlignment,
   processOrg,
@@ -82,6 +84,85 @@ describe('planAggregateAlignment — status → canonical aggregate stage', () =
     expect(planAggregateAlignment('IN_EXECUTION', null)).toEqual({
       action: 'align',
       targetStage: 'IN_EXECUTION',
+    });
+  });
+});
+
+describe('alignSeedInitiativeStage — D-66 (Wpis 86): stage repaired from the SEEDED status', () => {
+  /**
+   * The seed cannot read `initiatives.status` to decide the stage: 20262260's
+   * cascade already rewrote the column FROM the aggregate's hardcoded
+   * REGISTERED_DRAFT, so a seeded CLOSED row claims DRAFT by then and the
+   * planner would answer skip-aligned. These cases pin that the seed's OWN
+   * resolved status drives the repair instead.
+   */
+  function fakeStore(stage: string | null) {
+    const writes: string[] = [];
+    const store: AggregateStageStore = {
+      async readStage() {
+        return stage;
+      },
+      async writeStage(_orgId, _initiativeId, next) {
+        writes.push(next);
+        return 1;
+      },
+    };
+    return { store, writes };
+  }
+
+  it('advances the born-REGISTERED_DRAFT aggregate of a seeded CLOSED initiative to CLOSED', async () => {
+    const { store, writes } = fakeStore('REGISTERED_DRAFT');
+    await expect(alignSeedInitiativeStage(store, 'org', 'init', 'CLOSED')).resolves.toEqual({
+      action: 'align',
+      targetStage: 'CLOSED',
+      wrote: 1,
+    });
+    expect(writes).toEqual(['CLOSED']);
+  });
+
+  it('does the same for a seeded IN_EXECUTION initiative', async () => {
+    const { store, writes } = fakeStore('REGISTERED_DRAFT');
+    await expect(alignSeedInitiativeStage(store, 'org', 'init', 'IN_EXECUTION')).resolves.toEqual({
+      action: 'align',
+      targetStage: 'IN_EXECUTION',
+      wrote: 1,
+    });
+    expect(writes).toEqual(['IN_EXECUTION']);
+  });
+
+  it('writes nothing when the aggregate already sits in the seeded status group', async () => {
+    const { store, writes } = fakeStore('REGISTERED_DRAFT');
+    await expect(alignSeedInitiativeStage(store, 'org', 'init', 'DRAFT')).resolves.toEqual({
+      action: 'skip-aligned',
+      targetStage: 'REGISTERED_DRAFT',
+      wrote: 0,
+    });
+    expect(writes).toEqual([]);
+  });
+
+  it('short-circuits a disposition (seeded CANCELLED -> REJECTED) so the caller re-asserts the column', async () => {
+    const { store, writes } = fakeStore('REGISTERED_DRAFT');
+    await expect(alignSeedInitiativeStage(store, 'org', 'init', 'REJECTED')).resolves.toEqual({
+      action: 'skip-short-circuit',
+      targetStage: null,
+      wrote: 0,
+    });
+    expect(writes).toEqual([]);
+  });
+
+  it('reports no write when the store itself reports 0 changed rows (idempotent re-run)', async () => {
+    const store: AggregateStageStore = {
+      async readStage() {
+        return 'REGISTERED_DRAFT';
+      },
+      async writeStage() {
+        return 0;
+      },
+    };
+    await expect(alignSeedInitiativeStage(store, 'org', 'init', 'CLOSED')).resolves.toEqual({
+      action: 'align',
+      targetStage: 'CLOSED',
+      wrote: 0,
     });
   });
 });
