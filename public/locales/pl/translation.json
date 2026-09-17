@@ -12309,6 +12309,7 @@
       "CLOSED": "Zamknięta",
       "REJECTED": "Odrzucona",
       "ON_HOLD": "Wstrzymana",
+      "UNKNOWN_OTHER": "Nieznany / Inny",
       "unknown": "Nieznany status",
       "pendingReview": "Do przeglądu",
       "promoted": "Wypromowana",

@@ -13098,6 +13098,7 @@
       "CLOSED": "Closed",
       "REJECTED": "Rejected",
       "ON_HOLD": "On hold",
+      "UNKNOWN_OTHER": "Unknown / Other",
       "unknown": "Unknown status",
       "pendingReview": "Pending review",
       "promoted": "Promoted",
