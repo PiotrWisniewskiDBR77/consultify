@@ -639,6 +639,9 @@ const Day236OrganizacjaScreen = React.lazy(() => import('./screens/day236-organi
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
+const Rp3InicjatywyAnalizaOffScreen = React.lazy(
+  () => import('./screens/rp3-inicjatywy-analiza-off')
+);
 // Pomiar mechaniki KPI/OKR/ROI (2026-08-30) — kanoniczne wejście "lista
 // inicjatyw" pod odkrywalną nazwą. Sam REALNY <InitiativesHub> już istniał w
 // harnessie (patrz StagingFixesInitiativesI18nScreen wyżej) — ten wpis go
@@ -918,6 +921,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'rp3-inicjatywy-analiza-off': {
+    label:
+      'RP3 (17.09) — REALNY <InitiativesHub> przy fladze VITE_INITIATIVES_FOUR_BUTTONS OFF (harness startowany bez tej zmiennej), soczewka „Analysis" z przelacznika „Initiative workspace". Dowód, że po usunięciu atrapy `InitiativePreparationReadView` soczewka pokazuje rejestr, nie „Preparation overview". &lens=analysis|list &lang=pl|en &theme=light|dark',
+    render: () => <Rp3InicjatywyAnalizaOffScreen />,
   },
   'dec495-inicjatywy-archiwum': {
     label:

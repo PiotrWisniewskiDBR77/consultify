@@ -1,21 +1,20 @@
 /**
  * @vitest-environment jsdom
  *
- * DEC-420 (właściciel, 06.09.2026, 3 zrzuty Inicjatyw): „Trzecie menu ma za
- * dużo przycisków — ogranicz je do dwóch lub trzech." Bezpiecznik: każda z
- * trzech zakładek (Inicjatywy/Plan/Obciążenie) renderuje ≤3 chipy w Menu 3
- * i dokładnie jeden dropdown filtra w Menu 2.
+ * RP3 (wiersz planu 17, DEC-543, 17.09.2026): atrapa `InitiativePreparationReadView`
+ * usunięta razem z gałęzią „PARYTET OFF" w `InitiativesHub`. Pomiar decyzyjny:
+ * staging ma `VITE_INITIATIVES_FOUR_BUTTONS:"true"` wbite w zbudowany bundle
+ * (env obiekt w `index-*.js`, gitSha ba0e600b12), więc stan OFF nie istnieje na
+ * stagingu, a bundler wyciął atrapę z dostarczonego chunka `InitiativesHub-*.js`
+ * (zero jej literałów). Przy fladze OFF soczewka „Analysis" ma teraz pokazywać
+ * kanoniczny rejestr — tę samą powierzchnię, co soczewka „List".
  *
- * Mutacja: przywrócenie pełnej listy 8 chipów cyklu życia (zamiast
- * `menu3LifecyclePresets` filtrowanej do `KEPT_LIFECYCLE_MENU3_IDS`) w
- * `InitiativesHub.tsx` wywraca test „Inicjatywy" na czerwono — zmierzone
- * ręcznie 06.09.2026 przy tym dyżurze (patrz meldunek).
+ * Mutacja: przywrócenie gałęzi OFF i pliku atrapy (stan sprzed RP3) wywraca
+ * pierwszy test na czerwono — region „Preparation overview" wraca do DOM.
  */
-
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter, useNavigate } from 'react-router-dom';
-vi.unmock('react-router-dom');
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -44,7 +43,7 @@ const {
   portfolioStoreState,
   appStoreState,
   conversationStoreState,
-  demoModeState,
+  fourButtonsFlagState,
 } = vi.hoisted(() => ({
   getPortfolio: vi.fn(),
   getInitiative: vi.fn(),
@@ -58,7 +57,7 @@ const {
     currentOrganization: { id: 'org-1' },
   },
   conversationStoreState: { addMessage: vi.fn() },
-  demoModeState: { enabled: false },
+  fourButtonsFlagState: { enabled: false },
 }));
 
 vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) => ({
@@ -69,7 +68,7 @@ vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) =>
 
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {
-    getPortfolio: getPortfolio,
+    getPortfolio,
     getPendingDecisions: vi.fn(async () => []),
     getInitiativeSnapshot: vi.fn(async () => null),
     getInitiative,
@@ -83,9 +82,10 @@ vi.mock('@/services/api', () => ({
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
     getUsers: vi.fn(async () => []),
+    getProjects: vi.fn(async () => []),
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
-  shouldAllowDemoData: () => demoModeState.enabled,
+  shouldAllowDemoData: () => false,
 }));
 
 vi.mock('@/hooks/useOpenChatWithContext', () => ({
@@ -114,6 +114,10 @@ vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => appStoreState,
 }));
 
+vi.mock('@/utils/initiativesFourButtonsFlag', () => ({
+  isInitiativesFourButtonsEnabled: () => fourButtonsFlagState.enabled,
+}));
+
 import { InitiativesHub } from '../InitiativesHub';
 
 const renderHubAt = (entry: string) =>
@@ -123,29 +127,29 @@ const renderHubAt = (entry: string) =>
     </MemoryRouter>
   );
 
+const registered = (id: string, title: string, lifecycleState: string) => ({
+  version: 1,
+  updatedAt: '2026-09-13T00:00:00.000Z',
+  initiative: {
+    initiativeId: id,
+    lifecycleState,
+    title,
+    priority: 'MEDIUM',
+    projectId: 'proj-1',
+    readiness: 'NOT_EVALUATED',
+  },
+});
+
 beforeEach(() => {
   window.localStorage.clear();
-  demoModeState.enabled = false;
+  fourButtonsFlagState.enabled = false;
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
   getInitiative.mockReset();
   getInitiative.mockResolvedValue(null);
   listRegisteredInitiatives.mockReset();
   listRegisteredInitiatives.mockResolvedValue({
-    initiatives: [
-      {
-        version: 1,
-        updatedAt: '2026-09-13T00:00:00.000Z',
-        initiative: {
-          initiativeId: 'ie01-row-1',
-          lifecycleState: 'SCHEDULED',
-          title: 'ie01-register-row',
-          priority: 'MEDIUM',
-          projectId: 'proj-1',
-          readiness: 'NOT_EVALUATED',
-        },
-      },
-    ],
+    initiatives: [registered('rp3-row-1', 'rp3-register-row', 'SCHEDULED')],
   });
   listLegacyInitiatives.mockReset();
   listLegacyInitiatives.mockResolvedValue([]);
@@ -157,34 +161,37 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('IE01 preparation navigation', () => {
-  it('renders exactly three stable module destinations by default (Work report gated behind VITE_INITIATIVES_FOUR_BUTTONS, K5-8), with List and Analysis inside Initiatives', async () => {
-    renderHubAt('/initiatives');
-    await screen.findByRole('combobox', { name: 'Initiative workspace' });
-    expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
-    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Initiative workspace' }), {
-      target: { value: 'analysis' },
-    });
-    // RP3 (DEC-543): atrapa `InitiativePreparationReadView` usunięta — soczewka
-    // „Analysis" przy fladze OFF pokazuje kanoniczny rejestr, nie „Preparation overview".
-    expect(await screen.findByText('ie01-register-row')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
-  });
-});
+describe('RP3 — atrapa InitiativePreparationReadView usunięta', () => {
+  it('flag OFF: soczewka „Analysis" nie renderuje atrapy, tylko kanoniczny rejestr', async () => {
+    renderHubAt('/initiatives?lens=analysis');
+    await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
 
-it('restores the preparation lens in both directions through router history', async () => {
-  function HistoryControls() {
-    const navigate = useNavigate();
-    return <><button onClick={() => navigate(1)}>→</button><button onClick={() => navigate(-1)}>←</button></>;
-  }
-  render(<MemoryRouter initialEntries={['/initiatives?lens=list','/initiatives?lens=analysis']} initialIndex={0}><HistoryControls/><InitiativesHub/></MemoryRouter>);
-  expect(await screen.findByRole('combobox', {name:'Initiative workspace'})).toHaveValue('list');
-  fireEvent.click(screen.getByRole('button',{name:'→'}));
-  await waitFor(() => expect(screen.getByRole('combobox', {name:'Initiative workspace'})).toHaveValue('analysis'));
-  expect(await screen.findByText('ie01-register-row')).toBeInTheDocument();
-  expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
-  fireEvent.click(screen.getByRole('button',{name:'←'}));
-  await waitFor(() => expect(screen.getByRole('combobox', {name:'Initiative workspace'})).toHaveValue('list'));
+    // Soczewka faktycznie stoi na „Analysis" — to dokładnie ten stan, w którym
+    // przed RP3 montowała się atrapa.
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue(
+      'analysis'
+    );
+
+    // Atrapy nie ma w DOM: ani jej region, ani jej zdania.
+    expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
+    expect(screen.queryByText(/initiatives in the current scope/i)).toBeNull();
+
+    // Zamiast niej — kanoniczny rejestr z tym samym wierszem, co soczewka „List".
+    expect(await screen.findByText('rp3-register-row')).toBeInTheDocument();
+  });
+
+  it('flag OFF: soczewki „Analysis" i „List" pokazują tę samą powierzchnię rejestru', async () => {
+    const analysis = renderHubAt('/initiatives?lens=analysis');
+    expect(await screen.findByText('rp3-register-row')).toBeInTheDocument();
+    const analysisHtml = screen.getByText('rp3-register-row').closest('table')?.outerHTML;
+    analysis.unmount();
+
+    const list = renderHubAt('/initiatives?lens=list');
+    expect(await screen.findByText('rp3-register-row')).toBeInTheDocument();
+    const listHtml = screen.getByText('rp3-register-row').closest('table')?.outerHTML;
+    list.unmount();
+
+    expect(analysisHtml).toBeTruthy();
+    expect(analysisHtml).toBe(listHtml);
+  });
 });

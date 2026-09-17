@@ -143,7 +143,6 @@ import {
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import { InitiativePortfolioScheduleView } from './InitiativePortfolioScheduleView';
-import { InitiativePreparationReadView } from './InitiativePreparationReadView';
 import { InitiativeWorkloadSurface } from './InitiativeWorkloadSurface';
 import { InitiativeWorkReportView } from './InitiativeWorkReportView';
 import {
@@ -2297,17 +2296,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           currentProjectId={currentProjectId}
           currentUserId={String((currentUser as any)?.id || '')}
           currentOrganizationId={String(currentOrganization?.id || '')}
-        />
-      );
-    }
-
-    // PARYTET OFF: przy fladze wylaczonej soczewka "Analiza" z Menu 2 musi dawac
-    // dokladnie to, co dawala na linii — widok `InitiativePreparationReadView`.
-    if (!initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
-      return (
-        <InitiativePreparationReadView
-          initiatives={searchedInitiatives}
-          onOpen={handleOpenInitiativeDocument}
         />
       );
     }
