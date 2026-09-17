@@ -740,14 +740,14 @@ export class ModelRouter {
     }
 
     const defaultProvider = await this.getDefaultProvider();
+    const defaultProviderCapabilityId = this.normalizeModelIdForCapabilities(
+      String(defaultProvider?.model_id || defaultProvider?.id || '')
+    );
     if (
       defaultProvider &&
       String(defaultProvider.provider || '').toLowerCase() === 'openrouter' &&
       defaultProvider.api_key &&
-      modelMeetsRequirements(
-        String(defaultProvider.model_id || defaultProvider.id || ''),
-        requirements
-      )
+      modelMeetsRequirements(defaultProviderCapabilityId, requirements)
     ) {
       const evaluated = await this.evaluateRoutingCandidate(
         {
