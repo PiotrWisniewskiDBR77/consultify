@@ -10860,7 +10860,8 @@
             "title": "Ta sesja nie ma jeszcze zamrożonego wyniku",
             "description": "Sesja jest zamrożona na serwerze, ale nie znaleziono jej wyniku — raport powstaje z wyniku, nigdy z kopii lokalnej. Odśwież sesję albo wygeneruj raport, gdy wynik będzie dostępny."
           },
-          "unitLine": "Jednostka: {{name}}"
+          "unitLine": "Jednostka: {{name}}",
+          "headingNamed": "{{name}} — {{state}}"
         },
         "generated": {
           "initiativeOutcome": "Podniesienie poziomu dojrzałości.",
@@ -10935,7 +10936,8 @@
           "creatingSession": "Tworzenie sesji…",
           "loadingFromServer": "Wczytywanie sesji z serwera…",
           "loadingSession": "Wczytywanie sesji…"
-        }
+        },
+        "sessionFallbackName": "Sesja {{id}}"
       },
       "legacy": {
         "revisionNotice": "Rewizja sesji {{id}} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).",
@@ -18509,7 +18511,15 @@
       "axisSentence": "{{axis}}: {{verdict}} (wskaźnik {{ratio}})",
       "axisSentenceUnknown": "{{axis}}: nie zmierzono — brak danych bazowych",
       "noSignal": "Osie ryzyka nie zostały policzone dla tego wiersza",
-      "coverage": "{{measured}}/3"
+      "coverage": "{{measured}}/3",
+      "axisSentenceUnknownReason": "{{axis}}: nie zmierzono — {{reason}}",
+      "reason": {
+        "noValueBaseline": "brak bazowej wartości",
+        "noCostBaseline": "brak bazowego kosztu",
+        "noScheduleDates": "brak dat harmonogramu",
+        "noProgress": "brak wartości postępu",
+        "noBaselineData": "brak danych bazowych"
+      }
     },
     "actionCards": {
       "aria": "Karty działań realizacji"

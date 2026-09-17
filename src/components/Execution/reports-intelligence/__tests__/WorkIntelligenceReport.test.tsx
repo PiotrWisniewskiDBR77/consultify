@@ -28,13 +28,21 @@ vi.mock('@/services/executionReports/executionReportsApi', () => ({
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
+    i18n: {
+      language: 'en',
+      getFixedT: () => (_key: string, fallback: string, options?: Record<string, unknown>) =>
+        Object.entries(options || {}).reduce(
+          (text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)),
+          fallback
+        ),
+    },
     t: (_key: string, fallback: string, options?: Record<string, unknown>) =>
       Object.entries(options || {}).reduce(
         (text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)),
         fallback
       ),
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 vi.mock('@/components/standard/StandardTable', () => ({
   StandardTable: ({ columns = [], data, onRowClick, onRowDoubleClick }: any) => (
@@ -197,6 +205,32 @@ describe('Work Intelligence report', () => {
     expect(screen.getByRole('heading', { name: 'Auditable register' })).toBeInTheDocument();
     expect(api.readExecutionWork).toHaveBeenCalledWith('case-1');
     expect(screen.getByTestId('standard-table')).toHaveTextContent('Governed task');
+  });
+
+
+
+  it('keeps calculated epistemic and severity labels separated in Executive Pulse', async () => {
+    api.listExecutionCases.mockResolvedValue({
+      cases: [{ executionCaseId: 'case-1', initiativeId: 'initiative-1' }],
+    });
+    api.readExecutionWork.mockResolvedValue({
+      tasks: [{ taskId: 'task-1', title: 'Governed task', status: 'OPEN' }],
+      decisions: [],
+    });
+    api.readExecutionMilestones.mockResolvedValue({ items: [] });
+
+    render(<WorkIntelligenceReport />);
+
+    await screen.findByRole('heading', { name: 'Executive Pulse' });
+    const calculatedPulseButtons = screen.getAllByRole('button').filter((button) =>
+      button.textContent?.includes('CALCULATED')
+    );
+
+    expect(calculatedPulseButtons.length).toBeGreaterThan(0);
+    for (const button of calculatedPulseButtons) {
+      expect(button.textContent).not.toMatch(/CalculatedNeutral|CALCULATEDNeutral/);
+      expect(button.textContent).toMatch(/CALCULATED\s+Neutral|CALCULATED\s+Amber|CALCULATED\s+Red|CALCULATED\s+Unknown|CALCULATED\s+Warning/);
+    }
   });
 
   it('keeps healthy source cases visible when one case read fails', async () => {

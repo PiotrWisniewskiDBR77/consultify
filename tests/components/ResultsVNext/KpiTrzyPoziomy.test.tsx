@@ -36,7 +36,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) =>
       typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
-    i18n: { language: 'pl' },
+    i18n: {
+      language: 'pl',
+      getFixedT: () => (_key: string, fallback?: any) =>
+        typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+    },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
 }));
@@ -396,7 +400,7 @@ describe('KPI — trzy poziomy: tabela raportów → raport → karta N', () => 
     fireEvent.doubleClick(screen.getByText('Czas przezbrojenia'));
 
     expect(navigateMock).toHaveBeenCalledWith(
-      `/results/kpi/${CHILD_KPI_ID}?zbior=${SCORECARD_ID}`
+      `/results/kpi/${CHILD_KPI_ID}?set=${SCORECARD_ID}`
     );
   });
 

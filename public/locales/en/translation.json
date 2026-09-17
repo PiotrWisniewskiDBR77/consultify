@@ -11664,7 +11664,8 @@
             "title": "There is no frozen result for this session yet",
             "description": "The session is frozen on the server, but its Output has not been found — the report is built from the Output, never from a local copy. Refresh the session, or generate the report once the Output is available."
           },
-          "unitLine": "Unit: {{name}}"
+          "unitLine": "Unit: {{name}}",
+          "headingNamed": "{{name}} — {{state}}"
         },
         "generated": {
           "initiativeOutcome": "Raising the maturity level.",
@@ -11739,7 +11740,8 @@
           "creatingSession": "Creating session…",
           "loadingFromServer": "Loading session from server…",
           "loadingSession": "Loading session…"
-        }
+        },
+        "sessionFallbackName": "Session {{id}}"
       },
       "legacy": {
         "revisionNotice": "Revision of session {{id}} (created by a reopen — the previous Output stays untouched and is marked superseded after the next freeze).",
@@ -19285,7 +19287,15 @@
       "axisSentence": "{{axis}}: {{verdict}} (index {{ratio}})",
       "axisSentenceUnknown": "{{axis}}: not measured — no baseline data",
       "noSignal": "Risk axes have not been computed for this row",
-      "coverage": "{{measured}}/3"
+      "coverage": "{{measured}}/3",
+      "axisSentenceUnknownReason": "{{axis}}: not measured — {{reason}}",
+      "reason": {
+        "noValueBaseline": "no value baseline",
+        "noCostBaseline": "no cost baseline",
+        "noScheduleDates": "no schedule dates",
+        "noProgress": "no progress value",
+        "noBaselineData": "no baseline data"
+      }
     },
     "actionCards": {
       "aria": "Execution action cards"
