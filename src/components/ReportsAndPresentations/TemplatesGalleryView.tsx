@@ -272,70 +272,65 @@ const TemplateTile: React.FC<{
       </div>
 
       {/* akcja główna na hover/fokus — NIE w kebabie */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[152px] flex-wrap items-center justify-center gap-2 bg-c-surface/95 px-3 opacity-0 backdrop-blur-[3px] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[152px] flex-col items-center justify-center gap-2 bg-c-surface/95 px-3 opacity-0 backdrop-blur-[3px] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+        <div className="flex w-full flex-nowrap items-center justify-center gap-1.5">
+          <button
+            type="button"
+            data-testid={`template-gallery-build-${item.id}`}
+            className={MENU_3_ACTION_NEUTRAL}
+            disabled={item.scope === 'system'}
+            title={
+              item.scope === 'system'
+                ? t(
+                    'rap.templates.systemReadOnly',
+                    'System templates are read-only. Duplicate this template to edit a copy.'
+                  )
+                : undefined
+            }
+            onClick={() => onBuild(item)}
+          >
+            <Pencil size={12} />
+            {t('rap.actions.buildEdit', 'Build / Edit')}
+          </button>
+          <button
+            type="button"
+            disabled={disabledUse}
+            data-testid={`template-gallery-use-${item.id}`}
+            className={cn(MENU_1_PRIMARY_CTA, disabledUse && 'cursor-not-allowed opacity-70')}
+            onClick={() => onUse(item)}
+          >
+            <Check size={16} />
+            {t('rap.actions.useTemplate', 'Use template')}
+          </button>
+          <button
+            type="button"
+            data-testid={`template-gallery-duplicate-${item.id}`}
+            className={MENU_3_ACTION_NEUTRAL}
+            onClick={() => onDuplicate(item)}
+          >
+            <Copy size={12} />
+            {t('rap.actions.duplicate', 'Duplicate')}
+          </button>
+          <button type="button" className={MENU_3_ACTION_NEUTRAL} onClick={() => onPreview(item)}>
+            <Eye size={12} />
+            {t('rap.preview.open', 'Preview')}
+          </button>
+        </div>
         {disabledUse ? (
-          <div className="px-4 text-center">
-            <button
-              type="button"
-              disabled
-              data-testid={`template-gallery-use-disabled-${item.id}`}
-              className={cn(MENU_3_ACTION_NEUTRAL, 'cursor-not-allowed opacity-70')}
-            >
-              {t('rap.actions.useTemplate', 'Use template')}
-            </button>
-            <p className="mt-2 text-[11px] leading-4 text-c-text-muted">
-              {isDeprecated
-                ? t('rap.templates.deprecatedUseBlocked', 'A deprecated template cannot be used.')
+          <p className="px-4 text-center text-[11px] leading-4 text-c-text-muted">
+            {isDeprecated
+              ? t('rap.templates.deprecatedUseBlocked', 'A deprecated template cannot be used.')
+              : item.originRuntime === 'sheet_template'
+                ? t(
+                    'rap.templates.sheetUseBlocked',
+                    'Use Duplicate to create an editable scorecard workbook.'
+                  )
                 : t(
                     'rap.templates.useBlocked',
                     'No canonical template record — there is nothing to use.'
                   )}
-            </p>
-          </div>
-        ) : (
-          <>
-            <button
-              type="button"
-              data-testid={`template-gallery-build-${item.id}`}
-              className={MENU_3_ACTION_NEUTRAL}
-              disabled={item.scope === 'system'}
-              title={
-                item.scope === 'system'
-                  ? t(
-                      'rap.templates.systemReadOnly',
-                      'System templates are read-only. Duplicate this template to edit a copy.'
-                    )
-                  : undefined
-              }
-              onClick={() => onBuild(item)}
-            >
-              <Pencil size={12} />
-              {t('rap.actions.buildEdit', 'Build / Edit')}
-            </button>
-            <button
-              type="button"
-              data-testid={`template-gallery-use-${item.id}`}
-              className={MENU_1_PRIMARY_CTA}
-              onClick={() => onUse(item)}
-            >
-              <Check size={16} />
-              {t('rap.actions.useTemplate', 'Use template')}
-            </button>
-            <button
-              type="button"
-              data-testid={`template-gallery-duplicate-${item.id}`}
-              className={MENU_3_ACTION_NEUTRAL}
-              onClick={() => onDuplicate(item)}
-            >
-              <Copy size={12} />
-              {t('rap.actions.duplicate', 'Duplicate')}
-            </button>
-            <button type="button" className={MENU_3_ACTION_NEUTRAL} onClick={() => onPreview(item)}>
-              <Eye size={12} />
-              {t('rap.preview.open', 'Preview')}
-            </button>
-          </>
-        )}
+          </p>
+        ) : null}
       </div>
 
       {/* opis */}

@@ -1245,7 +1245,10 @@ async function cleanupGhostOutputsByOrigin(params: {
 export async function removeTemplateArtifactByOrigin(params: {
   organizationId: string;
   originRuntime:
-    'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
+    | 'report_template'
+    | 'presentation_template'
+    | 'sheet_template'
+    | 'document_template';
   originRecordId: string;
 }): Promise<boolean> {
   const result = await cleanupGhostOutputsByOrigin(params);
@@ -2373,6 +2376,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     activeColumn: string | null;
     isSystemColumn: string | null;
     visibilityColumn: string | null;
+    descriptionColumn: string | null;
+    structureColumn: string | null;
   } | null
 > = {
   document_template: {
@@ -2382,6 +2387,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     activeColumn: null,
     isSystemColumn: 'is_system',
     visibilityColumn: null,
+    descriptionColumn: 'purpose',
+    structureColumn: 'section_blueprint',
   },
   report_template: {
     table: 'report_builder_templates',
@@ -2390,6 +2397,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     activeColumn: 'is_active',
     isSystemColumn: 'is_system',
     visibilityColumn: null,
+    descriptionColumn: 'description',
+    structureColumn: 'sections_json',
   },
   presentation_template: {
     table: 'presentation_templates',
@@ -2398,6 +2407,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     activeColumn: 'is_active',
     isSystemColumn: 'is_system',
     visibilityColumn: 'visibility',
+    descriptionColumn: 'description',
+    structureColumn: 'outline_json',
   },
   sheet_template: {
     table: 'tp_base_templates',
@@ -2406,6 +2417,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     activeColumn: null,
     isSystemColumn: null,
     visibilityColumn: 'visibility',
+    descriptionColumn: 'description',
+    structureColumn: 'schema_snapshot',
   },
 };
 
@@ -2416,6 +2429,8 @@ interface CanonicalTemplateRow {
   visibility: unknown;
   status_value: string | null;
   active_value: unknown;
+  description_value: string | null;
+  structure_value: unknown;
 }
 
 /**
@@ -2437,6 +2452,8 @@ async function loadCanonicalTemplateRows(
   const activeSelect = registry.activeColumn ? `t.${registry.activeColumn}` : 'NULL';
   const isSystemSelect = registry.isSystemColumn ? `t.${registry.isSystemColumn}` : 'NULL';
   const visibilitySelect = registry.visibilityColumn ? `t.${registry.visibilityColumn}` : 'NULL';
+  const descriptionSelect = registry.descriptionColumn ? `t.${registry.descriptionColumn}` : 'NULL';
+  const structureSelect = registry.structureColumn ? `t.${registry.structureColumn}` : 'NULL';
 
   const rows = await dbAll<CanonicalTemplateRow>(
     `SELECT t.${registry.idColumn} AS canonical_id,
@@ -2444,7 +2461,9 @@ async function loadCanonicalTemplateRows(
             ${isSystemSelect} AS is_system,
             ${visibilitySelect} AS visibility,
             ${statusSelect} AS status_value,
-            ${activeSelect} AS active_value
+            ${activeSelect} AS active_value,
+            ${descriptionSelect} AS description_value,
+            ${structureSelect} AS structure_value
      FROM ${registry.table} t
      WHERE t.${registry.idColumn} IN (${placeholders})`,
     unique,
@@ -2466,10 +2485,6 @@ function statusFromCanonicalRow(
   const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
   if (registry?.statusColumn) {
     const status = normalizeTemplateStatus(row.status_value);
-    // Presentation templates historically expose approved active templates as
-    // published in the Materials contract. Preserve that API vocabulary while
-    // retaining draft/deprecated lifecycle precision.
-    if (originRuntime === 'presentation_template' && status === 'approved') return 'published';
     return status;
   }
   if (registry?.activeColumn) {
@@ -2478,6 +2493,32 @@ function statusFromCanonicalRow(
     if (active === true) return 'published';
   }
   return 'unknown';
+}
+
+/** Project the current canonical structure into the read model used by the library. */
+function structureBlueprintFromCanonicalRow(
+  originRuntime: TemplateOriginRuntime,
+  raw: unknown
+): Record<string, unknown> | null {
+  const parsed =
+    typeof raw === 'string'
+      ? safeJsonParse<unknown>(raw, originRuntime === 'sheet_template' ? {} : [])
+      : raw;
+
+  if (originRuntime === 'document_template' || originRuntime === 'report_template') {
+    return { sections: Array.isArray(parsed) ? parsed : [] };
+  }
+  if (originRuntime === 'presentation_template') {
+    return { outline: Array.isArray(parsed) ? parsed : [] };
+  }
+  if (originRuntime === 'sheet_template' && parsed && typeof parsed === 'object') {
+    const snapshot = parsed as Record<string, unknown>;
+    return {
+      sheets: Array.isArray(snapshot.sheets) ? snapshot.sheets : [],
+      columns: Array.isArray(snapshot.fields) ? snapshot.fields : [],
+    };
+  }
+  return null;
 }
 
 /**
@@ -2537,6 +2578,10 @@ export async function enrichTemplateOriginSummaries(
     const status = canonicalRow
       ? statusFromCanonicalRow(item.originRuntime, canonicalRow)
       : normalizeTemplateStatus(snapshot.status);
+    const canonicalDescription = String(canonicalRow?.description_value || '').trim();
+    const canonicalStructure = canonicalRow
+      ? structureBlueprintFromCanonicalRow(item.originRuntime, canonicalRow.structure_value)
+      : null;
 
     return {
       ...item,
@@ -2544,6 +2589,8 @@ export async function enrichTemplateOriginSummaries(
         ...(item.originSummary ?? {}),
         template: {
           ...snapshot,
+          ...(canonicalDescription ? { description: canonicalDescription } : {}),
+          ...(canonicalStructure ? { structureBlueprint: canonicalStructure } : {}),
           ...buildTemplateOriginSummaryFields({
             canonicalTemplateId: item.originRecordId,
             originRuntime: item.originRuntime,

@@ -37162,6 +37162,8 @@
       "orphanedBadge": "No source",
       "deprecatedUseBlocked": "A deprecated template cannot be used.",
       "useBlocked": "No canonical template record — there is nothing to use.",
+      "sheetUseBlocked": "Use Duplicate to create an editable scorecard workbook.",
+      "duplicateFailed": "Template could not be duplicated",
       "galleryEmpty": "No template matches these filters.",
       "statusUnknown": "Unknown",
       "provenanceQueue": "Provenance and rights",
