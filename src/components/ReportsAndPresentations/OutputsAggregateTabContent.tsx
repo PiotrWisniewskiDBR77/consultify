@@ -1367,10 +1367,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
       {/* DEC-593: JEDEN DocumentViewer dla zatwierdzonego dokumentu z listy —
           read-only, pełny ekran; „Edit" = jawne przejście do edytora tą samą
-          dotychczasową trasą (resolveArtifactOpenPath, z hotfixem assessmentu). */}
+          dotychczasową trasą (resolveArtifactOpenPath, z hotfixem assessmentu).
+          z-[70] (nie z-50): globalny Sidebar jest `fixed … z-[60]`, więc na
+          poziomie overlay rail malował się NAD „pełnoekranowym" viewerem i
+          ucinał lewą nawigację sekcji (zmierzone w zrzutach realnego Huba,
+          Wpis 87). z-[70] to ta sama wartość co pełnoekranowy powierzchniowy
+          overlay w ReportBuilder/TemplatesManager.tsx; toasty (100) i menu
+          kontekstowe (120) zostają nad nim. */}
       {viewerRow?.artifactId ? (
         <div
-          className="fixed inset-0 z-50 bg-c-surface-raised"
+          className="fixed inset-0 z-[70] bg-c-surface-raised"
           data-testid="doc0-document-viewer-overlay"
         >
           <DocumentViewer

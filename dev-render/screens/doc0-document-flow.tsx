@@ -1,94 +1,115 @@
 /**
- * DOC-0 etap 1 (b) (DEC-593) — harness host for the REAL open-flow:
- * `list → open → ONE DocumentViewer`.
+ * DOC-0 etap 1 (b) v2 (DEC-593, Wpis 87 P2) — harness host for the REAL
+ * open-flow `list → open → ONE DocumentViewer`, rendered inside the REAL
+ * Materials Hub shell (left rail + Menu 1/2/3), not an isolated table.
  *
- * What is real here (CLAUDE.md #7 — the owner judges the PRODUCT, not a mockup):
- *  - `<OutputsAggregateTabContent />` — the Materials common "All" registry
- *    (ReportsAndPresentationsHub, Menu 1 "All" tab), the SAME component the
- *    production Hub renders,
- *  - its `openRow` fork (`artifactNavigation.resolveArtifactOpenTarget`) — at
+ * Why v2 (Wpis 87 P2): the (b) list screenshots showed a bare `StandardTable`
+ * with a hand-written header on an empty background — no Hub shell — which the
+ * owner judges as a mockup, not the product (CLAUDE.md #7). This revision mounts
+ * the SAME `ReportsAndPresentationsHub` the production app renders (the day267
+ * owner-verdict pattern), so the rail, the Menu 1/2/3 tabs and the Outputs "All"
+ * registry chrome are all real. Only transport is stubbed.
+ *
+ * What is real here:
+ *  - `<ReportsAndPresentationsHub />` — the production Materials hub (rail,
+ *    Menu 1/2/3, Outputs "All" registry), mounted exactly as day267 does,
+ *  - its Outputs list (`useArtifactOutputsList` → `GET /api/artifacts?limit=200`
+ *    → `mapRegistryItemToUnified`) — the canonical server registry read-model,
+ *  - the `openRow` fork (`artifactNavigation.resolveArtifactOpenTarget`) — at
  *    flag ON an APPROVED document row opens the read-only `DocumentViewer`
- *    overlay instead of routing to Report Builder,
+ *    overlay instead of routing to Report Builder; a DRAFT keeps the old path,
  *  - `DocumentViewer` + `documentContentResolver` (`GET /api/artifacts/:id/content`),
- *  - the document body itself — 1264 chars of the REAL staging row
+ *  - the document body itself — the REAL staging row
  *    `4d6600e3-6ddd-52df-b0aa-85afa4c86c1c` "Digital Roadmap 2026–2028"
  *    (org 468b234c, delivery_state `ready`, owner Daniel Osei), captured by
  *    running the PRODUCTION resolver read-only against the local dump copy.
- *    Registry metadata in the row/Properties is that real `v8_output_artifacts` row.
  *
  * What is stubbed: transport only. The harness has no backend
  * (`apiNoBackendPlugin` answers every `/api/*` with an honest 404), so
- * `window.fetch` returns the captured envelope byte-for-byte for the one URL the
- * adapter calls. A SECOND row (draft) is included to show the fork honestly: at
- * flag ON a DRAFT document keeps the OLD path (Report Builder), it does NOT open
- * the viewer — only APPROVED rows do.
+ * `window.fetch` returns (1) the captured envelope byte-for-byte for the one
+ * content URL the adapter calls, and (2) the two registry rows below for the
+ * list call. Everything else keeps its real behaviour.
  *
  * Flag: ON via URL `?ff_doc0_document_viewer=1` (highest precedence in
  * `documentViewerFlag`). Drop it (or `=0`) to see the byte-identical OFF parity.
  *
- * URL: /doc0-document-flow.html?lang=en&theme=light|dark&ff_doc0_document_viewer=1&case=list|open
- *   case=list → the registry table (before the click)
- *   case=open → the DocumentViewer overlay (after "Open full" on the approved row)
+ * URL: /doc0-document-flow.html?lang=en&theme=light|dark&ff_doc0_document_viewer=1&tab=all&case=list|open
+ *   case=list → the Outputs "All" registry inside the Hub shell (before the click)
+ *   case=open → the DocumentViewer overlay (after a real dblclick on the approved row)
  */
 import React, { useEffect, useRef } from 'react';
-import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom';
 
-import { OutputsAggregateTabContent } from '../../src/components/ReportsAndPresentations/OutputsAggregateTabContent';
+import { ReportsAndPresentationsHub } from '../../src/components/ReportsAndPresentations/ReportsAndPresentationsHub';
+import { doneKey } from '../../src/components/Onboarding/useFirstRunOnboarding';
+import { STORY_RAIL_DISMISSED_KEY } from '../../src/components/demo/storyRailStops';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import i18n from '../../src/i18n';
+import { MainLayout } from '../../src/layouts/MainLayout';
+import { AppProviders } from '../../src/providers/AppProviders';
 
 import ENVELOPE from '../mocks/doc0-digital-roadmap-envelope.json';
+import { seedRealisticSession } from '../mocks/seedStore';
+
+seedRealisticSession();
+
+// MainLayout mounts FirstRunOnboarding, which opens the "Meet Teresa" modal for
+// any user with no local onboarding-done record (the harness has no server
+// preference row). Setting the production instant-guard key makes the shell
+// behave like a RETURNING user instead of blocking the Hub behind step 1 of 3.
+localStorage.setItem(doneKey('user-piotr-demo'), 'true');
+// Same idea for the demo StoryRail coach-mark: dismiss it permanently through
+// the production key so it never overlays the bottom of the Hub in a screenshot.
+localStorage.setItem(STORY_RAIL_DISMISSED_KEY, 'true');
 
 const APPROVED_ID = '4d6600e3-6ddd-52df-b0aa-85afa4c86c1c';
 const CONTENT_URL = `/api/artifacts/${APPROVED_ID}/content`;
 
-const actions = {
-  exportReportPdf: async () => {},
-  exportDeckPptx: async () => {},
-  archiveReport: async () => true,
-  archiveDeck: async () => true,
-  startArtifactReview: async () => true,
-} as any;
-
-// Real `v8_output_artifacts` rows (dump copy, org 468b234c). Row 1 is the
-// APPROVED document (delivery_state `ready`) that opens the viewer at flag ON;
-// row 2 is a DRAFT document that must keep the OLD path (Report Builder) even at
-// flag ON — the fork is fail-closed on non-approved statuses.
+// Real `v8_output_artifacts` rows (dump copy, org 468b234c) in the canonical
+// registry shape `mapRegistryItemToUnified` consumes. Row 1 is the APPROVED
+// document (originStatus `ready`) that opens the viewer at flag ON; row 2 is a
+// DRAFT document that must keep the OLD path (Report Builder) even at flag ON —
+// the fork is fail-closed on non-approved statuses.
 const ROWS = [
   {
-    kind: 'document' as const,
-    originRecordId: 'cd81551c-5c33-52b4-abb4-878fde387949',
     artifactId: APPROVED_ID,
-    title: 'Digital Roadmap 2026–2028',
-    statusKey: 'ready',
-    owner: 'Daniel Osei',
+    artifactFamily: 'document',
+    outputType: 'report',
+    originRuntime: 'native_artifact',
+    originRecordId: 'cd81551c-5c33-52b4-abb4-878fde387949',
+    resolvedTitle: 'Digital Roadmap 2026–2028',
+    originStatus: 'ready',
+    deliveryState: 'ready',
+    ownerName: 'Daniel Osei',
+    createdAt: '2026-09-08T14:58:06.124Z',
     updatedAt: '2026-09-08T14:58:06.124Z',
+    lastTransitionAt: '2026-09-08T14:58:06.124Z',
+    publishState: 'approved',
+    validationState: 'validated',
+    visibilityScope: 'organization',
+    exportFormat: 'docx',
     reportType: 'strategic_roadmap',
-    exportFormats: ['docx', 'pdf'],
-    fileFormat: 'Document',
-    governance: {
-      visibilityScope: 'organization',
-      publishState: 'approved',
-      originSummary: { sourceType: 'report_builder' },
-    },
+    authority: 'report_builder',
+    originSummary: { sourceType: 'report_builder' },
   },
   {
-    kind: 'document' as const,
-    originRecordId: 'cd81551c-0000-4000-8000-000000000002',
     artifactId: 'art-doc0-draft-2',
-    title: 'Draft — Q4 operating notes',
-    statusKey: 'draft',
-    owner: 'Daniel Osei',
+    artifactFamily: 'document',
+    outputType: 'report',
+    originRuntime: 'native_artifact',
+    originRecordId: 'cd81551c-0000-4000-8000-000000000002',
+    resolvedTitle: 'Draft — Q4 operating notes',
+    originStatus: 'draft',
+    deliveryState: 'draft',
+    ownerName: 'Daniel Osei',
+    createdAt: '2026-09-10T09:12:00.000Z',
     updatedAt: '2026-09-10T09:12:00.000Z',
+    lastTransitionAt: '2026-09-10T09:12:00.000Z',
+    publishState: 'draft',
+    validationState: null,
+    visibilityScope: 'organization',
+    exportFormat: 'docx',
     reportType: 'executive_memo',
-    exportFormats: ['docx'],
-    fileFormat: 'Document',
-    governance: {
-      visibilityScope: 'organization',
-      publishState: 'draft',
-      originSummary: { sourceType: 'report_builder' },
-    },
+    authority: 'report_builder',
+    originSummary: { sourceType: 'report_builder' },
   },
 ];
 
@@ -99,80 +120,85 @@ function jsonResponse(body: unknown, status: number): Response {
   });
 }
 
-// Transport stub: serve the captured envelope for the adapter's one call. Every
-// OTHER request keeps its real behaviour — `/locales/**` must reach vite's
-// publicDir or i18n renders raw keys, and `/api/**` gets the same honest 404 the
-// harness middleware (`apiNoBackendPlugin`) would return.
+// Transport stub. Order matters: the content URL also contains `/api/artifacts`,
+// so it is matched FIRST. The list call returns the two registry rows (filtered
+// by `outputType` when the caller asks for one family). Every OTHER request keeps
+// its real behaviour — `/locales/**` must reach vite's publicDir or i18n renders
+// raw keys, and any other `/api/**` gets the same honest 404 the harness
+// middleware (`apiNoBackendPlugin`) would return.
 const realFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.includes(CONTENT_URL)) return jsonResponse(ENVELOPE, 200);
-  if (url.includes('/api/')) return jsonResponse({ error: { code: 'DEV_RENDER_NO_BACKEND' } }, 404);
+  if (url.includes('/api/artifacts')) {
+    const query = new URL(url, window.location.origin).searchParams;
+    const outputType = query.get('outputType');
+    const data = outputType
+      ? ROWS.filter((row) => row.outputType === outputType)
+      : ROWS;
+    return jsonResponse({ data }, 200);
+  }
+  // Benign catch-all (Wpis 87 P2, pattern from rg1-audits-generate-owner.tsx):
+  // OrgContext (`/api/organizations/current`) and the shell (`/api/v8/admin/flags`)
+  // reach for raw `window.fetch`, not the `Api` singleton. Without this they fall
+  // through to `apiNoBackendPlugin`'s honest 404 and the browser auto-logs
+  // "Failed to load resource: 404" (bledyKonsoli≠0) even though both consumers
+  // degrade gracefully. Answer 200 with an empty envelope so the Hub mounts clean.
+  if (url.includes('/api/')) {
+    return jsonResponse({ data: [], items: [], organizations: [] }, 200);
+  }
   return realFetch(input as RequestInfo | URL, init);
 }) as typeof window.fetch;
 
 const params = new URLSearchParams(window.location.search);
 const openCase = params.get('case') === 'open';
-const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
-document.documentElement.classList.toggle('dark', theme === 'dark');
-document.documentElement.setAttribute('data-theme', theme);
-void i18n.changeLanguage(params.get('lang') === 'pl' ? 'pl' : 'en');
 
 /**
  * `case=open` reproduces the owner's real 2-click on the approved row without a
- * human. `FilterableTable` renders each row as a `<tr>` with React's
- * `onDoubleClick` → `onRowDoubleClick` → the SAME `openRow` fork production uses
- * (no shortcut, no direct `setViewerRow`). React listens for the native bubbling
- * `dblclick`, so dispatching it on the row's `<tr>` drives the real path. The row
- * is located by its title text (no invented data attribute).
+ * human. The Hub fetches the registry asynchronously, so poll until the row's
+ * `<tr>` is in the DOM, then dispatch the native bubbling `dblclick` React listens
+ * for → `FilterableTable.onRowDoubleClick` → the SAME `openRow` fork production
+ * uses (no shortcut, no direct `setViewerRow`). The row is located by its title
+ * text (no invented data attribute).
  */
 function useOpenApprovedRow(enabled: boolean) {
   const done = useRef(false);
   useEffect(() => {
     if (!enabled || done.current) return;
-    const timer = window.setTimeout(() => {
-      done.current = true;
+    let elapsed = 0;
+    const interval = window.setInterval(() => {
+      elapsed += 200;
       const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('tbody tr'));
-      const row = rows.find((tr) =>
-        (tr.textContent || '').includes('Digital Roadmap 2026')
-      );
+      const row = rows.find((tr) => (tr.textContent || '').includes('Digital Roadmap 2026'));
       if (row) {
+        done.current = true;
+        window.clearInterval(interval);
         row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+      } else if (elapsed >= 12000) {
+        window.clearInterval(interval);
       }
-    }, 400);
-    return () => window.clearTimeout(timer);
+    }, 200);
+    return () => window.clearInterval(interval);
   }, [enabled]);
 }
 
 export default function Doc0DocumentFlowScreen() {
   useOpenApprovedRow(openCase);
   return (
-    <I18nextProvider i18n={i18n}>
-      <FeatureFlagsProvider showDevTools={false}>
-        <MemoryRouter initialEntries={['/presentations?tab=all']}>
-          <div className="min-h-screen bg-c-bg p-6">
-            <div className="w-full">
-              {/* No visible chrome header on purpose: the language gate (J0) counts
-                  EN/PL JSX literals, and a harness caption on an owner-facing
-                  screenshot is exactly what the parity PODPIS rule discourages.
-                  Harness context lives in evidence/qoder-doc0-flow-20260917/README.md. */}
-              <div className="h-[640px] rounded-2xl border border-c-border-subtle overflow-hidden">
-                <OutputsAggregateTabContent
-                  viewMode="table"
-                  searchQuery=""
-                  activeFilters={[]}
-                  onFilterChange={() => {}}
-                  rows={ROWS as any}
-                  loading={false}
-                  error={null}
-                  onRefresh={() => {}}
-                  actions={actions}
-                />
-              </div>
-            </div>
-          </div>
-        </MemoryRouter>
-      </FeatureFlagsProvider>
-    </I18nextProvider>
+    <FeatureFlagsProvider showDevTools={false}>
+      <AppProviders>
+        <div className="h-screen min-h-0 bg-c-canvas text-c-text">
+          {/* No harness chrome on purpose: MainLayout + the Hub ARE the shell
+              (left rail + top bar + Menu 1/2/3 + chat dock), mounted exactly as
+              AppRoutes does for ROUTES.PRESENTATIONS. A caption on an
+              owner-facing screenshot is exactly what the parity PODPIS rule
+              discourages. Harness context lives in
+              evidence/qoder-doc0-flow-20260917/README.md. */}
+          <MainLayout breadcrumbs={['Materials']} noPadding>
+            <ReportsAndPresentationsHub />
+          </MainLayout>
+        </div>
+      </AppProviders>
+    </FeatureFlagsProvider>
   );
 }

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_LOG_PATH,
   Doc0CliUsageError,
+  mergeArchiveEntries,
   parseArgs,
   runCli,
   type Doc0CliDeps,
@@ -27,6 +28,10 @@ function makeDeps(overrides: Partial<Doc0CliDeps> = {}): { deps: Doc0CliDeps; ca
     findContentless: vi.fn(async () => {
       calls.push('findContentless');
       return new Array(6).fill({});
+    }),
+    findArchived: vi.fn(async () => {
+      calls.push('findArchived');
+      return [];
     }),
     backfill: vi.fn(async () => {
       calls.push('backfill');
@@ -116,18 +121,31 @@ describe('runCli — kontrakt trybów', () => {
     expect(calls.filter((c) => c !== 'print')).toEqual([]);
   });
 
-  it('dry-run drukuje liczby unlisted/contentless i NIE pisze (mutacja: write → czerwony)', async () => {
-    const { deps, calls } = makeDeps();
+  it('dry-run drukuje unlisted/contentless/archivedByDoc0 i NIE pisze (mutacja: write → czerwony)', async () => {
+    const { deps, calls } = makeDeps({
+      findArchived: vi.fn(async () => {
+        calls.push('findArchived');
+        return new Array(2).fill({});
+      }),
+    });
     const code = await runCli({ mode: 'dry-run', logPath: DEFAULT_LOG_PATH }, deps);
     expect(code).toBe(0);
     expect(calls).toContain('findUnlisted');
     expect(calls).toContain('findContentless');
+    expect(calls).toContain('findArchived');
     const writes = calls.filter((c) =>
       ['backfill', 'archive', 'restore', 'removeBackfilledRows', 'writeLog'].includes(c)
     );
     expect(writes).toEqual([]);
     const printed = (deps.print as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
-    expect(printed.some((line) => line.includes('unlisted=119') && line.includes('contentless=6'))).toBe(true);
+    expect(
+      printed.some(
+        (line) =>
+          line.includes('unlisted=119') &&
+          line.includes('contentless=6') &&
+          line.includes('archivedByDoc0=2')
+      )
+    ).toBe(true);
   });
 
   it('apply woła backfill+archive z dryRun:false i zapisuje log z archiveEntries', async () => {
@@ -150,32 +168,96 @@ describe('runCli — kontrakt trybów', () => {
     expect(log.archiveEntries[0].previousDeliveryState).toBe('ready');
   });
 
-  it('restore bez logu = exit 1 i zero wywołań zapisujących', async () => {
-    const { deps, calls } = makeDeps();
-    const code = await runCli({ mode: 'restore', logPath: DEFAULT_LOG_PATH }, deps);
-    expect(code).toBe(1);
-    expect(calls).not.toContain('restore');
-    expect(calls).not.toContain('removeBackfilledRows');
+  it('apply MERGUJE log: drugi idempotentny apply (0 wpisów) NIE nadpisuje audytu pustym (Wpis 87 P1)', async () => {
+    // Mutation target: reverting apply to `archiveEntries: archive.entries`
+    // (unconditional overwrite) blanks the log here → this assertion turns red.
+    const prior = {
+      appliedAt: '2026-09-17T11:00:00.000Z',
+      organizationId: null,
+      backfill: { scanned: 119, inserted: 119, failed: 0, skippedUnsupportedType: 0 },
+      archived: 6,
+      archiveEntries: [
+        { artifactId: 'art-orphan', organizationId: 'org-1', previousDeliveryState: 'ready', title: 'Orphan' },
+      ],
+    };
+    const { deps } = makeDeps({
+      readLog: () => JSON.stringify(prior),
+      // second apply: nothing new to archive
+      archive: vi.fn(async () => ({
+        dryRun: false,
+        scanned: 6,
+        archived: 0,
+        alreadyArchived: 6,
+        entries: [],
+      })),
+    });
+    const code = await runCli({ mode: 'apply', logPath: '/tmp/doc0-log.json' }, deps);
+    expect(code).toBe(0);
+    const [, contents] = (deps.writeLog as ReturnType<typeof vi.fn>).mock.calls[0];
+    const log = JSON.parse(String(contents));
+    expect(log.archived).toBe(0);
+    // The prior audit entry survives the empty second apply.
+    expect(log.archiveEntries).toHaveLength(1);
+    expect(log.archiveEntries[0].artifactId).toBe('art-orphan');
   });
 
-  it('restore z logiem cofa archiwizację wpisem z logu i usuwa wiersze backfillu', async () => {
-    const entries = [
+  it('restore jest DB-DRIVEN: czyta wpisy z findArchived, nie z logu (mutacja: log-only → czerwony)', async () => {
+    const dbEntries = [
       { artifactId: 'art-a', organizationId: 'org-1', previousDeliveryState: 'ready', title: 'A' },
       { artifactId: 'art-b', organizationId: 'org-1', previousDeliveryState: 'draft', title: 'B' },
     ];
     const { deps, calls } = makeDeps({
-      readLog: () => JSON.stringify({ appliedAt: 'x', organizationId: null, backfill: {}, archived: 2, archiveEntries: entries }),
+      // No log at all — restore must still work off the database.
+      readLog: () => null,
+      findArchived: vi.fn(async () => {
+        calls.push('findArchived');
+        return dbEntries;
+      }),
     });
     const code = await runCli({ mode: 'restore', logPath: DEFAULT_LOG_PATH }, deps);
     expect(code).toBe(0);
-    expect(deps.restore).toHaveBeenCalledWith(entries);
+    expect(calls).toContain('findArchived');
+    expect(deps.restore).toHaveBeenCalledWith(dbEntries);
     expect(calls).toContain('removeBackfilledRows');
   });
 
-  it('restore z uszkodzonym JSON-em = exit 1 (nie zgadujemy)', async () => {
-    const { deps, calls } = makeDeps({ readLog: () => '{not json' });
+  it('restore ignoruje uszkodzony/pusty log i tak przywraca z bazy (koniec z cichym restored=0)', async () => {
+    const dbEntries = [
+      { artifactId: 'art-x', organizationId: 'org-1', previousDeliveryState: 'ready', title: 'X' },
+    ];
+    const { deps, calls } = makeDeps({
+      readLog: () => '{not json',
+      findArchived: vi.fn(async () => {
+        calls.push('findArchived');
+        return dbEntries;
+      }),
+    });
     const code = await runCli({ mode: 'restore', logPath: DEFAULT_LOG_PATH }, deps);
-    expect(code).toBe(1);
-    expect(calls).not.toContain('restore');
+    expect(code).toBe(0);
+    expect(deps.restore).toHaveBeenCalledWith(dbEntries);
+    expect(calls).toContain('removeBackfilledRows');
+  });
+});
+
+describe('mergeArchiveEntries — audyt loga (Wpis 87 P1)', () => {
+  it('unii wpisy po (artifactId, org), prior pierwsze, bez duplikatów', () => {
+    const prior = [
+      { artifactId: 'a', organizationId: 'o1', previousDeliveryState: 'ready', title: 'A' },
+    ];
+    const next = [
+      { artifactId: 'a', organizationId: 'o1', previousDeliveryState: 'ready', title: 'A dup' },
+      { artifactId: 'b', organizationId: 'o1', previousDeliveryState: 'draft', title: 'B' },
+    ];
+    const merged = mergeArchiveEntries(prior, next);
+    expect(merged.map((e) => e.artifactId)).toEqual(['a', 'b']);
+    // prior wins its position AND its stored state
+    expect(merged[0].title).toBe('A');
+  });
+
+  it('pusty `next` nie kasuje wpisów prior (drugi idempotentny apply)', () => {
+    const prior = [
+      { artifactId: 'a', organizationId: 'o1', previousDeliveryState: 'ready', title: 'A' },
+    ];
+    expect(mergeArchiveEntries(prior, [])).toEqual(prior);
   });
 });

@@ -8,17 +8,25 @@
  * dumpu: dry-run 119/6 → apply → drugi apply 0/0 → restore 6 → dry-run 119/6.
  *
  * TRYBY (dry-run DOMYŚLNY, zero zapisu):
- *   --dry-run  liczby: unlisted (treści wave5 bez wiersza listy), contentless (sieroty 404)
- *   --apply    backfill + archiwizacja sierot (idempotentne), zapisuje log JSON
- *   --restore  cofnięcie archiwizacji z logu + usunięcie wierszy utworzonych przez backfill
+ *   --dry-run  liczby: unlisted (treści wave5 bez wiersza listy), contentless (sieroty 404),
+ *              archivedByDoc0 (wiersze już zarchiwizowane przez ten backfill)
+ *   --apply    backfill + archiwizacja sierot (idempotentne), log JSON MERGOWANY (append,
+ *              nigdy nadpisany pustym — drugi apply nie kasuje wpisów audytu)
+ *   --restore  DB-DRIVEN: czyta z bazy wiersze `delivery_state='archived'` z etykietą
+ *              sieroty DOC-0 i przywraca ich stan sprzed archiwizacji (zapisany w wierszu);
+ *              log jest TYLKO audytem, nie źródłem — restore działa nawet bez logu
  *
  * Log (domyślnie `doc0-registry-backfill.log.json`, nadpisywalny `--log <path>`)
- * przechowuje `archiveEntries` (stan sprzed archiwizacji per wiersz) — wejście
- * `restoreArchivedDocumentRows`. `--restore` usuwa dodatkowo wiersze rejestru, które
- * utworzył `--apply`: rozpoznaje je po znaczniku `sourceType='doc0_native_backfill'`
- * w `origin_summary_json` (stempel samego backfillu), więc bez logu ID — idempotentnie.
+ * przechowuje `archiveEntries` (stan sprzed archiwizacji per wiersz) jako AUDYT.
+ * `--restore` NIE zależy od niego: źródłem prawdy jest baza (etykieta `doc0Orphan`
+ * + `doc0OrphanPreviousDeliveryState` w `origin_summary_json`), więc drugi
+ * idempotentny `--apply` nie psuje restore (Wpis 87 P1). `--restore` usuwa dodatkowo
+ * wiersze rejestru utworzone przez `--apply`: rozpoznaje je po znaczniku
+ * `sourceType='doc0_native_backfill'` w `origin_summary_json` — bez logu ID, idempotentnie.
  *
- * Wymaga DATABASE_URL (bez niego exit 1, zero połączeń).
+ * Wymaga DATABASE_URL (bez niego exit 1, zero połączeń) ORAZ `MOCK_DB=false`:
+ * przy `NODE_ENV=test` bez `MOCK_DB=false` warstwa DB cicho mockuje i skrypt
+ * melduje 0/0 nie dotykając bazy — fałszywy sygnał sukcesu.
  *
  * Usage (kopia dumpu, kontener puli C):
  *   NODE_ENV=test MOCK_DB=false DATABASE_URL=postgres://postgres:qoder@127.0.0.1:66xx/consultify_qoder \
@@ -29,6 +37,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import {
   archiveContentlessDocumentRows,
   backfillUnlistedNativeArtifacts,
+  findArchivedDoc0OrphanRows,
   findContentlessDocumentRows,
   findUnlistedNativeArtifacts,
   restoreArchivedDocumentRows,
@@ -105,6 +114,8 @@ export interface Doc0CliDeps {
   env: { DATABASE_URL?: string };
   findUnlisted: (params: { organizationId?: string }) => Promise<unknown[]>;
   findContentless: (params: { organizationId?: string }) => Promise<unknown[]>;
+  /** Wpis 87 P1: DB-driven source for --restore and dry-run's archivedByDoc0. */
+  findArchived: (params: { organizationId?: string }) => Promise<ArchivedDocumentEntry[]>;
   backfill: (params: {
     organizationId?: string;
     dryRun?: boolean;
@@ -148,6 +159,29 @@ export async function removeBackfilledRegistryRows(): Promise<{
   };
 }
 
+/**
+ * Wpis 87 P1: union of prior + new archive entries, keyed by (artifactId, org).
+ * Prior entries win their position; new ones are appended only if unseen. A second
+ * idempotent `--apply` (0 new archives) therefore MERGES into the audit log instead
+ * of overwriting it with `archiveEntries: []` — which used to make the next
+ * `--restore` read an empty log and silently restore 0.
+ */
+export function mergeArchiveEntries(
+  prior: ArchivedDocumentEntry[],
+  next: ArchivedDocumentEntry[]
+): ArchivedDocumentEntry[] {
+  const key = (e: ArchivedDocumentEntry): string => `${e.artifactId}::${e.organizationId}`;
+  const seen = new Set<string>();
+  const merged: ArchivedDocumentEntry[] = [];
+  for (const entry of [...(prior || []), ...(next || [])]) {
+    const k = key(entry);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    merged.push(entry);
+  }
+  return merged;
+}
+
 export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promise<number> {
   if (!deps.env.DATABASE_URL) {
     deps.print('ERROR: DATABASE_URL is required (refusing to run without a target database)');
@@ -158,8 +192,10 @@ export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promis
   if (options.mode === 'dry-run') {
     const unlisted = await deps.findUnlisted(scope);
     const contentless = await deps.findContentless(scope);
+    const archived = await deps.findArchived(scope);
     deps.print(
-      `dry-run: unlisted=${unlisted.length} contentless=${contentless.length}` +
+      `dry-run: unlisted=${unlisted.length} contentless=${contentless.length} ` +
+        `archivedByDoc0=${archived.length}` +
         (options.organizationId ? ` org=${options.organizationId}` : ' (all orgs)')
     );
     deps.print('dry-run makes ZERO writes; pass --apply to backfill + archive');
@@ -169,6 +205,19 @@ export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promis
   if (options.mode === 'apply') {
     const backfill = await deps.backfill({ ...scope, dryRun: false });
     const archive = await deps.archive({ ...scope, dryRun: false });
+    // Wpis 87 P1: MERGE into the existing audit log, never overwrite it with empty
+    // entries. A second idempotent apply (archived=0, entries=[]) used to blank the
+    // log, after which --restore found nothing; the log is now append/merge-only.
+    const priorRaw = deps.readLog(options.logPath);
+    let priorEntries: ArchivedDocumentEntry[] = [];
+    if (priorRaw !== null) {
+      try {
+        const parsed = JSON.parse(priorRaw) as Partial<Doc0ApplyLog>;
+        if (Array.isArray(parsed.archiveEntries)) priorEntries = parsed.archiveEntries;
+      } catch {
+        priorEntries = [];
+      }
+    }
     const log: Doc0ApplyLog = {
       appliedAt: deps.now(),
       organizationId: options.organizationId ?? null,
@@ -179,31 +228,24 @@ export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promis
         skippedUnsupportedType: backfill.skippedUnsupportedType,
       },
       archived: archive.archived,
-      archiveEntries: archive.entries,
+      archiveEntries: mergeArchiveEntries(priorEntries, archive.entries),
     };
     deps.writeLog(options.logPath, JSON.stringify(log, null, 2));
     deps.print(
       `apply: backfill inserted=${backfill.inserted}/${backfill.scanned} ` +
         `failed=${backfill.failed} skippedUnsupportedType=${backfill.skippedUnsupportedType} :: ` +
         `archived=${archive.archived} alreadyArchived=${archive.alreadyArchived} :: ` +
-        `log=${options.logPath}`
+        `log=${options.logPath} (audit, merged: ${log.archiveEntries.length} entries)`
     );
     return 0;
   }
 
-  const raw = deps.readLog(options.logPath);
-  if (raw === null) {
-    deps.print(`ERROR: no apply log at ${options.logPath} — run --apply first`);
-    return 1;
-  }
-  let log: Doc0ApplyLog;
-  try {
-    log = JSON.parse(raw) as Doc0ApplyLog;
-  } catch {
-    deps.print(`ERROR: apply log at ${options.logPath} is not valid JSON`);
-    return 1;
-  }
-  const restored = await deps.restore(log.archiveEntries || []);
+  // Wpis 87 P1: restore is DB-DRIVEN. The apply log is audit only — restore reads
+  // the rows currently `delivery_state='archived'` carrying the DOC-0 orphan label
+  // (with their pre-archive state stored in the row), so it works even when the log
+  // is missing, empty, or stale, and can no longer silently restore 0.
+  const entries = await deps.findArchived(scope);
+  const restored = await deps.restore(entries);
   const removed = await deps.removeBackfilledRows();
   deps.print(
     `restore: restored=${restored.restored} failed=${restored.failed} :: ` +
@@ -216,6 +258,7 @@ export const defaultDeps: Doc0CliDeps = {
   env: process.env,
   findUnlisted: (params) => findUnlistedNativeArtifacts(params),
   findContentless: (params) => findContentlessDocumentRows(params),
+  findArchived: (params) => findArchivedDoc0OrphanRows(params),
   backfill: (params) => backfillUnlistedNativeArtifacts(params),
   archive: (params) => archiveContentlessDocumentRows(params),
   restore: (entries) => restoreArchivedDocumentRows(entries),

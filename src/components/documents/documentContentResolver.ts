@@ -153,7 +153,34 @@ export function splitMarkdownIntoSections(contentMd: string): DocumentContentSec
     (section) => section.label !== null || section.markdown !== ''
   );
   const kept = meaningful.length > 0 ? meaningful : sections;
-  return kept.map((section) => {
+  // Wpis 87 P2#2 (DEC-593): the report projection emits each block as an EMPTY
+  // title-case H2 wrapper immediately followed by the sentence-case H2 that
+  // carries the body (measured on the Digital Roadmap envelope and the Northwind
+  // row: "## Roadmap by Horizon" empty + "## Roadmap by horizon" with content,
+  // "Approved findings" ×3). Case-insensitively these are ONE logical section, so
+  // collapse same-title sections into a single nav entry, merging their bodies in
+  // document order. Chosen over ordinal suffixes ("… (2)") because the duplicates
+  // are not distinct sections — they are one block's title wrapper plus its body —
+  // so numbering would advertise a section that does not exist, while merging loses
+  // no content and the single entry scrolls to the first (only) occurrence.
+  const collapsed: PendingSection[] = [];
+  const indexByLabel = new Map<string, number>();
+  for (const section of kept) {
+    const key = section.label === null ? null : section.label.trim().toLowerCase();
+    if (key !== null) {
+      const at = indexByLabel.get(key);
+      if (at !== undefined) {
+        const target = collapsed[at];
+        target.markdown = [target.markdown, section.markdown]
+          .filter((body) => body !== '')
+          .join('\n\n');
+        continue;
+      }
+      indexByLabel.set(key, collapsed.length);
+    }
+    collapsed.push({ ...section });
+  }
+  return collapsed.map((section) => {
     const base = `doc-${section.label === null ? 'content' : slugify(section.label)}`;
     let id = base;
     let n = 2;

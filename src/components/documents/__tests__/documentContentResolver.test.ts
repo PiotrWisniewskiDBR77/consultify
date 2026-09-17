@@ -279,4 +279,69 @@ describe('splitMarkdownIntoSections — the left nav of the viewer', () => {
     expect(sections[1].markdown).toContain('Basis: 1 tension.');
     expect(sections[2].markdown).toBe('');
   });
+
+  it('collapses same-title sections that differ only in case into ONE nav entry (Wpis 87 P2#2)', () => {
+    // The REAL projection of staging row 4d6600e3 "Digital Roadmap 2026–2028"
+    // (captured envelope, evidence/qoder-doc0-viewer-20260917/capture-envelope.mts.txt
+    // and dev-render/mocks/doc0-digital-roadmap-envelope.json). Each block is an
+    // EMPTY title-case H2 wrapper followed by the sentence-case H2 with the body,
+    // so the raw split yields 7 near-identical nav entries ("Roadmap by Horizon" /
+    // "Roadmap by horizon", …). The owner sees this first (viewer = plan item #1).
+    const projected = [
+      '## Vision',
+      '',
+      '# Vision',
+      '',
+      'By the end of 2028, every shopfloor role works from digital work instructions.',
+      '',
+      '## Roadmap by Horizon',
+      '',
+      '## Roadmap by horizon',
+      '',
+      '**2026** — Digital work instructions pilot (2 lines).',
+      '',
+      '**2028** — Digital twin extended to 2 additional lines.',
+      '',
+      '## Investment Summary',
+      '',
+      '## Investment summary',
+      '',
+      '| Workstream | 2026 |',
+      '|---|---:|',
+      '| Digital twin | £210k |',
+      '',
+      '## Risks & Dependencies',
+      '',
+      '## Risks & dependencies',
+      '',
+      '- Shopfloor Wi-Fi coverage must be upgraded at Rotherham.',
+    ].join('\n');
+
+    const sections = splitMarkdownIntoSections(projected);
+
+    // ONE entry per distinct title — no case-insensitive duplicates in the nav.
+    expect(sections.map((s) => s.label)).toEqual([
+      'Vision',
+      'Roadmap by Horizon',
+      'Investment Summary',
+      'Risks & Dependencies',
+    ]);
+    const normalized = sections.map((s) => String(s.label).trim().toLowerCase());
+    expect(new Set(normalized).size).toBe(normalized.length);
+
+    // Merging loses no content: the body of the sentence-case block survives under
+    // the first (title-case) entry, and ids are clean slugs without ordinal suffixes.
+    const roadmap = sections.find((s) => s.label === 'Roadmap by Horizon');
+    expect(roadmap?.markdown).toContain('**2026**');
+    expect(roadmap?.markdown).toContain('**2028**');
+    expect(sections.find((s) => s.label === 'Risks & Dependencies')?.markdown).toContain(
+      'Wi-Fi coverage'
+    );
+    expect(sections.map((s) => s.id)).toEqual([
+      'doc-vision',
+      'doc-roadmap-by-horizon',
+      'doc-investment-summary',
+      'doc-risks-dependencies',
+    ]);
+  });
 });

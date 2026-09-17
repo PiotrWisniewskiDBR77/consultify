@@ -81,8 +81,9 @@ for (const s of shots) {
   page.on('console', onConsole);
   page.on('pageerror', onPageError);
 
-  // Flag ON via URL (highest precedence). case=open drives the real dblclick.
-  const url = `${BASE}?lang=en&theme=${s.theme}&ff_doc0_document_viewer=1&case=${s.kase}`;
+  // Flag ON via URL (highest precedence). tab=all opens the Hub's Outputs "All"
+  // registry (the real shell). case=open drives the real dblclick.
+  const url = `${BASE}?lang=en&theme=${s.theme}&ff_doc0_document_viewer=1&tab=all&case=${s.kase}`;
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForSelector('tbody tr', { timeout: 30000 });
 

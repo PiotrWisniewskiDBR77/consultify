@@ -15,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   archiveContentlessDocumentRows,
   backfillUnlistedNativeArtifacts,
+  findArchivedDoc0OrphanRows,
   findContentlessDocumentRows,
   findUnlistedNativeArtifacts,
   listShapeForNativeArtifactType,
@@ -431,5 +432,30 @@ describe.skipIf(!realPg)('DOC-0 documentRegistryBackfillService (real PostgreSQL
       doc0Orphan?: unknown;
     };
     expect(restoredLabel.doc0Orphan).toBe(true);
+  });
+
+  it('findArchivedDoc0OrphanRows is the DB-driven, label-scoped restore source (Wpis 87 P1)', async () => {
+    // Re-archive the orphan (the previous test restored it to draft). `--restore`
+    // now reads the DATABASE, not the apply log, so this is the authoritative source.
+    const archived = await archiveContentlessDocumentRows({ organizationId: ORG });
+    expect(archived.entries.map((entry) => entry.artifactId)).toEqual([LIST.orphan]);
+
+    const found = await findArchivedDoc0OrphanRows({ organizationId: ORG });
+    // LIST.orphanArchived is delivery_state='archived' but WITHOUT the doc0Orphan
+    // label (archive skips already-archived rows) — it must NOT be picked up, so
+    // `--restore` can never touch a user's own archive.
+    expect(found).toEqual([
+      {
+        artifactId: LIST.orphan,
+        organizationId: ORG,
+        previousDeliveryState: 'draft',
+        title: 'Doc0 orphan',
+      },
+    ]);
+
+    // DB-driven restore reverts from these entries alone (no log), then leaves 0.
+    const restored = await restoreArchivedDocumentRows(found);
+    expect(restored).toEqual({ restored: 1, failed: 0 });
+    expect(await findArchivedDoc0OrphanRows({ organizationId: ORG })).toEqual([]);
   });
 });

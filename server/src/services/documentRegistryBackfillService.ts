@@ -384,6 +384,12 @@ export async function archiveContentlessDocumentRows(
       doc0Orphan: true,
       doc0OrphanReason: row.reason ?? null,
       doc0OrphanArchivedAt: nowIso,
+      // Wpis 87 P1: persist the pre-archive state IN THE ROW so `--restore` can
+      // read it back from the database instead of depending on the apply log as
+      // its only source (a second idempotent `--apply` used to overwrite the log
+      // with empty entries, after which `--restore` silently restored 0 and left
+      // the rows archived forever).
+      doc0OrphanPreviousDeliveryState: row.deliveryState,
     });
     const result = await dbRun(
       `UPDATE v8_output_artifacts
@@ -441,4 +447,63 @@ export async function restoreArchivedDocumentRows(
     );
   }
   return { restored, failed };
+}
+
+/**
+ * Wpis 87 P1: the authoritative source for `--restore` is the DATABASE, not the
+ * apply log. Returns every document row currently `delivery_state='archived'`
+ * that carries the DOC-0 orphan label stamped by `archiveContentlessDocumentRows`,
+ * with the pre-archive state read back from the row itself
+ * (`doc0OrphanPreviousDeliveryState`). A second idempotent `--apply` no longer
+ * breaks restore: even if the log were lost, these rows are found and reverted.
+ *
+ * `previousDeliveryState` falls back to `'draft'` only for rows archived by a
+ * build BEFORE this field existed (the dump copy is re-applied with the fixed
+ * code, so in practice the field is always present).
+ */
+export async function findArchivedDoc0OrphanRows(
+  params: { organizationId?: string } = {}
+): Promise<ArchivedDocumentEntry[]> {
+  const scoped = Boolean(params.organizationId);
+  const rows = await dbAll<{
+    artifact_id: string;
+    organization_id: string;
+    title_snapshot: string | null;
+    origin_summary_json: string | null;
+  }>(
+    `SELECT a.artifact_id, a.organization_id, a.title_snapshot, a.origin_summary_json
+       FROM v8_output_artifacts a
+      WHERE a.artifact_family = 'document'
+        AND a.delivery_state = 'archived'
+        ${scoped ? 'AND a.organization_id = ?' : ''}
+      ORDER BY a.created_at ASC`,
+    scoped ? [params.organizationId as string] : [],
+    { fallback: true }
+  );
+
+  const entries: ArchivedDocumentEntry[] = [];
+  for (const row of rows || []) {
+    let label: Record<string, unknown> = {};
+    try {
+      const parsed = row.origin_summary_json ? JSON.parse(row.origin_summary_json) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        label = parsed as Record<string, unknown>;
+      }
+    } catch {
+      label = {};
+    }
+    if (label.doc0Orphan !== true) continue;
+    const previousDeliveryState =
+      typeof label.doc0OrphanPreviousDeliveryState === 'string' &&
+      label.doc0OrphanPreviousDeliveryState.trim() !== ''
+        ? label.doc0OrphanPreviousDeliveryState
+        : 'draft';
+    entries.push({
+      artifactId: row.artifact_id,
+      organizationId: row.organization_id,
+      previousDeliveryState,
+      title: row.title_snapshot,
+    });
+  }
+  return entries;
 }
