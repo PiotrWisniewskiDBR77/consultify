@@ -8440,6 +8440,16 @@
     "months": "months"
   },
   "interview": {
+    "candidateCard": {
+      "title": "Initiative candidate",
+      "untitled": "Untitled candidate",
+      "summary": "Approve to materialize this candidate as a draft initiative in the registry.",
+      "approveAsDraft": "Approve as draft → Initiatives",
+      "approved": "Candidate approved as a draft initiative.",
+      "approveFailed": "Could not approve the candidate. Please try again.",
+      "inboxHeading": "Initiative candidates",
+      "empty": "No pending initiative candidates from your interviews."
+    },
     "creator": {
       "shell": {
         "subtitle": "Interview › Insights · approved interview sessions",

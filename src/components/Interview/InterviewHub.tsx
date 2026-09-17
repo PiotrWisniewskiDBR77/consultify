@@ -121,7 +121,9 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { isSt2CandidateCardEnabled } from '@/utils/st2CandidateCardFlag';
 import { formatListDate, formatListDateTime, localeListy } from '@/utils/listDateFormat';
+import { InterviewCandidateInbox } from './InterviewCandidateInbox';
 import {
   formatPresentationCount,
   knownPresentation,
@@ -578,6 +580,10 @@ export const InterviewHub: React.FC = () => {
     currentUser,
     setInterviewBreadcrumbs,
   } = useAppStore();
+  // ST-2 (DEC-540 / U-09): behind VITE_ST2_CANDIDATE_CARD (default OFF), the
+  // initiative candidate card lives HERE in the source module and Interview no
+  // longer jumps to the Initiatives module to open a candidate/draft.
+  const st2CandidateCardEnabled = isSt2CandidateCardEnabled();
   // Fala lekkości — Interview light shell "Zapytaj Teresę" CTA (mirrors
   // FinanceHub/InitiativesHub's openChatWithContext wiring).
   const openChatWithContext = useOpenChatWithContext();
@@ -7658,8 +7664,13 @@ Return ONLY the answer text (no markdown fences).`;
               id: 'open-module',
               label: t('interview.hub.openInInitiatives'),
               icon: ExternalLink,
-              onClick: () =>
-                navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
+              onClick: () => {
+                if (st2CandidateCardEnabled) {
+                  setSelectedInterviewInitiativeId(initiative.id);
+                  return;
+                }
+                navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`);
+              },
             },
           ],
           statusTransitions:
@@ -7798,6 +7809,9 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="flex h-full flex-col overflow-hidden">
           {renderDegradedBanner()}
+          {st2CandidateCardEnabled ? (
+            <InterviewCandidateInbox onApproved={() => void loadInterviewInitiatives()} />
+          ) : null}
           {lineageDecisionCount > 0 || lineageTaskCount > 0 ? (
             <div className="mx-4 mb-3 mt-4 shrink-0 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
               <div className="mb-2 flex items-center gap-2">
@@ -7827,6 +7841,12 @@ Return ONLY the answer text (no markdown fences).`;
                 // Double-click / Enter / "Open" → full initiative doc view in the
                 // Initiatives module. Drafts open too (they exist in the DB and the
                 // module renders them fine); promotion only governs listing, not viewing.
+                // ST-2 (DEC-540): with the candidate card flag ON, Interview no longer
+                // jumps to the Initiatives module — it keeps the row in-module.
+                if (st2CandidateCardEnabled) {
+                  setSelectedInterviewInitiativeId(id);
+                  return;
+                }
                 navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
               }}
               renderPreview={(item) => renderInitiativePreview(item)}
@@ -7877,9 +7897,13 @@ Return ONLY the answer text (no markdown fences).`;
                     onBackToDraft={() =>
                       void handleUpdateInterviewInitiativeStatus(item.id, 'DRAFT')
                     }
-                    onOpenInModule={() =>
-                      navigate(`/initiatives?open=${encodeURIComponent(item.id)}&mode=doc`)
-                    }
+                    onOpenInModule={() => {
+                      if (st2CandidateCardEnabled) {
+                        setSelectedInterviewInitiativeId(item.id);
+                        return;
+                      }
+                      navigate(`/initiatives?open=${encodeURIComponent(item.id)}&mode=doc`);
+                    }}
                     onCopyId={() => copyToClipboard(item.id)}
                   />
                 );
@@ -7930,6 +7954,10 @@ Return ONLY the answer text (no markdown fences).`;
                               setSelectedInterviewInitiativeId(isSelected ? null : initiative.id)
                             }
                             onDoubleClick={() => {
+                              if (st2CandidateCardEnabled) {
+                                setSelectedInterviewInitiativeId(initiative.id);
+                                return;
+                              }
                               navigate(
                                 `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
                               );
@@ -8130,6 +8158,10 @@ Return ONLY the answer text (no markdown fences).`;
                     selectedRowId={selectedInterviewInitiativeId}
                     onRowClick={(row) => setSelectedInterviewInitiativeId(String((row as any).id))}
                     onRowDoubleClick={(row) => {
+                      if (st2CandidateCardEnabled) {
+                        setSelectedInterviewInitiativeId(String((row as any).id));
+                        return;
+                      }
                       navigate(
                         `/initiatives?open=${encodeURIComponent(String((row as any).id))}&mode=doc`
                       );

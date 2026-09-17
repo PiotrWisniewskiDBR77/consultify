@@ -7610,6 +7610,16 @@
     "months": "miesięcy"
   },
   "interview": {
+    "candidateCard": {
+      "title": "Kandydat inicjatywy",
+      "untitled": "Kandydat bez nazwy",
+      "summary": "Zatwierdź, aby utworzyć szkic inicjatywy w rejestrze.",
+      "approveAsDraft": "Zatwierdź jako szkic → Inicjatywy",
+      "approved": "Kandydat zatwierdzony jako szkic inicjatywy.",
+      "approveFailed": "Nie udało się zatwierdzić kandydata. Spróbuj ponownie.",
+      "inboxHeading": "Kandydaci inicjatyw",
+      "empty": "Brak oczekujących kandydatów inicjatyw z Twoich wywiadów."
+    },
     "creator": {
       "shell": {
         "subtitle": "Wywiad › Wnioski · zatwierdzone sesje wywiadu",

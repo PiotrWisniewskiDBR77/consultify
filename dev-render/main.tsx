@@ -479,6 +479,10 @@ const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview
 const InterviewSessionsStatusScreen = React.lazy(
   () => import('./screens/interview-sessions-status')
 );
+// ST-2 (DEC-540 / U-09) etap 1 — Interview initiative candidate card (inbox).
+const InterviewCandidateCardScreen = React.lazy(
+  () => import('./screens/interview-candidate-card')
+);
 const U05SesjaWywiaduPowlokaScreen = React.lazy(
   () => import('./screens/u05-sesja-wywiadu-powloka')
 );
@@ -1456,6 +1460,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'UI-latki-20260828 — REALNY <InterviewHub /> zakładka Sesje, kolumna status: 5 wierszy (assigned/in_progress/submitted/approved/completed) — weryfikacja etykiety "Przydzielony" i neutralnego tonu dla assigned.',
     render: () => <InterviewSessionsStatusScreen />,
+  },
+  'interview-candidate-card': {
+    label:
+      'ST-2 (DEC-540 / U-09) etap 1 — REALNY <InterviewCandidateInbox /> w powłoce Interview (zakładka Initiatives): karta kandydata inicjatywy widoczna tylko dla autora (+ADMIN), akcja "Approve as draft → Initiatives" woła istniejący endpoint accept. Trzeci kandydat innego autora jest odfiltrowany.',
+    render: () => <InterviewCandidateCardScreen />,
   },
   'u05-sesja-wywiadu-powloka': {
     label:
