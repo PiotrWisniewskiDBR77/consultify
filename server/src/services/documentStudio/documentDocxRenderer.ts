@@ -1044,9 +1044,10 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   // counter increments per renderer invocation so two tables in the
   // same document end up "Table 1" / "Table 2" regardless of section.
   ctx.tableCounter.value += 1;
-  const captionLabel = drdProfile
-    ? `Tabela ${ctx.tableCounter.value}.`
-    : `Table ${ctx.tableCounter.value}`;
+  const captionLabel =
+    drdProfile && ctx.schema.language.toLowerCase().startsWith('pl')
+      ? `Tabela ${ctx.tableCounter.value}.`
+      : `Table ${ctx.tableCounter.value}`;
   const captionText = value.caption
     ? drdProfile
       ? `${captionLabel} ${asString(value.caption)}`
@@ -1075,9 +1076,10 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   };
   ctx.figureCounter.value += 1;
   const drdProfile = isDrdReportProfile(ctx.schema);
-  const captionLabel = drdProfile
-    ? `Rysunek ${ctx.figureCounter.value}.`
-    : `Figure ${ctx.figureCounter.value}`;
+  const captionLabel =
+    drdProfile && ctx.schema.language.toLowerCase().startsWith('pl')
+      ? `Rysunek ${ctx.figureCounter.value}.`
+      : `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
   const captionText = drdProfile
     ? `${captionLabel} ${description}`
@@ -1133,9 +1135,10 @@ function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[]
 function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   ctx.figureCounter.value += 1;
   const drdProfile = isDrdReportProfile(ctx.schema);
-  const captionLabel = drdProfile
-    ? `Rysunek ${ctx.figureCounter.value}.`
-    : `Figure ${ctx.figureCounter.value}`;
+  const captionLabel =
+    drdProfile && ctx.schema.language.toLowerCase().startsWith('pl')
+      ? `Rysunek ${ctx.figureCounter.value}.`
+      : `Figure ${ctx.figureCounter.value}`;
   const summary = summarizeDocumentChartBlock(block);
   const titleText = summary.title ?? '(untitled chart)';
   const chartImage = ctx.chartPngByBlockId.get(block.blockId);
@@ -2237,7 +2240,7 @@ async function renderDocumentSchemaToDocxBufferInternal(
                 }),
                 new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
                 new TextRun({
-                  text: 'Strona ',
+                  text: schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ',
                   size: 16,
                   color: DRD_REPORT_PALETTE.muted,
                   font: ctx.bodyFont,
