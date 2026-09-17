@@ -6,12 +6,29 @@
  * the contract for the SR-1 roll; the nightly job and the SUPERADMIN endpoint
  * both call `rollShowcaseDates`.
  *
- * Scope is deliberately limited to GROUP (a) planning fields measured on line
- * cb81468b97 (see OD_QODERA [A] Wpis 31 KROK 0). GROUP (c) fields — OKR/KPI
- * periods, lifecycle markers (started_at/completed_at/...), cadence schedules
- * outside report_schedules, and the weekend/"Weekly stand-up" day-of-week rule —
- * AWAIT A PER-FIELD CTO DECISION and are intentionally NOT listed here.
- * Adding a group-(c) column to SHOWCASE_DATE_FIELDS requires a new [A] entry.
+ * Field selection follows the CTO per-group decisions ([A] Wpis 38):
+ *  - GROUP (a) planning fields (measured on line cb81468b97) — ALWAYS shifted.
+ *  - GROUP (c) item 2 (OKR vNext cycle/key-result/set dates) — shifted.
+ *  - GROUP (c) item 4 (KPI due / next-run / checkpoint / expected-recovery /
+ *    response-due) — shifted.
+ *  - GROUP (c) item 5 (other planning fields outside the My Work calendar) —
+ *    NOT included: they are gated on "only fields the Northwind seed actually
+ *    populates (COUNT(*) > 0)". The demo-en Northwind seed does not run to
+ *    completion on the current integration line (schema/type drift: it inserts
+ *    `initiatives.tags` / `projects.goal` and writes text into timestamptz
+ *    columns that do not exist / no longer match on this line), so the per-column
+ *    COUNT could not be established. Per Wpis 38 "0 = do not include", every
+ *    item-5 candidate is excluded until the seed runs and the counts are proven.
+ *  - GROUP (c) items 1 & 3 (lifecycle markers started_at/completed_at/... and
+ *    KPI measurement periods period_start/end, baseline_period_*, ...) — NEVER
+ *    shifted (history), per Wpis 38.
+ *
+ * Weekend / "Weekly stand-up" rule = VARIANT B (Wpis 38 item 6): one-off rows
+ * shift by `delta`; weekly-recurring rows shift by `round(delta/7)*7` so a weekly
+ * cadence stays on its weekday. Weekly recurrence is recognized ONLY via
+ * `meetings.recurrence_rule` (FREQ=WEEKLY). Other recurrence-bearing event tables
+ * (calendar_events.recurrence_rule, v8_calendar_items.recurrence_model_json) are
+ * listed in the report but NOT rule-shifted — Wpis 38: "do not guess".
  */
 
 import { all as dbAll, transaction as dbTransaction } from '../../utils/DbPromise.js';
@@ -19,7 +36,7 @@ import logger from '../../utils/Logger.js';
 
 /**
  * Storage kind of a planning column. The roll needs distinct write paths
- * because the group-(a) columns are heterogeneous on the live schema:
+ * because the shifted columns are heterogeneous on the live schema:
  *  - 'text'        → UTC ISO-8601 string. Shifted by parsing, adding days and
  *                    re-serializing byte-for-byte so the lexical range filters
  *                    (start_at < E, deadline >= S AND < E) keep working. Both
@@ -41,25 +58,54 @@ export interface ShowcaseDateColumn {
   kind: ShowcaseDateColumnKind;
 }
 
+/**
+ * Per-table weekly-recurrence rule (VARIANT B). When present, rows matching
+ * `weeklyWhen` shift by the weekly delta (round(delta/7)*7) instead of the raw
+ * per-org delta, so a weekly cadence keeps its weekday. `weeklyWhen` is a SQL
+ * boolean expression evaluated against the row (may reference its columns).
+ */
+export interface ShowcaseRecurrenceRule {
+  weeklyWhen: string;
+}
+
+/** Provenance tag: which CTO decision group a table belongs to. */
+export type ShowcaseFieldGroup = 'a' | 'c-okr' | 'c-kpi';
+
 export interface ShowcaseDateTable {
-  /** Physical table name (all group-(a) tables live in the `public` schema). */
+  /** Physical table name (all shifted tables live in the `public` schema). */
   table: string;
-  /** Column that scopes rows to an organization (all group-(a) tables use this). */
-  orgColumn: string;
-  /** GROUP (a) planning columns to shift, all by the same per-org delta. */
+  /**
+   * Column that scopes rows to an organization. Defaults to 'organization_id'.
+   * Omit when the table has no such column and `orgScopeSql` is used instead.
+   */
+  orgColumn?: string;
+  /**
+   * Custom org-scoping predicate (must reference $1) for tables with no direct
+   * organization_id column — e.g. a child scoped through its parent's org.
+   * Takes precedence over `orgColumn`.
+   */
+  orgScopeSql?: string;
+  /** Planning columns to shift. */
   columns: ShowcaseDateColumn[];
+  /** Decision-group provenance (defaults to 'a'). */
+  group?: ShowcaseFieldGroup;
+  /** When set, weekly-recurring rows shift by round(delta/7)*7 (VARIANT B). */
+  recurrence?: ShowcaseRecurrenceRule;
 }
 
 /**
- * SINGLE SOURCE OF TRUTH for the SR-1 roll: the explicit table→columns list for
- * GROUP (a) planning fields (23 columns / 9 tables), measured authoritatively on
- * line cb81468b97. GROUP (c) is excluded pending a per-field CTO decision — do
- * not add lifecycle / OKR / KPI columns here without a new [A] entry.
+ * SINGLE SOURCE OF TRUTH for the SR-1 roll: the explicit table→columns list.
+ * GROUP (a) = 9 tables / 23 columns (measured on cb81468b97). GROUP (c) per
+ * Wpis 38: OKR item 2 (3 tables / 14 columns) + KPI item 4 (10 tables / 10
+ * columns). Item 5 excluded (seed-gated, unproven — see header). Items 1 & 3
+ * (lifecycle markers, KPI measurement periods) are NEVER listed here.
  */
 export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
+  // ── GROUP (a): planning fields ──────────────────────────────────────────
   {
     table: 'tasks',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'due_date', kind: 'timestamptz' },
       { column: 'milestone_target_date', kind: 'date' },
@@ -69,6 +115,7 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'calendar_events',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'start_at', kind: 'text' },
       { column: 'end_at', kind: 'text' },
@@ -77,6 +124,7 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'decisions',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'deadline', kind: 'timestamp' },
       { column: 'escalation_deadline', kind: 'timestamp' },
@@ -85,6 +133,7 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'initiatives',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'planned_start_date', kind: 'text' },
       { column: 'planned_end_date', kind: 'text' },
@@ -99,14 +148,19 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'initiative_milestones',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'target_date', kind: 'date' },
       { column: 'baseline_date', kind: 'date' },
     ],
   },
   {
+    // VARIANT B: a weekly meeting (RRULE FREQ=WEEKLY) keeps its weekday —
+    // shifted by round(delta/7)*7; a one-off meeting shifts by the raw delta.
     table: 'meetings',
     orgColumn: 'organization_id',
+    group: 'a',
+    recurrence: { weeklyWhen: `"recurrence_rule" ~* 'FREQ=WEEKLY'` },
     columns: [
       { column: 'start_at', kind: 'text' },
       { column: 'end_at', kind: 'text' },
@@ -115,6 +169,7 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'v8_calendar_items',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [
       { column: 'start_at', kind: 'text' },
       { column: 'end_at', kind: 'text' },
@@ -123,12 +178,110 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   {
     table: 'interview_assignments',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [{ column: 'due_at', kind: 'timestamp' }],
   },
   {
     table: 'report_schedules',
     orgColumn: 'organization_id',
+    group: 'a',
     columns: [{ column: 'next_run_at', kind: 'timestamp' }],
+  },
+
+  // ── GROUP (c) item 2: OKR vNext (Wpis 38 — YES only these) ──────────────
+  {
+    table: 'okr_vnext_cycles',
+    orgColumn: 'organization_id',
+    group: 'c-okr',
+    columns: [
+      { column: 'start_date', kind: 'date' },
+      { column: 'end_date', kind: 'date' },
+      { column: 'draft_open_at', kind: 'timestamptz' },
+      { column: 'active_start_at', kind: 'timestamptz' },
+      { column: 'review_open_at', kind: 'timestamptz' },
+      { column: 'close_at', kind: 'timestamptz' },
+      { column: 'submission_due_at', kind: 'timestamptz' },
+      { column: 'approval_due_at', kind: 'timestamptz' },
+      { column: 'manager_review_due_at', kind: 'timestamptz' },
+      { column: 'final_update_due_at', kind: 'timestamptz' },
+      { column: 'reflection_due_at', kind: 'timestamptz' },
+      { column: 'midcycle_review_at', kind: 'timestamptz' },
+    ],
+  },
+  {
+    table: 'okr_vnext_key_results',
+    orgColumn: 'organization_id',
+    group: 'c-okr',
+    columns: [{ column: 'deadline', kind: 'date' }],
+  },
+  {
+    table: 'okr_vnext_sets',
+    orgColumn: 'organization_id',
+    group: 'c-okr',
+    columns: [{ column: 'next_checkin_due_at', kind: 'timestamptz' }],
+  },
+
+  // ── GROUP (c) item 4: KPI due / schedule (Wpis 38 — YES only these) ─────
+  {
+    table: 'kpi_recovery_actions',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'due_date', kind: 'date' }],
+  },
+  {
+    table: 'rvn_kpi_recovery_actions',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'due_date', kind: 'date' }],
+  },
+  {
+    table: 'rvn_kpi_corrective_actions',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'due_date', kind: 'timestamptz' }],
+  },
+  {
+    // No organization_id column — scoped through the parent deviation case.
+    table: 'kpi_deviation_actions',
+    orgScopeSql: `case_id IN (SELECT id FROM public.kpi_deviation_cases WHERE organization_id = $1)`,
+    group: 'c-kpi',
+    columns: [{ column: 'due_date', kind: 'date' }],
+  },
+  {
+    table: 'kpi_report_schedules',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'next_run_at', kind: 'timestamp' }],
+  },
+  {
+    table: 'kpi_connectors',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'next_run_at', kind: 'timestamp' }],
+  },
+  {
+    table: 'kpi_recovery_checkpoints',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'checkpoint_date', kind: 'date' }],
+  },
+  {
+    table: 'rvn_kpi_recovery_checkpoints',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'checkpoint_date', kind: 'date' }],
+  },
+  {
+    table: 'kpi_recovery_cards',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'expected_recovery_date', kind: 'date' }],
+  },
+  {
+    table: 'rvn_kpi_deviation_cases',
+    orgColumn: 'organization_id',
+    group: 'c-kpi',
+    columns: [{ column: 'response_due_at', kind: 'timestamptz' }],
   },
 ];
 
@@ -226,8 +379,18 @@ export function computeDeltaDays(today: Date, lastRolledOn: Date): number {
   return Math.floor((t - l) / MS_PER_DAY);
 }
 
+/**
+ * VARIANT B weekly delta: `round(delta/7)*7`. A weekly cadence moves in whole
+ * weeks so it lands on the same weekday; <3.5 days rounds to 0 (stays put),
+ * 3.5–10.4 days rounds to 7, etc. Exposed for unit tests.
+ */
+export function computeWeeklyDeltaDays(delta: number): number {
+  return Math.round(delta / 7) * 7;
+}
+
 // ---------------------------------------------------------------------------
-// SQL builders. $1 = orgId, $2 = delta (whole days, integer).
+// SQL builders. $1 = orgId, $2 = delta (whole days). Tables with a weekly
+// recurrence rule also bind $3 = weekly delta and choose per row.
 // ---------------------------------------------------------------------------
 
 /** Canonical date-only text: '2026-09-17'. */
@@ -235,20 +398,31 @@ const TEXT_DATE_ONLY = String.raw`^\d{4}-\d{2}-\d{2}$`;
 /** Canonical UTC ISO timestamp with an explicit Z/offset: '2026-09-17T00:00:00.000Z'. */
 const TEXT_ISO_TS = String.raw`^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})$`;
 
-function shiftExpression(col: string, kind: ShowcaseDateColumnKind): string {
+/**
+ * The per-row day-count expression a column is shifted by. Plain tables use the
+ * raw delta ($2). A weekly-recurring table picks $3 (weekly delta) for rows
+ * matching its recurrence rule and $2 otherwise (VARIANT B).
+ */
+function deltaExpression(t: ShowcaseDateTable): string {
+  return t.recurrence
+    ? `(CASE WHEN ${t.recurrence.weeklyWhen} THEN $3::int ELSE $2::int END)`
+    : `$2::int`;
+}
+
+function shiftExpression(col: string, kind: ShowcaseDateColumnKind, days: string): string {
   const q = `"${col}"`;
   switch (kind) {
     case 'date':
-      return `(${q} + $2::int)`;
+      return `(${q} + ${days})`;
     case 'timestamp':
-      return `(${q} + make_interval(days => $2::int))`;
+      return `(${q} + make_interval(days => ${days}))`;
     case 'timestamptz':
-      return `(((${q} AT TIME ZONE 'UTC') + make_interval(days => $2::int)) AT TIME ZONE 'UTC')`;
+      return `(((${q} AT TIME ZONE 'UTC') + make_interval(days => ${days})) AT TIME ZONE 'UTC')`;
     case 'text':
       return (
         `(CASE` +
-        ` WHEN ${q} ~ '${TEXT_DATE_ONLY}' THEN to_char((${q}::date + $2::int), 'YYYY-MM-DD')` +
-        ` WHEN ${q} ~ '${TEXT_ISO_TS}' THEN to_char(((${q}::timestamptz AT TIME ZONE 'UTC') + make_interval(days => $2::int)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')` +
+        ` WHEN ${q} ~ '${TEXT_DATE_ONLY}' THEN to_char((${q}::date + ${days}), 'YYYY-MM-DD')` +
+        ` WHEN ${q} ~ '${TEXT_ISO_TS}' THEN to_char(((${q}::timestamptz AT TIME ZONE 'UTC') + make_interval(days => ${days})), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')` +
         ` ELSE ${q} END)`
       );
   }
@@ -258,31 +432,66 @@ function anyNotNull(columns: ShowcaseDateColumn[]): string {
   return columns.map((c) => `"${c.column}" IS NOT NULL`).join(' OR ');
 }
 
-/** One UPDATE per table shifting every group-(a) column by $2 for org $1. */
+/** Org-scoping predicate: a custom `orgScopeSql` override, else `"<orgColumn>" = $1`. */
+function orgPredicate(t: ShowcaseDateTable): string {
+  return t.orgScopeSql ?? `"${t.orgColumn ?? 'organization_id'}" = $1`;
+}
+
+/** One UPDATE per table shifting every column by the per-row day count for org $1. */
 function buildTableUpdateSql(t: ShowcaseDateTable): string {
-  const sets = t.columns.map((c) => `"${c.column}" = ${shiftExpression(c.column, c.kind)}`).join(', ');
+  const days = deltaExpression(t);
+  const sets = t.columns.map((c) => `"${c.column}" = ${shiftExpression(c.column, c.kind, days)}`).join(', ');
   return (
     `UPDATE public."${t.table}" SET ${sets} ` +
-    `WHERE "${t.orgColumn}" = $1 AND (${anyNotNull(t.columns)})`
+    `WHERE ${orgPredicate(t)} AND (${anyNotNull(t.columns)})`
   );
 }
 
-/** dryRun candidate count: org rows with at least one non-null group-(a) column. */
+/** Candidate count: org rows with at least one non-null shifted column. */
 function buildTableCountSql(t: ShowcaseDateTable): string {
   return (
     `SELECT count(*)::int AS n FROM public."${t.table}" ` +
-    `WHERE "${t.orgColumn}" = $1 AND (${anyNotNull(t.columns)})`
+    `WHERE ${orgPredicate(t)} AND (${anyNotNull(t.columns)})`
   );
 }
 
+/**
+ * Watermark + run-proof upsert. $1 org, $2 last_rolled_on, $3 delta_days,
+ * $4 per_table (JSONB). A same-day no-op rerun never reaches this, so the proof
+ * of the last ACTUAL roll is preserved.
+ */
 const UPSERT_WATERMARK_SQL =
-  `INSERT INTO public.showcase_date_roll (org_id, last_rolled_on, updated_at) ` +
-  `VALUES ($1, $2::date, now()) ` +
-  `ON CONFLICT (org_id) DO UPDATE SET last_rolled_on = EXCLUDED.last_rolled_on, updated_at = now()`;
+  `INSERT INTO public.showcase_date_roll (org_id, last_rolled_on, delta_days, per_table, updated_at) ` +
+  `VALUES ($1, $2::date, $3::int, $4::jsonb, now()) ` +
+  `ON CONFLICT (org_id) DO UPDATE SET ` +
+  `last_rolled_on = EXCLUDED.last_rolled_on, ` +
+  `delta_days = EXCLUDED.delta_days, ` +
+  `per_table = EXCLUDED.per_table, ` +
+  `updated_at = now()`;
 
 // ---------------------------------------------------------------------------
 // Per-org roll.
 // ---------------------------------------------------------------------------
+
+/**
+ * Count candidate rows per table. This equals the rows the subsequent UPDATEs
+ * will change: the count and the UPDATE share the identical WHERE predicate
+ * (org + any shifted column non-null) and a shift never flips a column's
+ * null-ness, so Postgres writes (and reports) every matching row. Counting
+ * up-front lets the run proof (`per_table`) be stored in the SAME transaction
+ * as the shift, keeping watermark and data atomic.
+ */
+async function countCandidates(
+  db: ShowcaseRollDb,
+  orgId: string
+): Promise<Record<string, number>> {
+  const perTable: Record<string, number> = {};
+  for (const t of SHOWCASE_DATE_FIELDS) {
+    const r = await db.all<{ n: number }>(buildTableCountSql(t), [orgId]);
+    perTable[t.table] = Number(r[0]?.n ?? 0);
+  }
+  return perTable;
+}
 
 async function rollOne(
   db: ShowcaseRollDb,
@@ -304,7 +513,9 @@ async function rollOne(
   // First run for this org: initialize the watermark WITHOUT shifting anything.
   if (!last) {
     if (!dryRun) {
-      await db.transaction([{ sql: UPSERT_WATERMARK_SQL, params: [orgId, todayIso] }]);
+      await db.transaction([
+        { sql: UPSERT_WATERMARK_SQL, params: [orgId, todayIso, 0, '{}'] },
+      ]);
     }
     return {
       orgId,
@@ -318,7 +529,8 @@ async function rollOne(
   const lastIso = toUtcDateOnly(last);
   const delta = computeDeltaDays(today, last);
 
-  // Idempotent: a second pass the same day has delta 0 → 0 changes, no write.
+  // Idempotent: a second pass the same day has delta 0 → no shift, and NO write
+  // (overwriting delta_days/per_table here would erase the last real run proof).
   if (delta === 0) {
     return { orgId, lastRolledOn: lastIso, deltaDays: 0, perTable: {}, skipped: 'up_to_date' };
   }
@@ -331,22 +543,23 @@ async function rollOne(
     return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'negative_delta' };
   }
 
-  const perTable: Record<string, number> = {};
+  const perTable = await countCandidates(db, orgId);
 
   if (dryRun) {
-    for (const t of SHOWCASE_DATE_FIELDS) {
-      const r = await db.all<{ n: number }>(buildTableCountSql(t), [orgId]);
-      perTable[t.table] = Number(r[0]?.n ?? 0);
-    }
     return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable, skipped: 'dry_run' };
   }
 
-  // One transaction per org: all table UPDATEs + the watermark upsert, atomically.
+  const weeklyDelta = computeWeeklyDeltaDays(delta);
+
+  // One transaction per org: all table UPDATEs + the watermark/run-proof upsert.
   const statements: ShowcaseRollStatement[] = SHOWCASE_DATE_FIELDS.map((t) => ({
     sql: buildTableUpdateSql(t),
-    params: [orgId, delta],
+    params: t.recurrence ? [orgId, delta, weeklyDelta] : [orgId, delta],
   }));
-  statements.push({ sql: UPSERT_WATERMARK_SQL, params: [orgId, todayIso] });
+  statements.push({
+    sql: UPSERT_WATERMARK_SQL,
+    params: [orgId, todayIso, delta, JSON.stringify(perTable)],
+  });
 
   const tx = await db.transaction(statements);
   if (!tx.success) {
@@ -354,11 +567,7 @@ async function rollOne(
     return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'error' };
   }
 
-  // results[i] aligns with SHOWCASE_DATE_FIELDS[i]; the last result is the upsert.
-  SHOWCASE_DATE_FIELDS.forEach((t, i) => {
-    perTable[t.table] = Number(tx.results[i]?.changes ?? 0);
-  });
-  logger.info(`[ShowcaseRoll] org ${orgId}: rolled +${delta}d`, { perTable });
+  logger.info(`[ShowcaseRoll] org ${orgId}: rolled +${delta}d (weekly +${weeklyDelta}d)`, { perTable });
 
   return { orgId, lastRolledOn: todayIso, deltaDays: delta, perTable };
 }
@@ -386,11 +595,13 @@ export function buildShowcaseDateRoll(db: ShowcaseRollDb = defaultDb) {
 }
 
 /**
- * Rolls planning dates forward for the given showcase orgs (group (a) only).
+ * Rolls planning dates forward for the given showcase orgs.
  *
  *  - delta = floor((today − last_rolled_on) / 1 day); first run (no watermark
  *    row) initializes last_rolled_on = today WITHOUT shifting (delta 0).
- *  - one transaction per org; all group-(a) columns shifted by the same delta.
+ *  - one transaction per org; every shifted column moves by delta, except
+ *    weekly-recurring meetings which move by round(delta/7)*7 (VARIANT B).
+ *  - each actual roll persists its run proof (delta_days + per_table row counts).
  *  - idempotent: a second pass the same day has delta 0 → 0 changes, no write.
  *  - never touches orgs outside `orgIds` (every statement filters by org).
  */
@@ -400,4 +611,10 @@ export async function rollShowcaseDates(
   return buildShowcaseDateRoll().roll(input);
 }
 
-export default { rollShowcaseDates, buildShowcaseDateRoll, SHOWCASE_DATE_FIELDS, computeDeltaDays };
+export default {
+  rollShowcaseDates,
+  buildShowcaseDateRoll,
+  SHOWCASE_DATE_FIELDS,
+  computeDeltaDays,
+  computeWeeklyDeltaDays,
+};
