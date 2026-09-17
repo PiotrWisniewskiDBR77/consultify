@@ -529,7 +529,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       total: tasks.length,
       done: tasks.filter((t) => t.status === 'DONE').length,
       inProgress: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
-      blocked: tasks.filter((t) => t.status === 'IN_EXECUTION').length,
+      blocked: tasks.filter((t) => t.status === 'BLOCKED').length,
     }),
     [tasks]
   );

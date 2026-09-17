@@ -10,6 +10,12 @@ import {
   transitionProposalInboxItem,
 } from '../inboxPmoQueues';
 
+const pmoCopy = {
+  title: 'x',
+  reason: 'y',
+  description: 'z',
+};
+
 const item = (overrides: Partial<InboxItem> = {}) =>
   ({
     id: 'inbox-1',
@@ -56,7 +62,7 @@ describe('PMO-1a personal inbox queues', () => {
         createdAt: '2026-09-16T12:00:00Z',
         expiresAt: '2026-09-18T12:00:00Z',
         viewerIsReviewer: true,
-      } as never).sourceEntityType
+      } as never, pmoCopy).sourceEntityType
     ).toBe('initiative_stage');
     const analysisItem = analysisDecisionInboxItem({
       version: 1,
@@ -69,7 +75,7 @@ describe('PMO-1a personal inbox queues', () => {
       dueAt: '2026-09-18T12:00:00Z',
       requestedAt: '2026-09-16T12:00:00Z',
       cardVersions: {},
-    });
+    }, pmoCopy);
     expect(analysisItem.initiativeId).toBe('initiative-1');
     expect(inboxPmoQueue(analysisItem, now)).toBe('review');
   });
@@ -86,7 +92,7 @@ describe('PMO-1a personal inbox queues', () => {
       ],
     });
     expect(decisions).toHaveLength(1);
-    expect(actorScopedDecisionInboxItem(decisions[0], 'Schedule')).toMatchObject({
+    expect(actorScopedDecisionInboxItem(decisions[0], pmoCopy)).toMatchObject({
       id: 'schedule-1',
       sourceEntityType: 'initiative_stage',
       initiativeId: 'initiative-1',
@@ -95,7 +101,7 @@ describe('PMO-1a personal inbox queues', () => {
       acceptanceDecisionInboxItems({
         delivery: [{ decisionId: 'delivery-1', initiativeId: 'initiative-2' }],
         results: [{ resultsCaseId: 'results-1', initiativeId: 'initiative-3' }],
-      }).map((entry) => entry.id)
+      }, pmoCopy).map((entry) => entry.id)
     ).toEqual(['delivery-1', 'results-1']);
   });
 });

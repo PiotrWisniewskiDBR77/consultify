@@ -25,7 +25,7 @@ function pendingGateDecisionInboxItem(
     itemStatus: 'open',
     reason: copy.reason,
     isActionable: true,
-    itemType: 'review',
+    itemType: 'approval',
     sourceEntityType: 'initiative_stage',
     initiativeId: decision.initiativeId,
     _key: `decision:${decision.decisionId}`,

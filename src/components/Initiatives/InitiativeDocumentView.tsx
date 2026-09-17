@@ -1612,8 +1612,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // users with write access; server re-enforces (archive: lifecycle, delete:
   // DRAFT/CANCELLED only → 409 otherwise). Wires handleArchive/handleDelete,
   // which were defined but previously unreachable from the document toolbar.
-  const canArchiveDoc = canEditCards && status !== 'ARCHIVED' && status !== 'DRAFT';
-  const canDeleteDoc = canEditCards && (status === 'DRAFT' || status === 'CANCELLED');
+  const statusCode = String(status);
+  const canArchiveDoc = canEditCards && statusCode !== 'ARCHIVED' && statusCode !== 'DRAFT';
+  const canDeleteDoc = canEditCards && (statusCode === 'DRAFT' || statusCode === 'CANCELLED');
 
   // ── Mark Complete (Canon Blok C) ────────────────────────────────────────
   // section_completions is an AI signal only — it never locks fields. Persisted
@@ -3292,10 +3293,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // FAIL-OPEN: błąd sieci/braku endpointu → przepuszczamy. Bramka jakościowa
     // nie może zamienić się w awarię blokującą pracę (ten sam wzorzec co
     // gate-ai-check niżej).
-    if (
-      targetStatus === InitiativeStatus.PENDING_APPROVAL ||
-      targetStatus === InitiativeStatus.PENDING_APPROVAL
-    ) {
+    if (targetStatus === InitiativeStatus.PENDING_APPROVAL) {
       try {
         const envelope = await fetchEvidenceEnvelope('initiative', initiativeId);
         const sourceCount = envelope?.sources?.length ?? 0;
@@ -3424,7 +3422,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ...(truth.initiative || {}),
       status: targetStatus,
     }));
-    setGateReadiness(truth.gateReadiness);
+    setGateReadiness((truth.gateReadiness as any) ?? null);
     setStatusHistory(truth.statusHistory as any);
     setHistory(truth.history as any);
     onStatusChange?.(targetStatus as any);
@@ -3642,7 +3640,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ...(Object.hasOwn(updatePayload, 'plannedStartDate') ? { planned_start_date: updatePayload.plannedStartDate } : {}),
         ...(Object.hasOwn(updatePayload, 'plannedEndDate') ? { planned_end_date: updatePayload.plannedEndDate, targetDate: updatePayload.plannedEndDate } : {}),
       }));
-      setGateReadiness(truth.gateReadiness);
+      setGateReadiness((truth.gateReadiness as any) ?? null);
       setStatusHistory(truth.statusHistory as any);
       setHistory(truth.history as any);
 
@@ -5304,7 +5302,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // Mirror the server guard (InitiativeController.deleteInitiative): only
     // not-yet-active initiatives can be hard-deleted; everything else must be
     // cancelled first so linked M14/15/16 rows unwind through the lifecycle.
-    if (status !== 'DRAFT' && status !== 'CANCELLED') {
+    if (statusCode !== 'DRAFT' && statusCode !== 'CANCELLED') {
       toast.error(t('initiatives.onlyDraftsCanBeDeleted2'));
       return;
     }
@@ -6163,10 +6161,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Status color mapping
     const statusAlertBorder = (() => {
-      if (status === 'IN_EXECUTION') return 'border-danger-400/60';
-      if (status === 'IN_EXECUTION') return 'border-emerald-400/60';
-      if (status === 'DONE' || status === 'CLOSED') return 'border-blue-400/60';
-      if (status === 'CANCELLED' || status === 'ARCHIVED') return 'border-c-border-strong';
+      if (statusCode === 'IN_EXECUTION') return 'border-emerald-400/60';
+      if (statusCode === 'DONE' || statusCode === 'CLOSED') return 'border-blue-400/60';
+      if (statusCode === 'CANCELLED' || statusCode === 'ARCHIVED') return 'border-c-border-strong';
       return undefined;
     })();
 
