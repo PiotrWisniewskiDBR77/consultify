@@ -1,22 +1,31 @@
 /**
- * assessmentReportI18n — SŁOWNIK en/pl dla STAŁYCH napisów raportu z oceny
- * (S1.4b, DEC-461: raport domyślnie po angielsku, po polsku tylko gdy
- * język użytkownika/organizacji = pl).
+ * assessmentReportI18n — SŁOWNIK en/pl dla WSZYSTKICH napisów raportu z oceny
+ * (DEC-461: raport domyślnie po angielsku, po polsku tylko gdy język
+ * użytkownika/organizacji = pl).
  *
- * ★ CO TU JEST, A CZEGO NIE MA. Ten słownik pokrywa WYŁĄCZNIE strukturę
- * dokumentu — nagłówki sekcji, etykiety tabel, okładkę, placeholdery i
- * komunikaty statusu ("nie oceniono", "pominięto"). Świadomie NIE pokrywa
- * treści narracyjnej (streszczenie zarządcze, wnioski rozdziałów, komentarze
- * obszarów) — ta treść pochodzi z `assessmentNarrativeComposer.ts`, który
- * pisze deterministyczną prozę PO POLSKU niezależnie od `language`. Tłumaczenie
- * WŁASNEJ prozy silnika to osobny, znacznie większy zakres (i nie jest to
- * "treść odpowiedzi użytkownika", ale i tak jest to inna decyzja produktowa niż
- * "trzy małe naprawy" S1.4b) — patrz raport S1.4b, sekcja "Co zostaje do
- * decyzji".
+ * ★ CO TU JEST. Ten plik trzyma DWIE równoległe struktury dla obu języków:
+ *   1) `REPORT_I18N` (interfejs `ReportI18nShape`) — stałe napisy dokumentu:
+ *      nagłówki sekcji, etykiety tabel, okładkę, placeholdery, komunikaty
+ *      statusu, pola kolumn tabeli decyzji i deck-a PPTX/PDF, oraz jedyne
+ *      dosłowne zdania kontraktu (`legacyMethodVersionLabel`,
+ *      `legacyLimitation`), które silnik narracji cytuje 1:1 do prozy.
+ *   2) `ASSESSMENT_NARRATIVE_I18N` (interfejs `NarrativeGrammar`, dodane
+ *      przez DEC-510 FALA G1/K3) — składane zdania SILNIKA NARRACJI:
+ *      streszczenie zarządcze programu, wprowadzenia i wnioski rozdziałów,
+ *      luki krytyczne, wnioski końcowe, sekcje komentarza obszaru
+ *      (stan faktyczny, ocena i wiarygodność, luka i sens targetu,
+ *      najbliższy krok). Konsumenci (`assessmentNarrativeComposer`) czytają
+ *      z `assessmentNarrativeI18n(language)`, więc PL/EN wariant narracji
+ *      rozstrzyga się w JEDNYM miejscu — TYM.
+ *
+ * ★ CZEGO NIE MA. Treści odpowiedzi użytkownika (rekomendacje w
+ * `finding.recommendation`, notatki oceniającego, dowody) — te wchodzą do
+ * dokumentu jako dosłowny cytat i słownik nie próbuje ich tłumaczyć: dokument
+ * cytuje to, co powiedział autor oceny.
  *
  * JEDNO MIEJSCE: każdy konsument (schemat DOCX, okładka DOCX, model
- * PPTX/PDF) czyta z TEGO pliku, żeby dwa renderowane pliki tej samej oceny
- * nie mogły się rozjechać etykietą.
+ * PPTX/PDF, kompozytor narracji) czyta z TEGO pliku, żeby dwa renderowane
+ * pliki tej samej oceny nie mogły się rozjechać etykietą ani zdaniem.
  */
 
 export type ReportLanguage = 'pl' | 'en';

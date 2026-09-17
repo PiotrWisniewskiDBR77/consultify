@@ -7,12 +7,6 @@ import {
   type ReportLanguage,
 } from './assessmentReportI18n.js';
 
-export const CONFIDENCE_PL = Object.freeze({
-  low: 'niska',
-  medium: 'średnia',
-  high: 'wysoka',
-} as const);
-
 /**
  * Skąd pochodzą findingi. Silnik narracji NAZYWA źródło w treści („Źródłem
  * jest…"), więc nie może mówić „zamrożony Output" o wyniku, który nigdy nie
