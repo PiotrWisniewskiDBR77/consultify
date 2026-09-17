@@ -94,6 +94,51 @@ describe('OrganizationController membership safeguards', () => {
     expect(res.body.code).toBe('ORG_MEMBERSHIP_REQUIRED');
   });
 
+
+  it('lets active MEMBER read minimal directory payload without email', async () => {
+    getActiveMembers.mockResolvedValue([
+      { user_id: 'member-1', role: 'MEMBER', status: 'ACTIVE', first_name: 'Anna', last_name: 'Member', email: 'anna@example.test', avatar_url: 'avatar-a' },
+      { user_id: 'owner-1', role: 'OWNER', status: 'ACTIVE', first_name: 'Olga', last_name: 'Owner', email: 'olga@example.test', avatar_url: 'avatar-o' },
+    ]);
+    const req: any = {
+      params: { orgId: 'org-1' },
+      user: { id: 'member-1', role: 'MEMBER' },
+    };
+    const res = createResponse();
+
+    await OrganizationController.getMembers(req, res, vi.fn());
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.body).toEqual([
+      expect.objectContaining({ userId: 'member-1', displayName: 'Anna Member', avatarUrl: 'avatar-a' }),
+      expect.objectContaining({ userId: 'owner-1', displayName: 'Olga Owner', avatarUrl: 'avatar-o' }),
+    ]);
+    expect(JSON.stringify(res.body)).not.toContain('anna@example.test');
+    expect(JSON.stringify(res.body)).not.toContain('olga@example.test');
+  });
+
+  it('keeps full directory payload for active OWNER', async () => {
+    getActiveMembers.mockResolvedValue([
+      { user_id: 'owner-1', role: 'OWNER', status: 'ACTIVE', first_name: 'Olga', last_name: 'Owner', email: 'olga@example.test', avatar_url: 'avatar-o' },
+    ]);
+    const req: any = {
+      params: { orgId: 'org-1' },
+      user: { id: 'owner-1', role: 'OWNER' },
+    };
+    const res = createResponse();
+
+    await OrganizationController.getMembers(req, res, vi.fn());
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.body[0]).toMatchObject({
+      user_id: 'owner-1',
+      role: 'OWNER',
+      email: 'olga@example.test',
+      displayName: 'Olga Owner',
+      avatarUrl: 'avatar-o',
+    });
+  });
+
   it('rejects addMember for non-admin actors with explicit denial guidance', async () => {
     getMembers.mockResolvedValue([{ user_id: 'actor-1', role: 'MEMBER' }]);
     const req: any = {

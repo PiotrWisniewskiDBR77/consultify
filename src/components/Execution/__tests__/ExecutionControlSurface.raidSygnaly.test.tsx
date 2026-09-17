@@ -713,14 +713,16 @@ describe('MEMBER — para negatywna', () => {
    * skazany na odmowę. Test przestawiony z `1` na `0` — pilnuje teraz, że
    * odmowy nikt nie wywołuje ponownie.
    */
-  it('katalog osób NIE jest u MEMBER-a pobierany (hook nazwisk pyta tylko ról, które go uniosą)', async () => {
+  it('katalog osób jest u MEMBER-a pobierany raz i służy tylko do nazwisk', async () => {
     uzytkownik.role = 'MEMBER';
-    getOrganizationMembers.mockRejectedValue(new TestowyApiError({}, 'Forbidden', 403));
+    getOrganizationMembers.mockResolvedValue([
+      { userId: 'owner-1', displayName: 'Anna Member', avatarUrl: 'avatar-a' },
+    ]);
     render(<Gospodarz preset="ryzyka" />);
     await waitFor(() => expect(screen.getByText('Awaria dostawcy chmury')).toBeInTheDocument());
-    // Zero wołań: hook nazwisk pyta tylko ADMIN/OWNER/SUPERADMIN, a słowniki
-    // formularza R3 obwarował `canDecide`. Każda wartość > 0 = powrót 403.
-    expect(getOrganizationMembers).toHaveBeenCalledTimes(0);
+    // DEC-583: MEMBER czyta katalog własnej organizacji, ale serwer zwraca
+    // minimalny payload bez emaila. Jedno wołanie rozwiązuje nazwiska bez PII.
+    expect(getOrganizationMembers).toHaveBeenCalledTimes(1);
     // Bez katalogu ekran NIE pada i pokazuje rejestr.
     expect(screen.getByRole('table')).toBeInTheDocument();
   });

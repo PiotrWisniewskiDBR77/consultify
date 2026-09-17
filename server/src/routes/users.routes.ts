@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
 import { getRequestAccessRole } from '../middleware/requestAccess.js';
+import { shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -101,12 +102,23 @@ router.get(
       );
 
       // Map to expected format for TeamManagementPanel
-      const mappedUsers = (users || []).map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email,
-        avatarUrl: u.avatar_url,
-      }));
+      const viewerRole = getRequestAccessRole(req);
+      const mappedUsers = (users || []).map((u) => {
+        const shaped = shapeOrgPersonPayload({
+          id: u.id,
+          email: u.email,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          avatarUrl: u.avatar_url,
+        }, viewerRole);
+        return {
+          id: shaped.id,
+          ...(shaped.email ? { email: shaped.email } : {}),
+          name: shaped.displayName,
+          displayName: shaped.displayName,
+          avatarUrl: shaped.avatarUrl,
+        };
+      });
 
       logger.info(
         `[users] Search for "${query}" in org ${organizationId} returned ${mappedUsers.length} results`

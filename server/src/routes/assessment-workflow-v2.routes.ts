@@ -27,6 +27,7 @@ import AssessmentControllerRaw from '../controllers/AssessmentController.js';
 const AssessmentController = AssessmentControllerRaw as any;
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
@@ -34,6 +35,7 @@ import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
 import { upsertActiveAssessmentInitiativeBatch } from '../services/assessment/AssessmentWorkbenchService.js';
+import { shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import BenchmarkingService from '../services/benchmarkingService.js';
@@ -214,15 +216,27 @@ router.get('/:assessmentId/users', async (req, res) => {
       [String(organizationId), q, `%${q}%`, `%${q}%`, `%${q}%`, limit]
     );
 
-    const users = (rows || []).map((u: any) => ({
-      id: u.id,
-      email: u.email,
-      firstName: u.first_name,
-      lastName: u.last_name,
-      role: u.role,
-      status: u.status,
-      name: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email || u.id,
-    }));
+    const viewerRole = getRequestAccessRole(req as any);
+    const users = (rows || []).map((u: any) => {
+      const shaped = shapeOrgPersonPayload({
+        id: u.id,
+        email: u.email,
+        firstName: u.first_name,
+        lastName: u.last_name,
+        role: u.role,
+        status: u.status,
+      }, viewerRole);
+      return {
+        id: shaped.id,
+        ...(shaped.email ? { email: shaped.email } : {}),
+        firstName: shaped.firstName,
+        lastName: shaped.lastName,
+        role: shaped.role,
+        status: shaped.status,
+        name: shaped.displayName,
+        displayName: shaped.displayName,
+      };
+    });
 
     return res.json({ users });
   } catch (err: any) {
