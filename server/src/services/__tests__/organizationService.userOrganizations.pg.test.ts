@@ -83,6 +83,18 @@ const DB_TESTS_DEMANDED =
   ENV_AT_LOAD.RUN_DB_TESTS !== undefined &&
   !OPT_OUT.has(String(ENV_AT_LOAD.RUN_DB_TESTS).trim().toLowerCase());
 
+// Fail-closed in CI (KANAL Wpis 19/20, standard W164b): a RealPG suite that
+// merely "skips with a message" when RUN_DB_TESTS is absent is a silent green —
+// in CI the evidence must exist, so refusing to run is an ERROR, not a skip.
+// Read at module load so the throw happens during collection (RC=1), before any
+// beforeAll can soften it. Locally (no CI) the suite still skips loudly below.
+const IN_CI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS);
+if (IN_CI && !DB_TESTS_DEMANDED) {
+  throw new Error(
+    'RealPG evidence must never be skipped in CI: set RUN_DB_TESTS=1 and DATABASE_URL'
+  );
+}
+
 const USER = 'u-n2n3';
 const ORG = {
   current: 'org-n2n3-alpha', // is_current anchor, name 'Alpha'
@@ -223,8 +235,11 @@ afterAll(async () => {
   adminPool = null;
 }, 120_000);
 
+// it/it.skip is decided at COLLECTION time, so it must key on DB_TESTS_DEMANDED
+// (read at module load) — NOT on `usable`, which is only set inside beforeAll.
+// Keying on `usable` would report 6 skipped even with a working PostgreSQL.
 const guard = (name: string, fn: () => Promise<void>) =>
-  it(name, async () => {
+  (DB_TESTS_DEMANDED ? it : it.skip)(name, async () => {
     if (!usable) {
       // eslint-disable-next-line no-console
       console.warn(`[B2 N-2/N-3 pg] SKIPPED: ${skipReason}`);
