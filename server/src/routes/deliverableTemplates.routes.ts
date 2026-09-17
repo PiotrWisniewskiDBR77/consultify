@@ -13,6 +13,7 @@
 
 import { Router } from 'express';
 
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import type { DeliverableTemplateType } from '../services/deliverableTemplateService.js';
@@ -21,8 +22,8 @@ import {
   createDeliverableTemplate,
   deleteDeliverableTemplate,
   getDeliverableTemplate,
-  listPendingTemplateProvenance,
   listDeliverableTemplates,
+  listPendingTemplateProvenance,
   syncWorkbookTemplateArtifactLifecycle,
   TemplateForbiddenError,
   TemplateNotFoundError,
@@ -33,9 +34,22 @@ import {
   updateDeliverableTemplate,
 } from '../services/deliverableTemplateService.js';
 import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
+import {
+  approveTemplateWorkflow,
+  assertTemplateBase,
+  assertTemplateWorkflowEditable,
+  getTemplateWorkflow,
+  nextTemplateVersion,
+  recordTemplateWorkflowEdit,
+  registerTemplateDraftWorkflow,
+  runTemplateLiveTest,
+  submitTemplateForApproval,
+  type TemplateBaseKind,
+  type TemplateTestObjectType,
+  TemplateWorkflowError,
+} from '../services/deliverableTemplateWorkflowService.js';
 import { resolveDocumentTemplateLocale } from '../services/documentStudio/documentTemplateLocale.js';
 import logger from '../utils/Logger.js';
-import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -139,6 +153,258 @@ router.post('/templates', async (req, res) => {
   }
 });
 
+const ARCHETYPE_META: Record<DeliverableTemplateType, Record<string, unknown>> = {
+  doc: {
+    sections_json: [
+      {
+        title: 'Executive summary',
+        block: 'paragraph',
+        depth: 'medium',
+        hint: 'Key conclusion',
+        ai_filled: true,
+      },
+      {
+        title: 'Evidence',
+        block: 'table',
+        depth: 'medium',
+        hint: 'Source-backed evidence',
+        ai_filled: true,
+      },
+      {
+        title: 'Recommendations',
+        block: 'bullets',
+        depth: 'medium',
+        hint: 'Prioritized actions',
+        ai_filled: true,
+      },
+    ],
+  },
+  deck: {
+    outline_json: [
+      { title: 'Cover', archetype: 'cover', hint: 'Title and context', ai_filled: true },
+      { title: 'Executive summary', archetype: 'content', hint: 'Key message', ai_filled: true },
+      { title: 'Evidence', archetype: 'chart', hint: 'Source-backed evidence', ai_filled: true },
+      { title: 'Decision', archetype: 'closing', hint: 'Decision and next step', ai_filled: true },
+    ],
+  },
+  table: {
+    schema_snapshot: {
+      sheets: [
+        {
+          name: 'Data',
+          columns: [
+            { key: 'A', header: 'Item', type: 'text' },
+            { key: 'B', header: 'Value', type: 'number' },
+          ],
+          rows: [{ cells: { A: { value: 'Example' }, B: { value: 0 } } }],
+        },
+      ],
+    },
+  },
+};
+
+// TPL-1b canonical authoring entry. Kept separate from the legacy POST so old
+// integrations remain compatible while this route enforces a non-empty base.
+router.post('/templates/drafts', async (req, res) => {
+  const type = String(req.body?.type || '') as DeliverableTemplateType;
+  const name = String(req.body?.name || '').trim();
+  const baseKind = String(req.body?.baseKind || '') as TemplateBaseKind;
+  const baseTemplateId = String(req.body?.baseTemplateId || '').trim() || undefined;
+  if (!VALID_TYPES.has(type) || !name || !['archetype', 'system', 'own'].includes(baseKind)) {
+    res.status(400).json({ error: 'BASE_REQUIRED', code: 'BASE_REQUIRED' });
+    return;
+  }
+  try {
+    const base = await assertTemplateBase({
+      organizationId: getOrgId(req),
+      baseKind,
+      baseTemplateId,
+      type,
+    });
+    const language = await resolveDocumentTemplateLocale({
+      explicit: req.body?.language ?? 'en',
+      userId: getUserId(req),
+      organizationId: getOrgId(req),
+    });
+    const submittedMeta =
+      req.body?.meta && typeof req.body.meta === 'object' && !Array.isArray(req.body.meta)
+        ? req.body.meta
+        : {};
+    const inheritedMeta = base ? { ...base.meta } : { ...ARCHETYPE_META[type] };
+    const sourceBindings =
+      req.body?.sourceBindings && typeof req.body.sourceBindings === 'object'
+        ? req.body.sourceBindings
+        : {};
+    const template = await createDeliverableTemplate(
+      type,
+      name,
+      typeof req.body?.description === 'string'
+        ? req.body.description
+        : (base?.description ?? undefined),
+      {
+        ...inheritedMeta,
+        ...submittedMeta,
+        __workflowDraft: true,
+        scope: 'org',
+        language,
+        source_bindings: sourceBindings,
+      },
+      getOrgId(req),
+      getUserId(req),
+      language
+    );
+    const workflow = await registerTemplateDraftWorkflow({
+      organizationId: getOrgId(req),
+      authorUserId: getUserId(req),
+      template,
+      baseKind,
+      baseTemplateId,
+      language,
+      documentType: String(req.body?.documentType || 'custom'),
+      audience: typeof req.body?.audience === 'string' ? req.body.audience : undefined,
+      confidentiality: String(req.body?.confidentiality || 'internal'),
+      sourceBindings,
+    });
+    res.status(201).json({ template, workflow });
+  } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Failed to create governed draft', { err });
+    res.status(500).json({ error: 'TEMPLATE_DRAFT_CREATE_FAILED' });
+  }
+});
+
+router.get('/templates/:id/workflow', async (req, res) => {
+  try {
+    const workflow = await getTemplateWorkflow(req.params.id, getOrgId(req));
+    if (!workflow) return res.status(404).json({ error: 'WORKFLOW_NOT_FOUND' });
+    res.json({ workflow });
+  } catch (err) {
+    logger.error('[deliverableTemplates] Failed to load template workflow', { err });
+    res.status(500).json({ error: 'WORKFLOW_LOAD_FAILED' });
+  }
+});
+
+router.post('/templates/:id/test-runs', async (req, res) => {
+  try {
+    const result = await runTemplateLiveTest({
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+      templateId: req.params.id,
+      objectType: String(req.body?.objectType || '') as TemplateTestObjectType,
+      objectId: String(req.body?.objectId || ''),
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Template live test failed', { err, id: req.params.id });
+    res.status(500).json({ error: 'TEMPLATE_TEST_FAILED' });
+  }
+});
+
+router.post('/templates/:id/submit', async (req, res) => {
+  try {
+    const workflow = await submitTemplateForApproval({
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+      templateId: req.params.id,
+    });
+    res.json({ workflow });
+  } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Template submit failed', { err, id: req.params.id });
+    res.status(500).json({ error: 'TEMPLATE_SUBMIT_FAILED' });
+  }
+});
+
+router.post('/templates/:id/workflow/approve', async (req, res) => {
+  try {
+    const workflow = await approveTemplateWorkflow({
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+      templateId: req.params.id,
+      setAsDefault: req.body?.setAsDefault === true,
+    });
+    res.json({ workflow });
+  } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
+    if (err instanceof TemplateProvenanceForbiddenError) {
+      res.status(403).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Template workflow approval failed', {
+      err,
+      id: req.params.id,
+    });
+    res.status(500).json({ error: 'TEMPLATE_APPROVAL_FAILED' });
+  }
+});
+
+// Editing an approved template creates a new draft identity and minor version.
+// The approved row remains immutable so already generated artifacts retain an
+// exact template/version reference.
+router.post('/templates/:id/revisions', async (req, res) => {
+  try {
+    const previous = await getTemplateWorkflow(req.params.id, getOrgId(req));
+    if (!previous || previous.status !== 'approved') {
+      throw new TemplateWorkflowError(
+        'APPROVED_TEMPLATE_REQUIRES_REVISION',
+        'Only an approved template can start a revision',
+        409
+      );
+    }
+    const base = await getDeliverableTemplate(req.params.id, getOrgId(req));
+    if (!base || base.isSystem || base.organizationId !== getOrgId(req)) {
+      throw new TemplateWorkflowError('BASE_FORBIDDEN', 'Template is unavailable', 404);
+    }
+    const template = await createDeliverableTemplate(
+      base.type,
+      typeof req.body?.name === 'string' && req.body.name.trim() ? req.body.name.trim() : base.name,
+      base.description ?? undefined,
+      { ...base.meta, __workflowDraft: true, scope: 'org' },
+      getOrgId(req),
+      getUserId(req),
+      previous.language
+    );
+    const workflow = await registerTemplateDraftWorkflow({
+      organizationId: getOrgId(req),
+      authorUserId: getUserId(req),
+      template,
+      baseKind: 'own',
+      baseTemplateId: base.id,
+      parentWorkflowId: previous.id,
+      version: nextTemplateVersion(previous.version),
+      language: previous.language,
+      documentType: previous.documentType,
+      audience: previous.audience ?? undefined,
+      confidentiality: previous.confidentiality,
+      sourceBindings: previous.sourceBindings,
+    });
+    res.status(201).json({ template, workflow });
+  } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Failed to create template revision', {
+      err,
+      id: req.params.id,
+    });
+    res.status(500).json({ error: 'TEMPLATE_REVISION_CREATE_FAILED' });
+  }
+});
+
 // ── GET single ──────────────────────────────────────────────
 router.get('/templates/:id', async (req, res) => {
   try {
@@ -174,14 +440,30 @@ router.put('/templates/:id', async (req, res) => {
   }
 
   try {
+    await assertTemplateWorkflowEditable(req.params.id, getOrgId(req), getUserId(req));
     const template = await updateDeliverableTemplate(
       req.params.id,
       { name: name?.trim(), description, meta },
       getOrgId(req),
       getUserId(req)
     );
+    const sourceBindings =
+      meta?.source_bindings &&
+      typeof meta.source_bindings === 'object' &&
+      !Array.isArray(meta.source_bindings)
+        ? (meta.source_bindings as Record<string, unknown>)
+        : undefined;
+    await recordTemplateWorkflowEdit({
+      templateId: req.params.id,
+      organizationId: getOrgId(req),
+      sourceBindings,
+    });
     res.json({ template });
   } catch (err) {
+    if (err instanceof TemplateWorkflowError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
     if (err instanceof TemplateForbiddenError) {
       res.status(403).json({ ...mapAppErrorResponse(err, req, 'error') });
       return;
@@ -230,9 +512,9 @@ async function mutateWorkbookLifecycle(req: any, res: any, action: 'approve' | '
   } catch (err) {
     const code = (err as { code?: string }).code;
     if (code === 'INVALID_LIFECYCLE_TRANSITION')
-      return res.status(409).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
+      return res.status(409).json({ ...mapAppErrorResponse(err as Error, req, 'error'), code });
     if (code === 'TEMPLATE_NOT_FOUND')
-      return res.status(404).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
+      return res.status(404).json({ ...mapAppErrorResponse(err as Error, req, 'error'), code });
     logger.error('[deliverableTemplates] Workbook lifecycle transition failed', {
       err,
       id: req.params.id,

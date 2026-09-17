@@ -21,6 +21,38 @@ export interface SavedTemplate {
   id: string;
   type: string;
   name: string;
+  workflow?: TemplateWorkflow;
+}
+
+export interface TemplateWorkflow {
+  id: string;
+  templateId: string;
+  status: 'draft' | 'submitted' | 'approved' | 'deprecated';
+  version: string;
+  baseKind: 'archetype' | 'system' | 'own';
+  baseTemplateId: string | null;
+  parentWorkflowId: string | null;
+  language: 'en' | 'pl';
+  documentType: string;
+  audience: string | null;
+  confidentiality: string;
+  sourceBindings: Record<string, unknown>;
+  lastTestRunId: string | null;
+  lastTestPassedAt: string | null;
+  submittedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  isDefault: boolean;
+}
+
+export interface GovernedTemplateOptions {
+  baseKind: 'archetype' | 'system' | 'own';
+  baseTemplateId?: string;
+  language: 'en' | 'pl';
+  documentType: string;
+  audience?: string;
+  confidentiality: string;
+  sourceBindings: Record<string, string>;
 }
 
 export interface DeliverableTemplateRecord extends SavedTemplate {
@@ -57,6 +89,71 @@ export async function saveTemplate(draft: TemplateDraft): Promise<SavedTemplate>
   return { id: tpl.id, type: tpl.type, name: tpl.name };
 }
 
+export async function saveGovernedTemplate(
+  draft: TemplateDraft,
+  options: GovernedTemplateOptions
+): Promise<SavedTemplate> {
+  const body = draftToPostBody(draft);
+  const data = await templateRequest('/api/deliverables/templates/drafts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...body, ...options }),
+  });
+  const tpl = data.template ?? data;
+  return { id: tpl.id, type: tpl.type, name: tpl.name, workflow: data.workflow };
+}
+
+export async function loadTemplateWorkflow(id: string): Promise<TemplateWorkflow> {
+  const data = await templateRequest(
+    `/api/deliverables/templates/${encodeURIComponent(id)}/workflow`
+  );
+  return data.workflow ?? data;
+}
+
+export async function runTemplateLiveTest(
+  id: string,
+  input: { objectType: 'initiative' | 'kpi' | 'decision' | 'artifact'; objectId: string }
+): Promise<{
+  status: 'pass' | 'fail';
+  checks: Record<string, boolean>;
+  workflow: TemplateWorkflow;
+  exportFormat: string;
+  exportByteSize: number;
+}> {
+  return templateRequest(`/api/deliverables/templates/${encodeURIComponent(id)}/test-runs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function submitTemplate(id: string): Promise<TemplateWorkflow> {
+  const data = await templateRequest(
+    `/api/deliverables/templates/${encodeURIComponent(id)}/submit`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    }
+  );
+  return data.workflow ?? data;
+}
+
+export async function approveGovernedTemplate(
+  id: string,
+  setAsDefault: boolean
+): Promise<TemplateWorkflow> {
+  const data = await templateRequest(
+    `/api/deliverables/templates/${encodeURIComponent(id)}/workflow/approve`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setAsDefault }),
+    }
+  );
+  return data.workflow ?? data;
+}
+
 export async function loadTemplate(id: string): Promise<DeliverableTemplateRecord> {
   const data = await templateRequest(`/api/deliverables/templates/${encodeURIComponent(id)}`);
   return data.template ?? data;
@@ -64,10 +161,16 @@ export async function loadTemplate(id: string): Promise<DeliverableTemplateRecor
 
 export async function updateTemplate(id: string, draft: TemplateDraft): Promise<SavedTemplate> {
   const body = draftToPostBody(draft);
+  const items = draft.type === 'doc' ? draft.doc : draft.type === 'deck' ? draft.deck : draft.table;
+  const sourceBindings = Object.fromEntries(items.map((item) => [item.id, item.source]));
   const data = await templateRequest(`/api/deliverables/templates/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: body.name, description: body.description, meta: body.meta }),
+    body: JSON.stringify({
+      name: body.name,
+      description: body.description,
+      meta: { ...body.meta, source_bindings: sourceBindings },
+    }),
   });
   const tpl = data.template ?? data;
   return { id: tpl.id, type: tpl.type, name: tpl.name };
@@ -97,7 +200,39 @@ export function recordToDraft(record: DeliverableTemplateRecord): TemplateDraft 
   const draft = emptyDraft(record.type as TemplateDraft['type'], record.name, scope);
   draft.description = record.description ?? '';
   draft.themeRef = typeof record.meta?.theme_ref === 'string' ? record.meta.theme_ref : null;
-  if (record.type !== 'table') return draft;
+  if (record.type === 'doc') {
+    const raw = record.meta?.sections_json;
+    const sections = typeof raw === 'string' ? safeJson(raw) : raw;
+    if (Array.isArray(sections) && sections.length > 0) {
+      draft.doc = sections.map((section: any) => ({
+        id: nextId('sec'),
+        title: String(section?.title || 'Section'),
+        block: ['heading', 'paragraph', 'bullets', 'table', 'kpi', 'chart'].includes(section?.block)
+          ? section.block
+          : 'paragraph',
+        depth: ['short', 'medium', 'long'].includes(section?.depth) ? section.depth : 'medium',
+        hint: String(section?.hint || section?.purpose || ''),
+        aiFilled: section?.ai_filled !== false,
+        source: String(section?.source || '') as any,
+      }));
+    }
+    return draft;
+  }
+  if (record.type === 'deck') {
+    const raw = record.meta?.outline_json;
+    const slides = typeof raw === 'string' ? safeJson(raw) : raw;
+    if (Array.isArray(slides) && slides.length > 0) {
+      draft.deck = slides.map((slide: any) => ({
+        id: nextId('slide'),
+        title: String(slide?.title || 'Slide'),
+        archetype: String(slide?.archetype || 'content') as any,
+        hint: String(slide?.hint || ''),
+        aiFilled: slide?.ai_filled !== false,
+        source: String(slide?.source || '') as any,
+      }));
+    }
+    return draft;
+  }
 
   const raw = record.meta?.schema_snapshot;
   const schema = typeof raw === 'string' ? safeJson(raw) : raw;
@@ -111,6 +246,7 @@ export function recordToDraft(record: DeliverableTemplateRecord): TemplateDraft 
     return {
       id: nextId('sheet'),
       name: String(sheet?.name || `Arkusz ${sheetIndex + 1}`),
+      source: String(sheet?.source || '') as any,
       columns: columns.map((column: any, columnIndex: number) => {
         const base = newSheetColumn();
         const key = String(column?.key || String.fromCharCode(65 + columnIndex));

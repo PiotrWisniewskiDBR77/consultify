@@ -74,6 +74,19 @@ export interface TemplateBuilderShellProps {
     onDeprecate?: () => void;
     onDelete?: () => void;
   };
+  workflow?: {
+    status: 'draft' | 'submitted' | 'approved' | 'deprecated';
+    version: string;
+    testPassed: boolean;
+    testDisabled?: boolean;
+    testing?: boolean;
+    submitting?: boolean;
+    onTest: () => void;
+    onSubmit: () => void;
+    onApprove?: () => void;
+  };
+  secondBar?: React.ReactNode;
+  artifactRightPanel?: React.ReactNode;
 
   onBack?: () => void;
   persistRailState?: boolean;
@@ -99,6 +112,9 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
   saveLabel,
   validationErrors = [],
   lifecycle,
+  workflow,
+  secondBar,
+  artifactRightPanel,
   onBack,
   persistRailState = true,
 }) => {
@@ -113,7 +129,12 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
     () => [
       {
         id: 'type-badge',
-        label: pickTemplateLabel(TEMPLATE_TYPE_LABELS, TEMPLATE_TYPE_LABELS_EN, draft.type, language),
+        label: pickTemplateLabel(
+          TEMPLATE_TYPE_LABELS,
+          TEMPLATE_TYPE_LABELS_EN,
+          draft.type,
+          language
+        ),
         kind: 'standard',
         group: 'secondary',
         disabled: true,
@@ -154,21 +175,31 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         onClick: lifecycle?.onValidate,
         tooltip:
           validationErrors[0] ||
-          t('templateBuilder.shell.validationPassedTooltip', 'The template passed structural validation'),
+          t(
+            'templateBuilder.shell.validationPassedTooltip',
+            'The template passed structural validation'
+          ),
       },
       ...(lifecycle
         ? [
             {
               id: 'template-version',
-              label: t('templateBuilder.shell.versionHistory', '{{version}} · {{status}} · {{count}} changes', {
-                version: lifecycle.version,
-                status: lifecycle.status,
-                count: lifecycle.historyCount,
-              }),
+              label: t(
+                'templateBuilder.shell.versionHistory',
+                '{{version}} · {{status}} · {{count}} changes',
+                {
+                  version: lifecycle.version,
+                  status: lifecycle.status,
+                  count: lifecycle.historyCount,
+                }
+              ),
               kind: 'standard' as const,
               group: 'secondary' as const,
               onClick: lifecycle.onValidate,
-              tooltip: t('templateBuilder.shell.versionHistoryTooltip', 'Wersja i historia lifecycle'),
+              tooltip: t(
+                'templateBuilder.shell.versionHistoryTooltip',
+                'Wersja i historia lifecycle'
+              ),
             },
           ]
         : []),
@@ -195,7 +226,10 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
               kind: 'standard' as const,
               group: 'secondary' as const,
               onClick: lifecycle.onDelete,
-              tooltip: t('templateBuilder.shell.deleteDraftTooltip', 'Delete an unpublished template'),
+              tooltip: t(
+                'templateBuilder.shell.deleteDraftTooltip',
+                'Delete an unpublished template'
+              ),
             },
           ]
         : []),
@@ -211,16 +245,69 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             },
           ]
         : []),
+      ...(workflow
+        ? [
+            {
+              id: 'test-template-live',
+              label: workflow.testing
+                ? t('templateBuilder.workflow.testing', 'Testing…')
+                : t('templateBuilder.workflow.test', 'Test'),
+              kind: 'standard' as const,
+              group: 'primary' as const,
+              disabled:
+                saving || workflow.testing || workflow.status !== 'draft' || workflow.testDisabled,
+              onClick: workflow.onTest,
+              tooltip: t(
+                'templateBuilder.workflow.testTooltip',
+                'Generate a preview against the selected live organization object'
+              ),
+            },
+            ...(workflow.status === 'submitted' && workflow.onApprove
+              ? [
+                  {
+                    id: 'approve-template-workflow',
+                    label: t('templateBuilder.workflow.approve', 'Approve'),
+                    kind: 'primary' as const,
+                    group: 'primary' as const,
+                    onClick: workflow.onApprove,
+                    tooltip: t(
+                      'templateBuilder.workflow.approveTooltip',
+                      'Approval requires a different organization approver'
+                    ),
+                  },
+                ]
+              : [
+                  {
+                    id: 'submit-template-workflow',
+                    label: workflow.submitting
+                      ? t('templateBuilder.workflow.submitting', 'Submitting…')
+                      : t('templateBuilder.workflow.submit', 'Submit'),
+                    kind: 'primary' as const,
+                    group: 'primary' as const,
+                    disabled:
+                      workflow.status !== 'draft' || !workflow.testPassed || workflow.submitting,
+                    onClick: workflow.onSubmit,
+                    tooltip: workflow.testPassed
+                      ? t('templateBuilder.workflow.submitTooltip', 'Submit for approval')
+                      : t(
+                          'templateBuilder.workflow.testRequired',
+                          'A passing live-data test is required'
+                        ),
+                  },
+                ]),
+          ]
+        : []),
       {
         id: 'save-template',
         label: saving ? t('templateBuilder.shell.saving', 'Saving…') : resolvedSaveLabel,
-        kind: 'primary',
-        group: 'primary',
+        kind: workflow ? 'standard' : 'primary',
+        group: workflow ? 'secondary' : 'primary',
         disabled: saving || !canSave,
         onClick: onSave,
         tooltip: canSave
           ? t('templateBuilder.shell.saveTooltip', 'Save a reusable template')
-          : validationErrors[0] || t('templateBuilder.shell.completeTemplate', 'Complete the template'),
+          : validationErrors[0] ||
+            t('templateBuilder.shell.completeTemplate', 'Complete the template'),
       },
     ],
     [
@@ -232,6 +319,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
       saveLabel,
       validationErrors,
       lifecycle,
+      workflow,
       onSave,
       onActiveRightToolChange,
     ]
@@ -264,6 +352,9 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             onBack={onBack}
             backLabel={t('templateBuilder.shell.back', 'Back')}
             topBarChips={chips}
+            secondBar={secondBar}
+            artifactStudioMode={Boolean(artifactRightPanel)}
+            artifactRightPanelSlot={artifactRightPanel}
             leftRailTitle={
               draft.type === 'doc'
                 ? t('templateBuilder.shell.sections', 'Sections')
@@ -282,7 +373,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
                 onDelete={onDelete}
               />
             }
-            rightRailTools={rightTools}
+            rightRailTools={artifactRightPanel ? [] : rightTools}
             activeRightRailToolId={activeRightTool}
             onActiveRightRailToolChange={(id) =>
               onActiveRightToolChange((id as TemplateRightTool | null) ?? null)

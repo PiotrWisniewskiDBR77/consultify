@@ -11,6 +11,7 @@ export {
   TemplateBuilderFlow,
 } from './TemplateBuilder';
 export { saveTemplate } from './templateBuilderApi';
+export { GovernedTemplateBuilderFlow } from './GovernedTemplateBuilderFlow';
 export { isTemplateBuilderEnabled } from './templateBuilderFlags';
 export * from './templateBuilderModel';
 export { TemplateBuilderShell } from './TemplateBuilderShell';
