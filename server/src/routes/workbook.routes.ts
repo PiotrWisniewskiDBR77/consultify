@@ -791,6 +791,29 @@ function draftFileName(fileName: string): string {
     : `${normalized}-DRAFT.xlsx`;
 }
 
+async function buildCanonicalSchemaForOrganization(
+  schema: WorkbookSchema,
+  organizationId: string,
+  generatedAt?: string
+): Promise<Buffer> {
+  let organization: { name: string } | null | undefined;
+  try {
+    organization = await queryHelpers.queryOne<{ name: string }>(
+      'SELECT name FROM organizations WHERE id = ?',
+      [organizationId]
+    );
+  } catch {
+    organization = null;
+  }
+  const { buildCanonicalWorkbookSchemaBuffer } =
+    await import('../services/export/CanonicalXlsxExportService.js');
+  return buildCanonicalWorkbookSchemaBuffer(schema, {
+    organizationName: organization?.name || 'Organization',
+    source: 'Consultify → Materials → Sheets',
+    generatedAt: generatedAt?.slice(0, 10),
+  });
+}
+
 /**
  * Shared tail for any produced workbook (free-form `/generate` OR parametric
  * `/templates/:id/build`): cache the buffer for download, persist metadata, and
@@ -1244,8 +1267,10 @@ router.post(
             custom,
             rawParams && typeof rawParams === 'object' ? rawParams : {}
           );
-          const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
-          buffer = await buildWorkbookBuffer(customSchema);
+          buffer = await buildCanonicalSchemaForOrganization(
+            customSchema,
+            user.organizationId
+          );
         } catch (err) {
           if (!(err instanceof CustomWorkbookTemplateInvalidError)) throw err;
           logger.error('[WorkbookRoutes] Custom template build failed:', err);
@@ -1336,6 +1361,11 @@ router.post(
         flatParams: parsed.data as Record<string, unknown>,
         organizationName: orgContextForTemplate?.organizationName,
       });
+      result.buffer = await buildCanonicalSchemaForOrganization(
+        result.schema,
+        user.organizationId,
+        result.generatedAt
+      );
     } catch (err) {
       logger.error('[WorkbookRoutes] Template build failed:', err);
       res.status(500).json({
@@ -1437,11 +1467,9 @@ router.post(
       sheets: [{ name: sheetName, columns: blankColumns, rows: blankRows }],
     };
 
-    const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
-
     let buffer: Buffer;
     try {
-      buffer = await buildWorkbookBuffer(schema);
+      buffer = await buildCanonicalSchemaForOrganization(schema, user.organizationId);
     } catch (err) {
       logger.error('[WorkbookRoutes] Failed to build blank workbook:', err);
       res.status(500).json({ error: 'Failed to build blank workbook' });
@@ -1591,8 +1619,6 @@ router.get(
     }
 
     const { classifyBuildError } = await import('../services/workbook/WorkbookBuilder.js');
-    const { buildCanonicalXlsxBuffer, workbookSchemaToCanonicalSheets } =
-      await import('../services/export/CanonicalXlsxExportService.js');
     const schema = JSON.parse(row.schema_json) as WorkbookSchema;
     const governedExport = await beginMaterialExport({
       organizationId: user.organizationId,
@@ -1608,16 +1634,7 @@ router.get(
 
     let buffer: Buffer;
     try {
-      const organization = await queryHelpers.queryOne<{ name: string }>(
-        'SELECT name FROM organizations WHERE id = ?',
-        [user.organizationId]
-      );
-      buffer = await buildCanonicalXlsxBuffer({
-        title: schema.title || row.file_name.replace(/\.xlsx$/i, ''),
-        organizationName: organization?.name || 'Organization',
-        source: 'Consultify → Materials → Sheets',
-        sheets: workbookSchemaToCanonicalSheets(schema),
-      });
+      buffer = await buildCanonicalSchemaForOrganization(schema, user.organizationId);
       const completedReceipt = await completeMaterialExport({
         begun: governedExport,
         organizationId: user.organizationId,
@@ -1854,11 +1871,9 @@ router.post(
     const title = rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
     const schema: WorkbookSchema = { ...sourceSchema, title };
 
-    const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
-
     let buffer: Buffer;
     try {
-      buffer = await buildWorkbookBuffer(schema);
+      buffer = await buildCanonicalSchemaForOrganization(schema, user.organizationId);
     } catch (err) {
       logger.error('[WorkbookRoutes] Failed to build cloned workbook:', err);
       res.status(500).json({

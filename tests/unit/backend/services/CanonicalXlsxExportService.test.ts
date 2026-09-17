@@ -2,10 +2,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
 import {
   buildCanonicalXlsxBuffer,
+  buildCanonicalWorkbookSchemaBuffer,
   CONSULTIFY_SUPPLIER_SCORECARD_PROFILE,
 } from '../../../../server/src/services/export/CanonicalXlsxExportService.js';
 
@@ -62,8 +64,11 @@ describe('CanonicalXlsxExportService', () => {
     const generated = new ExcelJS.Workbook();
     await generated.xlsx.load(bytes);
 
-    expect(generated.worksheets.map((sheet) => sheet.name)).toEqual(['Data', 'Summary']);
-    const data = generated.getWorksheet('Data')!;
+    expect(generated.worksheets.map((sheet) => sheet.name)).toEqual([
+      'Supplier scorecard',
+      'Summary',
+    ]);
+    const data = generated.getWorksheet('Supplier scorecard')!;
     expect(Array.from({ length: 11 }, (_, index) => data.getCell(6, index + 1).value)).toEqual(
       Array.from({ length: 11 }, (_, index) => acceptedData.getCell(6, index + 1).value)
     );
@@ -78,10 +83,14 @@ describe('CanonicalXlsxExportService', () => {
       expect(data.getCell(ref).type).toBe(ExcelJS.ValueType.Formula);
     }
     expect(data.getCell('A14').value).toContain('Tolerance:');
-    expect(data.getCell('A6').font.name).toBe('Aptos');
+    expect(data.getCell('A6').font.name).toBe('Arial');
     expect(data.headerFooter.oddHeader).toContain('Consultify');
     expect(data.headerFooter.oddHeader).toContain('Northwind Manufacturing Ltd.');
     expect(data.conditionalFormattings.length).toBeGreaterThanOrEqual(3);
+    const stylesXml = await (await JSZip.loadAsync(bytes)).file('xl/styles.xml')!.async('string');
+    expect(stylesXml).toContain('<bgColor rgb="FFFCE8E6"/>');
+    expect(stylesXml).toContain('<bgColor rgb="FFE3F5E9"/>');
+    expect(stylesXml).not.toContain('<fgColor rgb="FFFCE8E6"/>');
 
     const summary = generated.getWorksheet('Summary')!;
     for (let row = 4; row <= 9; row += 1) {
@@ -117,5 +126,72 @@ describe('CanonicalXlsxExportService', () => {
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Demand', 'Supply', 'Summary']);
     expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
     expect(workbook.getWorksheet('Summary')!.getCell('B5').type).toBe(ExcelJS.ValueType.Formula);
+  });
+
+  it('only enables the scorecard profile explicitly and preserves supplied values otherwise', async () => {
+    const columns = headers.map((header, index) => ({ key: `c${index}`, header, type: 'text' }));
+    const row = Object.fromEntries(columns.map((column) => [column.key, { value: 'source value' }]));
+    const bytes = await buildCanonicalXlsxBuffer({
+      title: 'User table',
+      organizationName: 'Northwind & Sons',
+      source: 'Table & Studio',
+      sheets: [{ name: 'User data', columns, rows: [row] }],
+    });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(bytes);
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['User data', 'Summary']);
+    expect(workbook.getWorksheet('User data')!.getCell('E2').value).toBe('source value');
+    expect(workbook.getWorksheet('User data')!.headerFooter.oddHeader).toContain(
+      'Northwind && Sons'
+    );
+  });
+
+  it('keeps full WorkbookSchema features on the canonical Materials path', async () => {
+    const bytes = await buildCanonicalWorkbookSchemaBuffer(
+      {
+        title: 'Full schema',
+        sheets: [
+          {
+            name: 'Assumptions',
+            isAssumptions: true,
+            nameKeyColumn: 'key',
+            nameValueColumn: 'value',
+            columns: [
+              { key: 'key', header: 'Driver' },
+              {
+                key: 'value',
+                header: 'Value',
+                type: 'number',
+                validation: { type: 'whole', min: 0, max: 100 },
+              },
+            ],
+            rows: [{ cells: { key: { value: 'Growth rate' }, value: { value: 12 } } }],
+            merges: [{ start: 'A4', end: 'B4' }],
+            conditionalFormatting: [
+              {
+                ref: 'B2:B2',
+                rules: [
+                  {
+                    type: 'cellIs',
+                    operator: 'greaterThan',
+                    formulae: ['10'],
+                    style: { bgColor: 'E3F5E9' },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { organizationName: 'Northwind', source: 'Materials' }
+    );
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(bytes);
+    expect(workbook.getWorksheet('Info')).toBeDefined();
+    const sheet = workbook.getWorksheet('Assumptions')!;
+    expect(sheet.getCell('B2').dataValidation.type).toBe('whole');
+    expect(sheet.getCell('A4').isMerged).toBe(true);
+    expect(sheet.conditionalFormattings).toHaveLength(1);
+    expect(JSON.stringify(workbook.definedNames.model)).toContain('Growth_rate');
   });
 });

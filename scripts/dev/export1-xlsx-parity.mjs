@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import process from 'node:process';
 
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 
 const [acceptedPath, generatedPath] = process.argv.slice(2);
 if (!acceptedPath || !generatedPath) {
@@ -17,14 +18,16 @@ const load = async (file) => {
 };
 const [accepted, generated] = await Promise.all([load(acceptedPath), load(generatedPath)]);
 const acceptedData = accepted.worksheets[0];
-const generatedData = generated.getWorksheet('Data');
+const generatedData = generated.getWorksheet('Supplier scorecard');
 const generatedSummary = generated.getWorksheet('Summary');
 const header = (sheet) =>
   Array.from({ length: 11 }, (_, index) => sheet.getCell(6, index + 1).value);
 const formulaRefs = ['E7', 'H7', 'I7', 'J7'];
 const checks = {
   sheetCount: generated.worksheets.length === accepted.worksheets.length,
-  sheetNames: generated.worksheets.map((sheet) => sheet.name).join('|') === 'Data|Summary',
+  sheetNames:
+    generated.worksheets.map((sheet) => sheet.name).join('|') ===
+    ['Supplier scorecard', 'Summary'].join('|'),
   headers: JSON.stringify(header(generatedData)) === JSON.stringify(header(acceptedData)),
   formats:
     generatedData.getCell('C7').numFmt === acceptedData.getCell('C7').numFmt &&
@@ -43,11 +46,20 @@ const checks = {
     generatedData.views[0]?.state === 'frozen' &&
     generatedData.views[0]?.xSplit === 2 &&
     generatedData.views[0]?.ySplit === 6,
-  aptos: generatedData.getCell('A6').font.name === 'Aptos',
+  portableFont: generatedData.getCell('A6').font.name === 'Arial',
   coBranding:
     generatedData.headerFooter.oddHeader?.includes('Consultify') &&
     generatedData.headerFooter.oddHeader?.includes('Northwind'),
-  zeroCrimson: !JSON.stringify(generated.model).toUpperCase().includes('A50034'),
 };
+const stylesXml = await (await JSZip.loadAsync(await fs.readFile(generatedPath)))
+  .file('xl/styles.xml')
+  .async('string');
+checks.noLegacyCrimson = !stylesXml.toUpperCase().includes('85182F');
+checks.conditionalFormatting =
+  generatedData.conditionalFormattings.map(({ ref }) => ref).join('|') === 'H7:H11|J7:J12|I7:I11';
+checks.libreOfficeDxf =
+  stylesXml.includes('<bgColor rgb="FFFCE8E6"/>') &&
+  stylesXml.includes('<bgColor rgb="FFE3F5E9"/>') &&
+  !stylesXml.includes('<fgColor rgb="FFFCE8E6"/>');
 console.log(JSON.stringify(checks, null, 2));
 if (Object.values(checks).some((value) => !value)) process.exit(1);

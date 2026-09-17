@@ -1,11 +1,14 @@
 import ExcelJS from 'exceljs';
 
+import { buildWorkbookBuffer } from '../workbook/WorkbookBuilder.js';
 import { sanitizeSpreadsheetCellText } from '../workbook/workbookExportSanitizer.js';
 import type { WorkbookSchema } from '../workbook/WorkbookSchema.js';
 
 export const CONSULTIFY_SUPPLIER_SCORECARD_PROFILE = 'consultify-supplier-scorecard';
 
-const FONT = 'Aptos';
+// Arial is the accepted workbook's portable face and remains available when
+// newer Microsoft-only Aptos fonts are not installed (for example LibreOffice).
+const FONT = 'Arial';
 const COLORS = {
   navy: 'FF1B2A41',
   slate: 'FF46556B',
@@ -63,6 +66,12 @@ function solid(argb: string): ExcelJS.Fill {
   return { type: 'pattern', pattern: 'solid', fgColor: { argb } };
 }
 
+/** Excel stores differential solid fills in bgColor. LibreOffice discards a
+ * dxf that uses the normal-cell fgColor representation. */
+function differentialSolid(argb: string): ExcelJS.Fill {
+  return { type: 'pattern', pattern: 'solid', bgColor: { argb } };
+}
+
 function thinBorder(color: string = COLORS.rule): Partial<ExcelJS.Borders> {
   const side: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: color } };
   return { top: side, left: side, bottom: side, right: side };
@@ -98,15 +107,6 @@ function normalized(value: unknown): string {
   return String(value ?? '')
     .trim()
     .toLowerCase();
-}
-
-function isScorecard(sheet: ExportSheet): boolean {
-  return (
-    sheet.columns.length === SCORECARD_HEADERS.length &&
-    sheet.columns.every(
-      (column, index) => normalized(column.header) === normalized(SCORECARD_HEADERS[index])
-    )
-  );
 }
 
 function isDuplicateHeaderRow(sheet: ExportSheet, row: Record<string, ExportCell>): boolean {
@@ -157,6 +157,7 @@ function setPrintAndBrand(
   organizationName: string,
   source: string
 ): void {
+  const headerText = (value: string) => value.replace(/&/g, '&&');
   worksheet.pageSetup = {
     paperSize: 9,
     orientation: 'landscape',
@@ -164,8 +165,14 @@ function setPrintAndBrand(
     fitToWidth: 1,
     fitToHeight: 0,
   };
-  worksheet.headerFooter.oddHeader = `&L&9Consultify&R&9${organizationName}`;
-  worksheet.headerFooter.oddFooter = `&L&9${source} · Confidential&R&9Page &P of &N`;
+  worksheet.headerFooter.oddHeader = `&L&9Consultify&R&9${headerText(organizationName)}`;
+  worksheet.headerFooter.oddFooter = `&L&9${headerText(source)} · Confidential&R&9Page &P of &N`;
+}
+
+function displayedLength(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const text = String(value);
+  return Math.max(...text.split(/\r?\n/).map((line) => line.length), 0);
 }
 
 function addGenericSheet(
@@ -178,11 +185,17 @@ function addGenericSheet(
     views: [{ state: 'frozen', ySplit: 1, showGridLines: false }],
   });
   setPrintAndBrand(worksheet, input.organizationName, input.source);
-  worksheet.columns = sheet.columns.map((column) => ({
-    key: column.key,
-    header: column.header,
-    width: column.width ?? Math.min(32, Math.max(12, column.header.length + 3)),
-  }));
+  worksheet.columns = sheet.columns.map((column) => {
+    const contentWidth = sheet.rows.reduce(
+      (max, row) => Math.max(max, displayedLength(row[column.key]?.value)),
+      column.header.length
+    );
+    return {
+      key: column.key,
+      header: column.header,
+      width: column.width ?? Math.min(40, Math.max(12, contentWidth + 3)),
+    };
+  });
   const header = worksheet.getRow(1);
   header.height = 30;
   header.eachCell({ includeEmpty: true }, (cell) => {
@@ -231,7 +244,7 @@ function addScorecardDataSheet(
   input: CanonicalXlsxInput,
   sheet: ExportSheet
 ): { name: string; firstDataRow: number; lastDataRow: number } {
-  const worksheet = workbook.addWorksheet('Data', {
+  const worksheet = workbook.addWorksheet('Supplier scorecard', {
     views: [{ state: 'frozen', xSplit: 2, ySplit: 6, showGridLines: false }],
   });
   setPrintAndBrand(worksheet, input.organizationName, input.source);
@@ -375,7 +388,7 @@ function addScorecardDataSheet(
         priority: 1,
         style: {
           font: { bold: true, color: { argb: COLORS.critical } },
-          fill: solid(COLORS.criticalSoft),
+          fill: differentialSolid(COLORS.criticalSoft),
         },
       },
       {
@@ -385,7 +398,7 @@ function addScorecardDataSheet(
         priority: 2,
         style: {
           font: { bold: true, color: { argb: COLORS.ok } },
-          fill: solid(COLORS.okSoft),
+          fill: differentialSolid(COLORS.okSoft),
         },
       },
     ],
@@ -409,7 +422,7 @@ function addScorecardDataSheet(
       },
     ],
   });
-  return { name: 'Data', firstDataRow, lastDataRow };
+  return { name: 'Supplier scorecard', firstDataRow, lastDataRow };
 }
 
 function addSummarySheet(
@@ -484,8 +497,7 @@ export async function buildCanonicalXlsxBuffer(input: CanonicalXlsxInput): Promi
   workbook.creator = 'Consultify';
   workbook.created = new Date();
   workbook.calcProperties.fullCalcOnLoad = true;
-  const scorecard =
-    input.profile === CONSULTIFY_SUPPLIER_SCORECARD_PROFILE || isScorecard(input.sheets[0]);
+  const scorecard = input.profile === CONSULTIFY_SUPPLIER_SCORECARD_PROFILE;
   if (scorecard) {
     const data = addScorecardDataSheet(workbook, input, input.sheets[0]);
     addSummarySheet(workbook, input, data, true);
@@ -510,23 +522,13 @@ export async function buildCanonicalXlsxBuffer(input: CanonicalXlsxInput): Promi
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
-export function workbookSchemaToCanonicalSheets(schema: WorkbookSchema): ExportSheet[] {
-  return schema.sheets.map((sheet) => ({
-    name: sheet.name,
-    columns: sheet.columns.map((column) => ({
-      key: column.key,
-      header: column.header,
-      width: column.width,
-      type: column.type,
-      numberFormat: column.numberFormat,
-    })),
-    rows: sheet.rows.map((row) =>
-      Object.fromEntries(
-        Object.entries(row.cells).map(([key, cell]) => [
-          key,
-          { value: cell.value, formula: cell.formula, numberFormat: cell.style?.numberFormat },
-        ])
-      )
-    ),
-  }));
+/** Canonical full-schema path used by every Materials create/download route.
+ * It intentionally delegates the schema materialisation to WorkbookBuilder:
+ * that renderer owns merges, validations, conditional formatting, Info and
+ * named ranges, none of which can survive a lossy rows/columns adapter. */
+export async function buildCanonicalWorkbookSchemaBuffer(
+  schema: WorkbookSchema,
+  meta: { organizationName?: string; source?: string; generatedAt?: string } = {}
+): Promise<Buffer> {
+  return buildWorkbookBuffer(schema, { applyConsultantStyling: true, meta });
 }

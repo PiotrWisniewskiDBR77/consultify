@@ -207,7 +207,7 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
       const row: Record<string, { value?: unknown; formula?: string }> = {};
       for (const field of fields) {
         const raw = data[field.id] ?? data[field.name] ?? null;
-        row[field.id] = { value: raw };
+        row[field.id] = { value: formatFieldValue(raw, field) };
       }
       rows.push(row);
     }

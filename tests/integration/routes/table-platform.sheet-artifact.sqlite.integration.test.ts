@@ -10,13 +10,15 @@ import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
 } from '../helpers/artifactSubstrateSqliteContext.js';
+import {
+  createTestSqliteDatabase,
+  type NodeSqliteCompatDatabase,
+} from '../helpers/nodeSqliteCompat.js';
 
 const sqliteCtx = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const sqlite3 = require('sqlite3') as typeof import('sqlite3');
-  const db = new sqlite3.Database(':memory:');
-  return { db };
+  return { db: null as unknown as NodeSqliteCompatDatabase };
 });
+sqliteCtx.db = createTestSqliteDatabase() as NodeSqliteCompatDatabase;
 
 const queryMock = vi.hoisted(() =>
   vi.fn((sql: string, params?: unknown[]) => {
@@ -137,8 +139,12 @@ vi.mock('../../../server/src/services/tablePlatform/PermissionsService.js', () =
     requireTableAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
     requireFieldAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
     requireRecordAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireFormAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
     requireViewAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireGovernedModelAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
     requireRoles: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireRole: vi.fn().mockResolvedValue({ role: 'owner' }),
+    canAccessBase: vi.fn().mockResolvedValue(true),
     SCHEMA_ROLES: ['owner'],
     DATA_ROLES: ['owner'],
     VIEW_ROLES: ['owner'],
@@ -164,7 +170,7 @@ import tablePlatformRoutes from '../../../server/src/routes/table-platform.route
 
 describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tables)', () => {
   beforeAll(async () => {
-    await applyArtifactSubstrateDdl(sqliteCtx.db);
+    await applyArtifactSubstrateDdl(sqliteCtx.db as never);
   });
 
   beforeEach(async () => {
