@@ -13,5 +13,7 @@ Tabela chroni pełne wartości zakresu, statusu i daty po otwarciu prawego panel
 cztery akcje w jednym rzędzie. Importery testowe zostały przeniesione do obecnego kontraktu, w
 którym przełącznik Galeria/Tabela oraz filtry należą do Menu 2/3 Huba.
 
-Etap 1 jest gotowy do odbioru. Etap 2 wymaga realnej kopii bazy i zrzutów Huba; szczegóły oraz
-bramki są w `RECEIPT.md`.
+Etap 2 potwierdził zachowanie na lokalnej kopii stagingowej bazy: trzy bazy są `approved`, mają
+opisy i realne struktury, a Hub EN pokazuje je w light/dark 1440×900. Podczas pomiaru wykryto i
+naprawiono ściskanie galerii do trzech kolumn przy otwartym preview, które obcinało akcje hover.
+Szczegóły i dowody są w `RECEIPT.md`.

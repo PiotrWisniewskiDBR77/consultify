@@ -932,6 +932,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const galleryView = (
     <TemplatesGalleryView
       templates={filteredData}
+      previewOpen={selectedItem !== null}
       scopeLabel={scopeLabel}
       resolveUsePath={resolveUsePath}
       onUse={(item) => handleUseTemplate(item)}

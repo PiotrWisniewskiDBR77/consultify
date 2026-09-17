@@ -375,6 +375,8 @@ const TemplateTile: React.FC<{
 export interface TemplatesGalleryViewProps {
   /** Fully filtered (search + activeFilters) — rendered as tiles. */
   templates: TemplateItem[];
+  /** Keep every hover action readable when the desktop preview narrows the grid. */
+  previewOpen?: boolean;
   scopeLabel: (scope: TemplateItem['scope']) => string;
   resolveUsePath: (item: TemplateItem) => string | null;
   onUse: (item: TemplateItem) => void;
@@ -385,6 +387,7 @@ export interface TemplatesGalleryViewProps {
 
 export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
   templates,
+  previewOpen = false,
   scopeLabel,
   resolveUsePath,
   onUse,
@@ -407,7 +410,12 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
           {t('rap.templates.galleryEmpty', 'No template matches these filters.')}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-5 sm:grid-cols-2',
+            previewOpen ? '2xl:grid-cols-3' : 'lg:grid-cols-3 2xl:grid-cols-4'
+          )}
+        >
           {templates.map((item) => (
             <TemplateTile
               key={item.id}

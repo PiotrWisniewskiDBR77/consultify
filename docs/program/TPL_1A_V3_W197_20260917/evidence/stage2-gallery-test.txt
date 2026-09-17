@@ -1,0 +1,23 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917
+
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > system SHEET-BASE is read-only, explains unavailable Use, and remains duplicable 69ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > organization copy exposes Build / Edit as a working action 18ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx (2 tests) 90ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  12:44:30
+   Duration  2.07s (transform 346ms, setup 355ms, import 434ms, tests 90ms, environment 975ms)
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  12:44:30
+   Duration  2.07s (transform 346ms, setup 355ms, import 434ms, tests 90ms, environment 975ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917/junit.xml
