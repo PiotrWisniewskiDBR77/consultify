@@ -55052,6 +55052,8 @@
     },
     "value": {
       "days": "{{count}} days",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
       "unassigned": "Unassigned",
       "noData": "no data",
       "none": "none",

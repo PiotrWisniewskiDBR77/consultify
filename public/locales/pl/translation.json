@@ -55422,6 +55422,8 @@
     },
     "value": {
       "days": "{{count}} dni",
+      "days_one": "{{count}} dzień",
+      "days_other": "{{count}} dni",
       "unassigned": "Nieprzypisane",
       "noData": "brak danych",
       "none": "brak",

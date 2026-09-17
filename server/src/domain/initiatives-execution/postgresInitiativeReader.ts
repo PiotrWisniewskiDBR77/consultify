@@ -229,21 +229,33 @@ export class PostgresInitiativeReader {
           ORDER BY updated_at DESC`,
         [organizationId, input.projectIds]
       ),
+      // Wpis 50 part A (DEC-605): read the RELATIONAL `decisions` table, the same
+      // source E4 (`/api/decisions` → DecisionController.getDecisions) uses, NOT
+      // `ie_aggregate_state`. Real orgs keep decisions relationally and hold no
+      // decision aggregates, so the old query counted 0 where E4 counted 19.
+      // Open-status set mirrors the frontend `OPEN_DECISION_STATUSES`; the debtor
+      // is `decision_maker_id`; overdue is `deadline < now` (computed below).
       this.pool.query<{
-        aggregate_id: string;
-        version: number;
-        payload_json: Record<string, any>;
+        id: string;
+        deadline: Date | string | null;
+        decision_maker_id: string | null;
         authority_name: string | null;
-        updated_at: Date | string;
       }>(
-        `SELECT d.aggregate_id,d.version,d.payload_json,d.updated_at,
-                COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')),''),u.email,d.payload_json->>'authorityId') authority_name
-           FROM ie_aggregate_state d
-           LEFT JOIN users u ON u.id=d.payload_json->>'authorityId' AND u.organization_id=d.organization_id
-          WHERE d.organization_id=$1 AND d.aggregate_type IN ('decision','execution_decision')
-            AND UPPER(COALESCE(d.payload_json->>'status',''))='PENDING'
-            AND (cardinality($2::text[])=0 OR d.payload_json->>'projectId'=ANY($2::text[]))
-          ORDER BY NULLIF(d.payload_json->>'dueAt','')::timestamptz NULLS LAST`,
+        `SELECT d.id,d.deadline,d.decision_maker_id,
+                COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')),''),u.email,d.decision_maker_id) authority_name
+           FROM decisions d
+           LEFT JOIN users u ON u.id=d.decision_maker_id AND u.organization_id=d.organization_id
+          WHERE d.organization_id=$1
+            -- Open = E4 semantics. DecisionController.normalizeStatus maps the raw
+            -- column (expired→escalated, deferred/null/unknown→pending, made→approved,
+            -- obsolete/abandoned→superseded) and the frontend keeps OPEN_DECISION_STATUSES
+            -- {PENDING,ESCALATED,OPEN,IN_REVIEW}. Net: every raw status EXCEPT the closed
+            -- outcomes is open. A literal status IN ('PENDING',…) would drop EXPIRED
+            -- (→ESCALATED) and undercount — measured on the staging dump: 16 vs the true 19.
+            AND LOWER(COALESCE(d.status,'')) NOT IN
+                ('approved','made','rejected','cancelled','superseded','obsolete','abandoned','returned_for_clarification')
+            AND (cardinality($2::text[])=0 OR d.project_id=ANY($2::text[]))
+          ORDER BY d.deadline NULLS LAST`,
         [organizationId, input.projectIds]
       ),
     ]);
@@ -268,10 +280,15 @@ export class PostgresInitiativeReader {
     const now = Date.now();
     const debtors = new Map<string, InitiativeWorkReportContent['decisionDebtors'][number]>();
     for (const row of decisionsResult.rows) {
-      const authorityId = String(row.payload_json.authorityId || 'UNASSIGNED');
-      const dueAt = row.payload_json.dueAt ? String(row.payload_json.dueAt) : null;
-      const overdue =
-        dueAt !== null && Number.isFinite(Date.parse(dueAt)) && Date.parse(dueAt) < now;
+      const authorityId = String(row.decision_maker_id || 'UNASSIGNED');
+      const deadlineMs =
+        row.deadline === null || row.deadline === undefined
+          ? NaN
+          : row.deadline instanceof Date
+            ? row.deadline.getTime()
+            : Date.parse(String(row.deadline));
+      const dueAt = Number.isFinite(deadlineMs) ? new Date(deadlineMs).toISOString() : null;
+      const overdue = dueAt !== null && deadlineMs < now;
       const current = debtors.get(authorityId) ?? {
         authorityId,
         authorityName: row.authority_name || authorityId,
@@ -319,8 +336,8 @@ export class PostgresInitiativeReader {
       })),
       ...decisionsResult.rows.map((row) => ({
         sourceType: 'decision',
-        sourceId: row.aggregate_id,
-        version: row.version,
+        sourceId: row.id,
+        version: 1,
         capturedAt: generatedAt,
         freshness: 'CURRENT',
         formula: null,

@@ -66,6 +66,41 @@ const safeText = (value: unknown, fallback: string) => {
   return text || fallback;
 };
 
+/** Human labels for the raw template codes (Wpis 50 part B — no raw enum in the PDF). */
+const TEMPLATE_LABELS: Record<InitiativeWorkReportTemplate, string> = {
+  EXECUTIVE_SUMMARY: 'Executive summary',
+  PORTFOLIO_STATUS: 'Portfolio status',
+  DECISION_BACKLOG: 'Decision backlog',
+  DELIVERY_RISKS: 'Delivery risks',
+  WEEKLY_TEAM_UPDATE: 'Weekly team update',
+  WORKLOAD_CAPACITY: 'Workload & capacity',
+};
+
+const templateLabel = (id: InitiativeWorkReportTemplate) => TEMPLATE_LABELS[id] ?? id;
+
+/** Initiative status codes (IN_EXECUTION, DRAFT, UNKNOWN, …) → readable words. */
+const statusLabel = (status: unknown) =>
+  safeText(status, 'UNKNOWN')
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+/** UI date format (date-only) so the PDF matches the on-screen tables. */
+const formatDate = (value: string | null | undefined, fallback = 'not set') => {
+  if (!value) return fallback;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : fallback;
+};
+
+/** UI timestamp format for the generated-at line. */
+const formatTimestamp = (value: string) => {
+  const ms = Date.parse(value);
+  if (!Number.isFinite(ms)) return value;
+  const iso = new Date(ms).toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
+};
+
 export function selectInitiativeWorkReportSections(content: InitiativeWorkReportContent) {
   const recentThreshold = new Date(content.generatedAt).getTime() - 7 * 86_400_000;
   switch (content.templateId) {
@@ -137,7 +172,7 @@ export async function renderInitiativeWorkReportPdf(
     .font(PDF_FONT.regular)
     .fontSize(9)
     .fillColor('#64748b')
-    .text(`Generated ${new Date(content.generatedAt).toISOString()} · ${content.templateId}`);
+    .text(`Generated ${formatTimestamp(content.generatedAt)} · ${templateLabel(content.templateId)}`);
   doc.moveDown(1.2);
   doc.font(PDF_FONT.bold).fontSize(13).fillColor('#0f172a').text('Portfolio summary');
   doc.font(PDF_FONT.regular).fontSize(10).fillColor('#334155');
@@ -145,7 +180,7 @@ export async function renderInitiativeWorkReportPdf(
   doc.text(`Pending decisions: ${content.summary.pendingDecisions}`);
   doc.text(`Overdue decisions: ${content.summary.overdueDecisions}`);
   for (const [status, count] of Object.entries(content.summary.byStatus)) {
-    doc.text(`${safeText(status, 'UNKNOWN')}: ${count}`);
+    doc.text(`${statusLabel(status)}: ${count}`);
   }
 
   if (content.templateId === 'WORKLOAD_CAPACITY' && content.workload) {
@@ -220,7 +255,7 @@ export async function renderInitiativeWorkReportPdf(
         .fontSize(9)
         .fillColor('#475569')
         .text(
-          `Pending ${debtor.pending} · overdue ${debtor.overdue} · oldest due ${debtor.oldestDueAt ?? 'not set'}`
+          `Pending ${debtor.pending} · overdue ${debtor.overdue} · oldest due ${formatDate(debtor.oldestDueAt)}`
         );
     }
   }

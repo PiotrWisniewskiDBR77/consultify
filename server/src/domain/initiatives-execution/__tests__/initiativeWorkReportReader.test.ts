@@ -3,8 +3,20 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { PostgresInitiativeReader } from '../postgresInitiativeReader.js';
 
+// Wpis 50 part D (DEC-605): the work-report reader must count decisions from the
+// RELATIONAL `decisions` table (the source E4 uses), not `ie_aggregate_state`.
+// Restoring the aggregate query turns these red: the SQL assertion below and the
+// `decision_maker_id` grouping both only hold for the relational source.
+const DECISION_SQL_MARKERS = [
+  'FROM decisions',
+  'd.organization_id=$1',
+  'd.project_id=ANY($2::text[])',
+  'NOT IN',
+  'returned_for_clarification',
+];
+
 describe('initiative work report reader', () => {
-  it('uses tenant/project predicates and groups pending decision debt by authority', async () => {
+  it('reads decisions from the relational table and groups open debt by decision maker', async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({
@@ -25,16 +37,10 @@ describe('initiative work report reader', () => {
       .mockResolvedValueOnce({
         rows: [
           {
-            aggregate_id: 'decision-1',
-            version: 3,
-            payload_json: {
-              authorityId: 'manager-1',
-              status: 'PENDING',
-              dueAt: '2020-01-01T00:00:00.000Z',
-              projectId: 'project-1',
-            },
+            id: 'decision-1',
+            deadline: new Date('2020-01-01T00:00:00.000Z'),
+            decision_maker_id: 'manager-1',
             authority_name: 'Manager One',
-            updated_at: '2026-09-14T10:00:00.000Z',
           },
         ],
       });
@@ -49,14 +55,113 @@ describe('initiative work report reader', () => {
     expect(query).toHaveBeenCalledTimes(2);
     expect(query.mock.calls.every((call) => call[1][0] === 'org-1')).toBe(true);
     expect(query.mock.calls.every((call) => call[1][1][0] === 'project-1')).toBe(true);
+    // Initiatives still come from the aggregate store; decisions from `decisions`.
+    expect(query.mock.calls[0][0]).toContain("aggregate_type='initiative'");
+    const decisionSql = query.mock.calls[1][0] as string;
+    for (const marker of DECISION_SQL_MARKERS) expect(decisionSql).toContain(marker);
+    expect(decisionSql).not.toContain('ie_aggregate_state');
+
     expect(result.content.summary).toMatchObject({
       initiatives: 1,
       pendingDecisions: 1,
       overdueDecisions: 1,
     });
     expect(result.content.decisionDebtors).toEqual([
-      expect.objectContaining({ authorityId: 'manager-1', pending: 1, overdue: 1 }),
+      {
+        authorityId: 'manager-1',
+        authorityName: 'Manager One',
+        pending: 1,
+        overdue: 1,
+        oldestDueAt: '2020-01-01T00:00:00.000Z',
+      },
     ]);
     expect(result.sources).toHaveLength(2);
+    expect(result.sources[1]).toMatchObject({
+      sourceType: 'decision',
+      sourceId: 'decision-1',
+      version: 1,
+    });
+  });
+
+  it('groups multiple decisions per maker, counts only past deadlines overdue, keeps the oldest', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'd-1',
+            deadline: new Date('2020-01-01T00:00:00.000Z'),
+            decision_maker_id: 'manager-1',
+            authority_name: 'Manager One',
+          },
+          {
+            id: 'd-2',
+            deadline: new Date('2999-01-01T00:00:00.000Z'),
+            decision_maker_id: 'manager-1',
+            authority_name: 'Manager One',
+          },
+          {
+            id: 'd-3',
+            deadline: new Date('2021-01-01T00:00:00.000Z'),
+            decision_maker_id: 'manager-2',
+            authority_name: 'Manager Two',
+          },
+        ],
+      });
+    const reader = new PostgresInitiativeReader({ query } as never);
+
+    const result = await reader.buildInitiativeWorkReport('org-1', {
+      title: 'Backlog',
+      templateId: 'DECISION_BACKLOG',
+      projectIds: [],
+    });
+
+    expect(result.content.summary.pendingDecisions).toBe(3);
+    expect(result.content.summary.overdueDecisions).toBe(2);
+    // Sorted by overdue desc, then pending desc → manager-1 (2 pending) first.
+    expect(result.content.decisionDebtors).toEqual([
+      {
+        authorityId: 'manager-1',
+        authorityName: 'Manager One',
+        pending: 2,
+        overdue: 1,
+        oldestDueAt: '2020-01-01T00:00:00.000Z',
+      },
+      {
+        authorityId: 'manager-2',
+        authorityName: 'Manager Two',
+        pending: 1,
+        overdue: 1,
+        oldestDueAt: '2021-01-01T00:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('falls back to UNASSIGNED and treats a null deadline as not overdue', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [{ id: 'd-x', deadline: null, decision_maker_id: null, authority_name: null }],
+      });
+    const reader = new PostgresInitiativeReader({ query } as never);
+
+    const result = await reader.buildInitiativeWorkReport('org-1', {
+      title: 'Backlog',
+      templateId: 'DECISION_BACKLOG',
+      projectIds: [],
+    });
+
+    expect(result.content.summary).toMatchObject({ pendingDecisions: 1, overdueDecisions: 0 });
+    expect(result.content.decisionDebtors).toEqual([
+      {
+        authorityId: 'UNASSIGNED',
+        authorityName: 'UNASSIGNED',
+        pending: 1,
+        overdue: 0,
+        oldestDueAt: null,
+      },
+    ]);
   });
 });
