@@ -93,6 +93,11 @@ export interface ReportIntent {
     charts?: boolean;
     icons?: boolean;
   };
+  /** Engine knobs (RB-1): merged into config and read by buildStyleGuidance. */
+  verbosity?: 'concise' | 'standard' | 'detailed' | 'comprehensive';
+  writingStyle?: 'formal' | 'professional' | 'consultative' | 'persuasive';
+  illustrationLevel?: 'minimal' | 'moderate' | 'extensive';
+  customTone?: string;
 }
 
 export interface ReportStyling {

@@ -136,6 +136,41 @@ const ILLUSTRATION_GUIDANCE: Record<IllustrationLevel, string> = {
     'Include multiple examples, case studies, and real-world scenarios for every major point. Use analogies and comparisons to make concepts relatable.',
 };
 
+// Report-level intent knobs (RB-1): saved by the editor under config.intent
+// (PUT /report-builder/:id/intent) and previously never read by the prompt builder.
+const AUDIENCE_GUIDANCE: Record<string, string> = {
+  executive:
+    'Write for executives: lead with outcomes, ROI and risk; keep methodology in the background.',
+  board: 'Write for a board: emphasize governance, oversight and decision-ready conclusions.',
+  technical: 'Write for technical readers: include systems, metrics and implementation detail.',
+  operational:
+    'Write for operational teams: emphasize processes, owners and executable next steps.',
+  mixed: 'Write for a mixed audience: balance executive summary language with supporting detail.',
+};
+
+const INTENT_TONE_GUIDANCE: Record<string, string> = {
+  consulting: 'Use an advisory consulting tone: frame findings as expert recommendations.',
+  neutral: 'Use a neutral, factual tone: describe findings without persuasive framing.',
+  decisive: 'Use a decisive tone: state conclusions and calls to action directly.',
+  academic: 'Use an academic tone: precise, objective, with measured claims.',
+};
+
+function buildIntentGuidance(config?: Record<string, unknown>): string {
+  if (!config) return '';
+
+  const guidance: string[] = [];
+  const audience = String(config.audience || '');
+  if (AUDIENCE_GUIDANCE[audience]) {
+    guidance.push(`AUDIENCE: ${AUDIENCE_GUIDANCE[audience]}`);
+  }
+  const tone = String(config.tone || '');
+  if (INTENT_TONE_GUIDANCE[tone]) {
+    guidance.push(`REGISTER: ${INTENT_TONE_GUIDANCE[tone]}`);
+  }
+
+  return guidance.length > 0 ? '\n\nINTENT REQUIREMENTS:\n' + guidance.join('\n') : '';
+}
+
 /**
  * Build style guidance from report config
  * These settings control the overall "voice" and detail level of the generated content
@@ -517,9 +552,16 @@ function getSectionPrompt(
   // Build settings guidance string from blockSettings
   const settingsGuidance = buildSettingsGuidance(sectionType, blockSettings);
 
-  // Get report-level style settings from config
+  // Get report-level style settings from config. Knobs and intent live under
+  // config.intent (PUT /:id/intent); merge over the top level so saved knobs
+  // reach the prompt instead of silently falling back to defaults.
   const reportConfig = report.config || {};
-  const styleGuidance = buildStyleGuidance(reportConfig);
+  const intentAwareConfig: Record<string, unknown> = {
+    ...reportConfig,
+    ...((reportConfig as any)?.intent || {}),
+  };
+  const styleGuidance = buildStyleGuidance(intentAwareConfig);
+  const intentGuidance = buildIntentGuidance(intentAwareConfig);
   const outputLanguage =
     String((reportConfig as any)?.language || 'en').toLowerCase() === 'pl' ? 'Polish' : 'English';
 
@@ -530,7 +572,8 @@ Target length: ${lengthGuidance}
 ${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
 ${sourceContext ? `\nUser-provided source data and context:\n${sourceContext}` : ''}
 ${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}
-${styleGuidance}`;
+${styleGuidance}
+${intentGuidance}`;
 
   switch (sectionType) {
     case 'cover':

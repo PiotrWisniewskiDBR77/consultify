@@ -451,6 +451,9 @@ const ReportBuilderBlockTypesScreen = React.lazy(
   () => import('./screens/report-builder-block-types')
 );
 const ReportBuilderTemplatesScreen = React.lazy(() => import('./screens/report-builder-templates'));
+const ReportBuilderVoiceDetailScreen = React.lazy(
+  () => import('./screens/report-builder-voice-detail')
+);
 const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-danger-token-parity'));
 const SettingsCrimsonNeutralizedScreen = React.lazy(
   () => import('./screens/settings-crimson-neutralized')
@@ -2409,6 +2412,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'report-builder-templates': {
     label: '§27-todo: TemplatesManager (Report Builder → Templates) → StandardTable',
     render: () => <ReportBuilderTemplatesScreen />,
+  },
+  'report-builder-voice-detail': {
+    label:
+      'RB-1 (Wpis 76) — REALNY <SettingsPanel> (Report Builder → Content): karta „Voice & Detail" z żywymi pokrętłami silnika (verbosity/writing style/examples/custom tone). &lang=en|pl &theme=light|dark',
+    render: () => <ReportBuilderVoiceDetailScreen />,
   },
   'model-catalog-table': {
     label: '§27-todo: ModelCatalogTable (SuperAdmin → Model Registry) → StandardTable',

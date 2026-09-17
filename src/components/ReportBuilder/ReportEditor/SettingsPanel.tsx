@@ -1110,6 +1110,97 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
             </SectionCard>
 
+            {/* Voice & Detail (RB-1): engine knobs with no UI control before */}
+            <SectionCard
+              title={t('reportBuilder.settingsPanel.voiceDetail', 'Voice & Detail')}
+              icon={<Layers className="w-4 h-4" />}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {t('reportBuilder.settingsPanel.verbosity', 'Verbosity')}
+                  </label>
+                  <select
+                    value={intent.verbosity || 'standard'}
+                    onChange={(e) => onIntentChange({ verbosity: e.target.value } as any)}
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
+                  >
+                    <option value="concise">
+                      {t('reportBuilder.settingsPanel.verbosityConcise', 'Concise')}
+                    </option>
+                    <option value="standard">
+                      {t('reportBuilder.settingsPanel.verbosityStandard', 'Standard')}
+                    </option>
+                    <option value="detailed">
+                      {t('reportBuilder.settingsPanel.verbosityDetailed', 'Detailed')}
+                    </option>
+                    <option value="comprehensive">
+                      {t('reportBuilder.settingsPanel.verbosityComprehensive', 'Exhaustive')}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {t('reportBuilder.settingsPanel.writingStyle', 'Writing style')}
+                  </label>
+                  <select
+                    value={intent.writingStyle || 'professional'}
+                    onChange={(e) => onIntentChange({ writingStyle: e.target.value } as any)}
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
+                  >
+                    <option value="formal">
+                      {t('reportBuilder.settingsPanel.writingStyleFormal', 'Formal')}
+                    </option>
+                    <option value="professional">
+                      {t('reportBuilder.settingsPanel.writingStyleProfessional', 'Professional')}
+                    </option>
+                    <option value="consultative">
+                      {t('reportBuilder.settingsPanel.writingStyleConsultative', 'Consultative')}
+                    </option>
+                    <option value="persuasive">
+                      {t('reportBuilder.settingsPanel.writingStylePersuasive', 'Persuasive')}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {t('reportBuilder.settingsPanel.illustrationLevel', 'Examples')}
+                  </label>
+                  <select
+                    value={intent.illustrationLevel || 'moderate'}
+                    onChange={(e) => onIntentChange({ illustrationLevel: e.target.value } as any)}
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
+                  >
+                    <option value="minimal">
+                      {t('reportBuilder.settingsPanel.illustrationLevelMinimal', 'Minimal')}
+                    </option>
+                    <option value="moderate">
+                      {t('reportBuilder.settingsPanel.illustrationLevelModerate', 'Moderate')}
+                    </option>
+                    <option value="extensive">
+                      {t('reportBuilder.settingsPanel.illustrationLevelExtensive', 'Extensive')}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-c-text-secondary mb-1">
+                    {t('reportBuilder.settingsPanel.customTone', 'Custom tone (optional)')}
+                  </label>
+                  <input
+                    type="text"
+                    value={intent.customTone || ''}
+                    onChange={(e) => onIntentChange({ customTone: e.target.value } as any)}
+                    placeholder={t(
+                      'reportBuilder.settingsPanel.customTonePlaceholder',
+                      'E.g., direct and data-driven'
+                    )}
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
+                  />
+                </div>
+              </div>
+            </SectionCard>
+
             {/* Content Coherence (REQ-5) */}
             <SectionCard
               title={t('reportBuilder.settingsPanel.contentCoherence', 'Content Coherence')}
