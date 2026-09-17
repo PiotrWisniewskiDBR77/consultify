@@ -173,6 +173,18 @@ export function evaluatePublishPackGate(
   return { allowed: true };
 }
 
+/**
+ * OP-2-lite (Wpis 85, wiersz planu 65 / U-27): liczba kryteriów pakietu bez
+ * surowych wartości. Preferuje realną listę `criteria`, potem `criteriaCount`,
+ * a gdy żadne nie daje skończonej liczby → „—" (placeholder neutralny
+ * językowo, ten sam co pola `source`/`roles` obok) — NIGDY „undefined" w DOM.
+ */
+export function formatPackCriteriaCount(detail: AuditPackDetail): string {
+  const fromList = Array.isArray(detail.criteria) ? detail.criteria.length : 0;
+  const count = fromList || detail.criteriaCount;
+  return typeof count === 'number' && Number.isFinite(count) ? String(count) : '—';
+}
+
 export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   packs,
   loading,
@@ -407,7 +419,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'rights',
           label: isPolish ? 'Prawa' : 'Rights',
-          value: detail.rightsStatus || (isPolish ? 'Nie zweryfikowano' : 'Not verified'),
+          value: detail.rightsStatus || '—',
         },
         {
           id: 'roles',
@@ -421,14 +433,12 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
           label: isPolish ? 'Taksonomia ustaleń' : 'Finding taxonomy',
           value: detail.findingTaxonomy.length
             ? detail.findingTaxonomy.map((t) => t.label).join(', ')
-            : isPolish
-              ? 'Brak zdefiniowanej taksonomii'
-              : 'No taxonomy defined',
+            : '—',
         },
         {
           id: 'criteriaCount',
           label: isPolish ? 'Liczba kryteriów' : 'Criteria count',
-          value: String(detail.criteria.length || detail.criteriaCount),
+          value: formatPackCriteriaCount(detail),
           mono: true,
         },
       ]

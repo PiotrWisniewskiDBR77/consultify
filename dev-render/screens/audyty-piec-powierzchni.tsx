@@ -1276,6 +1276,29 @@ Api.post = (async (url: string, data: any) => {
   return (originalPost as any)(url, data);
 }) as typeof Api.post;
 
+// OrgContext/UserProfileMenu/flags sięgają po surowe `window.fetch` (nie po
+// singleton `Api`) — bez tej zapadki harness loguje 404 na
+// `/api/organizations/current` i `/api/v8/admin/flags` (bledyKonsoli≠0).
+// Przepuszczamy `/locales/`, resztę `/api/` gasimy benigniczną kopertą.
+// Wzorzec 1:1 z `dev-render/screens/rg1-audits-generate-owner.tsx`.
+const realFetch = window.fetch.bind(window);
+window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.href
+        : (input as Request).url;
+  if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
+  if (url.includes('/api/')) {
+    return new Response(JSON.stringify({ data: [], items: [], organizations: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  return realFetch(input as RequestInfo, init);
+}) as typeof window.fetch;
+
 // ---------------------------------------------------------------------------
 // Ekran — montuje REALNY AuditsMethodHub wewnątrz REALNEGO AppProviders.
 // `?tab=` czyta bezpośrednio `useSearchParams` w hubie (BrowserRouter żyje w

@@ -47,6 +47,7 @@ import {
   AuditLibraryTab,
   evaluateApproveExpertGate,
   evaluatePublishPackGate,
+  formatPackCriteriaCount,
 } from '../tabs/AuditLibraryTab';
 import {
   AUDIT_VERIFICATION_STATES,
@@ -422,6 +423,84 @@ describe('AuditLibraryTab', () => {
       );
       expect(evaluatePublishPackGate({ ...approvedDraft, expertApprovedBy: null }, false, true).allowed).toBe(false);
       expect(evaluatePublishPackGate(approvedDraft, false, true).allowed).toBe(true);
+    });
+  });
+
+  // OP-2-lite (Wpis 85, wiersz planu 65 / U-27): podgląd pakietu przestaje
+  // pokazywać surowe wartości. Trzy pola (`Rights`, `Finding taxonomy`,
+  // `Criteria count`) mają realną wartość albo „—", NIGDY „undefined" ani
+  // technicznego placeholdera typu „No taxonomy defined"/„Not verified".
+  describe('OP-2-lite — podgląd pakietu bez surowych wartości', () => {
+    /** Wartość komórki „Value" wiersza tabeli właściwości o danej etykiecie. */
+    function propertyValue(label: string): string | null {
+      const labelCell = screen.getByText(label);
+      const row = labelCell.closest('tr');
+      const cells = row?.querySelectorAll('td');
+      return cells && cells.length > 1 ? (cells[1].textContent ?? '').trim() : null;
+    }
+
+    it('formatPackCriteriaCount: realna liczba z listy, potem z criteriaCount, a gdy brak → „—" (nigdy „undefined")', () => {
+      const base = packDetailFixture(verifiedInternalProcedure);
+      expect(
+        formatPackCriteriaCount({
+          ...base,
+          criteria: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] as AuditPackDetail['criteria'],
+          criteriaCount: 99,
+        })
+      ).toBe('3');
+      expect(formatPackCriteriaCount({ ...base, criteria: [], criteriaCount: 5 })).toBe('5');
+      expect(
+        formatPackCriteriaCount({ ...base, criteria: [], criteriaCount: undefined as unknown as number })
+      ).toBe('—');
+      expect(
+        formatPackCriteriaCount({ ...base, criteria: [], criteriaCount: NaN })
+      ).toBe('—');
+    });
+
+    it('brak danych → „—" w Rights / Finding taxonomy / Criteria count, a „undefined" nigdy nie trafia do DOM', async () => {
+      const bareDetail = {
+        ...packDetailFixture(verifiedInternalProcedure),
+        findingTaxonomy: [],
+        rightsStatus: null,
+        criteria: [],
+        criteriaCount: undefined,
+      } as unknown as AuditPackDetail;
+      mockedGetPack.mockResolvedValue(bareDetail);
+      const { container } = renderTab({ packs: [verifiedInternalProcedure] });
+
+      fireEvent.click(screen.getByText('Client QMS Procedure'));
+      await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-1'));
+      await waitFor(() => expect(propertyValue('Criteria count')).toBe('—'));
+
+      expect(propertyValue('Rights')).toBe('—');
+      expect(propertyValue('Finding taxonomy')).toBe('—');
+      expect(propertyValue('Criteria count')).toBe('—');
+      expect(container.textContent).not.toMatch(/undefined/);
+      expect(container.textContent).not.toMatch(/No taxonomy defined/i);
+      expect(container.textContent).not.toMatch(/Not verified/i);
+    });
+
+    it('obecne dane → realna wartość (liczba kryteriów, taksonomia, prawa), nie placeholder', async () => {
+      const richDetail: AuditPackDetail = {
+        ...packDetailFixture(verifiedInternalProcedure),
+        findingTaxonomy: [
+          { key: 'major', label: 'Major nonconformity', nonConforming: true },
+          { key: 'minor', label: 'Minor nonconformity', nonConforming: true },
+        ],
+        rightsStatus: 'licensed',
+        criteria: [],
+        criteriaCount: 5,
+      };
+      mockedGetPack.mockResolvedValue(richDetail);
+      renderTab({ packs: [verifiedInternalProcedure] });
+
+      fireEvent.click(screen.getByText('Client QMS Procedure'));
+      await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-1'));
+      await waitFor(() => expect(propertyValue('Criteria count')).toBe('5'));
+
+      expect(propertyValue('Rights')).toBe('licensed');
+      expect(propertyValue('Finding taxonomy')).toBe('Major nonconformity, Minor nonconformity');
+      expect(propertyValue('Criteria count')).toBe('5');
     });
   });
 });
