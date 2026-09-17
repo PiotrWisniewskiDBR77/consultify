@@ -39347,6 +39347,13 @@
       "completed": "Zakończone",
       "pastNeedsUpdate": "Po terminie — wymaga aktualizacji"
     },
+    "lifecycle": {
+      "scheduled": "Zaplanowane",
+      "inProgress": "W trakcie",
+      "minutesToApprove": "Protokół do akceptacji",
+      "needsActions": "Wymaga działań",
+      "closed": "Zamknięte"
+    },
     "sync": {
       "loading": "Ładowanie przestrzeni",
       "workspace": "Wspólna przestrzeń"

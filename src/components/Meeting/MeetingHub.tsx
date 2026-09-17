@@ -15,14 +15,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
-import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
-import {
-  MENU_3_ALL_DOT_CLASS,
-  MENU_3_BADGE_ACTIVE,
-  MENU_3_BADGE_INACTIVE,
-  MENU_3_CHIP_ACTIVE,
-  MENU_3_CHIP_INACTIVE,
-} from '@/components/shared/ModuleMenu3';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -41,6 +33,13 @@ import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { translateOperatorMessage } from './meetingOperatorBriefI18n';
+import {
+  MEETING_LIFECYCLE_ALL_DOT_CLASS,
+  MEETING_LIFECYCLE_DOT_CLASS,
+  MEETING_LIFECYCLE_LABEL_KEY,
+  MEETING_LIFECYCLE_STATES,
+  resolveMeetingLifecycleState,
+} from './meetingLifecycle';
 
 type FollowUpStatus = 'open' | 'done';
 export type MeetingStatus = 'scheduled' | 'completed';
@@ -65,6 +64,10 @@ export interface MeetingItem {
   decisions: string[];
   followUps: FollowUpItem[];
   status: MeetingStatus;
+  // DEC-596: pięć stanów cyklu życia z `meetings.lifecycle_state` (migracja
+  // 20262301). Opcjonalne — środowisko bez migracji nie zwraca pola, a
+  // `resolveMeetingLifecycleState` odtwarza je z legacy `status`.
+  lifecycleState?: string;
   // FIX-M-2 (DEC-58 sceptyk): server includes this on every meeting row
   // (meetingService.ts mapMeeting → createdBy) but it was never declared
   // here, so nothing in this file could gate on it. Needed to mirror the
@@ -97,6 +100,11 @@ export const MeetingHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  // DEC-596 Menu 3: aktywny chip stanu cyklu życia ('all' = bez tego filtra).
+  // Osobny stan, NIE `activeFilters` — lejek tabeli stosuje `activeFilters`
+  // drugi raz po `row[filter.column]` (pułapka M12-F02), a stan cyklu życia
+  // nie jest polem wiersza.
+  const [lifecycleChip, setLifecycleChip] = useState<string>('all');
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -178,6 +186,11 @@ export const MeetingHub: React.FC = () => {
       );
     }
 
+    // M12-F02: ten sam predykat, którym licznik chipa liczy wiersze.
+    if (lifecycleChip !== 'all') {
+      data = data.filter((item) => resolveMeetingLifecycleState(item) === lifecycleChip);
+    }
+
     for (const filter of activeFilters) {
       if (filter.column === 'status') {
         data = data.filter((item) => item.status === filter.value);
@@ -200,7 +213,7 @@ export const MeetingHub: React.FC = () => {
     }
 
     return data;
-  }, [activeFilters, meetings, searchQuery]);
+  }, [activeFilters, lifecycleChip, meetings, searchQuery]);
 
   /**
    * M12-F02: `FilterableTable` applies `activeFilters` a SECOND time, matching
@@ -320,18 +333,13 @@ export const MeetingHub: React.FC = () => {
     [meetings.length, t]
   );
 
-  const counts = useMemo(() => {
-    return {
-      all: meetings.length,
-      upcoming: meetings.filter((m) => isUpcoming(m)).length,
-      followUp: meetings.filter((item) => item.followUps.some((x) => x.status === 'open')).length,
-      completed: meetings.filter((item) => item.status === 'completed').length,
-      // CB-04/RB-009/RV-024: past meetings never auto-marked completed —
-      // distinct from `followUp` (open action-item follow-ups on ANY
-      // meeting) and from `completed` (genuinely closed out).
-      pastNeedsUpdate: meetings.filter((m) => deriveMeetingLifecycle(m) === 'past_needs_update')
-        .length,
-    };
+  const lifecycleCounts = useMemo(() => {
+    const totals: Record<string, number> = { all: meetings.length };
+    for (const state of MEETING_LIFECYCLE_STATES) totals[state] = 0;
+    for (const meeting of meetings) {
+      totals[resolveMeetingLifecycleState(meeting)] += 1;
+    }
+    return totals;
   }, [meetings]);
 
   const columns: StandardTableColumn[] = useMemo(
@@ -434,116 +442,48 @@ export const MeetingHub: React.FC = () => {
     [isPolish, t]
   );
 
-  const commandRowContent = useMemo(() => {
-    const chips = [
+  /**
+   * DEC-596 Menu 3 (Wpis 41a): pięć stanów cyklu życia + „All", każdy z
+   * licznikiem czytanym z trwałego `meetings.lifecycle_state`. Sankcjonowany
+   * kanał `chips`/`activeChip`/`onChipChange` fasady (nie `commandRowContent`,
+   * który jest luką ucieczkową do wygaszenia) — chipy h-7 z licznikami, zero
+   * widoczne, aktywny wypełniony (TRIADA_KANON §Menu 3).
+   */
+  const menu3Chips = useMemo(
+    () => [
       {
         id: 'all',
         label: t('meeting.counters.all', 'All'),
-        count: counts.all,
-        active: !activeFilters.length,
-        onClick: () => setActiveFilters([]),
+        count: lifecycleCounts.all ?? 0,
+        dot: MEETING_LIFECYCLE_ALL_DOT_CLASS,
       },
-      {
-        id: 'upcoming',
-        label: t('meeting.counters.upcoming', 'Upcoming'),
-        count: counts.upcoming,
-        active: activeFilters.some((f) => f.column === 'upcoming'),
-        onClick: () =>
-          setActiveFilters([
-            {
-              id: 'upcoming:true',
-              column: 'upcoming',
-              value: 'true',
-              label: t('meeting.counters.upcoming', 'Upcoming'),
-            },
-          ]),
-      },
-      {
-        // CB-04/RB-009/RV-024: distinct from `followUp` below (open
-        // action-item follow-ups on any meeting) — this is meetings whose
-        // time has passed but were never marked completed.
-        id: 'pastNeedsUpdate',
-        label: t('meeting.counters.pastNeedsUpdate', 'Past — needs update'),
-        count: counts.pastNeedsUpdate,
-        active: activeFilters.some((f) => f.column === 'pastNeedsUpdate'),
-        onClick: () =>
-          setActiveFilters([
-            {
-              id: 'pastNeedsUpdate:true',
-              column: 'pastNeedsUpdate',
-              value: 'true',
-              label: t('meeting.counters.pastNeedsUpdate', 'Past — needs update'),
-            },
-          ]),
-      },
-      {
-        id: 'followUp',
-        label: t('meeting.counters.followUp', 'Needs follow-up'),
-        count: counts.followUp,
-        active: activeFilters.some((f) => f.column === 'followUp'),
-        onClick: () =>
-          setActiveFilters([
-            {
-              id: 'followUp:open',
-              column: 'followUp',
-              value: 'open',
-              label: t('meeting.counters.followUp', 'Needs follow-up'),
-            },
-          ]),
-      },
-      {
-        id: 'completed',
-        label: t('meeting.counters.completed', 'Completed'),
-        count: counts.completed,
-        active: activeFilters.some((f) => f.id === 'status:completed'),
-        onClick: () =>
-          setActiveFilters([
-            {
-              id: 'status:completed',
-              column: 'status',
-              value: 'completed',
-              label: t('meeting.counters.completed', 'Completed'),
-            },
-          ]),
-      },
-    ];
+      ...MEETING_LIFECYCLE_STATES.map((state) => ({
+        id: state,
+        label: t(MEETING_LIFECYCLE_LABEL_KEY[state]),
+        count: lifecycleCounts[state] ?? 0,
+        dot: MEETING_LIFECYCLE_DOT_CLASS[state],
+      })),
+    ],
+    [lifecycleCounts, t]
+  );
 
-    // Canonical Menu 3 layout: left preset chips + right AI action in one justify-between row.
-    // NOTE: commandRowRightContent is voided by ModuleNavBar (line 188), so we embed both
-    // sides here via the canonical Menu3Row shell (left/right slots over MENU_3 tokens).
-    return (
-      <Menu3Row
-        left={chips.map((chip) => (
-          <button
-            key={chip.id}
-            type="button"
-            onClick={chip.onClick}
-            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-          >
-            {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
-            <span>{chip.label}</span>
-            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-              {chip.count}
-            </span>
-          </button>
-        ))}
-        right={
-          <button
-            type="button"
-            disabled={!briefingMeeting}
-            onClick={() => {
-              if (briefingMeeting) openMeetingDocument(briefingMeeting);
-            }}
-            className={getMenu3AiButtonClass(false)}
-            title={t('meeting.actions.operatorBrief', 'Operator brief')}
-          >
-            <Sparkles size={12} />
-            <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
-          </button>
-        }
-      />
-    );
-  }, [activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
+  const menu3Right = useMemo(
+    () => (
+      <button
+        type="button"
+        disabled={!briefingMeeting}
+        onClick={() => {
+          if (briefingMeeting) openMeetingDocument(briefingMeeting);
+        }}
+        className={getMenu3AiButtonClass(false)}
+        title={t('meeting.actions.operatorBrief', 'Operator brief')}
+      >
+        <Sparkles size={12} />
+        <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
+      </button>
+    ),
+    [briefingMeeting, openMeetingDocument, t]
+  );
 
   const resetDraft = () => {
     setDraft({
@@ -869,7 +809,10 @@ export const MeetingHub: React.FC = () => {
             )}
           </div>
         }
-        commandRowContent={commandRowContent}
+        chips={menu3Chips}
+        activeChip={lifecycleChip}
+        onChipChange={setLifecycleChip}
+        menu3Right={menu3Right}
         viewModes={['table', 'calendar']}
       >
         {loading ? (

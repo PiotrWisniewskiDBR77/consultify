@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import {
+  isMeetingLifecycleState,
+  type MeetingLifecycleState,
+} from './meeting/meetingAgendaService.js';
 import { ensureMeetingBoundaryTables } from './meetingBoundary/meetingBoundaryService.js';
 
 export type MeetingStatus = 'scheduled' | 'completed';
@@ -63,6 +67,7 @@ export interface MeetingRecord {
   decisions: string[];
   followUps: MeetingFollowUp[];
   status: MeetingStatus;
+  lifecycleState: MeetingLifecycleState;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -90,6 +95,7 @@ type MeetingRow = {
   agenda_json: string | null;
   decisions_json: string | null;
   status: string | null;
+  lifecycle_state?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -144,6 +150,13 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
     decisions: safeJsonArray(row.decisions_json),
     followUps,
     status: row.status === 'completed' ? 'completed' : 'scheduled',
+    // Migration 20262301 backfills with the same rule; a NULL/absent column
+    // (environment without the migration) must not surface as an unknown state.
+    lifecycleState: isMeetingLifecycleState(row.lifecycle_state)
+      ? row.lifecycle_state
+      : row.status === 'completed'
+        ? 'closed'
+        : 'scheduled',
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
