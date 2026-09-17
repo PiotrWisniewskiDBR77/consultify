@@ -173,9 +173,22 @@ export async function prepareForReview(
     { type: 'EVIDENCE_ATTACHED', unitId: '1A', level: 2, payload: { evidenceId: `asm-evidence-${sessionId}`, evidenceType: 'document', strength: 'E2' } },
     { type: 'DECISION_APPROVED', unitId: '1A', level: 4, payload: { decisionId: `asm-target-${sessionId}`, subject: 'target_level', decidedValue: 4, rationale: 'Approved target' } },
   ].entries()) {
+    const sessionResponse = await request.get(`${API}/api/method/sessions/${sessionId}`, {
+      headers,
+    });
+    if (!sessionResponse.ok()) {
+      throw new Error(
+        `read session before event ${index}: ${sessionResponse.status()} ${await sessionResponse.text()}`
+      );
+    }
+    const sessionBody = (await sessionResponse.json()) as { session?: { version?: unknown } };
+    const expectedVersion = sessionBody.session?.version;
+    if (!Number.isInteger(expectedVersion) || Number(expectedVersion) < 1) {
+      throw new Error(`read session before event ${index}: invalid version ${String(expectedVersion)}`);
+    }
     const response = await request.post(`${API}/api/method/sessions/${sessionId}/events`, {
       headers: { ...headers, 'Idempotency-Key': `asm:${sessionId}:event:${index}` },
-      data: event,
+      data: { ...event, expectedVersion },
     });
     if (!response.ok()) throw new Error(`event ${index}: ${response.status()} ${await response.text()}`);
   }
