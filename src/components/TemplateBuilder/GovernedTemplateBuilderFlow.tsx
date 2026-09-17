@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TFunction } from 'i18next';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
@@ -374,7 +374,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
           id: 'metadata',
           label: t('templateBuilder.workflow.metadata'),
           defaultOpen: true,
-          content: (
+          children: (
             <div className="space-y-2">
               {detailRow(t('templateBuilder.workflow.name'), seed.name)}
               {detailRow(t('templateBuilder.workflow.format'), type)}
@@ -402,7 +402,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
           id: 'formatting',
           label: t('templateBuilder.workflow.formatting'),
           defaultOpen: true,
-          content: (
+          children: (
             <div className="space-y-1 text-xs text-c-text-secondary">
               <p className="font-medium text-c-text">{t('templateBuilder.workflow.brand')}</p>
               <p>{t('templateBuilder.workflow.formattingInherited')}</p>
@@ -412,7 +412,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
         {
           id: 'sources',
           label: t('templateBuilder.workflow.sources'),
-          content: (
+          children: (
             <p className="text-xs text-c-text-secondary">
               {t('templateBuilder.workflow.sourceCatalog')}
             </p>
@@ -421,7 +421,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
         {
           id: 'assignment',
           label: t('templateBuilder.workflow.assignment'),
-          content: (
+          children: (
             <label className="flex items-center gap-2 text-xs text-c-text">
               <input
                 type="checkbox"
@@ -436,7 +436,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
         {
           id: 'approval',
           label: t('templateBuilder.workflow.approval'),
-          content: (
+          children: (
             <div>
               {detailRow(
                 t('templateBuilder.workflow.author'),
@@ -454,7 +454,7 @@ export const GovernedTemplateBuilderFlow: React.FC<{ onClose: () => void }> = ({
         {
           id: 'history',
           label: t('templateBuilder.workflow.history'),
-          content: (
+          children: (
             <p className="text-xs text-c-text-secondary">
               {workflow
                 ? t('templateBuilder.workflow.draftCreated', { version: workflow.version })

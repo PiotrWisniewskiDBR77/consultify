@@ -18,8 +18,11 @@
  * MUTACJE (zmierzone ręcznie 06.09.2026 przy tym dyżurze — patrz meldunek):
  *  1. przywrócenie przycisku „Pokaż robocze" w `rightControls`
  *     → „zero przycisków Pokaż robocze/Filtry" na CZERWONO (5 zakładek),
- *  2. zdjęcie `disabled` z CTA „Nowy wzorzec"
- *     → „Biblioteka: CTA zamrożony" na CZERWONO.
+ *  2. przywrócenie `disabled` na CTA „Nowy wzorzec" po jego świadomym
+ *     odmrożeniu → test DEC-558 aktywnego pełnego artefaktu na CZERWONO.
+ *
+ * [ODMROZENIE 11_MATERIALS DEC-558] CTA zostało odmrożone po akceptacji
+ * makiety 16.09; kontrakt broni teraz aktywnego wejścia do governed buildera.
  */
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -109,7 +112,10 @@ vi.mock('../TemplateProvenanceApprovalDialog', () => ({
 vi.mock('@/components/shared/CreateFormatModeLauncher', () => ({
   CreateFormatModeLauncher: () => null,
 }));
-vi.mock('@/components/TemplateBuilder', () => ({ TemplateBuilderFlow: () => null }));
+vi.mock('@/components/TemplateBuilder', () => ({
+  TemplateBuilderFlow: () => null,
+  GovernedTemplateBuilderFlow: () => <div data-testid="governed-template-builder-flow" />,
+}));
 vi.mock('@/components/AIChat/KimiWorkspace/ExceleParametricTemplates', () => ({
   ExceleParametricTemplates: () => null,
 }));
@@ -307,13 +313,16 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
     expect(screen.queryByTestId('view-mode-grid')).toBeNull();
   });
 
-  it('Biblioteka wzorców: CTA „Nowy wzorzec" jest ZAMROŻONY (disabled + powód)', async () => {
+  it('[ODMROZENIE 11_MATERIALS DEC-558] Biblioteka wzorców: CTA otwiera pełny governed builder', async () => {
     renderHubAt('/materials?tab=templates');
     await screen.findByTestId('reports-presentations-hub');
 
     const cta = screen.getByTestId('outputs-new-btn');
-    expect(cta).toBeDisabled();
-    expect(cta).toHaveAttribute('title', 'Template creation lands in wave 2');
+    expect(cta).not.toBeDisabled();
+    expect(cta).not.toHaveAttribute('title', 'Template creation lands in wave 2');
+
+    fireEvent.click(cta);
+    expect(await screen.findByTestId('governed-template-builder-flow')).toBeInTheDocument();
   });
 
   it.each(TABS.slice(0, 4))('zakładka $nazwa: CTA NIE jest zamrożony', async ({ url }) => {
