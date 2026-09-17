@@ -212,30 +212,34 @@ const isOpaqueIdentifier = (value: string) =>
  * „Anna Kowalska", „Marek Nowak", „Katarzyna Wójcik").
  */
 const actorLabelWithOrigin = (
-  value: string,
+  value: unknown,
   t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
 ): { label: string; userContent: boolean } => {
-  const fromDirectory = value ? resolveMemberName?.(value) : null;
+  const actorValue = typeof value === 'string' ? value : '';
+  const fromDirectory = actorValue ? resolveMemberName?.(actorValue) : null;
   if (fromDirectory) return { label: fromDirectory, userContent: true };
-  const roleLabel = executionReviewRoleLabel(value, t);
+  const roleLabel = executionReviewRoleLabel(actorValue, t);
   if (roleLabel) return { label: roleLabel, userContent: false };
-  const fromDemo = executionReviewPeople[value];
+  const fromDemo = executionReviewPeople[actorValue];
   if (fromDemo) return { label: fromDemo, userContent: true };
-  if (isOpaqueIdentifier(value)) {
-    return { label: memberNameOrUnknown(resolveMemberName, value, isPolish), userContent: false };
+  if (isOpaqueIdentifier(actorValue)) {
+    return {
+      label: memberNameOrUnknown(resolveMemberName, actorValue, isPolish),
+      userContent: false,
+    };
   }
   return {
-    label: value
+    label: actorValue
       .replace(/[-_]+/g, ' ')
       .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase()),
-    userContent: Boolean(value),
+    userContent: Boolean(actorValue),
   };
 };
 
 const actorLabel = (
-  value: string,
+  value: unknown,
   t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
@@ -512,7 +516,7 @@ const mapRuntimeWorkRows = (
     title: item.title,
     kind: 'TASK' as const,
     status: item.status,
-    owner: item.assigneeId,
+    owner: typeof item.assigneeId === 'string' ? item.assigneeId : '',
     dueAt: formatDate(item.dueAt),
     rawDueAt: item.dueAt ?? null,
     version: item.version,
@@ -528,7 +532,7 @@ const mapRuntimeWorkRows = (
     title: item.title,
     kind: 'DECISION' as const,
     status: item.status,
-    owner: item.authorityId,
+    owner: typeof item.authorityId === 'string' ? item.authorityId : '',
     dueAt: formatDate(item.dueAt),
     rawDueAt: item.dueAt ?? null,
     version: item.version,
@@ -583,23 +587,26 @@ export const mapRealTaskRows = (
   }));
 
 const businessLabel = (
-  value: string | null | undefined,
+  value: unknown,
   fallback: string,
   t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
 ) => {
-  if (!value) return fallback;
+  const actorValue = typeof value === 'string' ? value : '';
+  if (!actorValue) return fallback;
   // Katalog organizacji ma pierwszeństwo — panel podglądu i tabela obok muszą
   // pisać o tej samej osobie tak samo (2026-09-05).
-  const fromDirectory = resolveMemberName?.(value);
+  const fromDirectory = resolveMemberName?.(actorValue);
   if (fromDirectory) return fromDirectory;
   // Osoba ma nazwisko w katalogu; `\b\w` nie podnosi liter spoza ASCII, więc
   // granica liczona po Unicode (ten sam kontrakt co `actorLabel` wyżej).
-  const fromDemo = executionReviewRoleLabel(value, t) ?? executionReviewPeople[value];
+  const fromDemo = executionReviewRoleLabel(actorValue, t) ?? executionReviewPeople[actorValue];
   if (fromDemo) return fromDemo;
-  if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
-  return value
+  if (isOpaqueIdentifier(actorValue)) {
+    return memberNameOrUnknown(resolveMemberName, actorValue, isPolish);
+  }
+  return actorValue
     .replace(/^(task|decision|case|initiative)[-_:]/i, '')
     .replace(/[-_]+/g, ' ')
     .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());

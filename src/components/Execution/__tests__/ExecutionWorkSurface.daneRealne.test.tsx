@@ -102,6 +102,12 @@ import { ExecutionWorkSurface } from '../ExecutionWorkSurface';
 const dzien = (przesuniecie: number) =>
   new Date(Date.now() + przesuniecie * 86_400_000).toISOString();
 
+const NORTHWIND_PROJECT = 'Operational Excellence Programme';
+const NORTHWIND_TASK_TITLE = 'Agree the shuttle safety case with the works council';
+const NORTHWIND_TASK_DESCRIPTION =
+  'The council asked for a written position on manual intervention inside the shuttle aisle.';
+const NORTHWIND_RUNTIME_TITLE = 'Runtime task without an assignee';
+
 /** 24 zadania — tyle, żeby „ile zwróciło API, tyle jest wierszy" było twierdzeniem, nie zbiegiem. */
 const ZADANIA = Array.from({ length: 24 }, (_, i) => ({
   id: `task-${i}`,
@@ -170,6 +176,83 @@ describe('1.12-R1 (B) — źródło danych zakładki Praca', () => {
     expect(wiersz).toBeTruthy();
     // Zadanie 3 ma termin 5 dni wstecz.
     expect(within(wiersz as HTMLElement).getByText('+5')).toBeInTheDocument();
+  });
+
+  it('nie wywraca zakładki Praca dla zadania Northwind z pustym właścicielem i pustym źródłem', async () => {
+    listExecutionCases.mockResolvedValue({
+      cases: [
+        {
+          executionCaseId: 'northwind-case',
+          initiativeId: 'northwind-init',
+          initiativeTitle: 'Northwind readiness',
+        },
+      ],
+    });
+    readExecutionWork.mockResolvedValue({
+      tasks: [
+        {
+          taskId: 'northwind-runtime-task',
+          title: NORTHWIND_RUNTIME_TITLE,
+          status: 'OPEN',
+          assigneeId: null,
+          dueAt: '2026-08-15T10:00:00.000Z',
+          version: 1,
+          evidenceRefs: [],
+        },
+      ],
+      decisions: [],
+    });
+    getTasks.mockResolvedValue([
+      {
+        id: 'f9c386c1-8b09-5276-a5a0-4452f1e283b8',
+        projectId: '6174636d-c4f2-552d-9a5a-d2695738f9bc',
+        projectName: NORTHWIND_PROJECT,
+        organizationId: '468b234c-66c4-54e1-b626-5e0fb3a92f6a',
+        title: NORTHWIND_TASK_TITLE,
+        source: 'manual',
+        sourceType: null,
+        sourceId: null,
+        description: NORTHWIND_TASK_DESCRIPTION,
+        status: 'blocked',
+        priority: 'critical',
+        assigneeId: null,
+        backupAssigneeId: null,
+        assignee: null,
+        reporterId: '08c54d75-5260-57b1-9db6-a30aed89a587',
+        reporter: {
+          id: '08c54d75-5260-57b1-9db6-a30aed89a587',
+          firstName: 'James',
+          lastName: 'Whitfield',
+          avatarUrl: null,
+        },
+        dueDate: '2026-08-14T17:00:00.000Z',
+        startedAt: null,
+        estimatedHours: 36,
+        checklist: [],
+        attachments: [],
+        tags: [],
+        customStatusId: null,
+        createdAt: '2026-08-03T08:00:00.000Z',
+        updatedAt: '2026-09-11T19:09:55.694Z',
+        completedAt: null,
+        taskType: 'execution',
+        budgetAllocated: 0,
+        budgetSpent: 0,
+        riskRating: 'high',
+        acceptanceCriteria: 'Safety case signed by the works council chair.',
+        blockingIssues: '',
+        stepPhase: 'design',
+        why: '',
+        ownerId: null,
+      },
+    ]);
+
+    zamontuj();
+
+    await waitFor(() => expect(screen.getByText(NORTHWIND_TASK_TITLE)).toBeInTheDocument());
+    expect(screen.getByText(NORTHWIND_RUNTIME_TITLE)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('RouteErrorBoundary');
+    expect(document.body.textContent).not.toContain('Cannot read properties of null');
   });
 
   it('preset „Po terminie" zawęża tabelę do 8 zadań, a nie do wszystkich', async () => {
