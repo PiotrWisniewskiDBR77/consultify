@@ -18,9 +18,11 @@ import { z } from 'zod';
 
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { emitChatProjectsChanged } from '../realtime/chatProjectsRealtime.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { canReadOrgPersonPrivateFields, shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -702,7 +704,20 @@ router.get('/:id/members', verifyToken, async (req: Request, res: Response) => {
        ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, m.added_at`,
       [id]
     )) as any;
-    const members = Array.isArray(rows) ? rows : rows?.rows || [];
+    const viewerRole = getRequestAccessRole(req as any);
+    const canReadEmail = canReadOrgPersonPrivateFields(viewerRole);
+    const members = (Array.isArray(rows) ? rows : rows?.rows || []).map((row: any) => {
+      const shaped = shapeOrgPersonPayload({ id: row.user_id, userId: row.user_id, email: row.email, name: row.name }, viewerRole);
+      return {
+        user_id: row.user_id,
+        userId: row.user_id,
+        role: row.role,
+        added_at: row.added_at,
+        name: shaped.displayName,
+        displayName: shaped.displayName,
+        ...(canReadEmail ? { email: row.email } : {}),
+      };
+    });
     return res.json({ members, myRole: myRole || (project.user_id === userId ? 'owner' : null) });
   } catch (error: any) {
     logger.error('[ChatProjects] List members error:', error?.message);

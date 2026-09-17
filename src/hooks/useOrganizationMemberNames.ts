@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
-import { isAdminOwnerOrSuperAdminRole, normalizeAppRole } from '@/utils/roleGuards';
+import { normalizeAppRole } from '@/utils/roleGuards';
 
 /**
  * Identyfikator osoby → NAZWISKO, z realnej listy członków organizacji.
@@ -94,7 +94,7 @@ export function useOrganizationMemberNames(): MemberNameResolver {
   const organizationId = currentOrganization?.id ?? '';
   const userId = currentUser?.id ?? '';
   const role = normalizeAppRole(currentUser?.role);
-  const canReadMemberDirectory = isAdminOwnerOrSuperAdminRole(currentUser?.role);
+  const canReadMemberDirectory = Boolean(organizationId && userId);
   const scopeKey = `${organizationId}:${userId}:${role}`;
   const [memberNames, setMemberNames] = useState<{
     scopeKey: string;

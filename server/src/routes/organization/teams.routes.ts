@@ -10,7 +10,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { getRequestAccessRole } from '../../middleware/requestAccess.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { shapeOrgNestedUser } from '../../services/orgPersonPayloadPolicy.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { buildInPlaceholders } from '../../utils/queryHelpers.js';
@@ -94,6 +96,7 @@ router.get(
       }
     }
 
+    const viewerRole = getRequestAccessRole(req);
     const teamsWithMembers = teams.map((t) => {
       const members = membersByTeam.get(t.id) || [];
 
@@ -115,13 +118,13 @@ router.get(
         members: members.map((m) => ({
           userId: m.user_id,
           role: m.role,
-          user: {
+          user: shapeOrgNestedUser({
             id: m.user_id,
             firstName: m.first_name,
             lastName: m.last_name,
             email: m.email,
             avatarUrl: m.avatar_url,
-          },
+          }, viewerRole),
         })),
         color: t.color || 'violet',
         defaultProjectRole: t.default_project_role || 'TEAM_MEMBER',
@@ -189,6 +192,7 @@ router.get(
       email: string;
       avatar_url: string | null;
     }>(membersSql, [id]);
+    const viewerRole = getRequestAccessRole(req);
 
     return res.json({
       id: team.id,
@@ -207,13 +211,13 @@ router.get(
       createdAt: team.created_at,
       members: members.map((m) => ({
         userId: m.user_id,
-        user: {
+        user: shapeOrgNestedUser({
           id: m.user_id,
           firstName: m.first_name,
           lastName: m.last_name,
           email: m.email,
           avatarUrl: m.avatar_url,
-        },
+        }, viewerRole),
         role: m.role,
         joinedAt: m.joined_at,
       })),

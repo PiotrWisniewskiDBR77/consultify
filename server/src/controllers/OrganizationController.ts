@@ -8,6 +8,8 @@
 import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
+import { shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import type {
@@ -242,7 +244,9 @@ export class OrganizationController {
         return;
       }
 
-      res.json(members);
+      const actor = members.find((m) => m.user_id === userId);
+      const viewerRole = req.user?.role === 'SUPERADMIN' ? 'SUPERADMIN' : actor?.role ?? getRequestAccessRole(req as any);
+      res.json(members.map((member) => shapeOrgPersonPayload(member as any, viewerRole)));
     }
   );
 

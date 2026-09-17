@@ -88,7 +88,6 @@ router.put(
  */
 router.get(
   '/:orgId/members',
-  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   OrganizationController.getMembers
 );
 
