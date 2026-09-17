@@ -10236,6 +10236,7 @@
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transcript approved.",
+      "transcriptDiscardFailed": "The transcript could not be discarded. Try again.",
       "pleaseApproveTheTranscriptBefore": "Please approve the transcript before continuing.",
       "failedToAddAttachment": "Failed to add attachment.",
       "failedToImproveAnswer": "Failed to improve answer",
@@ -10650,6 +10651,7 @@
       "start": "Start",
       "continue": "Continue",
       "fixResubmit": "Fix & resubmit",
+      "sendBack": "Send back for correction",
       "noLinkedDocuments": "No linked documents"
     },
     "initiativePreview": {
@@ -11553,6 +11555,7 @@
       }
     },
     "drd": {
+      "level": "Level",
       "whyThisMatters": {
         "title": "Why we ask this",
         "ariaLabel": "Why this question"
@@ -11565,6 +11568,7 @@
         "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
         "levelRamp": "Level ramp",
         "areasAssessed": "Areas assessed",
+        "targetLegend": "Target level",
         "readOnly": {
           "axisNotFound": "This axis's matrix can't be drawn: axis {{axisNumber}} structure is not present in the methodology pinned to this Output.",
           "overflowHint_one": "{{count}} more column to the right — scroll to see it.",
@@ -11779,6 +11783,7 @@
         "add": "Add",
         "previous": "Previous",
         "next": "Next",
+        "aiGuidanceCta": "AI guidance (why it matters + how to score)",
         "generatingGuidance": "Generating guidance…",
         "consultantGuidance": "Consultant guidance",
         "whyItMatters": "Why it matters: ",

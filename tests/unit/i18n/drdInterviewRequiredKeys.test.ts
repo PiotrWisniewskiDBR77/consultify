@@ -20,12 +20,21 @@ function sourceFiles(root: string): string[] {
 }
 
 function hasKey(root: unknown, key: string): boolean {
-  let value: unknown = root;
-  for (const segment of key.split('.')) {
-    if (!value || typeof value !== 'object' || !(segment in value)) return false;
-    value = (value as Record<string, unknown>)[segment];
+  const segments = key.split('.');
+  const leaf = segments.pop();
+  if (!leaf) return false;
+  let parent: unknown = root;
+  for (const segment of segments) {
+    if (!parent || typeof parent !== 'object' || !(segment in parent)) return false;
+    parent = (parent as Record<string, unknown>)[segment];
   }
-  return typeof value === 'string' || (value !== null && typeof value === 'object');
+  if (!parent || typeof parent !== 'object') return false;
+  const value = (parent as Record<string, unknown>)[leaf];
+  if (typeof value === 'string' || (value !== null && typeof value === 'object')) return true;
+  return ['one', 'few', 'many', 'other'].some(
+    (suffix) =>
+      typeof (parent as Record<string, unknown>)[`${leaf}_${suffix}`] === 'string'
+  );
 }
 
 describe('DRD and Interview i18n contract', () => {
@@ -34,7 +43,9 @@ describe('DRD and Interview i18n contract', () => {
     const keys = new Set<string>();
     for (const file of sourceRoots.flatMap(sourceFiles)) {
       const source = fs.readFileSync(file, 'utf8');
-      for (const match of source.matchAll(literalKey)) keys.add(match[1]);
+      for (const match of source.matchAll(literalKey)) {
+        if (!match[1].includes('…')) keys.add(match[1]);
+      }
     }
 
     const missing = [...keys].flatMap((key) => [

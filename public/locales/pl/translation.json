@@ -9429,6 +9429,7 @@
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transkrypcja zatwierdzona.",
+      "transcriptDiscardFailed": "Nie udało się odrzucić transkrypcji. Spróbuj ponownie.",
       "pleaseApproveTheTranscriptBefore": "Zatwierdź transkrypcję przed przejściem dalej.",
       "failedToAddAttachment": "Nie udało się dodać załącznika.",
       "failedToImproveAnswer": "Nie udało się ulepszyć odpowiedzi",
@@ -9843,6 +9844,7 @@
       "start": "Rozpocznij",
       "continue": "Kontynuuj",
       "fixResubmit": "Popraw",
+      "sendBack": "Odeślij do poprawy",
       "noLinkedDocuments": "Brak powiązań"
     },
     "initiativePreview": {
@@ -10746,6 +10748,7 @@
       }
     },
     "drd": {
+      "level": "Poziom",
       "whyThisMatters": {
         "title": "Dlaczego o to pytamy",
         "ariaLabel": "Dlaczego to pytanie"
@@ -10758,6 +10761,7 @@
         "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
         "levelRamp": "Skala poziomów",
         "areasAssessed": "Ocenione obszary",
+        "targetLegend": "Poziom docelowy",
         "readOnly": {
           "axisNotFound": "Macierzy tej osi nie da się narysować: struktura osi {{axisNumber}} nie występuje w metodyce przypiętej do tego Outputu.",
           "overflowHint_one": "Jeszcze {{count}} kolumna po prawej — przewiń w bok.",
@@ -10974,6 +10978,7 @@
         "add": "Dodaj",
         "previous": "Poprzedni",
         "next": "Następny",
+        "aiGuidanceCta": "Podpowiedź AI (dlaczego to ważne + jak oceniać)",
         "generatingGuidance": "Generuję podpowiedź…",
         "consultantGuidance": "Podpowiedź konsultanta",
         "whyItMatters": "Dlaczego to ważne: ",
