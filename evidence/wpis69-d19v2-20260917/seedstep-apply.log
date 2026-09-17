@@ -1,0 +1,11 @@
+=== APPLY #1 Atelier (ateliertoys-demo-session-1bd9863714-mu1knjd0) ===
+[98-align] org=ateliertoys-demo-session-1bd9863714-mu1knjd0 (Atelier Toys) mode=APPLY :: aligned=20, already=1, skipped=1, wrote=20
+RESULT {"aligned":20,"already":1,"skipped":1,"wrote":20}
+
+=== APPLY #2 Atelier (idempotency) ===
+[98-align] org=ateliertoys-demo-session-1bd9863714-mu1knjd0 (Atelier Toys) mode=APPLY :: aligned=0, already=21, skipped=1, wrote=0
+RESULT {"aligned":0,"already":21,"skipped":1,"wrote":0}
+
+=== APPLY Northwind (already consistent) ===
+[98-align] org=468b234c-66c4-54e1-b626-5e0fb3a92f6a (Northwind Manufacturing Ltd.) mode=APPLY :: aligned=0, already=8, skipped=0, wrote=0
+RESULT {"aligned":0,"already":8,"skipped":0,"wrote":0}

@@ -53,6 +53,11 @@
  * - No migration, no DDL. Only `ie_aggregate_state.payload_json` is touched.
  * - Idempotent: a second `--apply` finds every row already in the right group and
  *   changes 0 rows.
+ * - The connection guard `resolveReachableDatabaseUrl()` refuses a loopback
+ *   (localhost/127.0.0.1) DATABASE_URL unless `NODE_ENV=test`, so an operator
+ *   pointing this script at a local dump copy must run it under `NODE_ENV=test`
+ *   (or pass an explicitly reachable non-loopback URL); there is no
+ *   `allowLocalHost` escape hatch in this script.
  * - ZERO writes to staging/demo from this task: running it there is the CTO's
  *   deployment-22 runbook. The proof below is dry-run + apply on a local copy.
  *
@@ -218,7 +223,7 @@ async function reportDbr77ForDecision(client: pg.Client): Promise<void> {
   }
 }
 
-interface OrgCounts {
+export interface OrgCounts {
   align: number;
   'skip-aligned': number;
   'skip-short-circuit': number;
@@ -236,7 +241,7 @@ function emptyCounts(): OrgCounts {
   };
 }
 
-async function processOrg(
+export async function processOrg(
   client: pg.Client,
   orgId: string,
   apply: boolean

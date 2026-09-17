@@ -1,0 +1,12 @@
+=== DBR77 dry-run via seed step (must be REFUSED, allowed=false) ===
+2026-09-17 12:38:00:380 [32minfo[39m: [32m[align-initiative-aggregate] org=a3e05d4a-5397-419d-b486-8e44366c0063 name=DBR77 allowed=NO (refused) mode=DRY-RUN :: would-align=4 already-aligned=2 short-circuit(REJECTED/PROPOSED)=0 no-stage=0[39m
+[98-align] org=a3e05d4a-5397-419d-b486-8e44366c0063 (DBR77) mode=DRY-RUN :: aligned=4, already=2, skipped=0
+RESULT {"aligned":4,"already":2,"skipped":0,"wrote":0}
+
+=== DBR77 divergent rows: id | status | aggregate lifecycleState ===
+bb9038c3-d5e0-41e4-8d3d-f695d9c045f9 | APPROVED | APPROVED_BACKLOG
+8df2897b-5993-4ee3-82ba-746a0bc6b166 | APPROVED | APPROVED_BACKLOG
+a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--initiative | IN_EXECUTION | EXECUTING
+e3b0a66a-dc86-4730-84e0-cdffb66cbed6 | PENDING_APPROVAL | APPROVED_BACKLOG
+84baaa08-5249-42e4-a292-3921e67d29d1 | PENDING_APPROVAL | APPROVED_BACKLOG
+7eb944f9-c5b9-4162-8bff-23b0d620f9f3 | PENDING_APPROVAL | APPROVED_BACKLOG
