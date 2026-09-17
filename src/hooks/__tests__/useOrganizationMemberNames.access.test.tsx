@@ -29,20 +29,23 @@ describe('useOrganizationMemberNames restricted directory access and cache scope
     storeState.currentUser = { id: 'admin-a', role: 'ADMIN' };
   });
 
-  it('does not request the restricted organization directory for an ordinary user', async () => {
+  it('requests the organization directory for an ordinary user and uses the minimal payload', async () => {
     storeState.currentUser = { id: 'user-a', role: 'USER' };
+    getOrganizationMembers.mockResolvedValueOnce([
+      { userId: 'person-a', displayName: 'Alice Member', avatarUrl: 'avatar-a' },
+    ]);
     const { result } = renderHook(() => useOrganizationMemberNames());
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(getOrganizationMembers).not.toHaveBeenCalled();
-    expect(result.current('person-a')).toBeNull();
+    await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalledWith('org-a'));
+    await waitFor(() => expect(result.current('person-a')).toBe('Alice Member'));
   });
 
   it('clears cached names synchronously across organization, user, and role transitions', async () => {
     getOrganizationMembers
       .mockResolvedValueOnce([{ user_id: 'person-a', first_name: 'Alice', last_name: 'A' }])
       .mockResolvedValueOnce([{ user_id: 'person-b', first_name: 'Bob', last_name: 'B' }])
-      .mockResolvedValueOnce([{ user_id: 'person-c', first_name: 'Carol', last_name: 'C' }]);
+      .mockResolvedValueOnce([{ user_id: 'person-c', first_name: 'Carol', last_name: 'C' }])
+      .mockResolvedValueOnce([{ userId: 'person-d', displayName: 'Dana D' }]);
     const { result, rerender } = renderHook(() => useOrganizationMemberNames());
 
     await waitFor(() => expect(result.current('person-a')).toBe('Alice A'));
@@ -66,8 +69,8 @@ describe('useOrganizationMemberNames restricted directory access and cache scope
       rerender();
     });
     expect(result.current('person-c')).toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(getOrganizationMembers).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(result.current('person-d')).toBe('Dana D'));
+    expect(getOrganizationMembers).toHaveBeenCalledTimes(4);
   });
 
   it('ignores a late member-directory response from the previous organization scope', async () => {

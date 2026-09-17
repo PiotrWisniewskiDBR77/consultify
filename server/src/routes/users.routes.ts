@@ -70,7 +70,7 @@ router.get(
     const limit = Math.min(parseInt(String(req.query.limit || '10')), 50);
 
     if (!organizationId) {
-      return res.status(400).json({ error: 'Organization context required' });
+      return res.status(400).json({ error: 'ORG_CONTEXT_REQUIRED' });
     }
 
     if (query.length < 2) {
@@ -177,19 +177,40 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const organizationId = req.user?.organizationId;
+
+    if (!organizationId) {
+      return res.status(400).json({ error: 'ORG_CONTEXT_REQUIRED' });
+    }
 
     try {
       const user = await dbGet(
-        `SELECT id, email, first_name, last_name, role, avatar_url, status, created_at
-             FROM users WHERE id = ?`,
-        [id]
+        `SELECT id, email, first_name, last_name, role, avatar_url, status, created_at, organization_id
+             FROM users WHERE id = ? AND organization_id = ?`,
+        [id, organizationId]
       );
 
       if (!user) {
+        const foreignUser = await dbGet(`SELECT id FROM users WHERE id = ?`, [id]);
+        if (foreignUser) {
+          return res.status(403).json({ error: 'USERS_READ_FORBIDDEN' });
+        }
         return res.status(404).json({ error: 'User not found' });
       }
 
-      return res.json({ success: true, data: user });
+      const shaped = shapeOrgPersonPayload({
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role,
+        avatarUrl: user.avatar_url,
+        status: user.status,
+        createdAt: user.created_at,
+        organizationId: user.organization_id,
+      }, getRequestAccessRole(req));
+
+      return res.json({ success: true, data: shaped });
     } catch (err: any) {
       logger.error('[users] Error fetching user', {
         err,

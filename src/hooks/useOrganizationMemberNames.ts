@@ -47,6 +47,8 @@ export function readMemberId(member: RawMember): string {
 
 /** Etykieta do pokazania: nazwa → imię+nazwisko → e-mail. `null` gdy nic nie ma. */
 export function readMemberLabel(member: RawMember): string | null {
+  const displayName = str(member.displayName) || str(member.display_name);
+  if (displayName) return displayName;
   const name = str(member.name);
   if (name) return name;
   const first = str(member.firstName) || str(member.first_name);
