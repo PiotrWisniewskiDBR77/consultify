@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
-import { isAdminOwnerOrSuperAdminRole, normalizeAppRole } from '@/utils/roleGuards';
+import { normalizeAppRole } from '@/utils/roleGuards';
 
 /**
  * Identyfikator osoby → NAZWISKO, z realnej listy członków organizacji.
@@ -47,7 +47,7 @@ export function readMemberId(member: RawMember): string {
 
 /** Etykieta do pokazania: nazwa → imię+nazwisko → e-mail. `null` gdy nic nie ma. */
 export function readMemberLabel(member: RawMember): string | null {
-  const name = str(member.name);
+  const name = str(member.displayName) || str(member.display_name) || str(member.name);
   if (name) return name;
   const first = str(member.firstName) || str(member.first_name);
   const last = str(member.lastName) || str(member.last_name);
@@ -94,7 +94,7 @@ export function useOrganizationMemberNames(): MemberNameResolver {
   const organizationId = currentOrganization?.id ?? '';
   const userId = currentUser?.id ?? '';
   const role = normalizeAppRole(currentUser?.role);
-  const canReadMemberDirectory = isAdminOwnerOrSuperAdminRole(currentUser?.role);
+  const canReadMemberDirectory = Boolean(organizationId && userId);
   const scopeKey = `${organizationId}:${userId}:${role}`;
   const [memberNames, setMemberNames] = useState<{
     scopeKey: string;

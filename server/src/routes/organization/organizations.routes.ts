@@ -83,14 +83,10 @@ router.put(
 
 /**
  * GET /api/organizations/:orgId/members
- * Get organization members — ADMIN/OWNER only (the full member list exposes
- * names + emails; a plain USER must not be able to dump the directory).
+ * Get organization members. Active members of the current organization receive
+ * a minimal name directory; administrators retain the full management payload.
  */
-router.get(
-  '/:orgId/members',
-  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
-  OrganizationController.getMembers
-);
+router.get('/:orgId/members', OrganizationController.getMembers);
 
 router.get('/:orgId/admin/invitations', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.list);
 router.post('/:orgId/admin/invitations', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.command('CREATE'));

@@ -28,9 +28,9 @@ describe.skipIf(!realDb).sequential('ADM-UI-CANON-001 — mounted active member 
   let pool: Pool;
   let app: Express;
 
-  const token = (id: string, organizationId: string) =>
+  const token = (id: string, organizationId: string, role = 'ADMIN') =>
     jwt.sign(
-      { id, email: `${id}@test.invalid`, organizationId, organization_id: organizationId, role: 'ADMIN' },
+      { id, email: `${id}@test.invalid`, organizationId, organization_id: organizationId, role },
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '10m' }
     );
@@ -40,7 +40,10 @@ describe.skipIf(!realDb).sequential('ADM-UI-CANON-001 — mounted active member 
     process.env.DB_TYPE = 'postgres';
     pool = new Pool({ connectionString: databaseUrl });
 
-    for (const [id, name] of [[orgA, 'Admin directory A'], [orgB, 'Admin directory B']] as const) {
+    for (const [id, name] of [
+      [orgA, 'Admin directory A'],
+      [orgB, 'Admin directory B'],
+    ] as const) {
       await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$2)`, [id, name]);
     }
     for (const [id, org, role, membershipStatus] of [
@@ -50,9 +53,9 @@ describe.skipIf(!realDb).sequential('ADM-UI-CANON-001 — mounted active member 
       [foreignAdmin, orgB, 'ADMIN', 'ACTIVE'],
     ] as const) {
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,password,role,status)
-         VALUES($1,$2,$3,'unused',$4,'active')`,
-        [id, org, `${id}@test.invalid`, role]
+        `INSERT INTO users(id,organization_id,email,password,role,status,first_name,last_name)
+         VALUES($1,$2,$3,'unused',$4,'active',$5,$6)`,
+        [id, org, `${id}@test.invalid`, role, role === 'MEMBER' ? 'Maria' : 'Alex', role]
       );
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status)
@@ -68,8 +71,12 @@ describe.skipIf(!realDb).sequential('ADM-UI-CANON-001 — mounted active member 
 
   afterAll(async () => {
     if (!pool) return;
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[activeAdmin, activeMember, revokedAdmin, foreignAdmin]]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [
+      [activeAdmin, activeMember, revokedAdmin, foreignAdmin],
+    ]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
   }, 30_000);
@@ -102,5 +109,34 @@ describe.skipIf(!realDb).sequential('ADM-UI-CANON-001 — mounted active member 
 
     expect(response.status).toBe(403);
     expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REQUIRED' });
+  });
+
+  it('returns a privacy-minimized same-tenant directory to MEMBER and denies cross-tenant access', async () => {
+    const ownResponse = await request(app)
+      .get(`/api/organizations/${orgA}/members`)
+      .set('Authorization', `Bearer ${token(activeMember, orgA, 'MEMBER')}`);
+
+    expect(ownResponse.status).toBe(200);
+    expect(ownResponse.body.map((row: { id: string }) => row.id).sort()).toEqual(
+      [activeAdmin, activeMember].sort()
+    );
+    expect(
+      ownResponse.body.every(
+        (row: Record<string, unknown>) =>
+          Object.keys(row).sort().join(',') === 'avatar,displayName,id'
+      )
+    ).toBe(true);
+    expect(ownResponse.body).toContainEqual({
+      id: activeMember,
+      displayName: 'Maria MEMBER',
+      avatar: null,
+    });
+
+    const foreignResponse = await request(app)
+      .get(`/api/organizations/${orgB}/members`)
+      .set('Authorization', `Bearer ${token(activeMember, orgA, 'MEMBER')}`);
+
+    expect(foreignResponse.status).toBe(403);
+    expect(foreignResponse.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REQUIRED' });
   });
 });

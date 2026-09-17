@@ -32,7 +32,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (store: unknown) => unknown) =>
     selector({
-      currentUser: { id: 'user-anna', role: 'OWNER' },
+      currentUser: { id: 'user-anna', role: 'MEMBER' },
       currentOrganization: { id: 'org-1' },
     }),
 }));
@@ -74,17 +74,12 @@ import { ExecutionWorkSurface } from '../ExecutionWorkSurface';
 
 const WLASCICIEL = 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2';
 
-/** Dokładny kształt odpowiedzi `getActiveMembers` — snake_case, bez `name`. */
+/** Minimalny kształt katalogu zwracanego aktywnemu MEMBER-owi (DEC-583). */
 const CZLONKOWIE = [
   {
-    id: 'membership-1',
-    user_id: WLASCICIEL,
-    role: 'OWNER',
-    status: 'ACTIVE',
-    created_at: '2026-01-01T00:00:00.000Z',
-    first_name: 'Piotr',
-    last_name: 'Wiśniewski',
-    email: 'piotr.wisniewski@dbr77.com',
+    id: WLASCICIEL,
+    displayName: 'Piotr Wiśniewski',
+    avatar: null,
   },
 ];
 

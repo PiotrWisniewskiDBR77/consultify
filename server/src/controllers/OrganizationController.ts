@@ -38,6 +38,10 @@ function conflict(res: Response, error: string, code: string, guidance: string):
   res.status(409).json({ error, code, guidance });
 }
 
+function denyOrganizationDirectory(res: Response): void {
+  res.status(403).json({ error: 'Access denied', code: 'ORG_MEMBERSHIP_REQUIRED' });
+}
+
 function respondIamDenial(res: Response, denial: { code: string; message: string }): void {
   const status = ['LAST_OWNER_PROTECTED', 'SELF_LOCKOUT_REJECTED'].includes(denial.code)
     ? 409
@@ -231,18 +235,58 @@ export class OrganizationController {
         return;
       }
 
+      const currentOrganizationId = String(req.user?.organizationId || '').trim();
+      const currentRole = String(
+        (req as AuthenticatedRequest & { userRole?: string }).userRole || req.user?.role || ''
+      )
+        .trim()
+        .toUpperCase();
+      const isSuperAdmin = currentRole === 'SUPERADMIN' || currentRole === 'SUPER_ADMIN';
+      if (!isSuperAdmin && (!currentOrganizationId || currentOrganizationId !== orgId)) {
+        denyOrganizationDirectory(res);
+        return;
+      }
+
       const { getActiveMembers } = await import('../services/organizationService.js');
 
       // Only an ACTIVE tenant edge authorizes this directory read. Revoked and
       // inactive rows are intentionally excluded from both the gate and body.
       const members = await getActiveMembers(orgId);
-      const isMember = members.some((m) => m.user_id === userId);
-      if (!isMember && req.user?.role !== 'SUPERADMIN') {
-        res.status(403).json({ error: 'Access denied', code: 'ORG_MEMBERSHIP_REQUIRED' });
+      const actorMember = members.find((member) => member.user_id === userId);
+      if (!actorMember && !isSuperAdmin) {
+        denyOrganizationDirectory(res);
         return;
       }
 
-      res.json(members);
+      const activeMembershipRole = String(actorMember?.role || '')
+        .trim()
+        .toUpperCase();
+      if (
+        isSuperAdmin ||
+        activeMembershipRole === 'OWNER' ||
+        activeMembershipRole === 'ADMIN'
+      ) {
+        res.json(
+          members.map((member) => {
+            const fullMember = { ...member };
+            delete fullMember.avatar_url;
+            return fullMember;
+          })
+        );
+        return;
+      }
+
+      res.json(
+        members.map((member) => ({
+          id: member.user_id,
+          displayName:
+            [member.first_name, member.last_name]
+              .map((part) => String(part || '').trim())
+              .filter(Boolean)
+              .join(' ') || null,
+          avatar: member.avatar_url || null,
+        }))
+      );
     }
   );
 

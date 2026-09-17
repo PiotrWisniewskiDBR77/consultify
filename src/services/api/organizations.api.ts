@@ -33,12 +33,54 @@ export interface OrganizationBranding {
 }
 
 export interface OrganizationMember {
+  id?: string;
   userId: string;
   email: string;
   name: string;
+  displayName: string | null;
+  avatar?: string | null;
   role: string;
   status: 'active' | 'invited' | 'suspended';
   joinedAt: string;
+}
+
+type OrganizationMemberWire = Partial<OrganizationMember> & {
+  user_id?: unknown;
+  first_name?: unknown;
+  last_name?: unknown;
+  avatar_url?: unknown;
+  created_at?: unknown;
+};
+
+const memberString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+/** Keep the wire payload private while preserving the established frontend shape. */
+export function normalizeOrganizationMember(
+  row: OrganizationMemberWire
+): OrganizationMember | null {
+  const userId = memberString(row.userId) || memberString(row.user_id) || memberString(row.id);
+  if (!userId) return null;
+  const displayName =
+    memberString(row.displayName) ||
+    memberString(row.name) ||
+    [memberString(row.first_name), memberString(row.last_name)].filter(Boolean).join(' ') ||
+    null;
+  const email = memberString(row.email);
+  const rawStatus = memberString(row.status).toLowerCase();
+  const status =
+    rawStatus === 'invited' || rawStatus === 'suspended' ? rawStatus : ('active' as const);
+
+  return {
+    id: memberString(row.id) || undefined,
+    userId,
+    email,
+    name: displayName || email || userId,
+    displayName,
+    avatar: memberString(row.avatar) || memberString(row.avatar_url) || null,
+    role: memberString(row.role) || 'MEMBER',
+    status,
+    joinedAt: memberString(row.joinedAt) || memberString(row.created_at),
+  };
 }
 
 export interface SwitchOrganizationResult {
@@ -103,8 +145,12 @@ export const OrganizationApi = {
 
   getOrganizationMembers: async (orgId: string): Promise<OrganizationMember[]> => {
     const res = await fetch(`${API_URL}/organizations/${orgId}/members`, { headers: getHeaders() });
-    return handleResponse<OrganizationMember[]>(res, 'Failed to fetch organization members').then(
-      (data) => data || []
+    return handleResponse<OrganizationMemberWire[]>(
+      res,
+      'Failed to fetch organization members'
+    ).then(
+      (data) =>
+        (data || []).map(normalizeOrganizationMember).filter(Boolean) as OrganizationMember[]
     );
   },
 
@@ -183,5 +229,4 @@ export const OrganizationApi = {
     );
     return json?.invitations || (json as unknown[]) || [];
   },
-
 };

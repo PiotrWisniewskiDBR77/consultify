@@ -137,6 +137,7 @@ interface Member {
   first_name?: string;
   last_name?: string;
   email?: string;
+  avatar_url?: string;
 }
 
 interface UserOrganization {
@@ -383,7 +384,7 @@ export async function addMember(params: AddMemberParams): Promise<AddMemberResul
 export async function getMembers(orgId: string): Promise<Member[]> {
   const rows = await DbPromise.all<Member>(
     db,
-    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
+    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email, u.avatar_url
          FROM organization_members m
          JOIN users u ON m.user_id = u.id
          WHERE m.organization_id = ?`,
@@ -401,7 +402,7 @@ export async function getMembers(orgId: string): Promise<Member[]> {
 export async function getActiveMembers(orgId: string): Promise<Member[]> {
   const rows = await DbPromise.all<Member>(
     db,
-    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
+    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email, u.avatar_url
          FROM organization_members m
          JOIN users u ON m.user_id = u.id
          WHERE m.organization_id = ?

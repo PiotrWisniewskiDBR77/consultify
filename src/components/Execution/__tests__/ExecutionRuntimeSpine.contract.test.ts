@@ -24,7 +24,7 @@ vi.mock('@/store/useAppStore', () => ({
     const store = {
       currentProjectId: null,
       fullSessionData: null,
-      currentUser: { id: 'user-1', role: 'OWNER' },
+      currentUser: { id: 'user-1', role: 'MEMBER' },
       currentOrganization: { id: 'org-1' },
       toggleChatCollapse: vi.fn(),
       isChatCollapsed: true,

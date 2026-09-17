@@ -20,29 +20,32 @@ vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (state: typeof storeState) => unknown) => selector(storeState),
 }));
 
-import { useOrganizationMemberNames } from '../useOrganizationMemberNames';
+import { memberNameOrUnknown, useOrganizationMemberNames } from '../useOrganizationMemberNames';
 
-describe('useOrganizationMemberNames restricted directory access and cache scope', () => {
+describe('useOrganizationMemberNames tenant directory access and cache scope', () => {
   beforeEach(() => {
     getOrganizationMembers.mockReset();
     storeState.currentOrganization = { id: 'org-a', name: 'Org A' };
     storeState.currentUser = { id: 'admin-a', role: 'ADMIN' };
   });
 
-  it('does not request the restricted organization directory for an ordinary user', async () => {
-    storeState.currentUser = { id: 'user-a', role: 'USER' };
+  it('resolves a minimal directory response for a MEMBER in the current organization', async () => {
+    storeState.currentUser = { id: 'user-a', role: 'MEMBER' };
+    getOrganizationMembers.mockResolvedValueOnce([
+      { id: 'person-a', displayName: 'Alice Member', avatar: null },
+    ]);
     const { result } = renderHook(() => useOrganizationMemberNames());
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(getOrganizationMembers).not.toHaveBeenCalled();
-    expect(result.current('person-a')).toBeNull();
+    await waitFor(() => expect(result.current('person-a')).toBe('Alice Member'));
+    expect(getOrganizationMembers).toHaveBeenCalledWith('org-a');
   });
 
   it('clears cached names synchronously across organization, user, and role transitions', async () => {
     getOrganizationMembers
       .mockResolvedValueOnce([{ user_id: 'person-a', first_name: 'Alice', last_name: 'A' }])
       .mockResolvedValueOnce([{ user_id: 'person-b', first_name: 'Bob', last_name: 'B' }])
-      .mockResolvedValueOnce([{ user_id: 'person-c', first_name: 'Carol', last_name: 'C' }]);
+      .mockResolvedValueOnce([{ user_id: 'person-c', first_name: 'Carol', last_name: 'C' }])
+      .mockResolvedValueOnce([]);
     const { result, rerender } = renderHook(() => useOrganizationMemberNames());
 
     await waitFor(() => expect(result.current('person-a')).toBe('Alice A'));
@@ -62,12 +65,11 @@ describe('useOrganizationMemberNames restricted directory access and cache scope
     await waitFor(() => expect(result.current('person-c')).toBe('Carol C'));
 
     act(() => {
-      storeState.currentUser = { id: 'user-b', role: 'USER' };
+      storeState.currentUser = { id: 'user-b', role: 'MEMBER' };
       rerender();
     });
     expect(result.current('person-c')).toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(getOrganizationMembers).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalledTimes(4));
   });
 
   it('ignores a late member-directory response from the previous organization scope', async () => {
@@ -99,5 +101,18 @@ describe('useOrganizationMemberNames restricted directory access and cache scope
     });
     expect(result.current('person-a')).toBeNull();
     expect(result.current('person-b')).toBe('Bob B');
+  });
+
+  it('renders Unknown user when a foreign-directory request is rejected', async () => {
+    storeState.currentUser = { id: 'member-a', role: 'MEMBER' };
+    getOrganizationMembers.mockRejectedValueOnce(
+      Object.assign(new Error('Access denied'), { status: 403 })
+    );
+    const { result } = renderHook(() => useOrganizationMemberNames());
+
+    await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalledWith('org-a'));
+    await waitFor(() =>
+      expect(memberNameOrUnknown(result.current, 'person-b', false)).toBe('Unknown user')
+    );
   });
 });
