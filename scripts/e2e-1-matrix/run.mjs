@@ -16,6 +16,7 @@ import {
 import { validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
 import { isDomainMutationRequest } from './network.mjs';
 import { onboardingDoneKey } from './onboarding.mjs';
+import { applyPresentationState } from './presentationState.mjs';
 import { settle as settleAndWait } from './settle.mjs';
 
 const args = process.argv.slice(2);
@@ -178,27 +179,17 @@ async function captureFlags(page) {
 }
 
 async function setPresentationState(page, userId) {
-  await page.evaluate(({ locale, theme, userId }) => {
-    localStorage.setItem('i18nextLng', locale);
-    localStorage.setItem('consultify_language', locale);
-    localStorage.setItem('theme', theme);
-    // DEC-590 (Wpis 39): the first-run onboarding modal covered every screen in
-    // run 1 (147/154 FAIL on locator.click timeout). useFirstRunOnboarding reads
-    // `consultify_onboarding_done:{userId}` === 'true' as an instant local guard
-    // BEFORE any server call, so setting it here dismisses onboarding for the
-    // service account without touching the server-side preference.
-    if (userId) {
-      localStorage.setItem(onboardingDoneKey(userId), 'true');
-    }
-    const raw = localStorage.getItem('consultify-storage');
-    let parsed = {};
-    try {
-      parsed = raw ? JSON.parse(raw) : {};
-    } catch {}
-    parsed.state = { ...(parsed.state || {}), theme };
-    parsed.version ??= 2;
-    localStorage.setItem('consultify-storage', JSON.stringify(parsed));
-  }, { locale: variant.locale, theme: variant.theme, userId });
+  // DEC-590 (Wpis 73 / C3c): compute the onboarding key in NODE and pass the RESULT
+  // into the browser. The evaluate callback (applyPresentationState) must NOT call
+  // onboardingDoneKey — that Node import does not exist in browser scope and threw
+  // ReferenceError in run 2 (8/8 FAILURE). applyPresentationState is self-contained
+  // (its argument + localStorage + JSON only), so Playwright serializes it safely.
+  const onboardingKey = userId ? onboardingDoneKey(userId) : null;
+  await page.evaluate(applyPresentationState, {
+    locale: variant.locale,
+    theme: variant.theme,
+    onboardingKey,
+  });
 }
 
 async function settle(page, route, sink) {
