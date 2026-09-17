@@ -392,6 +392,51 @@ describe('MTG-1 agenda + lifecycle (real PG)', () => {
     expect(untouched.rows[0].title).toBe('Other-org confidential agenda point');
   });
 
+  // P3 (KANAL Wpis 48): karta pokazuje numery punktów (`position`), więc
+  // usunięcie punktu ze środka listy musi zamknąć lukę — inaczej oś agendy
+  // czytałaby się 1, 3, 4. Kolejność względna punktów zostaje.
+  guard('deleting a middle agenda item renumbers the remaining positions 1..N', async () => {
+    const first = await createMeetingAgendaItem({
+      organizationId: ORG,
+      meetingId: MEETING,
+      title: 'Renumber A',
+    });
+    const middle = await createMeetingAgendaItem({
+      organizationId: ORG,
+      meetingId: MEETING,
+      title: 'Renumber B',
+    });
+    const last = await createMeetingAgendaItem({
+      organizationId: ORG,
+      meetingId: MEETING,
+      title: 'Renumber C',
+    });
+    expect([first.position, middle.position, last.position]).toEqual([1, 2, 3]);
+
+    expect(await deleteMeetingAgendaItem({ organizationId: ORG, itemId: middle.id })).toBe(true);
+
+    const items = await listMeetingAgendaItems({ organizationId: ORG, meetingId: MEETING });
+    expect(items.map((item) => item.title)).toEqual(['Renumber A', 'Renumber C']);
+    expect(items.map((item) => item.position)).toEqual([1, 2]);
+
+    // Stan w bazie, nie tylko w odpowiedzi serwisu.
+    const rows = await sharedPool!.query(
+      `SELECT id, position FROM meeting_agenda_items
+        WHERE organization_id = $1 AND meeting_id = $2 ORDER BY position ASC`,
+      [ORG, MEETING]
+    );
+    expect(rows.rows.map((row) => [row.id, Number(row.position)])).toEqual([
+      [first.id, 1],
+      [last.id, 2],
+    ]);
+
+    await deleteMeetingAgendaItem({ organizationId: ORG, itemId: first.id });
+    await deleteMeetingAgendaItem({ organizationId: ORG, itemId: last.id });
+    await expect(
+      listMeetingAgendaItems({ organizationId: ORG, meetingId: MEETING })
+    ).resolves.toEqual([]);
+  });
+
   // DbPromise's default `fallback: true` swallows a DB error into [] / null, so
   // a missing `meeting_agenda_items` table (environment that never ran
   // migration 20262301) would look exactly like "this meeting has no agenda"

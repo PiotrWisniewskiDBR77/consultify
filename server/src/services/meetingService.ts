@@ -68,6 +68,8 @@ export interface MeetingRecord {
   followUps: MeetingFollowUp[];
   status: MeetingStatus;
   lifecycleState: MeetingLifecycleState;
+  chairUserId: string | null;
+  scribeUserId: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -96,6 +98,8 @@ type MeetingRow = {
   decisions_json: string | null;
   status: string | null;
   lifecycle_state?: string | null;
+  chair_user_id?: string | null;
+  scribe_user_id?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -157,6 +161,8 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
       : row.status === 'completed'
         ? 'closed'
         : 'scheduled',
+    chairUserId: row.chair_user_id || null,
+    scribeUserId: row.scribe_user_id || null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

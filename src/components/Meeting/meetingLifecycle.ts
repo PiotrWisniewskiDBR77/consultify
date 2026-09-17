@@ -25,6 +25,18 @@ export const MEETING_LIFECYCLE_LABEL_KEY: Record<MeetingLifecycleStateValue, str
   closed: 'meeting.lifecycle.closed',
 };
 
+/** Zwarte etykiety stanów dla wąskiej kolumny Status listy: columnFit fasady
+ *  dociska kolumnę do podłogi typu `status` (160 px), więc pełne brzmienia
+ *  („Protokół do akceptacji") nie mieszczą się w pigułce. Menu 3, podgląd
+ *  i karta zostają przy pełnych etykietach. */
+export const MEETING_LIFECYCLE_SHORT_LABEL_KEY: Record<MeetingLifecycleStateValue, string> = {
+  scheduled: 'meeting.lifecycle.short.scheduled',
+  in_progress: 'meeting.lifecycle.short.inProgress',
+  minutes_to_approve: 'meeting.lifecycle.short.minutesToApprove',
+  needs_actions: 'meeting.lifecycle.short.needsActions',
+  closed: 'meeting.lifecycle.short.closed',
+};
+
 /**
  * Kropki Menu 3 — wyłącznie tokeny semantyczne w kolejności makiety
  * (draft/review/warn/ok). Karmazynowy token marki jest zarezerwowany dla
@@ -44,6 +56,31 @@ export const MEETING_LIFECYCLE_DOT_CLASS: Record<MeetingLifecycleStateValue, str
  */
 export const MEETING_LIFECYCLE_ALL_DOT_CLASS = 'bg-slate-400 dark:bg-slate-500';
 
+/** StatusChip w karcie (wiersz „Status" we Właściwościach) — te same pięć
+ *  semantyk co kropki Menu 3, żeby lista i karta mówiły jednym kolorem. */
+export const MEETING_LIFECYCLE_CHIP_TONE: Record<
+  MeetingLifecycleStateValue,
+  'success' | 'warning' | 'danger' | 'info' | 'neutral'
+> = {
+  scheduled: 'neutral',
+  in_progress: 'info',
+  minutes_to_approve: 'warning',
+  needs_actions: 'danger',
+  closed: 'success',
+};
+
+/** Pigułka statusu w Menu 1 powłoki artefaktu (zbiór tonów `NModeHeader`). */
+export const MEETING_LIFECYCLE_PILL_TONE: Record<
+  MeetingLifecycleStateValue,
+  'draft' | 'review' | 'approved' | 'rejected' | 'neutral'
+> = {
+  scheduled: 'draft',
+  in_progress: 'review',
+  minutes_to_approve: 'review',
+  needs_actions: 'review',
+  closed: 'approved',
+};
+
 export function isMeetingLifecycleStateValue(value: unknown): value is MeetingLifecycleStateValue {
   return (
     typeof value === 'string' &&
@@ -57,4 +94,29 @@ export function resolveMeetingLifecycleState(meeting: {
 }): MeetingLifecycleStateValue {
   if (isMeetingLifecycleStateValue(meeting.lifecycleState)) return meeting.lifecycleState;
   return meeting.status === 'completed' ? 'closed' : 'scheduled';
+}
+
+/**
+ * Dozwolone przejścia cyklu życia — LUSTRO serwera
+ * (`server/src/services/meeting/meetingAgendaService.ts`
+ * `MEETING_LIFECYCLE_TRANSITIONS`). Karta rysuje z niego przyciski „przejdź do"
+ * w panelu Akcje, ale to serwer jest źródłem prawdy: `PATCH /:id/lifecycle`
+ * i tak odrzuci niedozwolone przejście (409), więc frontowa mapa tylko NIE
+ * POKAZUJE przejść, których backend nie przyjmie — nigdy nie decyduje sama.
+ * `closed` jest terminalny (brak przycisków).
+ */
+export const MEETING_LIFECYCLE_TRANSITIONS: Readonly<
+  Record<MeetingLifecycleStateValue, readonly MeetingLifecycleStateValue[]>
+> = Object.freeze({
+  scheduled: Object.freeze(['in_progress'] as const),
+  in_progress: Object.freeze(['minutes_to_approve'] as const),
+  minutes_to_approve: Object.freeze(['needs_actions', 'closed'] as const),
+  needs_actions: Object.freeze(['closed'] as const),
+  closed: Object.freeze([] as const),
+});
+
+export function meetingLifecycleNextStates(
+  state: MeetingLifecycleStateValue
+): readonly MeetingLifecycleStateValue[] {
+  return MEETING_LIFECYCLE_TRANSITIONS[state] ?? [];
 }

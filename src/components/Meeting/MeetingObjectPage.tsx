@@ -92,15 +92,19 @@
  * does not exist yet, so the shell only ever mounts once `meeting` is real.
  */
 import {
+  ArrowRight,
   CalendarDays,
   CheckSquare2,
   ClipboardList,
   FileText,
+  Flag,
+  Gavel,
   History,
   Link2,
   ListChecks,
   Loader2,
   MapPin,
+  Paperclip,
   Pencil,
   Plus,
   RefreshCw,
@@ -139,10 +143,39 @@ import {
   type MeetingParticipantDto,
 } from '@/services/api';
 
-import { deriveMeetingLifecycle, formatDateTime, type MeetingItem } from './MeetingHub';
+import { formatDateTime, type MeetingItem } from './MeetingHub';
+import {
+  agendaItemStartAt,
+  fetchMeetingAgendaItems,
+  formatAgendaTime,
+  MEETING_AGENDA_PURPOSE_LABEL_KEY,
+  MEETING_AGENDA_PURPOSE_TONE,
+  type MeetingAgendaItemDto,
+  patchMeetingLifecycle,
+} from './meetingAgendaClient';
+import {
+  MEETING_LIFECYCLE_CHIP_TONE,
+  MEETING_LIFECYCLE_LABEL_KEY,
+  MEETING_LIFECYCLE_PILL_TONE,
+  meetingLifecycleNextStates,
+  resolveMeetingLifecycleState,
+} from './meetingLifecycle';
 import { translateOperatorMessage } from './meetingOperatorBriefI18n';
 
 type Section = 'details' | 'minutes' | 'decisions';
+
+/**
+ * DEC-596: angielskie fallbacki etykiet pięciu stanów cyklu życia (gdy brak
+ * klucza i18n). Wspólne dla statusu karty i przycisków „przejdź do" w panelu
+ * Akcje — jedno źródło, żeby lista/karta/akcje mówiły tym samym słowem.
+ */
+const MEETING_LIFECYCLE_FALLBACK_LABEL: Record<string, string> = {
+  scheduled: 'Scheduled',
+  in_progress: 'In progress',
+  minutes_to_approve: 'Minutes to approve',
+  needs_actions: 'Needs actions',
+  closed: 'Closed',
+};
 
 /**
  * FIX-M-5a (D.4/D.5 owner review): `Api.*` throws a plain `Error` with
@@ -320,6 +353,163 @@ function ParticipantsField({
   );
 }
 
+/**
+ * MTG-1 rework etap 1 / DEC-596 — agenda jako oś spotkania (makieta
+ * mtg-rework-20260917, ekran karty): punkt ma godzinę startu liczoną od startu
+ * spotkania, czas, numer, cel, prowadzącego, pre-read i powiązanie z
+ * inicjatywą/decyzją (wyłącznie odczyt). Gdy spotkanie nie ma jeszcze
+ * strukturalnych punktów (tabela z migracji 20262301 pusta), sekcja spada na
+ * legacy `agenda_json` z dopiskiem — tak samo uczciwie, jak uczestnicy spadają
+ * na listę zaproszeń.
+ */
+function AgendaAxisField({
+  items,
+  legacyAgenda,
+  loading,
+  error,
+  onRetry,
+  meetingStartAt,
+  isPolish,
+  leadName,
+  relationLabel,
+  t,
+}: {
+  items: MeetingAgendaItemDto[];
+  legacyAgenda: string[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  meetingStartAt: string;
+  isPolish: boolean;
+  leadName: (leadUserId: string | null) => string;
+  relationLabel: (kind: 'initiative' | 'decision', id: string) => string;
+  t: TFunction;
+}) {
+  const totalMinutes = items.reduce((sum, item) => sum + (Number(item.durationMinutes) || 0), 0);
+  return (
+    <div
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-3 lg:col-span-2"
+      data-testid="meeting-agenda-axis"
+    >
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+        <span className="flex items-center gap-2">
+          <ClipboardList size={14} />
+          <span>{t('meeting.agenda', 'Agenda')}</span>
+        </span>
+        {!loading && !error && items.length ? (
+          <span
+            className="font-normal normal-case tracking-normal text-c-text-muted"
+            data-testid="meeting-agenda-axis-totals"
+          >
+            {t('meeting.agendaAxis.axisTotals', '{{items}} items · {{minutes}} min', {
+              items: items.length,
+              minutes: totalMinutes,
+            })}
+          </span>
+        ) : null}
+      </div>
+      {loading ? (
+        <LoadingState variant="spinner" className="h-20" />
+      ) : error ? (
+        <ErrorState message={error} retry={onRetry} />
+      ) : items.length ? (
+        <ol className="space-y-3" data-testid="meeting-agenda-items">
+          {items.map((item, index) => {
+            const start = agendaItemStartAt(meetingStartAt, items, index);
+            return (
+              <li
+                key={item.id}
+                className="grid grid-cols-[56px_1fr] gap-3 border-b border-c-border-subtle pb-3 last:border-b-0 last:pb-0"
+              >
+                <div className="text-right">
+                  <div className="text-sm font-semibold tabular-nums text-c-text">
+                    {start ? formatAgendaTime(start, isPolish) : '—'}
+                  </div>
+                  <div className="text-xs tabular-nums text-c-text-muted">
+                    {t('meeting.agendaAxis.minutesShort', '{{minutes}} min', {
+                      minutes: Number(item.durationMinutes) || 0,
+                    })}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-c-text" data-testid="agenda-item-title">
+                    {item.position}. {item.title}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <StatusChip
+                      tone={MEETING_AGENDA_PURPOSE_TONE[item.purpose]}
+                      label={t(
+                        MEETING_AGENDA_PURPOSE_LABEL_KEY[item.purpose],
+                        item.purpose === 'discussion'
+                          ? 'Discussion'
+                          : item.purpose === 'decision'
+                            ? 'Decision'
+                            : 'Information'
+                      )}
+                    />
+                    <span className="rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary">
+                      {t('meeting.agendaAxis.owner', 'Owner')}: {leadName(item.leadUserId)}
+                    </span>
+                    {item.initiativeId ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary"
+                        data-testid="agenda-item-initiative"
+                        title={t('meeting.agendaAxis.linkedInitiative', 'Linked initiative (read-only)')}
+                      >
+                        <Flag size={12} />
+                        {relationLabel('initiative', item.initiativeId)}
+                      </span>
+                    ) : null}
+                    {item.decisionId ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary"
+                        data-testid="agenda-item-decision"
+                        title={t('meeting.agendaAxis.linkedDecision', 'Linked decision (read-only)')}
+                      >
+                        <Gavel size={12} />
+                        {relationLabel('decision', item.decisionId)}
+                      </span>
+                    ) : null}
+                    {item.preRead.map((file) => (
+                      <span
+                        key={`${item.id}-${file}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary"
+                      >
+                        <Paperclip size={12} />
+                        {file}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : legacyAgenda.length ? (
+        <div className="space-y-1.5" data-testid="meeting-agenda-legacy">
+          <ul className="space-y-1.5">
+            {legacyAgenda.map((line, idx) => (
+              <li key={`legacy-agenda-${idx}`} className="text-sm text-c-text-secondary">
+                {line}
+              </li>
+            ))}
+          </ul>
+          <div className="text-xs text-c-text-muted">
+            {t(
+              'meeting.agendaAxis.legacyHint',
+              'Free-text agenda only — no structured agenda items recorded for this meeting.'
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-c-text-muted">
+          {t('meeting.agendaAxis.empty', 'No agenda items yet.')}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function noteStatusTone(
   status: GovernedMeetingNoteDto['status']
 ): 'success' | 'warning' | 'danger' {
@@ -424,6 +614,18 @@ export const MeetingObjectPage: React.FC = () => {
   const [participants, setParticipants] = useState<MeetingParticipantDto[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [participantsError, setParticipantsError] = useState<string | null>(null);
+
+  // MTG-1 etap 1 / DEC-596: agenda jako oś karty — strukturalne punkty z
+  // tabeli `meeting_agenda_items` (`GET /api/meeting/:id/agenda`).
+  const [agendaItems, setAgendaItems] = useState<MeetingAgendaItemDto[]>([]);
+  const [agendaLoading, setAgendaLoading] = useState(false);
+  const [agendaError, setAgendaError] = useState<string | null>(null);
+  const [initiativeTitles, setInitiativeTitles] = useState<Record<string, string>>({});
+
+  // DEC-596 / Wpis 54c: przejście cyklu życia z karty. `lifecyclePending` to
+  // stan docelowy właśnie wysyłany (blokada podwójnego kliknięcia + spinner na
+  // jednym przycisku); null = bez lotu. Hook MUSI stać przed wczesnymi zwrotami.
+  const [lifecyclePending, setLifecyclePending] = useState<string | null>(null);
 
   // [U-51] Menu 2 (archetyp B): „Edycja | Podgląd”. Podgląd chowa jedyne
   // kontrolki zapisu tej karty (formularze w sekcji „Decyzje i działania”),
@@ -583,6 +785,44 @@ export const MeetingObjectPage: React.FC = () => {
       );
     } finally {
       setParticipantsLoading(false);
+    }
+  };
+
+  // MTG-1 etap 1 / DEC-596: oś agendy czyta `meeting_agenda_items`. 403/404
+  // (brak prawa / brak spotkania) traktujemy jak „brak punktów" — sekcja spada
+  // wtedy na legacy `agenda_json`; każdy inny błąd jest pokazany wprost.
+  const loadAgenda = async (id: string) => {
+    setAgendaLoading(true);
+    setAgendaError(null);
+    try {
+      const items = await fetchMeetingAgendaItems(id);
+      setAgendaItems(items);
+    } catch (error: unknown) {
+      setAgendaItems([]);
+      if (isMeetingApiError(error) && (error.status === 403 || error.status === 404)) {
+        return;
+      }
+      console.error('Failed to load meeting agenda:', error);
+      setAgendaError(t('meeting.agendaAxis.errors.loadFailed', 'Could not load the agenda.'));
+    } finally {
+      setAgendaLoading(false);
+    }
+  };
+
+  /** Nazwy inicjatyw dla linków agendy i sekcji Powiązania. Best-effort jak
+   *  roster użytkowników: porażka degraduje link do surowego id, nie psuje
+   *  karty — id w etykiecie jest uczciwsze niż wymyślony tytuł. */
+  const loadInitiativeTitles = async () => {
+    try {
+      const rows = await Api.getInitiatives();
+      const titles: Record<string, string> = {};
+      for (const row of Array.isArray(rows) ? rows : []) {
+        const id = String(row?.id || '');
+        if (id) titles[id] = String(row?.title || row?.name || id);
+      }
+      setInitiativeTitles(titles);
+    } catch (error) {
+      console.error('Failed to load initiative titles for agenda links:', error);
     }
   };
 
@@ -862,13 +1102,18 @@ export const MeetingObjectPage: React.FC = () => {
       void loadOperatorBrief(meeting.id);
       void loadDecisionRecords(meeting.id);
       void loadFollowUpRecords(meeting.id);
+      void loadAgenda(meeting.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meeting?.id]);
 
-  const goToList = () => navigate(ROUTES.MEETINGS.ROOT);
+  useEffect(() => {
+    const linked = agendaItems.some((item) => item.initiativeId);
+    if (linked) void loadInitiativeTitles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agendaItems]);
 
-  const lifecycle = meeting ? deriveMeetingLifecycle(meeting) : null;
+  const goToList = () => navigate(ROUTES.MEETINGS.ROOT);
 
   const approvedNoteDecisions = notes
     .filter((note) => note.status === 'approved')
@@ -946,6 +1191,30 @@ export const MeetingObjectPage: React.FC = () => {
     return 'details';
   }, [location.pathname]);
 
+  /**
+   * DEC-596: powiązania karty = linki zapisane na punktach agendy
+   * (`initiative_id`/`decision_id`), bez duplikatów. Memo musi stać PRZED
+   * wczesnymi zwrotami (loading/error/not-found) — hook po `return` łamie
+   * reguły hooków React.
+   */
+  const agendaRelations = useMemo(() => {
+    const initiatives: Array<{ id: string; label: string }> = [];
+    const decisions: Array<{ id: string; label: string }> = [];
+    for (const item of agendaItems) {
+      if (item.initiativeId && !initiatives.some((r) => r.id === item.initiativeId)) {
+        initiatives.push({
+          id: item.initiativeId,
+          label: initiativeTitles[item.initiativeId] || item.initiativeId,
+        });
+      }
+      if (item.decisionId && !decisions.some((r) => r.id === item.decisionId)) {
+        const record = decisionRecords.find((d) => d.id === item.decisionId);
+        decisions.push({ id: item.decisionId, label: record?.statement || item.decisionId });
+      }
+    }
+    return { initiatives, decisions };
+  }, [agendaItems, decisionRecords, initiativeTitles]);
+
   const goToSection = (section: string) => {
     const base = `${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(meetingId)}`;
     navigate(section === 'details' ? base : `${base}/${section}`);
@@ -1001,6 +1270,29 @@ export const MeetingObjectPage: React.FC = () => {
     );
   }
 
+  // MTG-1 etap 1 / DEC-596: etykiety linków agendy i sekcji Powiązania.
+  // Prowadzący punktu rozwiązywany po rosterze organizacji, potem po
+  // uczestnikach spotkania (to samo źródło nazwisk co sekcja Uczestnicy);
+  // inicjatywa po best-effort rosterze tytułów, decyzja po rekordach decyzji
+  // tego spotkania. Nierozwiązane id zostaje widoczne jako id — zniknięcie
+  // zapisanego linku byłoby gorsze niż surowy identyfikator.
+  const resolvePersonName = (userId?: string | null): string | null => {
+    if (!userId) return null;
+    const roster = users.find((u) => u.id === userId);
+    if (roster) return `${roster.firstName} ${roster.lastName}`.trim() || null;
+    const person = participants.find((p) => p.userId === userId);
+    return person?.displayName?.trim() || person?.email || userId;
+  };
+
+  const agendaLeadName = (leadUserId: string | null): string =>
+    resolvePersonName(leadUserId) ?? t('meeting.agendaAxis.noOwner', 'unassigned');
+
+  const agendaRelationLabel = (kind: 'initiative' | 'decision', id: string): string => {
+    if (kind === 'initiative') return initiativeTitles[id] || id;
+    const record = decisionRecords.find((d) => d.id === id);
+    return record?.statement || id;
+  };
+
   // ── Centrum: trzy sekcje = te same trasy co dziś (details/minutes/decisions) ──
   const detailsContent = (
     <div className="grid gap-4 p-5 lg:grid-cols-2">
@@ -1017,10 +1309,17 @@ export const MeetingObjectPage: React.FC = () => {
         label={t('meeting.preRead', 'Pre-read')}
         items={meeting.preRead}
       />
-      <ListField
-        icon={<ClipboardList size={14} />}
-        label={t('meeting.agenda', 'Agenda')}
-        items={meeting.agenda}
+      <AgendaAxisField
+        items={agendaItems}
+        legacyAgenda={meeting.agenda}
+        loading={agendaLoading}
+        error={agendaError}
+        onRetry={() => void loadAgenda(meeting.id)}
+        meetingStartAt={meeting.startAt}
+        isPolish={Boolean(isPolish)}
+        leadName={agendaLeadName}
+        relationLabel={agendaRelationLabel}
+        t={t}
       />
       <SectionCard
         icon={<ClipboardList size={14} />}
@@ -1525,22 +1824,50 @@ export const MeetingObjectPage: React.FC = () => {
   ];
 
   // ── Prawy panel (SPEC-A §11.2) ──────────────────────────────────────────
-  const statusLabel =
-    lifecycle === 'completed'
-      ? t('meeting.status.completed', 'Completed')
-      : lifecycle === 'past_needs_update'
-        ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
-        : t('meeting.status.scheduled', 'Scheduled');
-  const statusTone: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
-    lifecycle === 'completed' ? 'approved' : lifecycle === 'past_needs_update' ? 'review' : 'draft';
+  // DEC-596: status karty to ten sam zbiór pięciu stanów cyklu życia co Menu 3
+  // listy (`meetings.lifecycle_state`), nie osobna trójstanowa derywacja.
+  const lifecycleState = resolveMeetingLifecycleState(meeting);
+  const lifecycleStateLabel = (state: string): string =>
+    t(
+      MEETING_LIFECYCLE_LABEL_KEY[state as keyof typeof MEETING_LIFECYCLE_LABEL_KEY] ??
+        'meeting.lifecycle.scheduled',
+      MEETING_LIFECYCLE_FALLBACK_LABEL[state] ?? state
+    );
+  const statusLabel = lifecycleStateLabel(lifecycleState);
+  const statusTone = MEETING_LIFECYCLE_PILL_TONE[lifecycleState];
 
   const terminValue =
     meeting.endAt && meeting.endAt !== meeting.startAt
       ? `${formatDateTime(meeting.startAt, isPolish)} – ${formatDateTime(meeting.endAt, isPolish)}`
       : formatDateTime(meeting.startAt, isPolish);
 
-  const statusChipTone: 'success' | 'warning' | 'info' =
-    lifecycle === 'completed' ? 'success' : lifecycle === 'past_needs_update' ? 'warning' : 'info';
+  const statusChipTone = MEETING_LIFECYCLE_CHIP_TONE[lifecycleState];
+
+  // DEC-596 / Wpis 54c: przejścia cyklu życia z karty. Front rysuje TYLKO
+  // przejścia dozwolone przez serwer (lustro `MEETING_LIFECYCLE_TRANSITIONS`);
+  // `PATCH /:id/lifecycle` i tak jest źródłem prawdy — 409 NIE zmienia stanu,
+  // a karta po odrzuceniu nie odświeża (zostaje stan z serwera). `closed`
+  // terminalny → `nextLifecycleStates` puste → brak przycisków.
+  const nextLifecycleStates = meetingLifecycleNextStates(lifecycleState);
+  const advanceLifecycle = async (nextState: string) => {
+    if (lifecyclePending) return;
+    setLifecyclePending(nextState);
+    try {
+      await patchMeetingLifecycle(meeting.id, nextState);
+      toast.success(t('meeting.object.lifecycleAdvanced', 'Status updated'));
+      await loadMeeting();
+    } catch (error: unknown) {
+      const status = isMeetingApiError(error) ? error.status : undefined;
+      console.error('Failed to advance meeting lifecycle:', error);
+      toast.error(
+        status === 409
+          ? t('meeting.object.lifecycleTransitionRejected', 'This transition is not allowed')
+          : t('meeting.object.lifecycleFailed', 'Could not update the status')
+      );
+    } finally {
+      setLifecyclePending(null);
+    }
+  };
 
   // DEC-82 (owner right-panel review, 2026-08-26): Properties table dostrojona
   // do wzorca Decisions/Initiative — pełna metryczka spotkania, nie tylko
@@ -1601,6 +1928,30 @@ export const MeetingObjectPage: React.FC = () => {
       label: t('meeting.object.propOrganizer', 'Organizer'),
       value: organizerName,
     },
+    // DEC-596: agenda jako oś spotkania + role z migracji 20262301. Kolejność
+    // brief właściciela (DEC-82) wyżej zostaje nietknięta — nowe wiersze są
+    // dopisane na końcu.
+    {
+      id: 'agenda',
+      label: t('meeting.object.propAgenda', 'Agenda'),
+      value: agendaLoading
+        ? '…'
+        : agendaItems.length || meeting.agenda.length
+          ? t('meeting.object.propAgendaCount', '{{items}} items', {
+              items: agendaItems.length || meeting.agenda.length,
+            })
+          : '—',
+    },
+    {
+      id: 'prowadzacy',
+      label: t('meeting.object.propChair', 'Chair'),
+      value: resolvePersonName(meeting.chairUserId) || '—',
+    },
+    {
+      id: 'protokolant',
+      label: t('meeting.object.propScribe', 'Scribe'),
+      value: resolvePersonName(meeting.scribeUserId) || '—',
+    },
   ];
 
   /**
@@ -1658,6 +2009,27 @@ export const MeetingObjectPage: React.FC = () => {
       children: (
         <PreviewActionBar
           rows={[
+            // DEC-596 / Wpis 54c: wiersz przejścia cyklu życia — tylko stany
+            // dozwolone z obecnego (lustro serwera). Pierwszy cel = `primary`
+            // (granat/biel, NIGDY crimson), alternatywy (np. minutes_to_approve
+            // → needs_actions | closed) = `neutral`. `closed` terminalny → brak
+            // wiersza. Blokada podwójnego kliknięcia przez `lifecyclePending`.
+            ...(nextLifecycleStates.length
+              ? [
+                  {
+                    id: 'przejscie-cyklu-zycia',
+                    label: t('meeting.object.lifecycleAdvanceRow', 'Move to'),
+                    buttons: nextLifecycleStates.map((state, index) => ({
+                      label: lifecycleStateLabel(state),
+                      icon: ArrowRight,
+                      colorScheme: (index === 0 ? 'primary' : 'neutral') as 'primary' | 'neutral',
+                      flex: true,
+                      disabled: lifecyclePending !== null,
+                      onClick: () => void advanceLifecycle(state),
+                    })),
+                  },
+                ]
+              : []),
             {
               buttons: [
                 {
@@ -1684,7 +2056,11 @@ export const MeetingObjectPage: React.FC = () => {
       // Właściciel czytał je jako „nic tu nie działa”, a wszystkie trzy mają
       // realny dom na liście (`MeetingHub.tsx`), do której prowadzi przycisk
       // obok. Wyłączony przycisk-zapowiedź jest gorszy niż jego brak.
-      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
+      actionIds: [
+        ...(nextLifecycleStates.length ? ['przejscie-cyklu-zycia'] : []),
+        'wczytaj-ponownie',
+        'wroc-do-listy',
+      ],
     },
     properties: {
       label: t('meeting.object.properties', 'Properties'),
@@ -1696,10 +2072,69 @@ export const MeetingObjectPage: React.FC = () => {
         />
       ),
     },
+    /**
+     * DEC-596: Powiązania PRZESTAJĄ być pominięte — punkty agendy z migracji
+     * 20262301 niosą `initiative_id`/`decision_id`, więc jest co pokazać.
+     *
+     * ★ UCZCIWIE (dlaczego bez linków): w `src/routes/routeConfig.ts` nie ma
+     * trasy obiektowej inicjatywy (`/initiatives/:id`), a decyzja spotkania
+     * żyje w zakładce „Decisions & actions" TEJ karty. Powiązania są więc
+     * renderowane jako chipy wyłącznie do odczytu — klikalny element
+     * prowadzący donikąd byłby atrapą gorszą niż sama etykieta.
+     */
     relations: {
-      pominieta: true as const,
-      reason:
-        'Spotkania nie mają dziś mechanizmu powiązań z innymi obiektami (brak tabeli/serwisu linków w module Meeting) — pusty akordeon udawałby funkcję, której nie ma.',
+      label: t('meeting.object.relations', 'Relations'),
+      icon: Link2,
+      badge: agendaRelations.initiatives.length + agendaRelations.decisions.length,
+      children: agendaLoading ? (
+        <LoadingState variant="spinner" className="h-16" />
+      ) : agendaRelations.initiatives.length || agendaRelations.decisions.length ? (
+        <div className="space-y-3" data-testid="meeting-relations">
+          {agendaRelations.initiatives.length ? (
+            <div>
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                {t('meeting.object.relationsInitiatives', 'Initiatives')}
+              </div>
+              <ul className="flex flex-wrap gap-1.5">
+                {agendaRelations.initiatives.map((relation) => (
+                  <li
+                    key={`rel-initiative-${relation.id}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary"
+                  >
+                    <Flag size={12} />
+                    <span className="max-w-[16rem] truncate">{relation.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {agendaRelations.decisions.length ? (
+            <div>
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                {t('meeting.object.relationsDecisions', 'Decisions')}
+              </div>
+              <ul className="flex flex-wrap gap-1.5">
+                {agendaRelations.decisions.map((relation) => (
+                  <li
+                    key={`rel-decision-${relation.id}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-xs text-c-text-secondary"
+                  >
+                    <Gavel size={12} />
+                    <span className="max-w-[16rem] truncate">{relation.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="text-sm text-c-text-muted">
+          {t(
+            'meeting.object.relationsEmpty',
+            'No agenda item is linked to an initiative or a decision yet.'
+          )}
+        </div>
+      ),
     },
     comments: {
       pominieta: true as const,

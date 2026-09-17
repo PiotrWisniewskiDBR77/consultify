@@ -38718,7 +38718,30 @@
       "inProgress": "In progress",
       "minutesToApprove": "Minutes to approve",
       "needsActions": "Needs actions",
-      "closed": "Closed"
+      "closed": "Closed",
+      "short": {
+        "scheduled": "Scheduled",
+        "inProgress": "In progress",
+        "minutesToApprove": "Minutes due",
+        "needsActions": "Needs actions",
+        "closed": "Closed"
+      }
+    },
+    "agendaAxis": {
+      "axisTotals": "{{items}} items · {{minutes}} min",
+      "minutesShort": "{{minutes}} min",
+      "owner": "Owner",
+      "noOwner": "unassigned",
+      "purposeInformation": "Information",
+      "purposeDiscussion": "Discussion",
+      "purposeDecision": "Decision",
+      "linkedInitiative": "Linked initiative (read-only)",
+      "linkedDecision": "Linked decision (read-only)",
+      "legacyHint": "Free-text agenda only — no structured agenda items recorded for this meeting.",
+      "empty": "No agenda items yet.",
+      "errors": {
+        "loadFailed": "Could not load the agenda."
+      }
     },
     "sync": {
       "loading": "Loading workspace",
@@ -38976,6 +38999,18 @@
       "propDecisionsCount": "Decisions",
       "propFollowUpsCount": "Follow-ups",
       "propOrganizer": "Organizer",
+      "propAgenda": "Agenda",
+      "propAgendaCount": "{{items}} items",
+      "propChair": "Chair",
+      "propScribe": "Scribe",
+      "relations": "Relations",
+      "relationsInitiatives": "Initiatives",
+      "relationsDecisions": "Decisions",
+      "relationsEmpty": "No agenda item is linked to an initiative or a decision yet.",
+      "lifecycleAdvanceRow": "Move to",
+      "lifecycleAdvanced": "Status updated",
+      "lifecycleTransitionRejected": "This transition is not allowed",
+      "lifecycleFailed": "Could not update the status",
       "editMeeting": "Edit meeting",
       "generateAiNotesAction": "Generate AI notes",
       "deleteMeeting": "Delete meeting",

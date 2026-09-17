@@ -30,8 +30,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // "No initReactI18next export is defined" before a single test can run.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, opts?: string | { defaultValue?: string }) =>
-      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
+    t: (
+      k: string,
+      opts?: string | { defaultValue?: string; [key: string]: unknown },
+      vars?: Record<string, unknown>
+    ) => {
+      const szablon = (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
+      const params = { ...(typeof opts === 'object' && opts ? opts : {}), ...(vars || {}) };
+      return szablon.replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, name: string) =>
+        String(params[name] ?? '')
+      );
+    },
     i18n: { language: 'en' },
   }),
   Trans: ({ children, i18nKey }: any) => children || i18nKey,
@@ -105,6 +114,14 @@ describe('MeetingObjectPage', () => {
     listDecisionRecordsMock.mockResolvedValue({ decisions: [] });
     listFollowUpRecordsMock.mockReset();
     listFollowUpRecordsMock.mockResolvedValue({ followUps: [] });
+    // DEC-596: karta czyta oś agendy przez surowy `fetch`
+    // (`meetingAgendaClient.ts`). Domyślna atrapa zwraca PUSTĄ listę
+    // strukturalnych punktów, więc sekcja spada na legacy `agenda_json`
+    // fixture'a — dokładnie zachowanie, które te testy mierzyły wcześniej.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => ({ agendaItems: [] }) }))
+    );
     routerState.pathname = '/meetings/meeting-1';
     routerState.meetingId = 'meeting-1';
     routerState.noteId = undefined;
@@ -129,12 +146,18 @@ describe('MeetingObjectPage', () => {
 
     await screen.findByText('Quarterly Review');
     expect(screen.getByText('Alice')).toBeTruthy();
-    // DEC-82: "Status" is ambiguous on its own now — it's both this fixture's
-    // one agenda item AND the right panel's Properties row label (Properties
-    // is open by default, see StandardArtifactShell.tsx). Scope to the
-    // Agenda card so this asserts the agenda item specifically.
-    const agendaCard = screen.getByText('Agenda').closest('div')?.parentElement;
-    expect(agendaCard ? within(agendaCard).getByText('Status') : null).toBeTruthy();
+    // DEC-596: agenda to oś spotkania (`meeting_agenda_items`). Gdy tabela jest
+    // pusta, sekcja UCZCIWIE spada na legacy `agenda_json` z dopiskiem — więc
+    // zakres na `data-testid`, bo sama etykieta „Agenda" jest też wierszem
+    // Właściwości.
+    const agendaCard = screen.getByTestId('meeting-agenda-axis');
+    expect(within(agendaCard).getByText('Status')).toBeTruthy();
+    expect(within(agendaCard).getByTestId('meeting-agenda-legacy')).toBeTruthy();
+    expect(
+      within(agendaCard).getByText(
+        'Free-text agenda only — no structured agenda items recorded for this meeting.'
+      )
+    ).toBeTruthy();
     // Pre-read is empty — honest "—", never invented copy.
     const preReadCard = screen.getByText('Pre-read').closest('div')?.parentElement;
     expect(preReadCard?.textContent).toContain('—');
@@ -233,7 +256,14 @@ describe('MeetingObjectPage', () => {
     routerState.pathname = '/meetings/meeting-1/minutes';
     getMeetingMock.mockResolvedValue({ meeting });
     listNotesMock.mockResolvedValue({ notes: [{ id: 'note-1', source: 'heuristic', summary: 'Draft minutes', keyPoints: [], decisions: [], actionItems: [{ task: 'Write recap', owner: 'Bob' }], status: 'proposed', proposalId: 'proposal-1' }] });
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    // DEC-596: karta woła przez `fetch` także oś agendy, więc atrapa musi
+    // rozdzielać żądania po URL — inaczej licznik blokady duplikatu zliczałby
+    // GET agendy razem z POST tworzenia zadania.
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes('/agenda')
+        ? { ok: true, json: async () => ({ agendaItems: [] }) }
+        : { ok: true }
+    );
     vi.stubGlobal('fetch', fetchMock);
     render(<MeetingObjectPage />);
 
@@ -241,8 +271,12 @@ describe('MeetingObjectPage', () => {
     const button = screen.getByRole('button', { name: 'Create task' });
     button.click();
     button.click();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock).toHaveBeenCalledWith('/api/meeting/meeting-1/notes/note-1/action-items/0/task', { method: 'POST', credentials: 'include' });
+    const taskCalls = () => fetchMock.mock.calls.filter(([url]) => !String(url).includes('/agenda'));
+    await waitFor(() => expect(taskCalls()).toHaveLength(1));
+    expect(taskCalls()[0]).toEqual([
+      '/api/meeting/meeting-1/notes/note-1/action-items/0/task',
+      { method: 'POST', credentials: 'include' },
+    ]);
     expect(await screen.findByRole('button', { name: 'Task created' })).toBeDisabled();
   });
 
@@ -313,21 +347,22 @@ describe('MeetingObjectPage', () => {
   });
 
   it('renders the SPEC-A shell — Menu 1 (title + lifecycle status) and the right panel (Actions/Properties) — with real meeting data', async () => {
-    getMeetingMock.mockResolvedValue({ meeting });
+    // DEC-596: status karty to TRWAŁY stan cyklu życia z `meetings.
+    // lifecycle_state` (migracja 20262301), nie derywacja z zegara. Ten sam
+    // zbiór pięciu stanów i te same etykiety co Menu 3 listy (`MeetingHub`).
+    getMeetingMock.mockResolvedValue({
+      meeting: { ...meeting, lifecycleState: 'needs_actions' },
+    });
     render(<MeetingObjectPage />);
 
-    // Menu 1 (StandardArtifactShell -> NModeHeader): title + status pill.
-    // This fixture's `endAt` (2026-07-01) is in the past while `status`
-    // stays 'scheduled', so `deriveMeetingLifecycle` reports the "needs
-    // update" lifecycle — the pill must reflect that REAL derivation, not a
-    // static "Scheduled" label.
     expect(await screen.findByText('Quarterly Review')).toBeTruthy();
-    // DEC-82: "Past — needs update" now also renders as this meeting's
-    // Properties/Status value (Properties is open by default) — scope to
-    // Menu 1's header (`data-nmode-header`, NModeHeader.tsx) to assert the
-    // lifecycle pill specifically, not either occurrence.
+    // Zakres na Menu 1 (`data-nmode-header`, NModeHeader.tsx): ten sam stan
+    // renderuje się też jako wiersz „Status" we Właściwościach (panel otwarty
+    // domyślnie), więc bez zakresu asercja miałaby dwa trafienia.
     const header = document.querySelector('[data-nmode-header]') as HTMLElement;
-    expect(within(header).getByText('Past — needs update')).toBeTruthy();
+    expect(within(header).getByText('Needs actions')).toBeTruthy();
+    // Stare „Past — needs update" (derywacja z `endAt`) NIE ma już źródła.
+    expect(screen.queryByText('Past — needs update')).toBeNull();
 
     // Prawy panel (ArtifactRightPanel accordion): section headers always
     // render regardless of open/closed state. FIX-M-1c (DEC-58 sceptyk):

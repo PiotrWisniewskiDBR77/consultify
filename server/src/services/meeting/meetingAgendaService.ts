@@ -278,13 +278,40 @@ export async function deleteMeetingAgendaItem(input: {
   organizationId: string;
   itemId: string;
 }): Promise<boolean> {
+  const existing = await dbGet<{ meeting_id: string }>(
+    `SELECT meeting_id FROM meeting_agenda_items
+     WHERE organization_id = ? AND id = ? LIMIT 1`,
+    [input.organizationId, input.itemId],
+    { fallback: false }
+  );
   const result = await dbRun(
     `DELETE FROM meeting_agenda_items WHERE organization_id = ? AND id = ?`,
     [input.organizationId, input.itemId],
     { fallback: false }
   );
   const changed = (result as { changes?: number } | null)?.changes;
-  return typeof changed === 'number' ? changed > 0 : true;
+  const deleted = typeof changed === 'number' ? changed > 0 : true;
+  if (!deleted || !existing) return deleted;
+
+  // P3 (KANAL Wpis 48): numeracja punktów jest osią agendy w karcie, więc po
+  // usunięciu zamykamy luki (1,2,4 -> 1,2,3) w tej samej kolejności, w której
+  // lista czyta punkty.
+  const remaining = await dbAll<{ id: string }>(
+    `SELECT id FROM meeting_agenda_items
+     WHERE organization_id = ? AND meeting_id = ?
+     ORDER BY position ASC, id ASC`,
+    [input.organizationId, existing.meeting_id],
+    { fallback: false }
+  );
+  for (let index = 0; index < (remaining || []).length; index += 1) {
+    await dbRun(
+      `UPDATE meeting_agenda_items SET position = ?, updated_at = ?
+       WHERE organization_id = ? AND id = ?`,
+      [index + 1, new Date().toISOString(), input.organizationId, remaining![index].id],
+      { fallback: false }
+    );
+  }
+  return deleted;
 }
 
 /**

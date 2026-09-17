@@ -424,6 +424,7 @@ const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templ
 const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
 const MeetingsModuleScreen = React.lazy(() => import('./screens/meetings-module'));
+const Mtg1Etap2Screen = React.lazy(() => import('./screens/mtg1-etap2'));
 const ProcessFlowCanvasScreen = React.lazy(() => import('./screens/processflow-canvas'));
 const ProcessFlowCanvasSingleNodeScreen = React.lazy(
   () => import('./screens/processflow-canvas-single-node')
@@ -890,6 +891,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
     render: () => <MeetingsModuleScreen />,
+  },
+  'mtg1-etap2': {
+    label:
+      'MTG-1 etap 2 (DEC-596, Wpis 54) — REALNY <MeetingHub> (lista, Menu 3 z pięcioma stanami i licznikami) + <MeetingObjectPage> (karta: oś agendy, cykl życia, prowadzący/protokolant, Powiązania, przejście stanu). 5 spotkań Northwind po jednym na stan. &view=list|card &meeting=<id> &lang=en &theme=light|dark',
+    render: () => <Mtg1Etap2Screen />,
   },
   'org-identity-operating': {
     label:

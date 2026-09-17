@@ -22,14 +22,22 @@ describe('P9 meeting action item → task', () => {
   it('renders a button for the action and blocks a rapid duplicate request', async () => {
     api.getMeeting.mockResolvedValue({ meeting: { id: 'meeting-1', title: 'Spotkanie', startAt: '2026-09-06T10:00:00Z', endAt: '2026-09-06T11:00:00Z', attendees: [], preRead: [], agenda: [], status: 'scheduled' } });
     api.listMeetingNotes.mockResolvedValue({ notes: [{ id: 'note-1', summary: 'Podsumowanie', actionItems: [{ task: 'Wyślij raport', owner: 'Anna' }], decisions: [], keyPoints: [], status: 'proposed' }] });
-    const request = vi.fn().mockResolvedValue({ ok: true });
+    // DEC-596: karta czyta oś agendy tym samym globalnym `fetch`, więc atrapa
+    // rozdziela żądania po URL, a dowód blokady duplikatu liczy TYLKO POST
+    // tworzenia zadania.
+    const request = vi.fn(async (url: string) =>
+      String(url).includes('/agenda')
+        ? { ok: true, json: async () => ({ agendaItems: [] }) }
+        : { ok: true }
+    );
     vi.stubGlobal('fetch', request);
     render(<MeetingObjectPage />);
     await screen.findByText('Wyślij raport');
     const button = screen.getByRole('button', { name: 'Create task' });
     button.click();
     button.click();
-    await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+    const taskCalls = () => request.mock.calls.filter(([url]) => !String(url).includes('/agenda'));
+    await waitFor(() => expect(taskCalls()).toHaveLength(1));
     expect(await screen.findByRole('button', { name: 'Task created' })).toBeDisabled();
   });
 });

@@ -35,8 +35,10 @@ import { useAppStore } from '@/store/useAppStore';
 import { translateOperatorMessage } from './meetingOperatorBriefI18n';
 import {
   MEETING_LIFECYCLE_ALL_DOT_CLASS,
+  MEETING_LIFECYCLE_CHIP_TONE,
   MEETING_LIFECYCLE_DOT_CLASS,
   MEETING_LIFECYCLE_LABEL_KEY,
+  MEETING_LIFECYCLE_SHORT_LABEL_KEY,
   MEETING_LIFECYCLE_STATES,
   resolveMeetingLifecycleState,
 } from './meetingLifecycle';
@@ -68,6 +70,11 @@ export interface MeetingItem {
   // 20262301). Opcjonalne — środowisko bez migracji nie zwraca pola, a
   // `resolveMeetingLifecycleState` odtwarza je z legacy `status`.
   lifecycleState?: string;
+  // DEC-596 (migracja 20262301): role spotkania — prowadzący i protokolant.
+  // Opcjonalne z tego samego powodu co `lifecycleState`: środowisko bez
+  // migracji ich nie zwraca, a karta renderuje wtedy uczciwe „—".
+  chairUserId?: string | null;
+  scribeUserId?: string | null;
   // FIX-M-2 (DEC-58 sceptyk): server includes this on every meeting row
   // (meetingService.ts mapMeeting → createdBy) but it was never declared
   // here, so nothing in this file could gate on it. Needed to mirror the
@@ -192,8 +199,8 @@ export const MeetingHub: React.FC = () => {
     }
 
     for (const filter of activeFilters) {
-      if (filter.column === 'status') {
-        data = data.filter((item) => item.status === filter.value);
+      if (filter.column === 'lifecycleState') {
+        data = data.filter((item) => resolveMeetingLifecycleState(item) === filter.value);
       }
       if (filter.column === 'followUp') {
         data = data.filter((item) => item.followUps.some((x) => x.status === 'open'));
@@ -234,6 +241,9 @@ export const MeetingHub: React.FC = () => {
         // `upcoming`/`followUp` are — FilterableTable's second filtering pass
         // reads `row[filter.column]` literally.
         pastNeedsUpdate: deriveMeetingLifecycle(item) === 'past_needs_update' ? 'true' : 'false',
+        // DEC-596: the Status column filters by lifecycle state, so the literal
+        // second pass of FilterableTable needs the resolved state on the row.
+        lifecycleState: resolveMeetingLifecycleState(item),
       })),
     [filteredMeetings]
   );
@@ -378,52 +388,27 @@ export const MeetingHub: React.FC = () => {
         ),
       },
       {
-        id: 'status',
+        id: 'lifecycleState',
         label: t('meeting.columns.status', 'Status'),
-        // 200px, nie 120px: polska etykieta stanu „Po terminie — wymaga
-        // aktualizacji" (meeting.status.pastNeedsUpdate) jest dużo dłuższa
-        // niż angielski domyślny „Past — needs update" i przy 120px ucinała
-        // się w pigułce do „Po terminie — wym…" (noc 2026-08-30, przegląd
-        // modułu Spotkania — realny StatusChip, nie stanowisko pomiarowe).
+        // dataType 'status' = podłoga 160 px w columnFit fasady; bez typu
+        // kolumna siadała do ~105 px i każda pigułka ucinała się wielokropkiem.
+        dataType: 'status',
         width: '200px',
         filterable: true,
-        filterOptions: [
-          {
-            value: 'scheduled',
-            label: t('meeting.status.scheduled', 'Scheduled'),
-            color: 'bg-blue-400',
-          },
-          {
-            value: 'completed',
-            label: t('meeting.status.completed', 'Completed'),
-            color: 'bg-emerald-400',
-          },
-        ],
-        // CB-04/RB-009/RV-024: three DISPLAY states over the two real
-        // `status` values — a past-but-still-`scheduled` meeting gets its
-        // own honest warning-tone label instead of reading as identical to
-        // a genuinely future one (canon §4.1 EntityStatusChip pattern, but
-        // via StatusChip directly since the tone here is lifecycle-derived,
-        // not a straight raw-status lookup).
+        filterOptions: MEETING_LIFECYCLE_STATES.map((state) => ({
+          value: state,
+          label: t(MEETING_LIFECYCLE_LABEL_KEY[state]),
+          color: MEETING_LIFECYCLE_DOT_CLASS[state],
+        })),
         render: (row: MeetingItem) => {
-          const lifecycle = deriveMeetingLifecycle(row);
+          const state = resolveMeetingLifecycleState(row);
           return (
-            <StatusChip
-              tone={
-                lifecycle === 'completed'
-                  ? 'success'
-                  : lifecycle === 'past_needs_update'
-                    ? 'warning'
-                    : 'info'
-              }
-              label={
-                lifecycle === 'completed'
-                  ? t('meeting.status.completed', 'Completed')
-                  : lifecycle === 'past_needs_update'
-                    ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
-                    : t('meeting.status.scheduled', 'Scheduled')
-              }
-            />
+            <span className="whitespace-nowrap">
+              <StatusChip
+                tone={MEETING_LIFECYCLE_CHIP_TONE[state]}
+                label={t(MEETING_LIFECYCLE_SHORT_LABEL_KEY[state])}
+              />
+            </span>
           );
         },
       },
@@ -926,20 +911,10 @@ export const MeetingHub: React.FC = () => {
                   meta={{
                     pills: [
                       (() => {
-                        const lifecycle = deriveMeetingLifecycle(selectedMeeting);
+                        const state = resolveMeetingLifecycleState(selectedMeeting);
                         return {
-                          label:
-                            lifecycle === 'completed'
-                              ? t('meeting.status.completed', 'Completed')
-                              : lifecycle === 'past_needs_update'
-                                ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
-                                : t('meeting.status.scheduled', 'Scheduled'),
-                          tone:
-                            lifecycle === 'completed'
-                              ? ('success' as const)
-                              : lifecycle === 'past_needs_update'
-                                ? ('warning' as const)
-                                : ('info' as const),
+                          label: t(MEETING_LIFECYCLE_LABEL_KEY[state]),
+                          tone: MEETING_LIFECYCLE_CHIP_TONE[state],
                         };
                       })(),
                     ],

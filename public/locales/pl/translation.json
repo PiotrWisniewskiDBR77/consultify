@@ -39352,7 +39352,30 @@
       "inProgress": "W trakcie",
       "minutesToApprove": "Protokół do akceptacji",
       "needsActions": "Wymaga działań",
-      "closed": "Zamknięte"
+      "closed": "Zamknięte",
+      "short": {
+        "scheduled": "Zaplanowane",
+        "inProgress": "W trakcie",
+        "minutesToApprove": "Do akceptu",
+        "needsActions": "Wymaga działań",
+        "closed": "Zamknięte"
+      }
+    },
+    "agendaAxis": {
+      "axisTotals": "{{items}} pkt · {{minutes}} min",
+      "minutesShort": "{{minutes}} min",
+      "owner": "Prowadzący",
+      "noOwner": "nieprzydzielony",
+      "purposeInformation": "Informacja",
+      "purposeDiscussion": "Dyskusja",
+      "purposeDecision": "Decyzja",
+      "linkedInitiative": "Powiązana inicjatywa (tylko odczyt)",
+      "linkedDecision": "Powiązana decyzja (tylko odczyt)",
+      "legacyHint": "Tylko agenda tekstowa — to spotkanie nie ma jeszcze strukturalnych punktów agendy.",
+      "empty": "Brak punktów agendy.",
+      "errors": {
+        "loadFailed": "Nie udało się wczytać agendy."
+      }
     },
     "sync": {
       "loading": "Ładowanie przestrzeni",
@@ -39610,6 +39633,18 @@
       "propDecisionsCount": "Liczba decyzji",
       "propFollowUpsCount": "Liczba follow-upów",
       "propOrganizer": "Organizator",
+      "propAgenda": "Porządek obrad",
+      "propAgendaCount": "{{items}} pkt",
+      "propChair": "Prowadzący",
+      "propScribe": "Protokolant",
+      "relations": "Powiązania",
+      "relationsInitiatives": "Inicjatywy",
+      "relationsDecisions": "Decyzje",
+      "relationsEmpty": "Żaden punkt agendy nie jest jeszcze powiązany z inicjatywą ani decyzją.",
+      "lifecycleAdvanceRow": "Przejdź do",
+      "lifecycleAdvanced": "Status zaktualizowany",
+      "lifecycleTransitionRejected": "To przejście jest niedozwolone",
+      "lifecycleFailed": "Nie udało się zaktualizować statusu",
       "editMeeting": "Edytuj spotkanie",
       "generateAiNotesAction": "Generuj notatki AI",
       "deleteMeeting": "Usuń spotkanie",
