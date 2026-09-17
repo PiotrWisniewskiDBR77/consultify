@@ -326,3 +326,11 @@ benchmark/results/
 /odbior-uwagi/
 docs/program/grafika/odbior.sqlite
 docs/program/grafika/odbior.sqlite-*
+
+# BEZPIECZENSTWO (2026-09-17, wyciek L1): logi z przebiegow "zdalnie" potrafia
+# zawierac pelny ciag polaczenia z haslem zywej bazy (tak wyciek hasla demo do
+# publicznego repo). Logi dowodowe nie wchodza do repo; jesli konkretny log jest
+# naprawde potrzebny, dodaj go swiadomie przez `git add -f` PO sprawdzeniu, ze
+# nie ma w nim poswiadczen.
+evidence/**/zdalnie/*.log
+evidence/**/*.log
