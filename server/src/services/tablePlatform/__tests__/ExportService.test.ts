@@ -20,6 +20,8 @@ import exportService, {
   escapeCsvValue,
   formatFieldValue,
   neutralizeFormula,
+  resolveXlsxProfile,
+  SHEET_BASE_TEMPLATE_ID,
 } from '../ExportService.js';
 
 describe('ExportService', () => {
@@ -187,6 +189,29 @@ describe('ExportService', () => {
     });
   });
 
+  describe('resolveXlsxProfile', () => {
+    it('selects scorecard only from canonical SHEET-BASE provenance', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ metadata: { template_family_ref: 'SHEET-BASE' } }],
+      });
+      await expect(resolveXlsxProfile('t-sheet-family')).resolves.toBe(
+        'consultify-supplier-scorecard'
+      );
+
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ metadata: JSON.stringify({ originTemplateId: SHEET_BASE_TEMPLATE_ID }) }],
+      });
+      await expect(resolveXlsxProfile('t-sheet-id')).resolves.toBe('consultify-supplier-scorecard');
+    });
+
+    it('does not infer a profile from table headers or unrelated metadata', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ metadata: { headers: ['Supplier', 'Trend'], template_family_ref: 'OTHER' } }],
+      });
+      await expect(resolveXlsxProfile('t-generic')).resolves.toBeUndefined();
+    });
+  });
+
   // -----------------------------------------------------------------------
   // streamCsvExport
   // -----------------------------------------------------------------------
@@ -313,6 +338,57 @@ describe('ExportService', () => {
       expect(workbook.getWorksheet('Summary')!.getCell('B4').type).toBe(ExcelJS.ValueType.Formula);
       expect(workbook.getWorksheet('Summary')!.getCell('B5').type).toBe(ExcelJS.ValueType.Formula);
       expect(workbook.getWorksheet('Data')!.headerFooter.oddHeader).toContain('Northwind');
+    });
+
+    it('turns a profile-selected Table Studio scorecard into formulas while generic data stays literal', async () => {
+      const names = [
+        'Supplier',
+        'Site',
+        'Receipts Q2',
+        'NC Q2',
+        'NC rate Q2',
+        'Receipts Q3',
+        'NC Q3',
+        'NC rate Q3',
+        'Δ pp',
+        'Trend',
+        'Status',
+      ];
+      const fields = names.map((name, index) => ({
+        id: `f${index + 1}`,
+        name,
+        type: [2, 3, 5, 6].includes(index) ? 'number' : 'singleLineText',
+        options: null,
+      }));
+      mockQuery.mockResolvedValueOnce({ rows: fields });
+      mockExecuteQuery.mockResolvedValueOnce({
+        records: [
+          {
+            data: Object.fromEntries(fields.map((field) => [field.id, 'source value'])),
+          },
+        ],
+        cursor: undefined,
+        hasMore: false,
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [{ name: 'Supplier Quality Scorecard' }] });
+
+      const buf = await exportService.buildXlsxBuffer({
+        tableId: 't-sheet',
+        organizationName: 'Northwind',
+        profile: 'consultify-supplier-scorecard',
+      });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buf);
+      expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual([
+        'Supplier scorecard',
+        'Template fields',
+      ]);
+      expect(workbook.getWorksheet('Supplier scorecard')!.getCell('E7').type).toBe(
+        ExcelJS.ValueType.Formula
+      );
+      expect(workbook.getWorksheet('Supplier scorecard')!.getCell('J7').type).toBe(
+        ExcelJS.ValueType.Formula
+      );
     });
   });
 });

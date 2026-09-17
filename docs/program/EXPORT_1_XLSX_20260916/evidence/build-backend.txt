@@ -1,1 +1,1 @@
-PASS: npx tsc -p server/tsconfig.json --noEmit
+PASS — npx tsc -p server/tsconfig.json --noEmit; @types/node 22.19.3

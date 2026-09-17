@@ -3,8 +3,9 @@ import ExcelJS from 'exceljs';
 import { buildWorkbookBuffer } from '../workbook/WorkbookBuilder.js';
 import { sanitizeSpreadsheetCellText } from '../workbook/workbookExportSanitizer.js';
 import type { WorkbookSchema } from '../workbook/WorkbookSchema.js';
+import { CONSULTIFY_SUPPLIER_SCORECARD_PROFILE } from './XlsxExportProfile.js';
 
-export const CONSULTIFY_SUPPLIER_SCORECARD_PROFILE = 'consultify-supplier-scorecard';
+export { CONSULTIFY_SUPPLIER_SCORECARD_PROFILE } from './XlsxExportProfile.js';
 
 // Arial is the accepted workbook's portable face and remains available when
 // newer Microsoft-only Aptos fonts are not installed (for example LibreOffice).
@@ -382,9 +383,8 @@ function addScorecardDataSheet(
     ref: `J${firstDataRow}:J${totalRowNumber}`,
     rules: [
       {
-        type: 'containsText',
-        operator: 'containsText',
-        text: 'Worsening',
+        type: 'expression',
+        formulae: [`NOT(ISERROR(SEARCH("Worsening",J${firstDataRow})))`],
         priority: 1,
         style: {
           font: { bold: true, color: { argb: COLORS.critical } },
@@ -392,9 +392,8 @@ function addScorecardDataSheet(
         },
       },
       {
-        type: 'containsText',
-        operator: 'containsText',
-        text: 'Improving',
+        type: 'expression',
+        formulae: [`NOT(ISERROR(SEARCH("Improving",J${firstDataRow})))`],
         priority: 2,
         style: {
           font: { bold: true, color: { argb: COLORS.ok } },
@@ -491,6 +490,53 @@ function addSummarySheet(
   });
 }
 
+function addScorecardFieldMapSheet(workbook: ExcelJS.Workbook, input: CanonicalXlsxInput): void {
+  const worksheet = workbook.addWorksheet('Template fields', {
+    views: [{ state: 'frozen', ySplit: 1, showGridLines: false }],
+  });
+  setPrintAndBrand(worksheet, input.organizationName, input.source);
+  worksheet.columns = [20, 22, 16, 46].map((width) => ({ width }));
+  const rows = [
+    ['Cell / range', 'What it is', 'Owner', 'Bound to'],
+    ['A1', 'Template field', 'Template', 'Fixed title of the template'],
+    ['A2', 'Generator content', 'Generator', 'Reporting period selected at generation'],
+    ['A3', 'Template field', 'Template', 'Org name · source path · date · confidentiality label'],
+    ['A6:K6', 'Template field', 'Template', 'Column set, labels, widths, freeze, autofilter'],
+    [
+      'A7:D11, F7:G11, K7:K11',
+      'Generator content',
+      'Generator',
+      'Supplier register + goods-in nonconformance records',
+    ],
+    [
+      'E, H, I, J columns',
+      'Template formula',
+      'Template',
+      'NC rate, Δ pp and trend label — computed, never pasted',
+    ],
+    ['Row 12', 'Template formula', 'Template', 'SUM + weighted NC rate (not average of averages)'],
+    [
+      'Conditional formats',
+      'Template rule',
+      'Template',
+      'Tolerance 3.0% · Δ ±0.3 pp · trend colours',
+    ],
+  ];
+  rows.forEach((values, rowIndex) => {
+    const row = worksheet.getRow(rowIndex + 1);
+    row.values = values;
+    row.height = rowIndex === 0 ? 24 : 20;
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.font = argbFont(rowIndex === 0 ? COLORS.white : COLORS.ink, rowIndex === 0);
+      cell.fill = solid(
+        rowIndex === 0 ? COLORS.navy : rowIndex % 2 === 0 ? COLORS.zebra : COLORS.white
+      );
+      cell.border = thinBorder();
+      cell.alignment = { vertical: 'middle', wrapText: true };
+    });
+  });
+}
+
 export async function buildCanonicalXlsxBuffer(input: CanonicalXlsxInput): Promise<Buffer> {
   if (input.sheets.length === 0) throw new Error('XLSX_SHEETS_REQUIRED');
   const workbook = new ExcelJS.Workbook();
@@ -499,8 +545,8 @@ export async function buildCanonicalXlsxBuffer(input: CanonicalXlsxInput): Promi
   workbook.calcProperties.fullCalcOnLoad = true;
   const scorecard = input.profile === CONSULTIFY_SUPPLIER_SCORECARD_PROFILE;
   if (scorecard) {
-    const data = addScorecardDataSheet(workbook, input, input.sheets[0]);
-    addSummarySheet(workbook, input, data, true);
+    addScorecardDataSheet(workbook, input, input.sheets[0]);
+    addScorecardFieldMapSheet(workbook, input);
   } else {
     const used = new Set<string>();
     const rendered = input.sheets.map((sheet, index) =>

@@ -5,7 +5,13 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import {
+  CONSULTIFY_SUPPLIER_SCORECARD_PROFILE,
+  type XlsxExportProfile,
+} from '../export/XlsxExportProfile.js';
 import viewQueryEngine, { type QueryOptions } from './ViewQueryEngine.js';
+
+export const SHEET_BASE_TEMPLATE_ID = '2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1';
 
 // ---------------------------------------------------------------------------
 // CSV Value Formatting
@@ -139,6 +145,38 @@ export interface CsvExportOptions {
   viewId?: string;
   fieldIds?: string[];
   organizationName?: string;
+  profile?: XlsxExportProfile;
+}
+
+export async function resolveXlsxProfile(tableId: string): Promise<XlsxExportProfile | undefined> {
+  const db = getDatabase();
+  const result = await db.query(
+    `SELECT b.metadata
+       FROM tp_tables t
+       JOIN tp_bases b ON b.id = t.base_id
+      WHERE t.id = $1`,
+    [tableId]
+  );
+  const metadata = (result.rows[0] as { metadata?: unknown } | undefined)?.metadata;
+  const parsed =
+    typeof metadata === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(metadata) as Record<string, unknown>;
+          } catch {
+            return {};
+          }
+        })()
+      : metadata && typeof metadata === 'object'
+        ? (metadata as Record<string, unknown>)
+        : {};
+  const family = String(parsed.template_family_ref ?? parsed.templateFamilyRef ?? '');
+  const templateId = String(
+    parsed.originTemplateId ?? parsed.template_id ?? parsed.templateId ?? ''
+  );
+  return family === 'SHEET-BASE' || templateId === SHEET_BASE_TEMPLATE_ID
+    ? CONSULTIFY_SUPPLIER_SCORECARD_PROFILE
+    : undefined;
 }
 
 async function streamCsvExport(
@@ -190,7 +228,7 @@ async function streamCsvExport(
 // ---------------------------------------------------------------------------
 
 async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
-  const { tableId, viewId, fieldIds, organizationName = 'Organization' } = options;
+  const { tableId, viewId, fieldIds, organizationName = 'Organization', profile } = options;
   const fields = await loadFields(tableId, fieldIds);
   const rows: Record<string, { value?: unknown; formula?: string }>[] = [];
   let cursor: string | undefined;
@@ -220,6 +258,7 @@ async function buildXlsxBuffer(options: CsvExportOptions): Promise<Buffer> {
     title: tableName,
     organizationName,
     source: 'Consultify → Table Studio',
+    profile,
     sheets: [
       {
         name: 'Data',
@@ -244,6 +283,7 @@ const exportService = {
   getTableName,
   streamCsvExport,
   buildXlsxBuffer,
+  resolveXlsxProfile,
 };
 
 export default exportService;

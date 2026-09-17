@@ -157,10 +157,12 @@ const buildXlsxBufferMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue(Buffer.from([80, 75, 3, 4]))
 );
 const getTableNameMock = vi.hoisted(() => vi.fn().mockResolvedValue('Export display name'));
+const resolveXlsxProfileMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('../../../server/src/services/tablePlatform/ExportService.js', () => ({
   default: {
     getTableName: (...a: unknown[]) => getTableNameMock(...a),
+    resolveXlsxProfile: (...a: unknown[]) => resolveXlsxProfileMock(...a),
     buildXlsxBuffer: (...a: unknown[]) => buildXlsxBufferMock(...a),
     streamCsvExport: vi.fn(),
   },
@@ -178,8 +180,10 @@ describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tab
     queryMock.mockClear();
     buildXlsxBufferMock.mockClear();
     getTableNameMock.mockClear();
+    resolveXlsxProfileMock.mockReset();
     buildXlsxBufferMock.mockResolvedValue(Buffer.from([80, 75, 3, 4]));
     getTableNameMock.mockResolvedValue('Export display name');
+    resolveXlsxProfileMock.mockResolvedValue(undefined);
   });
 
   afterAll(
@@ -238,6 +242,63 @@ describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tab
       .expect(200);
 
     expect(first.headers['x-artifact-id']).toBe(second.headers['x-artifact-id']);
+  });
+
+  it('auto-selects the supplier scorecard profile for a SHEET-BASE table', async () => {
+    resolveXlsxProfileMock.mockResolvedValue('consultify-supplier-scorecard');
+    const app = express();
+    app.use('/api/table-platform', tablePlatformRoutes);
+
+    await request(app).get('/api/table-platform/tables/tbl-governed-1/export/xlsx').expect(200);
+
+    expect(resolveXlsxProfileMock).toHaveBeenCalledWith('tbl-governed-1');
+    expect(buildXlsxBufferMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tableId: 'tbl-governed-1',
+        profile: 'consultify-supplier-scorecard',
+      })
+    );
+  });
+
+  it('accepts the explicit supplier scorecard profile without provenance lookup', async () => {
+    const app = express();
+    app.use('/api/table-platform', tablePlatformRoutes);
+
+    await request(app)
+      .get('/api/table-platform/tables/tbl-operational-1/export/xlsx')
+      .query({ profile: 'consultify-supplier-scorecard' })
+      .expect(200);
+
+    expect(resolveXlsxProfileMock).not.toHaveBeenCalled();
+    expect(buildXlsxBufferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ profile: 'consultify-supplier-scorecard' })
+    );
+  });
+
+  it('rejects an unknown XLSX profile with HTTP 400 before export', async () => {
+    const app = express();
+    app.use('/api/table-platform', tablePlatformRoutes);
+
+    const res = await request(app)
+      .get('/api/table-platform/tables/tbl-operational-1/export/xlsx')
+      .query({ profile: 'header-sniffing-profile' })
+      .expect(400);
+
+    expect(res.body).toMatchObject({ code: 'XLSX_EXPORT_PROFILE_INVALID' });
+    expect(resolveXlsxProfileMock).not.toHaveBeenCalled();
+    expect(buildXlsxBufferMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps a generic table on the generic export profile', async () => {
+    const app = express();
+    app.use('/api/table-platform', tablePlatformRoutes);
+
+    await request(app).get('/api/table-platform/tables/tbl-operational-1/export/xlsx').expect(200);
+
+    expect(resolveXlsxProfileMock).toHaveBeenCalledWith('tbl-operational-1');
+    expect(buildXlsxBufferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ tableId: 'tbl-operational-1', profile: undefined })
+    );
   });
 
   it('register-sheet-artifact returns 400 when table is not governed', async () => {

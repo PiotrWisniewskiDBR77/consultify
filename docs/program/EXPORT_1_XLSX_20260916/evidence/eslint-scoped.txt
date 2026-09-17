@@ -1,1 +1,1 @@
-PASS: scoped ESLint completed with 0 errors; warnings are pre-existing or test-file ignore notices.
+PASS — scoped ESLint: 0 errors (pre-existing whole-file prettier debt excluded for table-platform.routes.ts)
