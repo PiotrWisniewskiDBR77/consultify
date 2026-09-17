@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
+import { INITIATIVE_LIFECYCLE_STAGES } from '../constants/initiativeLifecycleStages.js';
 import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeLegacyBudgetItem } from '../domain/initiatives-execution/budgetItems.js';
 import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
@@ -310,8 +311,14 @@ export class InitiativeController {
         params.push(String(projectId));
       }
       if (status) {
-        sql += ` AND UPPER(i.status) = ?`;
-        params.push(normalizeStatus(status));
+        const normalizedFilter = String(status).trim().toUpperCase();
+        if ((INITIATIVE_LIFECYCLE_STAGES as readonly string[]).includes(normalizedFilter)) {
+          sql += ` AND UPPER(i.lifecycle_stage) = ?`;
+          params.push(normalizedFilter);
+        } else {
+          sql += ` AND UPPER(i.status) = ?`;
+          params.push(normalizeStatus(status));
+        }
       }
       // DEC-495 — rejestr Inicjatyw pokazuje domyslnie tylko AKTUALNE.
       //
@@ -460,6 +467,8 @@ export class InitiativeController {
         summary: getMultilingualText(i.summary as string, lang),
         hypothesis: i.hypothesis,
         status: i.status,
+        lifecycleStage: i.lifecycle_stage ?? null,
+        lifecycleStageSource: i.lifecycle_stage_source ?? null,
         priority: i.priority || 'medium',
         impact: i.impact || 'medium',
         effort: i.effort,

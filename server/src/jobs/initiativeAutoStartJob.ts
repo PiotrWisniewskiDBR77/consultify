@@ -103,22 +103,16 @@ export async function autoStartScheduledInitiatives(options: { limit?: number } 
   // zostawiła ten filtr na starym słowniku, więc sama też nigdy się nie
   // wykonała.
   //
-  // Etap `SCHEDULED` (DEC-490) mapuje się na kod kolumny `APPROVED` — tak samo
-  // jak `APPROVED_BACKLOG`. Kod kolumny SAM w sobie nie odróżnia „zatwierdzona,
-  // ale bez okna" od „okno i baseline zatwierdzone". Rozróżnienie żyje w etapie
-  // silnika (`ie_aggregate_state.payload_json.lifecycleState`), więc kandydatów
-  // wybieramy PARĄ: kod kolumny + etap. Bez części etapowej cron startowałby
-  // inicjatywy z backlogu, którym nikt nie zatwierdził harmonogramu.
+  // DEC-539: persisted `initiatives.lifecycle_stage` is the product truth.
+  // Reading the aggregate here used to create a second store and made the job
+  // disagree with list/card readers after either side lagged. The compatibility
+  // status remains a defensive check; the precise stage comes from the column.
   const rows = await queryHelpers.queryAll<any>(
     `SELECT i.id, i.organization_id as "organizationId", i.status,
             i.planned_start_date as "plannedStartDate", i.start_date as "startDate"
      FROM initiatives i
-     JOIN ie_aggregate_state agg
-       ON agg.organization_id = i.organization_id
-      AND agg.aggregate_type = 'initiative'
-      AND agg.aggregate_id = i.id
      WHERE i.status = ?
-       AND agg.payload_json->>'lifecycleState' = ?
+       AND i.lifecycle_stage = ?
      ORDER BY COALESCE(i.planned_start_date::timestamptz, i.start_date::timestamptz) ASC
      LIMIT ?`,
     [InitiativeStatus.APPROVED, 'SCHEDULED', limit]

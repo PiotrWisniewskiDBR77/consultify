@@ -1,5 +1,5 @@
 /**
- * H1c / DEC-506 — JEDNO ŹRÓDŁO MAPOWANIA: 12 etapów silnika → 7 kodów kolumny.
+ * DEC-539 — JEDNO ŹRÓDŁO MAPOWANIA: 12 etapów produktu → 7 kodów zgodności.
  *
  * DLACZEGO TEN PLIK ISTNIEJE
  * --------------------------
@@ -20,9 +20,10 @@
  *     której stoją bramki `INITIATIVE_TRANSITION_MATRIX`, RBAC i wszystkie
  *     odczyty listowe.
  *
- * DEC-506 (CTO, 14.09) rozstrzyga: kolumna zostaje siedmiokodowa (BEZ migracji,
- * BEZ ruszania CHECK), a 12 etapów mapuje się na nią DETERMINISTYCZNIE przy
- * zapisie. Etap NIE ginie — zapisujemy go obok, w agregacie silnika.
+ * DEC-539 uchyla DEC-506: etap 12 jest osobną kolumną
+ * `initiatives.lifecycle_stage`, a `status` zostaje siedmiokodową pochodną do
+ * czasu osobnej decyzji o jego usunięciu. Agregat pozostaje precyzyjnym źródłem
+ * backfillu i projekcją zgodności dla istniejącego runtime-v1.
  *
  * CO BYŁO ZEPSUTE (tripwire `h1b-lifecycle-target-vocabulary-gap.test.ts`)
  * -----------------------------------------------------------------------
@@ -34,12 +35,10 @@
  *
  * TABELA MAPOWANIA — PARYTET, NIE TRZECIA PRAWDA
  * ----------------------------------------------
- * `INITIATIVE_STAGE_TO_STATUS` jest CELOWO identyczna z `runtimeToStatus`
- * w `src/contracts/initiatives-execution/statusMapping.ts` (klient). Test
- * parytetu `initiativeLifecycleStages.parity.test.ts` porównuje obie tabele
- * pozycja po pozycji — przy zmianie jednej strony zmień OBIE, inaczej test
- * czerwienieje. Wzorzec zapożyczony z
- * `server/src/method-core/__tests__/clientContractParity.integration.test.ts`.
+ * `INITIATIVE_STAGE_TO_STATUS` jest jedyną tabelą mapowania. Klientowy adapter
+ * `src/contracts/initiatives-execution/statusMapping.ts` importuje ten moduł,
+ * więc frontend i serwer nie mogą rozjechać się przez dwie ręcznie utrzymywane
+ * kopie. Test kontraktowy sprawdza oba kierunki adaptera.
  *
  * ZAŁOŻENIE DO ROZSTRZYGNIĘCIA PRZEZ WŁAŚCICIELA (oznaczone, nie ukryte):
  * `DELIVERED` / `BENEFITS_TRACKING` / `EFFECTIVENESS_REVIEWED` kolapsują na
@@ -148,8 +147,8 @@ export const INITIATIVE_STATUS_TO_STAGES: Record<
  * Słownik ZASTANY (13 kodów runtime sprzed P12 + 7 kodów P12) → etap silnika.
  * To jest most dla wszystkiego, co wciąż mówi starym słownikiem: pięciu celów
  * `EarlyLifecycleProposalSchema`, `APPROVED_EXPECTED_BY_TARGET` w adapterze,
- * danych zastanych. Zgodny co do joty z `legacyToRuntime`
- * (`src/contracts/initiatives-execution/statusMapping.ts`) — parytet pilnuje test.
+ * danych zastanych. Klient korzysta z tego samego resolvera przez adapter
+ * `src/contracts/initiatives-execution/statusMapping.ts`.
  */
 export const LEGACY_TARGET_TO_STAGE: Record<string, InitiativeLifecycleStage> = {
   PROPOSED: 'REGISTERED_DRAFT',

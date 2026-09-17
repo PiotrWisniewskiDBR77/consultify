@@ -138,4 +138,19 @@ describe('H1c — parytet z kontraktem klienta (jedna tabela, nie dwie)', () => 
       ).toEqual(INITIATIVE_STATUS_TO_STAGES[status]);
     }
   });
+
+  it('7→12 wybiera kanoniczne etapy bez cofania PENDING_APPROVAL i CLOSED', async () => {
+    const { mapInitiativeStatus } = await import(
+      '../../../../src/contracts/initiatives-execution/statusMapping'
+    );
+
+    expect(
+      mapInitiativeStatus({ direction: 'legacy-to-runtime', status: 'PENDING_APPROVAL' })
+    ).toBe('READY_FOR_DECISION');
+    expect(mapInitiativeStatus({ direction: 'legacy-to-runtime', status: 'CLOSED' })).toBe(
+      'CLOSED'
+    );
+    expect(resolveInitiativeLifecycleStage('PENDING_APPROVAL')).toBe('READY_FOR_DECISION');
+    expect(resolveInitiativeLifecycleStage('CLOSED')).toBe('CLOSED');
+  });
 });

@@ -1509,6 +1509,9 @@ export interface LegacyInitiativeApiRow {
   summary?: string | null;
   hypothesis?: string | null;
   status?: string | null;
+  /** DEC-539 twelve-stage database truth; status remains compatibility only. */
+  lifecycleStage?: string | null;
+  lifecycleStageSource?: 'aggregate' | 'mapped' | 'writer' | null;
   priority?: string | null;
   progress?: number | null;
   estimatedBudget?: number | null;
