@@ -39,6 +39,7 @@ import {
   normalizeStatus,
 } from './initiativeTransitionService.js';
 import { normalizeInitiativeDbStatusForRead } from './initiativeLifecycleCanon.js';
+import { resolveInitiativeTransitionCase } from './initiativeLifecycleGateDecisionService.js';
 
 export interface InitiativeTransitionPreflightItem {
   targetStatus: string;
@@ -76,6 +77,8 @@ export interface InitiativeTransitionPreflight {
   archived: boolean;
   isAuthor: boolean;
   effectiveRoles: string[];
+  /** PMO-1a v4: proposal POST needs D-37 lineage; expose it before click. */
+  transitionCase: { status: 'ready' | 'missing' | 'ambiguous'; transformationCaseId: string | null };
   transitions: InitiativeTransitionPreflightItem[];
   flags: InitiativeFlagPreflightItem[];
 }
@@ -95,6 +98,20 @@ export async function getInitiativeTransitionPreflight(input: {
   if (!row) return null;
 
   const currentStatus = normalizeInitiativeDbStatusForRead(String(row.status || ''));
+
+  const transitionCase = await queryHelpers.withPgTransaction(async (tx) => {
+    try {
+      const transformationCaseId = await resolveInitiativeTransitionCase(tx, { organizationId: orgId, initiativeId });
+      return { status: 'ready' as const, transformationCaseId };
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      return {
+        status: code === 'INITIATIVE_TRANSITION_CASE_AMBIGUOUS' ? ('ambiguous' as const) : ('missing' as const),
+        transformationCaseId: null,
+      };
+    }
+  });
+
   const accessCtx = await resolveInitiativeCapabilityContext(
     orgId,
     initiativeId,
@@ -227,6 +244,7 @@ export async function getInitiativeTransitionPreflight(input: {
     archived,
     isAuthor,
     effectiveRoles,
+    transitionCase,
     transitions,
     flags,
   };

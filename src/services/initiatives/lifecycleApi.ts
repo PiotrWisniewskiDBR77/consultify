@@ -43,6 +43,10 @@ export interface InitiativeTransitionPreflight {
   archived: boolean;
   isAuthor: boolean;
   effectiveRoles: string[];
+  transitionCase?: {
+    status: 'ready' | 'missing' | 'ambiguous';
+    transformationCaseId: string | null;
+  };
   transitions: InitiativeTransitionPreflightItem[];
   flags: InitiativeFlagPreflightItem[];
 }

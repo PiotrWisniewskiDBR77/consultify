@@ -10596,7 +10596,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               children: (
                 <PmoStageTransitionPanel
                   initiativeId={initiativeId}
-                  expectedVersion={initiative?.canonicalVersion ?? null}
+                  expectedVersion={
+                    initiative?.canonicalVersion ??
+                    initiative?.version ??
+                    initiative?.baselineVersion ??
+                    initiative?.baseline_version ??
+                    null
+                  }
                   reviewerUserId={sponsorId || null}
                 />
               ),

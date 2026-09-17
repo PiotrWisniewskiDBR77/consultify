@@ -9,6 +9,7 @@ import {
   type LifecycleGateDecisionLogEntry,
 } from '@/services/initiativeTransitionInboxApi';
 import {
+  readRegisteredInitiative,
   requestAnalysisDecision,
   startInitiativeAnalysis,
 } from '@/services/initiatives-execution/runtimeApi';
@@ -53,6 +54,7 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
   const [logError, setLogError] = useState(false);
   const [reasonAction, setReasonAction] = useState<InitiativeLifecycleAction | null>(null);
   const [requesting, setRequesting] = useState(false);
+  const [runtimeExpectedVersion, setRuntimeExpectedVersion] = useState<number | null>(null);
 
   const loadLog = useCallback(async () => {
     try {
@@ -73,26 +75,82 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
       actions.find((action) => action.kind === 'transition' && action.variant !== 'danger') ?? null,
     [actions]
   );
+  const directExpectedVersion = Number(expectedVersion);
+  const resolvedExpectedVersion =
+    Number.isFinite(directExpectedVersion) && directExpectedVersion > 0
+      ? directExpectedVersion
+      : runtimeExpectedVersion;
   const target = primary?.targetStatus
     ? TARGET_STATUS_FOR_PROPOSAL[primary.targetStatus]
     : undefined;
-  const missing =
-    preflight?.transitions
-      .filter((transition) => transition.roleAllowed && !transition.conditionSatisfied)
-      .flatMap((transition) => transition.blockingItems ?? []) ?? [];
-  const approvers = primary?.targetStatus
-    ? (preflight?.transitions.find((transition) => transition.targetStatus === primary.targetStatus)
-        ?.requiredRoles ?? [])
-    : [];
+  const primaryTransition = primary?.targetStatus
+    ? preflight?.transitions.find((transition) => transition.targetStatus === primary.targetStatus)
+    : undefined;
+  const missing = useMemo(() => {
+    if (!primaryTransition?.roleAllowed || primaryTransition.conditionSatisfied) return [];
+    const seen = new Set<string>();
+    return (primaryTransition.blockingItems ?? []).filter((item) => {
+      const key = String(item.key || item.label || '').trim();
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [primaryTransition]);
+  const approvers = primaryTransition?.requiredRoles ?? [];
   const isAnalysisBoundary =
     primary?.targetStatus === 'ANALYZING' || primary?.targetStatus === 'READY_FOR_DECISION';
+
+  useEffect(() => {
+    if (!isAnalysisBoundary || (Number.isFinite(directExpectedVersion) && directExpectedVersion > 0)) {
+      setRuntimeExpectedVersion(null);
+      return;
+    }
+    let active = true;
+    setRuntimeExpectedVersion(null);
+    void readRegisteredInitiative(initiativeId)
+      .then((record) => {
+        if (!active) return;
+        const version = Number(record?.version);
+        setRuntimeExpectedVersion(Number.isFinite(version) && version > 0 ? version : null);
+      })
+      .catch(() => {
+        if (active) setRuntimeExpectedVersion(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [directExpectedVersion, initiativeId, isAnalysisBoundary]);
+
+  const hasExpectedVersion = Number.isFinite(resolvedExpectedVersion) && Number(resolvedExpectedVersion) > 0;
+  const transitionCaseStatus = preflight?.transitionCase?.status ?? 'missing';
+  const transitionProposalReady = Boolean(target && transitionCaseStatus === 'ready');
+  const analysisProposalReady = Boolean(isAnalysisBoundary && hasExpectedVersion);
+  const proposalBlockedReason = !reviewerUserId
+    ? t('initiatives.pmo.requestNeedsReviewer', 'Assign a reviewer first.')
+    : primary?.disabled
+      ? primary.disabledReason || t('initiatives.pmo.conditionsNotMet', 'Complete the transition conditions first.')
+      : target && transitionCaseStatus === 'missing'
+        ? t(
+            'initiatives.pmo.transitionCaseMissing',
+            'This initiative is not linked to a transformation case yet, so the decision request cannot be created.'
+          )
+        : target && transitionCaseStatus === 'ambiguous'
+          ? t(
+              'initiatives.pmo.transitionCaseAmbiguous',
+              'This initiative is linked to more than one transformation case. Resolve the lineage before requesting a decision.'
+            )
+          : isAnalysisBoundary && !hasExpectedVersion
+            ? t(
+                'initiatives.pmo.versionMissing',
+                'The canonical version is not available for this initiative yet.'
+              )
+            : '';
   const proposalReady = Boolean(
     primary &&
-    (target || isAnalysisBoundary) &&
     reviewerUserId &&
-    Number.isFinite(expectedVersion) &&
-    Number(expectedVersion) > 0 &&
-    !primary.disabled
+    !primary.disabled &&
+    (transitionProposalReady || analysisProposalReady)
   );
 
   const apply = async (action: InitiativeLifecycleAction, reason?: string) => {
@@ -112,12 +170,12 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
       const clientRequestId = crypto.randomUUID();
       if (primary.targetStatus === 'ANALYZING') {
         await startInitiativeAnalysis(initiativeId, {
-          expectedVersion: Number(expectedVersion),
+          expectedVersion: Number(resolvedExpectedVersion),
           clientRequestId,
         });
       } else if (primary.targetStatus === 'READY_FOR_DECISION') {
         await requestAnalysisDecision(initiativeId, {
-          expectedVersion: Number(expectedVersion),
+          expectedVersion: Number(resolvedExpectedVersion),
           clientRequestId,
           decisionId: crypto.randomUUID(),
           authorityId: reviewerUserId,
@@ -202,7 +260,8 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
                 className="h-8 rounded-lg border border-c-border bg-c-surface-raised px-3 text-xs font-medium text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:border-c-border-subtle disabled:bg-c-surface-subtle disabled:text-c-text-secondary"
                 title={
                   !proposalReady
-                    ? t(
+                    ? proposalBlockedReason ||
+                      t(
                         'initiatives.pmo.requestUnavailable',
                         'Complete the conditions and assign a reviewer first'
                       )
@@ -213,6 +272,11 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
                   ? t('common.saving', 'Saving…')
                   : t('initiatives.pmo.requestDecision', 'Request decision')}
               </button>
+              {!proposalReady && proposalBlockedReason ? (
+                <p className="text-xs text-c-text-muted" data-testid="pmo-decision-request-blocked-reason">
+                  {proposalBlockedReason}
+                </p>
+              ) : null}
               <button
                 type="button"
                 disabled={primary.disabled || pendingActionId !== null}
