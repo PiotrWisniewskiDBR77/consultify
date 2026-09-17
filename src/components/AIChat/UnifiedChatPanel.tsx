@@ -4495,6 +4495,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             (a: any): a is File => typeof File !== 'undefined' && a instanceof File
           )
         : [];
+      const attemptedImageUpload = files.some(
+        (file) => getChatAttachmentKind(file, chatImagesEnabled) === 'image'
+      );
 
       const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
         Array.isArray(attachments)
@@ -4633,7 +4636,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         try {
           if (attachmentKind === 'image') {
             const resp = await Api.uploadChatImage(file);
-            const image = (resp as any)?.image;
+            const image = resp.image;
             const normalizedImage = normalizeChatImagePayload({
               name: image?.name || file.name,
               mimeType: image?.mimeType,
@@ -4850,7 +4853,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const effectiveImages =
         uploadedImages.length > 0
           ? uploadedImages
-          : persistedConversationImage
+          : !attemptedImageUpload && persistedConversationImage
             ? [persistedConversationImage]
             : [];
 

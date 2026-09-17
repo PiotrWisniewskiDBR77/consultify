@@ -928,7 +928,14 @@ export class ModelRouter {
     }
 
     for (const modelId of [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])]) {
-      if (!modelMeetsRequirements(String(modelId || ''), requirements)) continue;
+      if (
+        !modelMeetsRequirements(
+          this.normalizeModelIdForCapabilities(String(modelId || '')),
+          requirements
+        )
+      ) {
+        continue;
+      }
       await maybePush({
         ...(await this.getProviderConfig(modelId, tier)),
         source: 'static_fallback',

@@ -30,7 +30,9 @@ const CASES: Array<{
   },
   {
     nazwa: '401 zly klucz (dostawca odbija echem fragment klucza)',
-    err: new Error('Incorrect API key provided: sk-or-v1-9f3a****. Check https://openrouter.ai/keys'),
+    err: new Error(
+      'Incorrect API key provided: sk-or-v1-9f3a****. Check https://openrouter.ai/keys'
+    ),
     errorCode: 'AI_CONFIG',
     httpStatus: 503,
   },
@@ -62,7 +64,9 @@ const CASES: Array<{
   },
   {
     nazwa: 'przekroczony czas',
-    err: new Error('Request to https://openrouter.ai/api/v1/chat/completions timed out after 60000ms'),
+    err: new Error(
+      'Request to https://openrouter.ai/api/v1/chat/completions timed out after 60000ms'
+    ),
     errorCode: 'AI_TIMEOUT',
     httpStatus: 504,
   },
@@ -83,6 +87,15 @@ const CASES: Array<{
     err: { code: 'EMPTY_STREAM' },
     errorCode: 'AI_EMPTY',
     httpStatus: 502,
+  },
+  {
+    nazwa: 'wybrany model nie obsluguje obrazow',
+    err: Object.assign(new Error('CHAT_IMAGE_MODEL_UNSUPPORTED:openai/o1-mini'), {
+      code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      status: 422,
+    }),
+    errorCode: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+    httpStatus: 422,
   },
   {
     nazwa: 'blad nierozpoznany',
@@ -109,7 +122,7 @@ describe('providerErrorMapper — kazdy przypadek dostawcy ma kod i bezpieczny k
   it('kazdy przypadek daje inny errorCode niz zbiorczy AI_ERROR, poza jawnym nierozpoznanym', () => {
     const rozpoznane = CASES.filter((c) => c.errorCode !== 'AI_ERROR');
     expect(rozpoznane.length).toBe(CASES.length - 1);
-    expect(new Set(rozpoznane.map((c) => c.errorCode)).size).toBe(6);
+    expect(new Set(rozpoznane.map((c) => c.errorCode)).size).toBe(7);
   });
 });
 
@@ -191,5 +204,25 @@ describe('zgodnosc wstecz kontraktu drutu', () => {
   it('bez legacyCode uzywa kodu z bledu, a w ostatecznosci kanonicznego', () => {
     expect(mapProviderError({ code: 'CIRCUIT_OPEN' }).legacyCode).toBe('CIRCUIT_OPEN');
     expect(mapProviderError(new Error('boom')).legacyCode).toBe('AI_ERROR');
+  });
+});
+
+describe('CHAT-IMG — jawny blad modelu bez vision', () => {
+  it('zachowuje kod, nie proponuje retry i nie ujawnia identyfikatora modelu', () => {
+    const mapped = mapProviderError(
+      Object.assign(new Error('CHAT_IMAGE_MODEL_UNSUPPORTED:openai/o1-mini'), {
+        code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+        status: 422,
+      })
+    );
+
+    expect(mapped).toMatchObject({
+      errorCode: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      legacyCode: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      httpStatus: 422,
+      retryable: false,
+    });
+    expect(JSON.stringify(toSafeErrorBody(mapped))).not.toContain('o1-mini');
+    expect(JSON.stringify(toSafeSseFrame(mapped))).not.toContain('o1-mini');
   });
 });

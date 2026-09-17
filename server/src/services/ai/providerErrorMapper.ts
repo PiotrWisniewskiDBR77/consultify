@@ -22,6 +22,7 @@ export type AiErrorCode =
   | 'AI_TIMEOUT'
   | 'AI_STREAM_INTERRUPTED'
   | 'AI_EMPTY'
+  | 'CHAT_IMAGE_MODEL_UNSUPPORTED'
   | 'AI_ERROR';
 
 export interface MappedProviderError {
@@ -43,10 +44,13 @@ export interface MappedProviderError {
 const SAFE_MESSAGE: Record<AiErrorCode, string> = {
   AI_RATE_LIMIT: 'The AI assistant is busy right now. Please try again in a moment.',
   AI_UNAVAILABLE: 'The AI assistant is temporarily unavailable. Please try again shortly.',
-  AI_CONFIG: 'The AI assistant is not available on this account. Please contact your administrator.',
+  AI_CONFIG:
+    'The AI assistant is not available on this account. Please contact your administrator.',
   AI_TIMEOUT: 'The AI assistant took too long to answer. Please try again.',
   AI_STREAM_INTERRUPTED: 'The answer was interrupted before it finished. Please try again.',
   AI_EMPTY: 'The AI assistant returned no answer. Please try again.',
+  CHAT_IMAGE_MODEL_UNSUPPORTED:
+    'The selected AI model cannot analyze images. Choose a model that supports images and try again.',
   AI_ERROR: 'The AI assistant could not complete this request. Please try again.',
 };
 
@@ -57,6 +61,7 @@ const HTTP_STATUS: Record<AiErrorCode, number> = {
   AI_TIMEOUT: 504,
   AI_STREAM_INTERRUPTED: 502,
   AI_EMPTY: 502,
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 422,
   AI_ERROR: 502,
 };
 
@@ -67,6 +72,7 @@ const RETRYABLE: Record<AiErrorCode, boolean> = {
   AI_TIMEOUT: true,
   AI_STREAM_INTERRUPTED: true,
   AI_EMPTY: true,
+  CHAT_IMAGE_MODEL_UNSUPPORTED: false,
   AI_ERROR: true,
 };
 
@@ -87,6 +93,7 @@ const CODE_TO_CANONICAL: Record<string, AiErrorCode> = {
   EMPTY_STREAM: 'AI_EMPTY',
   EMPTY_LLM_RESPONSE: 'AI_EMPTY',
   AI_EMPTY: 'AI_EMPTY',
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
   PARTIAL_RECOVERY_NOT_FOUND: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_UNAVAILABLE: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_SUPERSEDED: 'AI_STREAM_INTERRUPTED',

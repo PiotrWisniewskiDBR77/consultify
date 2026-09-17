@@ -19,6 +19,7 @@ export type AiErrorCode =
   | 'AI_TIMEOUT'
   | 'AI_STREAM_INTERRUPTED'
   | 'AI_EMPTY'
+  | 'CHAT_IMAGE_MODEL_UNSUPPORTED'
   | 'AI_ERROR';
 
 export type AiErrorTone = 'danger' | 'warning';
@@ -56,6 +57,7 @@ const LEGACY_TO_CANONICAL: Record<string, AiErrorCode> = {
   EMPTY_STREAM: 'AI_EMPTY',
   EMPTY_LLM_RESPONSE: 'AI_EMPTY',
   AI_EMPTY: 'AI_EMPTY',
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
   PARTIAL_RECOVERY_NOT_FOUND: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_UNAVAILABLE: 'AI_STREAM_INTERRUPTED',
   PARTIAL_RECOVERY_SUPERSEDED: 'AI_STREAM_INTERRUPTED',
@@ -75,6 +77,7 @@ const TONE: Record<AiErrorCode, AiErrorTone> = {
   AI_TIMEOUT: 'warning',
   AI_STREAM_INTERRUPTED: 'warning',
   AI_EMPTY: 'warning',
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 'warning',
   AI_CONFIG: 'danger',
   AI_ERROR: 'danger',
 };
@@ -87,6 +90,7 @@ const SLUG: Record<AiErrorCode, string> = {
   AI_TIMEOUT: 'timeout',
   AI_STREAM_INTERRUPTED: 'interrupted',
   AI_EMPTY: 'empty',
+  CHAT_IMAGE_MODEL_UNSUPPORTED: 'imageModelUnsupported',
   AI_ERROR: 'generic',
 };
 
@@ -115,6 +119,10 @@ const FALLBACK_EN: Record<AiErrorCode, { message: string; action: string }> = {
   AI_EMPTY: {
     message: 'The assistant returned no answer.',
     action: 'Try again, or rephrase your question.',
+  },
+  CHAT_IMAGE_MODEL_UNSUPPORTED: {
+    message: 'The selected model cannot read images.',
+    action: 'Choose a vision-capable model or remove the image and try again.',
   },
   AI_ERROR: {
     message: 'The assistant could not complete this request.',

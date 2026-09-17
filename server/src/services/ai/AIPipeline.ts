@@ -42,6 +42,28 @@ type ProviderChatMessage = {
 };
 
 /**
+ * Return only the human-authored text from a provider message. Multimodal
+ * messages contain image objects whose string coercion is "[object Object]";
+ * routing decisions must never classify that representation.
+ */
+export function extractTextFromProviderContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+
+  return content
+    .filter((part): part is { type: 'text'; text: string } =>
+      Boolean(
+        part &&
+        typeof part === 'object' &&
+        (part as { type?: unknown }).type === 'text' &&
+        typeof (part as { text?: unknown }).text === 'string'
+      )
+    )
+    .map((part) => part.text)
+    .join('\n');
+}
+
+/**
  * The contract seam between chat orchestration and llmService. Keeping this
  * pure makes it possible to prove that pixels, rather than a filename or
  * placeholder sentence, reach the provider message payload.
@@ -73,7 +95,11 @@ export function assertVisionCapableModel(modelId: string): void {
     ? String(modelId).split('/').pop() || String(modelId)
     : String(modelId);
   if (!modelMeetsRequirements(providerNativeModelId, { vision: true })) {
-    throw new Error(`CHAT_IMAGE_MODEL_UNSUPPORTED:${modelId}`);
+    throw Object.assign(new Error(`CHAT_IMAGE_MODEL_UNSUPPORTED:${modelId}`), {
+      code: 'CHAT_IMAGE_MODEL_UNSUPPORTED',
+      status: 422,
+      retryable: false,
+    });
   }
 }
 
@@ -371,9 +397,7 @@ export class AIPipeline {
             role: m.role as 'user' | 'assistant' | 'system' | 'tool',
             content: m.content,
           }));
-        const chatImages = Array.isArray((request.context as any)?.chatImages)
-          ? ((request.context as any).chatImages as ProcessedImage[])
-          : [];
+        const chatImages: ProcessedImage[] = request.context?.chatImages || [];
         nonSystemMsgs = attachChatImagesToLastUserMessage(nonSystemMsgs, chatImages);
 
         // "Show reasoning" wiring. When on, we ask llmService to surface the
@@ -443,7 +467,7 @@ export class AIPipeline {
               const { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS } =
                 await import('./chatCreationIntent.js');
               const lastUser = [...nonSystemMsgs].reverse().find((m) => m.role === 'user')?.content;
-              const intent = classifyChatCreationIntent(String(lastUser || ''));
+              const intent = classifyChatCreationIntent(extractTextFromProviderContent(lastUser));
               if (intent) {
                 const forcedTool = INTENT_TO_TOOL[intent];
                 const hasForced = defs.some((d: { name: string }) => d.name === forcedTool);
@@ -2561,9 +2585,7 @@ export class AIPipeline {
     const explicitModel = request.options?.selectedModelId || request.options?.model;
     const explicitProvider = request.options?.provider;
     const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
-    const requiresVision =
-      Array.isArray((request.context as any)?.chatImages) &&
-      (request.context as any).chatImages.length > 0;
+    const requiresVision = Boolean(request.context?.chatImages?.length);
     const requirements = requiresVision ? ({ vision: true } as const) : undefined;
 
     if (explicitModel) {
@@ -2737,9 +2759,7 @@ export class AIPipeline {
     let nonSystemMessages: Array<{ role: any; content: any }> = messages
       .filter((m) => m.role !== 'system')
       .map((message) => ({ ...message }));
-    const chatImages = Array.isArray((request.context as any)?.chatImages)
-      ? ((request.context as any).chatImages as ProcessedImage[])
-      : [];
+    const chatImages: ProcessedImage[] = request.context?.chatImages || [];
     nonSystemMessages = attachChatImagesToLastUserMessage(nonSystemMessages, chatImages);
 
     const callOnce = async (cfg: {
@@ -3298,7 +3318,7 @@ export class AIPipeline {
       return {
         code: preserved || inferred || 'AI_ERROR',
         message: error.message,
-        retryable: true,
+        retryable: typeof anyErr?.retryable === 'boolean' ? anyErr.retryable : true,
         ...(Number.isInteger(anyErr?.providerStarts)
           ? { providerStarts: Number(anyErr.providerStarts) }
           : {}),

@@ -68,6 +68,7 @@ import {
   triggerAIRiskDetected,
 } from '../services/aiNotificationTriggers.js';
 import { isValidContextWorkflowMode } from '../services/organizationContext/ContextRetrievalService.js';
+import { guardLegacyChatImages } from './ai/chatImageRouteGuards.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
@@ -1873,7 +1874,11 @@ router.post(
       responseStyle,
     } = body;
 
-    const rawChatImages = (context as any)?.chatImages ?? (context as any)?.images;
+    const contextRecord =
+      context && typeof context === 'object' && !Array.isArray(context)
+        ? (context as Record<string, unknown>)
+        : {};
+    const rawChatImages = contextRecord.chatImages ?? contextRecord.images;
     const hasRequestedChatImages = Array.isArray(rawChatImages) && rawChatImages.length > 0;
     if (hasRequestedChatImages && !isChatImagesEnabled()) {
       return res.status(404).json({
@@ -2969,7 +2974,7 @@ router.post(
         capability: 'chat',
         message,
         attachments: [
-          ...(Array.isArray((context as any)?.attachments) ? (context as any).attachments : []),
+          ...(Array.isArray(contextRecord.attachments) ? contextRecord.attachments : []),
           ...preparedChatImages.map((image) => ({ mimeType: image.mimeType, name: image.name })),
         ],
         attachmentDocIds: attachmentDocIdsForPurpose,
@@ -7104,6 +7109,7 @@ router.post(
 router.post(
   '/chat',
   verifyToken,
+  guardLegacyChatImages,
   validateBody(ChatRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;

@@ -182,6 +182,15 @@ export interface AIContext {
   focusMode?: string;
   selectedText?: string;
   attachments?: AIAttachment[];
+  /** Server-validated images attached to the current governed chat request. */
+  chatImages?: Array<{
+    base64: string;
+    mimeType: string;
+    originalSize: number;
+    processedSize: number;
+    width: number;
+    height: number;
+  }>;
   projectContext?: ProjectContext;
   userPreferences?: UserPreferences;
   /**

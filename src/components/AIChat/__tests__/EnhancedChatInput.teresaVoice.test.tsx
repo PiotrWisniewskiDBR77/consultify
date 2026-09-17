@@ -181,10 +181,14 @@ describe('EnhancedChatInput — Teresa voice CTA', () => {
       },
     });
 
-    expect(await screen.findByAltText('Preview of screen.png')).toHaveAttribute(
-      'src',
-      'blob:screen'
+    const thumbnail = await screen.findByAltText('Preview of screen.png');
+    expect(thumbnail).toHaveAttribute('src', 'blob:screen');
+    expect(thumbnail.parentElement).toHaveClass(
+      'border-c-border-subtle',
+      'bg-c-surface-raised',
+      'text-c-text-secondary'
     );
+    expect(thumbnail.parentElement?.className).not.toMatch(/(?:slate|navy)-/);
     await userEvent.type(input, 'Describe this{enter}');
     expect(onSend).toHaveBeenCalledWith('Describe this', [image]);
     expect(toastError).not.toHaveBeenCalled();

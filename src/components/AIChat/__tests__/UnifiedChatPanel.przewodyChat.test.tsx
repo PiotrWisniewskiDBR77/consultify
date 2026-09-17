@@ -413,6 +413,59 @@ describe('UnifiedChatPanel chat route wiring', () => {
     ]);
   });
 
+  it('does not fall back to the previous image when a replacement upload fails', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const previousImage = {
+      name: 'previous.png',
+      mimeType: 'image/png' as const,
+      dataUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      width: 1,
+      height: 1,
+      size: 68,
+    };
+    harness.conversationState.activeConversationId = 'conversation-368';
+    harness.conversationState.activeMessages = [
+      {
+        id: 'previous-image-turn',
+        conversationId: 'conversation-368',
+        role: 'user',
+        content: 'Inspect the previous image',
+        messageType: 'text',
+        metadata: { images: [previousImage] },
+        createdAt: new Date('2026-09-17T00:00:00Z'),
+      },
+    ];
+    vi.spyOn(Api, 'getConversationBranches').mockResolvedValue({ branches: [], isBranch: false });
+    vi.spyOn(Api, 'uploadChatImage').mockRejectedValue({
+      message: 'Invalid replacement',
+      data: { code: 'UNSUPPORTED_MEDIA_TYPE' },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalledTimes(1));
+    const context = harness.startStream.mock.calls[0]?.[3];
+    expect(context).not.toHaveProperty('images');
+    expect(context).toEqual(
+      expect.objectContaining({
+        hasAttachments: false,
+        attachmentFileNames: [],
+        failedAttachments: [
+          expect.objectContaining({
+            filename: 'screen.png',
+            code: 'UNSUPPORTED_MEDIA_TYPE',
+          }),
+        ],
+      })
+    );
+  });
+
   it('keeps Business Actions hidden with the flag at its default OFF value', () => {
     render(
       <MemoryRouter initialEntries={['/chat']}>

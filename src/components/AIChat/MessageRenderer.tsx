@@ -1641,7 +1641,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 <div className="mt-2 flex items-center gap-2">
                   <img
                     src={persistedChatImage.dataUrl}
-                    alt={persistedChatImage.name}
+                    alt={t('aiChat.attachments.imagePreviewAlt', {
+                      name: persistedChatImage.name,
+                    })}
                     title={persistedChatImage.name}
                     className="h-10 w-10 rounded-md border border-c-border object-cover"
                   />

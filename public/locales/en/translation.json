@@ -26053,6 +26053,10 @@
         "message": "The assistant returned no answer.",
         "action": "Try again, or rephrase your question."
       },
+      "imageModelUnsupported": {
+        "message": "The selected model cannot read images.",
+        "action": "Choose a vision-capable model or remove the image and try again."
+      },
       "generic": {
         "message": "The assistant could not complete this request.",
         "action": "Try again. If it keeps happening, contact your administrator."

@@ -1106,7 +1106,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             return (
               <div
                 key={idx}
-                className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
+                className="flex items-center gap-1 rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text-secondary"
               >
                 {isImageAtt && (
                   <ChatImageThumbnail
@@ -1120,7 +1120,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 </span>
                 <button
                   onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                  className="ml-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                  className="ml-1 text-c-text-muted hover:text-c-text"
                 >
                   ×
                 </button>
