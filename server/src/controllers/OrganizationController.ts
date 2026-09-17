@@ -80,7 +80,11 @@ export class OrganizationController {
         .sort(
           (left, right) =>
             Number(right.is_current) - Number(left.is_current) ||
-            left.name.localeCompare(right.name)
+            // organizations.name is nullable — guard so a null name cannot throw
+            // a TypeError (500) on the switcher load; id is the deterministic
+            // final tiebreaker, matching the SQL ORDER BY.
+            String(left.name ?? '').localeCompare(String(right.name ?? '')) ||
+            String(left.id).localeCompare(String(right.id))
         );
 
       // Tenant membership/context must never be reused as a conditional browser

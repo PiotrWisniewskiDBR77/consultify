@@ -421,14 +421,19 @@ export async function getUserOrganizations(
 ): Promise<UserOrganization[]> {
   const rows = await DbPromise.all<UserOrganization>(
     db,
+    // Tenant-access contract must match orgContext.middleware.resolveUserOrgAccess
+    // (UPPER(TRIM(status)) = 'ACTIVE' + o.is_active = 1), otherwise the switcher
+    // lists an org that switch-organization then rejects with 403. o.id is the
+    // final tiebreaker so equal names keep a deterministic order across reads.
     `SELECT o.id, o.name, o.billing_status, o.industry, m.role,
             (o.id = COALESCE(?, u.organization_id)) AS is_current
          FROM organizations o
          JOIN organization_members m ON o.id = m.organization_id
          JOIN users u ON u.id = m.user_id
          WHERE m.user_id = ?
-           AND m.status = 'ACTIVE'
-         ORDER BY is_current DESC, o.name ASC`,
+           AND UPPER(TRIM(m.status)) = 'ACTIVE'
+           AND o.is_active = 1
+         ORDER BY is_current DESC, o.name ASC, o.id ASC`,
     [currentOrganizationId ?? null, userId]
   );
 

@@ -20,7 +20,7 @@ describe('organizationService.getUserOrganizations', () => {
     dbAll.mockReset();
   });
 
-  it('keeps the read user-scoped, excludes inactive memberships, and orders current then name', async () => {
+  it('keeps the read user-scoped, excludes inactive memberships and orgs, and orders current then name then id', async () => {
     dbAll.mockResolvedValue([
       {
         id: 'org-current',
@@ -49,8 +49,9 @@ describe('organizationService.getUserOrganizations', () => {
     expect(sql).toMatch(/JOIN\s+users\s+u\s+ON\s+u\.id\s*=\s*m\.user_id/i);
     expect(sql).toMatch(/o\.id\s*=\s*COALESCE\(\?\s*,\s*u\.organization_id\)/i);
     expect(sql).toMatch(/WHERE\s+m\.user_id\s*=\s*\?/i);
-    expect(sql).toMatch(/m\.status\s*=\s*'ACTIVE'/i);
-    expect(sql).toMatch(/ORDER\s+BY\s+is_current\s+DESC\s*,\s*o\.name\s+ASC/i);
+    expect(sql).toMatch(/UPPER\(TRIM\(m\.status\)\)\s*=\s*'ACTIVE'/i);
+    expect(sql).toMatch(/o\.is_active\s*=\s*1/i);
+    expect(sql).toMatch(/ORDER\s+BY\s+is_current\s+DESC\s*,\s*o\.name\s+ASC\s*,\s*o\.id\s+ASC/i);
     expect(params).toEqual(['org-current', 'user-two-orgs']);
   });
 
