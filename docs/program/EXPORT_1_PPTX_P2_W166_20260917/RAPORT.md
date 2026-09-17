@@ -2,8 +2,8 @@
 
 Data: 2026-09-17
 Tor: B
-Baza v2 po finalnym rebase: `bd7ff4943118fdcf3442cffb4532a89cce00860b`
-Gałąź v2: `codex/b-pptx-p2-v2-w178-20260917`
+Baza v2 po finalnym rebase: `1b662df8cd2cac255f008d40a6dd13d3718d879d`
+Gałąź v2: `codex/b-pptx-p2-v2-w198-20260917`
 
 ## Wynik
 
@@ -44,17 +44,17 @@ bloki heading/callout i pas `SO WHAT` równocześnie z natywną tabelą. Karta
 - czyste `npm ci --ignore-scripts` z lockfile: `@types/node 22.19.3` zgodne z
   `package-lock.json`;
 - `npx tsc --build server/tsconfig.build.json --pretty false`: RC=0, 0 błędów;
-- focused: 6 plików, 40 testów PASS; produkcyjny adapter i renderer Board
-  Deck mają 9/9 PASS;
+- focused: 5 plików, 35 testów PASS; opcjonalny szósty plik RealPG pominięty
+  bez `RUN_DB_TESTS=1` i nie jest liczony do wyniku;
 - scoped ESLint: 0 błędów;
 - locale JSON: EN/PL poprawny, `Export PPTX` i `PPTX` rozdzielone;
-- pełny front `tsc --noEmit`: środowisko linii 169 diagnostyk na kandydacie,
-  zgodne z wiążącym pomiarem linii W179; 0 diagnostyk w zmienionych plikach;
+- pełny front `tsc --noEmit` z limitem 8 GB: linia 152 = kandydat 152,
+  logi byte-identical; 0 diagnostyk w zmienionych plikach;
 - mutacja usuwająca pas `SO WHAT` z `renderTable`: RED 1/1;
 - `git diff --check`: PASS.
 
-Dowód binarny v2: `~/Developer/cto-codex/pptx-p2-v2-w178-20260917/`.
-PPTX ma SHA-256 `c8cb13f735dfae2e37f6c81973f36e6197a49866d62596a7da58c932e1fb1e89`;
+Dowód binarny v2: `docs/program/EXPORT_1_PPTX_P2_W198_20260917/dowody/`.
+PPTX ma SHA-256 `04b0dd54aa3f49d8566dcfa0fa16c939d8ccd952fe8039fe549f82464a9b651d`;
 LibreOffice render slajdu 2 pokazuje heading, headline, tabelę i pas `SO WHAT`
 bez kolizji ani pustej połowy.
 

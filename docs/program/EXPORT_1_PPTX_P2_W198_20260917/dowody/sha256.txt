@@ -1,0 +1,2 @@
+04b0dd54aa3f49d8566dcfa0fa16c939d8ccd952fe8039fe549f82464a9b651d  docs/program/EXPORT_1_PPTX_P2_W198_20260917/dowody/risk-management-v2.pptx
+da22ba7628deaaf4c3d101a7a6829964221daa181a43d0f1aab24f8aa1ccff5c  docs/program/EXPORT_1_PPTX_P2_W198_20260917/dowody/rendered/risk-management-v2.pdf
