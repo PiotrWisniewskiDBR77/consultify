@@ -57,9 +57,12 @@ import { createNativeDeck } from '../services/presentationGeneratorService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
 import {
+  getAllowedTaskTransitions,
   normalizeTaskStatus as normalizeWorkflowTaskStatus,
+  parseTaskStatus as parseWorkflowTaskStatus,
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
+
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -88,6 +91,7 @@ import statsRouter from './my-work/stats.routes.js';
 import whiteboardUploadsRouter from './my-work/whiteboard-uploads.routes.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
+const TASK_VERSION_CONFLICT_MESSAGE = 'Task changed since it was opened';
 const router = Router();
 
 const isPostgres = process.env.DB_TYPE === 'postgres';
@@ -1264,6 +1268,7 @@ router.get(
           t.status,
           t.priority,
           t.due_date as "dueDate",
+          t.blocked_reason as "blockedReason",
           t.tags,
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
@@ -1472,6 +1477,7 @@ router.get(
         t.status,
         t.priority,
         t.due_date as "dueDate",
+        t.blocked_reason as "blockedReason",
         t.tags,
         t.expected_outcome as "expectedOutcome",
         t.created_at as "createdAt",
@@ -1533,7 +1539,7 @@ router.put(
     // dokładnie tak jak w GET /personal-tasks/:id, gdzie ten sam filtr zdjęto
     // wcześniej (patrz komentarz przy 404 w detalu).
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status, CAST(updated_at AS TEXT) as "versionToken"
+      `SELECT id, status, blocked_reason as "blockedReason", CAST(updated_at AS TEXT) as "versionToken"
        FROM tasks t
        WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql}
        LIMIT 1`,
@@ -1552,6 +1558,14 @@ router.put(
       res.status(428).json({
         error: 'expectedVersionToken is required',
         code: 'TASK_VERSION_REQUIRED',
+      });
+      return;
+    }
+    if (String(existing.versionToken || '') !== expectedVersionToken) {
+      res.status(409).json({
+        error: TASK_VERSION_CONFLICT_MESSAGE,
+        code: 'TASK_VERSION_CONFLICT',
+        currentVersionToken: existing.versionToken || null,
       });
       return;
     }
@@ -1612,9 +1626,81 @@ router.put(
     }
 
     let nextStatus: string | null = null;
-    if (typeof req.body?.status === 'string') {
-      nextStatus = String(req.body.status).trim();
-      setIf('status', nextStatus);
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'status')) {
+      if (typeof req.body?.status !== 'string' || !req.body.status.trim()) {
+        res.status(400).json({
+          error: 'INVALID_STATUS',
+          code: 'INVALID_STATUS',
+          currentStatus: normalizeWorkflowTaskStatus(existing.status),
+          requestedStatus: req.body?.status ?? null,
+          allowedNext: getAllowedTaskTransitions(existing.status),
+        });
+        return;
+      }
+      const requestedStatus = req.body.status.trim();
+      const parsedCurrentStatus = parseWorkflowTaskStatus(existing.status);
+      const parsedRequestedStatus = parseWorkflowTaskStatus(requestedStatus);
+      const normalizeRaw = (value: unknown) =>
+        String(value ?? '')
+          .trim()
+          .toLowerCase()
+          .replace(/[\s-]/g, '_');
+
+      // Legacy statuses such as `archived` may still exist. An unrelated edit
+      // that echoes the unchanged legacy value must remain possible, but the
+      // value never inherits `todo` transitions and cannot move elsewhere.
+      const unchangedLegacyStatus =
+        !parsedCurrentStatus &&
+        !parsedRequestedStatus &&
+        normalizeRaw(existing.status) === normalizeRaw(requestedStatus);
+      if (unchangedLegacyStatus) {
+        nextStatus = null;
+      } else {
+        const transition = validateTaskStatusTransition(existing.status, req.body.status);
+        if (!transition.allowed) {
+          res.status(400).json({
+            error: 'rule' in transition ? transition.rule : 'INVALID_TRANSITION',
+            code: 'rule' in transition ? transition.rule : 'INVALID_TRANSITION',
+            currentStatus: parseWorkflowTaskStatus(existing.status) || String(existing.status || ''),
+            requestedStatus: req.body.status.trim(),
+            allowedNext: getAllowedTaskTransitions(existing.status),
+          });
+          return;
+        }
+        nextStatus = parsedRequestedStatus;
+      }
+
+      const blockedReason =
+        typeof req.body?.blockedReason === 'string'
+          ? req.body.blockedReason.trim()
+          : typeof req.body?.blocked_reason === 'string'
+            ? req.body.blocked_reason.trim()
+            : '';
+      const currentStatus = parsedCurrentStatus;
+      const effectiveBlockedReason = blockedReason || String(existing.blockedReason || '').trim();
+      const missingRequiredBlockReason =
+        nextStatus === 'blocked' &&
+        (currentStatus === 'blocked' ? !effectiveBlockedReason : !blockedReason);
+      if (missingRequiredBlockReason) {
+        res.status(400).json({
+          error: 'BLOCKED_REASON_REQUIRED',
+          code: 'BLOCKED_REASON_REQUIRED',
+          currentStatus,
+          requestedStatus: nextStatus,
+          allowedNext: getAllowedTaskTransitions(existing.status),
+        });
+        return;
+      }
+
+      if (nextStatus) setIf('status', nextStatus);
+      if (nextStatus === 'blocked' && blockedReason) {
+        setIf('blocked_reason', blockedReason);
+        if (currentStatus !== 'blocked') setIf('blocked_at', new Date().toISOString());
+      } else if (currentStatus === 'blocked' && nextStatus !== 'blocked') {
+        setIf('blocked_reason', null);
+        setIf('blocked_at', null);
+        setIf('blocked_by_decision_id', null);
+      }
     }
 
     // completed_at bookkeeping
@@ -1651,6 +1737,7 @@ router.put(
           t.due_date as "dueDate",
           t.tags,
           t.expected_outcome as "expectedOutcome",
+          t.blocked_reason as "blockedReason",
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
           CAST(t.updated_at AS TEXT) as "versionToken",
@@ -1680,7 +1767,7 @@ router.put(
         [id, orgId, ...ownerScope.params]
       );
       res.status(409).json({
-        error: 'Task changed since it was opened',
+        error: TASK_VERSION_CONFLICT_MESSAGE,
         code: 'TASK_VERSION_CONFLICT',
         currentVersionToken: current?.versionToken || null,
       });
@@ -1698,6 +1785,7 @@ router.put(
         t.due_date as "dueDate",
         t.tags,
         t.expected_outcome as "expectedOutcome",
+        t.blocked_reason as "blockedReason",
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
         CAST(t.updated_at AS TEXT) as "versionToken",

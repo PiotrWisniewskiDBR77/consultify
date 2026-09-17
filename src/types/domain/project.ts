@@ -189,6 +189,7 @@ export interface Task {
   strategicContribution?: string | string[];
   weightReason?: string;
   blockingIssues?: string[] | string;
+  blockedReason?: string;
   evidenceRequired?: boolean | string[];
   riskRating?: string;
   deliverables?: any[];

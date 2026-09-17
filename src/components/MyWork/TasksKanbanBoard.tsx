@@ -47,6 +47,7 @@ import {
   type StandardKanbanCard as StandardKanbanCardData,
   type StandardKanbanUrgency,
 } from '@/components/standard';
+import { ReasonDialog } from '@/components/standard/ReasonDialog';
 import type { ChipTone } from '@/components/ui/primitives/chips/chipBase';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
@@ -159,6 +160,36 @@ const getColumnForStatus = (status?: string): string => {
     if (col.statuses.includes(s)) return col.id;
   }
   return 'todo';
+};
+
+type WorkflowTransitions = Record<string, string[]>;
+
+/** Normalize only documented task-status aliases before consulting the API graph. */
+export const normalizeKanbanWorkflowStatus = (status?: string): string | null => {
+  const value = String(status ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]/g, '_');
+  if (!value) return null;
+  if (['completed', 'complete', 'validated'].includes(value)) return 'done';
+  if (['inprogress', 'active'].includes(value)) return 'in_progress';
+  if (value === 'in_review') return 'review';
+  if (['to_do', 'pending', 'new', 'open', 'not_started'].includes(value)) return 'todo';
+  if (['paused', 'hold', 'waiting'].includes(value)) return 'on_hold';
+  return value;
+};
+
+export const isKanbanTransitionAllowed = (
+  from: string | undefined,
+  to: string,
+  transitions: WorkflowTransitions | null
+): boolean => {
+  if (!transitions) return false;
+  const current = normalizeKanbanWorkflowStatus(from);
+  const target = normalizeKanbanWorkflowStatus(to);
+  if (!current || !target) return false;
+  if (current === target) return true;
+  return (transitions[current] || []).includes(target);
 };
 
 /* ─── Priority → StandardKanbanCard chip/urgency (kanon A9) ───
@@ -530,6 +561,13 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   // Raw task data from API
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workflowTransitions, setWorkflowTransitions] = useState<WorkflowTransitions | null>(null);
+  const [pendingBlockedMove, setPendingBlockedMove] = useState<{
+    task: Task;
+    target: KanbanColumnDef;
+  } | null>(null);
+  const [blockedMoveBusy, setBlockedMoveBusy] = useState(false);
+  const [blockedMoveError, setBlockedMoveError] = useState<string | null>(null);
 
   // DnD state
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -569,6 +607,21 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks, refreshTrigger]);
+
+  useEffect(() => {
+    let active = true;
+    Api.getTaskWorkflowConfig()
+      .then((config) => {
+        if (active) setWorkflowTransitions(config?.transitions || null);
+      })
+      .catch((error) => {
+        console.error('Failed to load task workflow rules:', error);
+        if (active) setWorkflowTransitions(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   /* ─── Filtering ─── */
 
@@ -658,6 +711,97 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
     [containerItems]
   );
 
+  const persistStatusMove = useCallback(
+    async (task: Task, targetColDef: KanbanColumnDef, blockedReason?: string) => {
+      const newStatus = targetColDef.apiStatus;
+      const previousStatus = task.status;
+
+      setTasks((prev) =>
+        prev.map((item) =>
+          item.id === task.id
+            ? {
+                ...item,
+                status: newStatus as TaskStatus,
+                blockedReason: newStatus === 'blocked' ? blockedReason : undefined,
+              }
+            : item
+        )
+      );
+
+      try {
+        const updated = await Api.updatePersonalTask(task.id, {
+          status: newStatus,
+          ...(newStatus === 'blocked' ? { blockedReason: blockedReason?.trim() } : {}),
+          expectedVersionToken: String((task as any).versionToken || ''),
+        });
+        setTasks((prev) =>
+          prev.map((item) => (item.id === task.id ? { ...item, ...updated } : item))
+        );
+        const targetColumnLabel = t(targetColDef.labelKey, targetColDef.labelFallback);
+        toast.success(
+          t('myWork.kanban.statusMoved', 'Moved to “{{column}}”', {
+            column: targetColumnLabel,
+          }),
+          { duration: 2000, icon: '✓' }
+        );
+        return updated;
+      } catch (error) {
+        console.error('Failed to update task status:', error);
+        setTasks((prev) =>
+          prev.map((item) =>
+            item.id === task.id
+              ? { ...item, status: previousStatus, blockedReason: task.blockedReason }
+              : item
+          )
+        );
+        setContainerItems(buildContainerItems(filteredTasks));
+
+        const httpStatus = Number((error as { status?: number } | undefined)?.status) || 0;
+        const shortTitle =
+          (task.title || '').length > 40 ? `${(task.title || '').slice(0, 40)}…` : task.title || '';
+        const ctx = {
+          title: shortTitle,
+          column: t(targetColDef.labelKey, targetColDef.labelFallback),
+        };
+        let message: string;
+        if (httpStatus === 404) {
+          message = t(
+            'myWork.kanban.statusFailedNotFound',
+            'Not saved: task "{{title}}" no longer exists (it may have been deleted or reassigned). Refresh the board.',
+            ctx
+          );
+        } else if (httpStatus === 401 || httpStatus === 403) {
+          message = t(
+            'myWork.kanban.statusFailedForbidden',
+            'Not saved: you do not have permission to change the status of "{{title}}". Ask the task owner to change it.',
+            ctx
+          );
+        } else if (httpStatus >= 500) {
+          message = t(
+            'myWork.kanban.statusFailedServer',
+            'Not saved "{{title}}" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.',
+            { ...ctx, code: httpStatus }
+          );
+        } else if (!httpStatus) {
+          message = t(
+            'myWork.kanban.statusFailedOffline',
+            'Not saved "{{title}}" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.',
+            ctx
+          );
+        } else {
+          message = t(
+            'myWork.kanban.statusFailedGeneric',
+            'Not saved "{{title}}" → {{column}} ({{code}}). The card was moved back — please try again.',
+            { ...ctx, code: httpStatus }
+          );
+        }
+        toast.error(message, { duration: 6000 });
+        throw error;
+      }
+    },
+    [filteredTasks, t]
+  );
+
   /**
    * onDragEnd — fires once when the drag finishes.
    * Handles same-container reordering + persists cross-container status change.
@@ -713,85 +857,43 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         const task = taskMap.get(activeId);
         if (!task) return;
 
-        const newStatus = targetColDef.apiStatus;
-        const previousStatus = task.status;
-
-        // Optimistic update on the task data
-        setTasks((prev) =>
-          prev.map((t) => (t.id === activeId ? { ...t, status: newStatus as TaskStatus } : t))
-        );
-
-        // Persist via API
-        try {
-          const updated = await Api.updatePersonalTask(activeId, {
-            status: newStatus,
-            expectedVersionToken: String((task as any).versionToken || ''),
-          });
-          setTasks((prev) =>
-            prev.map((item) => (item.id === activeId ? { ...item, ...updated } : item))
+        if (!workflowTransitions) {
+          setContainerItems(buildContainerItems(filteredTasks));
+          toast.error(
+            t(
+              'myWork.kanban.workflowUnavailable',
+              'Task workflow rules are unavailable. The card was not moved — refresh and try again.'
+            )
           );
-          const targetColumnLabel = t(targetColDef.labelKey, targetColDef.labelFallback);
-          toast.success(
-            t('myWork.kanban.statusMoved', 'Przeniesiono do „{{column}}"', {
-              column: targetColumnLabel,
-            }),
-            { duration: 2000, icon: '✓' }
-          );
-        } catch (error) {
-          console.error('Failed to update task status:', error);
-          // Revert
-          setTasks((prev) =>
-            prev.map((t) => (t.id === activeId ? { ...t, status: previousStatus } : t))
-          );
-          // PILNE-3: „Failed to update status" nic nie mówiło — ani co się stało,
-          // ani co zrobić. Komunikat rozróżnia teraz realne przypadki i zawsze
-          // podaje tytuł zadania + kolumnę docelową + krok naprawczy.
-          const httpStatus = Number((error as { status?: number } | undefined)?.status) || 0;
-          const shortTitle =
-            (task.title || '').length > 40
-              ? `${(task.title || '').slice(0, 40)}…`
-              : task.title || '';
-          const ctx = {
-            title: shortTitle,
-            column: t(targetColDef.labelKey, targetColDef.labelFallback),
-          };
-          let message: string;
-          if (httpStatus === 404) {
-            message = t(
-              'myWork.kanban.statusFailedNotFound',
-              'Not saved: task "{{title}}" no longer exists (it may have been deleted or reassigned). Refresh the board.',
-              ctx
-            );
-          } else if (httpStatus === 401 || httpStatus === 403) {
-            message = t(
-              'myWork.kanban.statusFailedForbidden',
-              'Not saved: you do not have permission to change the status of "{{title}}". Ask the task owner to change it.',
-              ctx
-            );
-          } else if (httpStatus >= 500) {
-            message = t(
-              'myWork.kanban.statusFailedServer',
-              'Not saved "{{title}}" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.',
-              { ...ctx, code: httpStatus }
-            );
-          } else if (!httpStatus) {
-            message = t(
-              'myWork.kanban.statusFailedOffline',
-              'Not saved "{{title}}" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.',
-              ctx
-            );
-          } else {
-            message = t(
-              'myWork.kanban.statusFailedGeneric',
-              'Not saved "{{title}}" → {{column}} ({{code}}). The card was moved back — please try again.',
-              { ...ctx, code: httpStatus }
-            );
-          }
-          toast.error(message, { duration: 6000 });
+          return;
         }
+
+        if (!isKanbanTransitionAllowed(task.status, targetColDef.apiStatus, workflowTransitions)) {
+          setContainerItems(buildContainerItems(filteredTasks));
+          toast.error(
+            t(
+              'myWork.kanban.transitionNotAllowed',
+              'This task cannot move from {{from}} to {{to}}.',
+              {
+                from: String(task.status || 'todo'),
+                to: targetColDef.apiStatus,
+              }
+            )
+          );
+          return;
+        }
+
+        if (targetColDef.apiStatus === 'blocked') {
+          setContainerItems(buildContainerItems(filteredTasks));
+          setBlockedMoveError(null);
+          setPendingBlockedMove({ task, target: targetColDef });
+          return;
+        }
+
+        await persistStatusMove(task, targetColDef).catch(() => undefined);
       }
     },
-    [containerItems, filteredTasks, taskMap, t]
+    [containerItems, filteredTasks, persistStatusMove, taskMap, t, workflowTransitions]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -800,6 +902,28 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
     // Rebuild from source of truth
     setContainerItems(buildContainerItems(filteredTasks));
   }, [filteredTasks]);
+
+  const confirmBlockedMove = useCallback(
+    async (reason: string) => {
+      if (!pendingBlockedMove) return;
+      setBlockedMoveBusy(true);
+      setBlockedMoveError(null);
+      try {
+        await persistStatusMove(pendingBlockedMove.task, pendingBlockedMove.target, reason);
+        setPendingBlockedMove(null);
+      } catch {
+        setBlockedMoveError(
+          t(
+            'myWork.kanban.blockReasonSaveFailed',
+            'The task was not blocked. Review the reason or refresh the board and try again.'
+          )
+        );
+      } finally {
+        setBlockedMoveBusy(false);
+      }
+    },
+    [pendingBlockedMove, persistStatusMove, t]
+  );
 
   /* ─── Render ─── */
 
@@ -897,6 +1021,30 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           </DragOverlay>
         </DndContext>
       </div>
+      <ReasonDialog
+        open={Boolean(pendingBlockedMove)}
+        title={t('myWork.kanban.blockReasonTitle', 'Why is this task blocked?')}
+        label={t('myWork.kanban.blockReasonLabel', 'Block reason (required)')}
+        placeholder={t(
+          'myWork.kanban.blockReasonPlaceholder',
+          'Describe what must happen before work can continue.'
+        )}
+        hint={t(
+          'myWork.kanban.blockReasonHint',
+          'This reason will be visible with the task and in execution reporting.'
+        )}
+        confirmLabel={t('myWork.kanban.blockReasonConfirm', 'Block task')}
+        busy={blockedMoveBusy}
+        error={blockedMoveError}
+        testIdPrefix="kanban-block-reason"
+        onCancel={() => {
+          if (blockedMoveBusy) return;
+          setPendingBlockedMove(null);
+          setBlockedMoveError(null);
+          setContainerItems(buildContainerItems(filteredTasks));
+        }}
+        onConfirm={confirmBlockedMove}
+      />
     </div>
   );
 };

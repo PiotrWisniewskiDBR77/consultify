@@ -1295,6 +1295,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         // wczytywałby się, ale każda edycja ginęła po odświeżeniu.
         expectedOutcome,
         status,
+        blockedReason: status === 'blocked' ? blockedReason : '',
         priority,
         dueDate: dueDate || null,
         tags,

@@ -481,6 +481,102 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
     expect(afterDelete.status).toBe(404);
   });
 
+  itDB(
+    'personal-task status transitions enforce the canonical graph and persist block reason atomically',
+    async (h) => {
+      const created = await request(app)
+        .post('/api/my-work/personal-tasks')
+        .set('Authorization', `Bearer ${h.tokenA1}`)
+        .send({ title: 'K-26 governed task', idempotencyKey: `idem-k26-${suffix()}` });
+      expect(created.status).toBe(201);
+      const taskId = created.body.id;
+
+      const opened = await request(app)
+        .get(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`);
+      expect(opened.status).toBe(200);
+
+      const invalid = await request(app)
+        .put(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`)
+        .send({ status: 'done', expectedVersionToken: opened.body.versionToken });
+      expect(invalid.status).toBe(400);
+      expect(invalid.body).toMatchObject({
+        code: 'INVALID_TRANSITION',
+        currentStatus: 'todo',
+        requestedStatus: 'done',
+      });
+
+      const withoutReason = await request(app)
+        .put(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`)
+        .send({
+          status: 'blocked',
+          blockedReason: '   ',
+          expectedVersionToken: opened.body.versionToken,
+        });
+      expect(withoutReason.status).toBe(400);
+      expect(withoutReason.body.code).toBe('BLOCKED_REASON_REQUIRED');
+
+      const blocked = await request(app)
+        .put(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`)
+        .send({
+          status: 'blocked',
+          blockedReason: '  Waiting for vendor approval  ',
+          expectedVersionToken: opened.body.versionToken,
+        });
+      expect(blocked.status).toBe(200);
+      expect(blocked.body).toMatchObject({
+        status: 'blocked',
+        blockedReason: 'Waiting for vendor approval',
+      });
+
+      const blockedDb = await h.client.query<{
+        status: string;
+        blocked_reason: string | null;
+        blocked_at: string | null;
+      }>(
+        `SELECT status, blocked_reason, CAST(blocked_at AS TEXT) blocked_at FROM tasks WHERE id = $1`,
+        [taskId]
+      );
+      expect(blockedDb.rows[0]).toMatchObject({
+        status: 'blocked',
+        blocked_reason: 'Waiting for vendor approval',
+      });
+      expect(blockedDb.rows[0]?.blocked_at).toBeTruthy();
+
+      const readBlocked = await request(app)
+        .get(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`);
+      expect(readBlocked.body.blockedReason).toBe('Waiting for vendor approval');
+
+      const unblocked = await request(app)
+        .put(`/api/my-work/personal-tasks/${taskId}`)
+        .set('Authorization', `Bearer ${h.tokenA1}`)
+        .send({ status: 'in_progress', expectedVersionToken: readBlocked.body.versionToken });
+      expect(unblocked.status).toBe(200);
+      expect(unblocked.body).toMatchObject({ status: 'in_progress', blockedReason: null });
+
+      const unblockedDb = await h.client.query<{
+        status: string;
+        blocked_reason: string | null;
+        blocked_at: string | null;
+        blocked_by_decision_id: string | null;
+      }>(
+        `SELECT status, blocked_reason, CAST(blocked_at AS TEXT) blocked_at, blocked_by_decision_id
+       FROM tasks WHERE id = $1`,
+        [taskId]
+      );
+      expect(unblockedDb.rows[0]).toEqual({
+        status: 'in_progress',
+        blocked_reason: null,
+        blocked_at: null,
+        blocked_by_decision_id: null,
+      });
+    }
+  );
+
   itDB('optimistic token makes two-writer personal-task updates atomic', async (h) => {
     const created = await request(app)
       .post('/api/my-work/personal-tasks')

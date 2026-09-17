@@ -41,6 +41,10 @@ const { apiMock } = vi.hoisted(() => {
   return {
     apiMock: {
       getPersonalTasks: vi.fn(async () => [task]),
+      getTaskWorkflowConfig: vi.fn(async () => ({
+        statuses: ['todo', 'in_progress', 'blocked', 'done'],
+        transitions: { todo: ['in_progress', 'blocked'] },
+      })),
       updatePersonalTask: vi.fn(async (_id: string, patch: Record<string, unknown>) => ({
         ...task,
         ...patch,

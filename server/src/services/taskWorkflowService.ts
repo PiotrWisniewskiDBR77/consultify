@@ -29,21 +29,28 @@ const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   cancelled: ['backlog', 'todo'], // reopen
 };
 
-export function normalizeTaskStatus(s: string | null | undefined): TaskStatus {
-  const v = String(s || 'todo')
-    .toLowerCase()
-    .replace(/[\s-]/g, '_');
+export function parseTaskStatus(s: string | null | undefined): TaskStatus | null {
+  const raw = String(s ?? '').trim();
+  if (!raw) return null;
+  const v = raw.toLowerCase().replace(/[\s-]/g, '_');
   if (TASK_STATUSES.includes(v as TaskStatus)) return v as TaskStatus;
   // Common aliases
   if (['completed', 'complete'].includes(v)) return 'done';
-  if (['in progress', 'inprogress'].includes(v)) return 'in_progress';
-  if (['to do', 'to_do'].includes(v)) return 'todo';
-  if (['paused', 'hold'].includes(v)) return 'on_hold';
-  return 'todo';
+  if (['inprogress', 'active'].includes(v)) return 'in_progress';
+  if (v === 'in_review') return 'review';
+  if (['to_do', 'pending', 'new', 'open', 'not_started'].includes(v)) return 'todo';
+  if (['paused', 'hold', 'waiting'].includes(v)) return 'on_hold';
+  if (v === 'validated') return 'done';
+  return null;
+}
+
+export function normalizeTaskStatus(s: string | null | undefined): TaskStatus {
+  return parseTaskStatus(s) ?? 'todo';
 }
 
 export function getAllowedTaskTransitions(from: string | null | undefined): TaskStatus[] {
-  return [...ALLOWED_TRANSITIONS[normalizeTaskStatus(from)]];
+  const fromNorm = parseTaskStatus(from);
+  return fromNorm ? [...ALLOWED_TRANSITIONS[fromNorm]] : [];
 }
 
 /**
@@ -53,8 +60,22 @@ export function validateTaskStatusTransition(
   from: string | null | undefined,
   to: string | null | undefined
 ): { allowed: true } | { allowed: false; rule: string; message: string } {
-  const fromNorm = normalizeTaskStatus(from);
-  const toNorm = normalizeTaskStatus(to);
+  const fromNorm = parseTaskStatus(from);
+  if (!fromNorm) {
+    return {
+      allowed: false,
+      rule: 'INVALID_CURRENT_STATUS',
+      message: `Unknown current task status: ${String(from ?? '')}`,
+    };
+  }
+  const toNorm = parseTaskStatus(to);
+  if (!toNorm) {
+    return {
+      allowed: false,
+      rule: 'INVALID_STATUS',
+      message: `Unknown task status: ${String(to ?? '')}`,
+    };
+  }
   if (fromNorm === toNorm) return { allowed: true };
   const allowed = ALLOWED_TRANSITIONS[fromNorm];
   if (allowed.includes(toNorm)) return { allowed: true };

@@ -94,6 +94,9 @@ function extractSetClause(sql: string): string {
 describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 2026-09-11)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQueryOne.mockReset();
+    mockQueryRun.mockReset();
+    mockGetTableColumns.mockReset();
     // 1) resolveCanonicalPersonalTaskIdentity: brak email na sesji -> szuka
     //    w bazie po userId; zwracamy brak -> identity bez zmian.
     // 2) resolveEmailForPersonalTaskScope: analogicznie, brak email.
@@ -118,6 +121,9 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
         'checklist',
         'assignee_id',
         'owner_id',
+        'blocked_reason',
+        'blocked_at',
+        'blocked_by_decision_id',
         'updated_at',
         'completed_at',
       ])
@@ -215,4 +221,221 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
     expect(res.body.sourceType).toBe('document');
     expect(res.body.sourceId).toBe('document-42');
   });
+  it('odrzuca niedozwolone przejście bez wykonania UPDATE', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'done',
+        blockedReason: null,
+        versionToken: VERSION_TOKEN,
+      });
+
+    const res = await request(createApp()).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      status: 'blocked',
+      blockedReason: 'Waiting for a decision',
+      expectedVersionToken: VERSION_TOKEN,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      code: 'INVALID_TRANSITION',
+      currentStatus: 'done',
+      requestedStatus: 'blocked',
+    });
+    expect(res.body.allowedNext).toEqual(['todo', 'in_progress']);
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it.each([{ status: '' }, { status: null }, { status: 123 }])(
+    'odrzuca niepoprawny typ lub pusty status: %o',
+    async (patch) => {
+      const res = await request(createApp())
+        .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+        .send({ ...patch, expectedVersionToken: VERSION_TOKEN });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('INVALID_STATUS');
+      expect(mockQueryRun).not.toHaveBeenCalled();
+    }
+  );
+
+  it('wymaga niepustego powodu przy wejściu do blocked', async () => {
+    const res = await request(createApp())
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'blocked', blockedReason: '   ', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('BLOCKED_REASON_REQUIRED');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('nie reaktywuje starego powodu przy ponownym wejściu do blocked', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'todo',
+        blockedReason: 'Stale blocker from an earlier cycle',
+        versionToken: VERSION_TOKEN,
+      });
+
+    const res = await request(createApp())
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'blocked', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('BLOCKED_REASON_REQUIRED');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('zwraca konflikt wersji przed oceną przejścia statusu', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'done',
+        blockedReason: null,
+        versionToken: 'newer-version',
+      });
+
+    const res = await request(createApp())
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'blocked', blockedReason: 'Dependency', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({
+      code: 'TASK_VERSION_CONFLICT',
+      currentVersionToken: 'newer-version',
+    });
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('nie nadaje nieznanemu statusowi źródłowemu reguł todo', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'archived',
+        blockedReason: null,
+        versionToken: VERSION_TOKEN,
+      });
+
+    const res = await request(createApp())
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'in_progress', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      code: 'INVALID_CURRENT_STATUS',
+      currentStatus: 'archived',
+      allowedNext: [],
+    });
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('pozwala edytować inne pole, gdy formularz odsyła niezmieniony legacy status', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'archived',
+        blockedReason: null,
+        versionToken: VERSION_TOKEN,
+      })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        title: 'Renamed archived task',
+        status: 'archived',
+        versionToken: 'next-version',
+      });
+
+    const res = await request(createApp()).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      title: 'Renamed archived task',
+      status: 'archived',
+      expectedVersionToken: VERSION_TOKEN,
+    });
+
+    expect(res.status).toBe(200);
+    const [sql] = mockQueryRun.mock.calls[0];
+    const setClause = extractSetClause(sql as string);
+    expect(setClause).toMatch(/title = \?/);
+    expect(setClause).not.toMatch(/status = \?/);
+  });
+
+  it('zapisuje status blocked i przycięty powód w tym samym UPDATE', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'todo',
+        blockedReason: null,
+        versionToken: VERSION_TOKEN,
+      })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'blocked',
+        blockedReason: 'Waiting for vendor',
+        versionToken: 'next-version',
+      });
+
+    const res = await request(createApp()).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      status: 'blocked',
+      blockedReason: '  Waiting for vendor  ',
+      expectedVersionToken: VERSION_TOKEN,
+    });
+
+    expect(res.status).toBe(200);
+    const [sql, params] = mockQueryRun.mock.calls[0];
+    expect(extractSetClause(sql as string)).toMatch(
+      /status = \?.*blocked_reason = \?.*blocked_at = \?/s
+    );
+    expect(params).toContain('blocked');
+    expect(params).toContain('Waiting for vendor');
+    expect(res.body.blockedReason).toBe('Waiting for vendor');
+  });
+
+  it('przy wyjściu z blocked atomowo czyści wszystkie pola blokady', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'blocked',
+        blockedReason: 'Dependency',
+        versionToken: VERSION_TOKEN,
+      })
+      .mockResolvedValueOnce({
+        id: TASK_ID,
+        status: 'in_progress',
+        blockedReason: null,
+        versionToken: 'next-version',
+      });
+
+    const res = await request(createApp())
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'in_progress', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(200);
+    const [sql, params] = mockQueryRun.mock.calls[0];
+    const setClause = extractSetClause(sql as string);
+    expect(setClause).toMatch(/blocked_reason = \?/);
+    expect(setClause).toMatch(/blocked_at = \?/);
+    expect(setClause).toMatch(/blocked_by_decision_id = \?/);
+    expect(params.slice(1, 4)).toEqual([null, null, null]);
+  });
+
 });
