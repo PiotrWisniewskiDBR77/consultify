@@ -91,9 +91,11 @@ export function resolveTemplateUsePath(target: TemplateUseTarget): string | null
   }
 
   if (target.originRuntime === 'sheet_template') {
-    const canonicalTemplateId = String(target.canonicalTemplateId || '').trim();
-    if (!canonicalTemplateId) return null;
-    return `/presentations?tab=workbook_templates&workbookTemplateId=${encodeURIComponent(canonicalTemplateId)}`;
+    // The old deep link opened the parametric-template catalogue. A custom
+    // SHEET-BASE id is not present in that nine-item catalogue, so the click
+    // silently selected nothing. Keep "Use template" disabled; "Duplicate"
+    // executes the real POST /api/workbook/templates/:id/build action.
+    return null;
   }
 
   // Wszystko, czego indeks jeszcze nie oznaczył originRuntime: dotychczasowa
@@ -170,6 +172,47 @@ export function resolveTemplateClonePath(
     return `/presentations/templates/document/${encodeURIComponent(canonicalId)}`;
   }
   return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
+}
+
+export interface TemplateDuplicateCommand {
+  kind: 'request' | 'navigate';
+  path: string;
+}
+
+/** Real duplicate operation for each template runtime. */
+export function resolveTemplateDuplicateCommand(
+  target: TemplateUseTarget
+): TemplateDuplicateCommand | null {
+  const artifactIndexId = String(target.artifactIndexId || '').trim();
+  const canonicalId = String(target.canonicalTemplateId || '').trim();
+  if (!artifactIndexId || target.orphaned) return null;
+
+  if (target.originRuntime === 'report_template') {
+    return {
+      kind: 'navigate',
+      path: `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(artifactIndexId)}`,
+    };
+  }
+  if (!canonicalId) return null;
+  if (target.originRuntime === 'document_template') {
+    return {
+      kind: 'request',
+      path: `/document-studio/templates/${encodeURIComponent(canonicalId)}/new-version`,
+    };
+  }
+  if (target.originRuntime === 'presentation_template') {
+    return {
+      kind: 'request',
+      path: `/presentations/templates/${encodeURIComponent(canonicalId)}/clone`,
+    };
+  }
+  if (target.originRuntime === 'sheet_template') {
+    return {
+      kind: 'request',
+      path: `/workbook/templates/${encodeURIComponent(canonicalId)}/build`,
+    };
+  }
+  return null;
 }
 
 /**

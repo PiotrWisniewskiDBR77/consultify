@@ -46,17 +46,21 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
+import { useToast } from '@/components/ui/use-toast';
+import { Api } from '@/services/api';
+import { clonePresentationTemplate } from '@/services/presentationTemplateArchitect';
 import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 
 import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
   resolveTemplateBuildPath,
-  resolveTemplateClonePath,
+  resolveTemplateDuplicateCommand,
   resolveTemplateEditPath,
   resolveTemplateUsePath,
 } from './artifactNavigation';
 import { templateScopeLabel, TemplatesGalleryView } from './TemplatesGalleryView';
+import { duplicateTemplateFromLibrary } from './templateDuplicateService';
 import {
   TEMPLATE_CATEGORY_META,
   TEMPLATE_STATUS_META,
@@ -117,10 +121,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const { toast } = useToast();
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pendingBriefRow, setPendingBriefRow] = useState<TemplateItem | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
+  const [duplicateBusyId, setDuplicateBusyId] = useState<string | null>(null);
   // Triada standard (canon A4/#13): checkbox selection state for the table's
   // left-hand checkbox column. This tab is a leaf under ReportsAndPresentationsHub
   // (which owns Menu 1/2/3) — there is no bulk-mode command-row slot exposed to
@@ -189,6 +195,52 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       navigate(usePath);
     },
     [navigate, resolveUsePath]
+  );
+
+  const handleDuplicateTemplate = useCallback(
+    async (row: TemplateItem) => {
+      if (duplicateBusyId === row.id) return;
+      const canonicalId = String(row.canonicalTemplateId || '').trim();
+      const target = {
+        artifactIndexId: row.artifactIndexId ?? row.id,
+        templateType: row.type,
+        canonicalTemplateId: canonicalId,
+        originRuntime: row.originRuntime,
+        orphaned: row.orphaned,
+      };
+
+      if (!resolveTemplateDuplicateCommand(target)) {
+        toast({
+          title: t('rap.templates.duplicateFailed', 'Template could not be duplicated'),
+          description: t(
+            'rap.templates.useBlocked',
+            'No canonical template record — there is nothing to use.'
+          ),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setDuplicateBusyId(row.id);
+      try {
+        const result = await duplicateTemplateFromLibrary(target, {
+          post: (path, body) => Api.post(path, body),
+          clonePresentation: clonePresentationTemplate,
+          buildWorkbook: (templateId, payload) => Api.buildWorkbookTemplate(templateId, payload),
+        });
+        navigate(result.openPath);
+        onRefresh?.();
+      } catch {
+        toast({
+          title: t('rap.templates.duplicateFailed', 'Template could not be duplicated'),
+          description: t('common.tryAgain', 'Try again.'),
+          variant: 'destructive',
+        });
+      } finally {
+        setDuplicateBusyId(null);
+      }
+    },
+    [duplicateBusyId, navigate, onRefresh, t, toast]
   );
 
   const finishBrief = useCallback(
@@ -367,7 +419,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       {
         id: 'scope',
         label: t('rap.columns.scope', 'Scope'),
-        width: '140px',
+        width: '160px',
+        dataType: 'text',
+        pinned: 'right',
         filterable: true,
         filterOptions: [
           { value: 'personal', label: t('reports.personal') },
@@ -375,14 +429,21 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           { value: 'organization', label: t('reports.organization') },
           { value: 'unknown', label: t('rap.templates.scopeUnknown', 'Unknown') },
         ],
-        render: (row: TemplateItem) => (
-          <span className="text-sm text-c-text-secondary">{scopeLabel(row.scope)}</span>
-        ),
+        render: (row: TemplateItem) => {
+          const label = scopeLabel(row.scope);
+          return (
+            <span title={label} className="whitespace-nowrap text-sm text-c-text-secondary">
+              {label}
+            </span>
+          );
+        },
       },
       {
         id: 'status',
         label: t('rap.columns.status', 'Status'),
-        width: '120px',
+        width: '150px',
+        dataType: 'status',
+        pinned: 'right',
         filterable: true,
         filterOptions: [
           {
@@ -409,13 +470,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         ],
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_STATUS_META[row.status] || TEMPLATE_STATUS_META.unknown;
-          return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
+          const label = isPolish ? meta.labelPl : meta.label;
+          return <StatusChip label={label} title={label} tone={meta.tone} className="max-w-none" />;
         },
       },
       {
         id: 'updatedAt',
         label: t('rap.columns.updatedAt', 'Last change'),
-        width: '150px',
+        width: '170px',
+        dataType: 'date',
+        pinned: 'right',
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => {
           const raw = (row as unknown as TemplateItem).updatedAt;
@@ -431,7 +495,14 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             return <span className="text-sm text-c-text-muted">—</span>;
           }
           return (
-            <span className="text-sm text-c-text-muted">
+            <span
+              title={d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+              className="whitespace-nowrap text-sm text-c-text-muted"
+            >
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
@@ -493,8 +564,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             : usePath
               ? undefined
               : t(
-                  'rap.templates.useBlocked',
-                  'No canonical template record — there is nothing to use.'
+                  row.originRuntime === 'sheet_template'
+                    ? 'rap.templates.sheetUseBlocked'
+                    : 'rap.templates.useBlocked',
+                  row.originRuntime === 'sheet_template'
+                    ? 'Use Duplicate to create an editable scorecard workbook.'
+                    : 'No canonical template record — there is nothing to use.'
                 ),
           onClick: usePath && !isDeprecated ? () => handleUseTemplate(row) : undefined,
         };
@@ -503,10 +578,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         id: 'clone',
         label: t('rap.actions.duplicate', 'Duplicate'),
         icon: Copy,
-        onClick: () =>
-          navigate(
-            resolveTemplateClonePath(row.id, row.type, row.canonicalTemplateId, row.originRuntime)
-          ),
+        disabled: duplicateBusyId === row.id || row.orphaned,
+        onClick: row.orphaned ? undefined : () => void handleDuplicateTemplate(row),
       },
       {
         id: 'ask_ai',
@@ -620,15 +693,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 variant: 'neutral',
                 label: t('rap.actions.duplicate', 'Duplicate'),
                 icon: Copy,
-                onClick: () =>
-                  navigate(
-                    resolveTemplateClonePath(
-                      selectedItem.id,
-                      selectedItem.type,
-                      selectedItem.canonicalTemplateId,
-                      selectedItem.originRuntime
-                    )
-                  ),
+                disabled: duplicateBusyId === selectedItem.id || selectedItem.orphaned,
+                onClick: () => void handleDuplicateTemplate(selectedItem),
               },
               {
                 id: 'ask_ai',
@@ -653,7 +719,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ],
           }
         : undefined,
-    [selectedItem, t, navigate, openChat, resolveUsePath, handleUseTemplate]
+    [
+      selectedItem,
+      t,
+      navigate,
+      openChat,
+      resolveUsePath,
+      handleUseTemplate,
+      duplicateBusyId,
+      handleDuplicateTemplate,
+    ]
   );
 
   // Esc closes preview; single-key shortcut (O) active while preview open (kanon B.24/B.31).
@@ -804,15 +879,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             const tpl = filteredData.find((t) => t.id === item.id);
             if (!tpl) return;
             if (actionId === 'open') handleUseTemplate(tpl);
-            if (actionId === 'duplicate')
-              navigate(
-                resolveTemplateClonePath(
-                  tpl.id,
-                  tpl.type,
-                  tpl.canonicalTemplateId,
-                  tpl.originRuntime
-                )
-              );
+            if (actionId === 'duplicate') void handleDuplicateTemplate(tpl);
             if (actionId === 'edit')
               navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
           }}
@@ -849,6 +916,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
       persistKey="rap.templates.list"
       selection={{ selectedIds, onChange: setSelectedIds }}
+      minTableWidth="columns"
       empty={{
         icon: BookTemplate,
         title: t('rap.empty.templates', 'No templates'),
@@ -878,11 +946,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           })
         )
       }
-      onDuplicate={(item) =>
-        navigate(
-          resolveTemplateClonePath(item.id, item.type, item.canonicalTemplateId, item.originRuntime)
-        )
-      }
+      onDuplicate={(item) => void handleDuplicateTemplate(item)}
       onPreview={(item) => setSelectedId(item.id)}
     />
   );

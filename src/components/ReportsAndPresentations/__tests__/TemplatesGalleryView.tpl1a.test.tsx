@@ -23,7 +23,7 @@ const base: TemplateItem = {
 };
 
 describe('TPL-1a template card actions', () => {
-  it('system base is read-only but remains usable and duplicable', () => {
+  it('system SHEET-BASE is read-only, explains unavailable Use, and remains duplicable', () => {
     const onBuild = vi.fn();
     const onUse = vi.fn();
     const onDuplicate = vi.fn();
@@ -31,7 +31,7 @@ describe('TPL-1a template card actions', () => {
       <TemplatesGalleryView
         templates={[base]}
         scopeLabel={() => 'Application'}
-        resolveUsePath={() => '/presentations?tab=workbook_templates'}
+        resolveUsePath={() => null}
         onBuild={onBuild}
         onUse={onUse}
         onDuplicate={onDuplicate}
@@ -40,11 +40,11 @@ describe('TPL-1a template card actions', () => {
     );
 
     expect(screen.getByTestId('template-gallery-build-artifact-sheet-base')).toBeDisabled();
-    fireEvent.click(screen.getByTestId('template-gallery-use-artifact-sheet-base'));
+    expect(screen.getByTestId('template-gallery-use-artifact-sheet-base')).toBeDisabled();
     fireEvent.click(screen.getByTestId('template-gallery-duplicate-artifact-sheet-base'));
 
     expect(onBuild).not.toHaveBeenCalled();
-    expect(onUse).toHaveBeenCalledWith(base);
+    expect(onUse).not.toHaveBeenCalled();
     expect(onDuplicate).toHaveBeenCalledWith(base);
   });
 

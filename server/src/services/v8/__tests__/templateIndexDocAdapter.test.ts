@@ -442,6 +442,11 @@ describe('orphan detection (measurement only)', () => {
             is_system: true,
             status_value: 'approved',
             active_value: true,
+            description_value: 'Board-ready system deck.',
+            structure_value: [
+              { intent: 'cover', title: 'Cover' },
+              { intent: 'decision', title: 'Decision and next steps' },
+            ],
           },
           {
             canonical_id: 'deck-deprecated',
@@ -470,9 +475,18 @@ describe('orphan detection (measurement only)', () => {
 
     expect(results.map((item) => (item.originSummary as any).template.status)).toEqual([
       'draft',
-      'published',
+      'approved',
       'deprecated',
     ]);
+    expect((results[1]!.originSummary as any).template).toMatchObject({
+      description: 'Board-ready system deck.',
+      structureBlueprint: {
+        outline: [
+          { intent: 'cover', title: 'Cover' },
+          { intent: 'decision', title: 'Decision and next steps' },
+        ],
+      },
+    });
     expect(allSql().find((sql) => sql.includes('FROM presentation_templates'))).toContain(
       't.lifecycle_state'
     );
@@ -512,6 +526,92 @@ describe('orphan detection (measurement only)', () => {
     expect(orphanTemplate.orphaned).toBe(true);
 
     // ★ Nothing was deleted or updated.
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('projects non-empty canonical content and approved status for all three base families', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM document_studio_templates')) {
+        return [
+          {
+            canonical_id: 'doc-base',
+            organization_id: null,
+            is_system: true,
+            visibility: null,
+            status_value: 'approved',
+            active_value: null,
+            description_value: 'A governed decision document.',
+            structure_value: JSON.stringify([
+              { key: 'summary', title: 'Executive summary' },
+              { key: 'decision', title: 'Decision' },
+            ]),
+          },
+        ];
+      }
+      if (sql.includes('FROM presentation_templates')) {
+        return [
+          {
+            canonical_id: 'deck-base',
+            organization_id: null,
+            is_system: true,
+            visibility: null,
+            status_value: 'approved',
+            active_value: true,
+            description_value: 'A board-ready decision deck.',
+            structure_value: [
+              { intent: 'cover', title: 'Cover' },
+              { intent: 'decision', title: 'Decision' },
+            ],
+          },
+        ];
+      }
+      if (sql.includes('FROM tp_base_templates')) {
+        return [
+          {
+            canonical_id: 'sheet-base',
+            organization_id: null,
+            is_system: null,
+            visibility: 'system',
+            status_value: 'approved',
+            active_value: null,
+            description_value: 'A KPI scorecard workbook.',
+            structure_value: {
+              sheets: [{ name: 'Scorecard' }, { name: 'Definitions' }],
+              fields: [{ name: 'KPI', type: 'text' }],
+            },
+          },
+        ];
+      }
+      return [];
+    });
+
+    const [doc, deck, sheet] = await enrichTemplateOriginSummaries('org-alpha', [
+      templateListItem({ artifactId: 'art-doc', originRecordId: 'doc-base' }),
+      templateListItem({
+        artifactId: 'art-deck',
+        outputType: 'presentation',
+        originRuntime: 'presentation_template',
+        originRecordId: 'deck-base',
+      }),
+      templateListItem({
+        artifactId: 'art-sheet',
+        outputType: 'sheet',
+        originRuntime: 'sheet_template',
+        originRecordId: 'sheet-base',
+      }),
+    ]);
+
+    const templates = [doc, deck, sheet].map((item) => (item.originSummary as any).template);
+    expect(templates.map(({ status }) => status)).toEqual(['approved', 'approved', 'approved']);
+    expect(templates.map(({ description }) => description)).toEqual([
+      'A governed decision document.',
+      'A board-ready decision deck.',
+      'A KPI scorecard workbook.',
+    ]);
+    expect(templates[0].structureBlueprint.sections).toHaveLength(2);
+    expect(templates[1].structureBlueprint.outline).toHaveLength(2);
+    expect(templates[2].structureBlueprint.sheets).toHaveLength(2);
+    expect(templates[2].structureBlueprint.columns).toHaveLength(1);
     expect(mockDbRun).not.toHaveBeenCalled();
   });
 

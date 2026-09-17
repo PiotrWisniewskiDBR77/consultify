@@ -37326,6 +37326,8 @@
       "statusPublished": "Opublikowany",
       "statusUnknown": "Nieznany",
       "useBlocked": "Brak rekordu źródłowego wzorca — generowanie jest niedostępne.",
+      "sheetUseBlocked": "Użyj Duplikuj, aby utworzyć edytowalny skoroszyt scorecard.",
+      "duplicateFailed": "Nie udało się zduplikować wzorca",
       "viewGallery": "Galeria",
       "viewTable": "Tabela",
       "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
