@@ -107,6 +107,22 @@ async function tekstPowloki(language: 'pl' | 'en'): Promise<string> {
   return (await Promise.all(names.map((name) => zip.file(name)!.async('string')))).join('\n');
 }
 
+async function tekstStopki(language: 'pl' | 'en'): Promise<string> {
+  const zip = await JSZip.loadAsync(
+    await renderDocumentSchemaToDocxBuffer(
+      buildAssessmentDrdReportSchema(kontrakt(language), 'Northwind Manufacturing Ltd.')
+    )
+  );
+  const names = Object.keys(zip.files)
+    .filter((name) => /^word\/footer\d*\.xml$/u.test(name))
+    .sort();
+  expect(names.length, 'raport DRD musi mieć stopki').toBeGreaterThan(0);
+  const xml = (await Promise.all(names.map((name) => zip.file(name)!.async('string')))).join('\n');
+  // Numery stron to pola Worda (instrText), więc czytelny tekst stopki to
+  // złączenie literałów i nazw pól po zdjęciu tagów.
+  return xml.replace(/<[^>]+>/gu, '');
+}
+
 describe('Etykiety powłoki raportu DRD idą za contract.language', () => {
   it('DOCX EN: 0 wystąpień „Tabela"/„Rysunek"/„Strona" w document.xml, nagłówkach i stopkach', async () => {
     const shell = await tekstPowloki('en');
@@ -118,6 +134,12 @@ describe('Etykiety powłoki raportu DRD idą za contract.language', () => {
     expect(shell).toContain('Page ');
   });
 
+  it('DOCX EN: cała stopka czyta się „Page … of …", bez polskiego spójnika „z"', async () => {
+    const stopka = await tekstStopki('en');
+    expect(stopka).toMatch(/Page\s+.*\s+of\s+/u);
+    expect(stopka).not.toMatch(/\s+z\s+/u);
+  });
+
   it('DOCX PL: powłoka bajt w bajt jak przed naprawą (snapshot treści)', async () => {
     const shell = await tekstPowloki('pl');
     // Zmierzone 2026-09-17 na linii b1ab38d4d6 PRZED naprawą renderera.
@@ -125,5 +147,11 @@ describe('Etykiety powłoki raportu DRD idą za contract.language', () => {
       '6d780e5d2016d7f043ec153901353ff3dfaf1d5cbb3843f227adb4c67af35b0d'
     );
     expect(shell.match(POLSKIE_ETYKIETY_POWLOKI) ?? []).not.toEqual([]);
+  });
+
+  it('DOCX PL: stopka zostaje „Strona … z …", bez angielskiego „of"', async () => {
+    const stopka = await tekstStopki('pl');
+    expect(stopka).toMatch(/Strona\s+.*\s+z\s+/u);
+    expect(stopka).not.toMatch(/\s+of\s+/u);
   });
 });

@@ -2113,6 +2113,8 @@ async function renderDocumentSchemaToDocxBufferInternal(
       })
     );
   }
+  const pageLabel = schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ';
+  const pageSeparator = schema.language.toLowerCase().startsWith('pl') ? ' z ' : ' of ';
   if (formatting.footers.pageNumbering) {
     // Slice E15.5.formatting.render — `pageNumberingFormat` honors a
     // template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
@@ -2157,11 +2159,10 @@ async function renderDocumentSchemaToDocxBufferInternal(
         }
       }
     } else {
-      const defaultPageLabel = schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ';
       footerRuns.push(
         new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
         new TextRun({
-          text: defaultPageLabel,
+          text: pageLabel,
           size: 16,
           color: DOCX_PALETTE.faint,
           font: ctx.bodyFont,
@@ -2240,7 +2241,7 @@ async function renderDocumentSchemaToDocxBufferInternal(
                 }),
                 new TextRun({ text: '\t', size: 16, font: ctx.bodyFont }),
                 new TextRun({
-                  text: schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ',
+                  text: pageLabel,
                   size: 16,
                   color: DRD_REPORT_PALETTE.muted,
                   font: ctx.bodyFont,
@@ -2252,7 +2253,7 @@ async function renderDocumentSchemaToDocxBufferInternal(
                   font: ctx.bodyFont,
                 }),
                 new TextRun({
-                  text: ' z ',
+                  text: pageSeparator,
                   size: 16,
                   color: DRD_REPORT_PALETTE.muted,
                   font: ctx.bodyFont,

@@ -88,12 +88,73 @@ w miejscu naprawy. Podniesienie deklaracji wyżej = dodatkowe linie poza 4 instr
 GO (Wpis 24 pkt 1), więc zgodnie z klauzulą Wpisu 27 („jeśli nie w zasięgu — zostaw ternar
 i napisz to w meldunku") zostaje ternar o IDENTYCZNYM wyrażeniu co `defaultPageLabel`.
 Kandydat na follow-up (po akcepcie CTO): podnieść `defaultPageLabel` do zasięgu funkcji
-i użyć w obu miejscach.
+i użyć w obu miejscach. **Zrealizowane w Wpisie 28**: para `pageLabel`/`pageSeparator`
+w zasięgu funkcji zastąpiła `defaultPageLabel` (jedno źródło prawdy).
+
+## Wpis 28 — separator stopki per język (`pageLabel` / `pageSeparator`)
+
+CTO oczami zobaczył na zrzucie PO stopkę „Page 2 **z** 19": literał `text: ' z '` (ówczesna
+linia 2255) był poza listą słów testu. Naprawa: para stałych w zasięgu funkcji
+(`documentDocxRenderer.ts:2116-2117`):
+
+```ts
+const pageLabel = schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ';
+const pageSeparator = schema.language.toLowerCase().startsWith('pl') ? ' z ' : ' of ';
+```
+
+użyta w trzech miejscach: wariant domyślny numeracji (`:2165`, zamiast usuniętego lokalnego
+`defaultPageLabel` — jedno źródło prawdy, patrz Wpis 27) oraz stopka DRD (`:2244` etykieta,
+`:2256` separator). Diff renderera w tym commicie: 5 insertions / 4 deletions, wyłącznie
+logika stopki.
+
+### Test (cała stopka, nie lista słów)
+Nowe asercje w `g1.reportShellLabels.test.ts`: EN po zdjęciu tagów z `word/footer*.xml`
+matchuje `/Page\s+.*\s+of\s+/` i NIE matchuje `/\s+z\s+/`; PL matchuje `/Strona\s+.*\s+z\s+/`
+i NIE matchuje `/\s+of\s+/`; snapshot powłoki PL bez zmian (`6d780e5d…`).
+
+| przebieg | EXIT | wynik |
+|---|---|---|
+| PRZED (renderer ze `' z '`) | 1 | nowy test EN czerwony: stopka „Page … z …" nie matchuje `/Page\s+.*\s+of\s+/` |
+| PO | 0 | 4 passed (4) |
+| MUTACJA (`pageSeparator = ' z '`) | 1 | dokładnie ten sam test czerwony; test listy słów zostaje ZIELONY (pułapka udokumentowana) |
+
+### Zrzut PO i stopka odczytana dosłownie
+`report-en-page2-PO-w28.png` (168 587 B, sha `ea87785b5737b7f2f84b9c94f28c4d85f46178124277cf22e8515a38330cb0c8`).
+Linia stopki strony 2 (pdftotext -layout):
+`Confidential — Northwind Manufacturing Ltd.                Page 2 of 19                               ● Consultify`
+PL (bez zmiany): `Poufne — Northwind Manufacturing Ltd.                     Strona 2 z 20                           ● Consultify`
+Cały PDF EN: 0 wystąpień `\b(Tabela|Rysunek|Strona)\b`.
+
+Binaria lokalnie: `/tmp/qoder-shell-w28/report-en-w28.docx` sha `f54a06463b673220c6dcb61c3d86a39b70b550b270407d0eb2ea67c90739ac8f`,
+`/tmp/qoder-shell-w28/report-pl-w28.docx` sha `dacbd272bc968f76b4bf7273249eeeb10f3b22041dc2878ee704258f80e4fe86`.
+
+### Inwentarz literałów tekstowych stopki/nagłówka (`rg -n "text: '"`, zakres 2150–2280)
+
+| linia | literal / stała | zależny od języka? |
+|---|---|---|
+| 2116 | `pageLabel` (`'Strona '` / `'Page '`) | TAK — para stałych |
+| 2117 | `pageSeparator` (`' z '` / `' of '`) | TAK — para stałych |
+| 2163 | `'   \|   '` | nie — separator pól stopki domyślnej |
+| 2176 | `' / '` | NIE — celowo bajtowo stabilny separator wariantu domyślnego (komentarz E15: „legacy `Page N / M` runs so existing schemas render byte-stable"); kandydat do decyzji, nie ruszany |
+| 2206 | `'\tPage '` | twardo EN — wariant stopki client-final (profil zawsze angielski DEC-461); poza zakresem GO |
+| 2213 | `' of '` | twardo EN — jw. |
+| 2237 | fallback `` `Poufne — ${audience}` `` | twardo PL — OTWARTE poniżej |
+| 2242 / 2267 | `'\t'` | nie — tabulatory układu |
+| 2269 | `'● '` | nie — znak graficzny |
+| 2275 | `'Consultify'` | nie — marka |
+
+Nagłówek: etykiety (`NAWIGACJA`/`NAVIGATION`, `Spis treści`/`Table of Contents`) idą przez
+ternar `isPolish` (`:1850-1861`) — zależne od języka, poprawne. Podpisy tabel/rysunków:
+warunek `drdProfile && …startsWith('pl')` (`:1047`, `:1078`, `:1136`).
 
 ## OTWARTE (poza zakresem GO — decyzja CTO)
 
-Stopka DRD EN po naprawie czyta się `Page 2 z 19`: separator `text: ' z '` (linia 2255)
-i fallback `Poufne — …` (linia 2236, gdy `formatting.footers.content` puste) są nadal
-polskie. GO obejmowało DOKŁADNIE 4 miejsca, więc ich NIE ruszyłem; test pilnuje tylko słów
-`Tabela|Rysunek|Strona`. Kandydat na follow-up: `' z '` → `' of '`, `Poufne —` → `Confidential —`
-(po akcepcie CTO, osobny wpis).
+- Spójnik `' z '` (Wpis 28) — ZAMKNIĘTY w tym commicie.
+- Fallback stopki DRD `` `Poufne — …` `` (linia 2237, gdy `formatting.footers.content` puste)
+  jest twardo polski; w raporcie EN kontrakt podstawia angielską treść stopki, więc literał
+  jest tylko fallbackiem — kandydat: `Confidential — …` po akcepcie.
+- Wariant stopki client-final (`:2206`/`:2213`) jest twardo angielski (`\tPage ` / ` of `);
+  profil client-final jest z definicji EN, ale dla symetrii mógłby czytać `pageLabel`/
+  `pageSeparator` — poza zakresem GO.
+- Separator `' / '` wariantu domyślnego (`:2176`) celowo bajtowo stabilny (E15) — nie ruszać
+  bez osobnej decyzji.
