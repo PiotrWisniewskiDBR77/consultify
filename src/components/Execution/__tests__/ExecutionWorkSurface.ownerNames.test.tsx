@@ -32,7 +32,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (store: unknown) => unknown) =>
     selector({
-      currentUser: { id: 'user-anna' },
+      currentUser: { id: 'user-anna', role: 'OWNER' },
       currentOrganization: { id: 'org-1' },
     }),
 }));
