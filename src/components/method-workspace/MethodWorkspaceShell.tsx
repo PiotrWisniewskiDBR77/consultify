@@ -272,7 +272,9 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-c-text">
-            {methodName} · {t('methodWorkspace.sessionShort', 'Session {{id}}', { id: session.id.slice(0, 8) })}
+            {methodName} ·{' '}
+            {session.name?.trim() ||
+              t('methodWorkspace.sessionShort', 'Session {{id}}', { id: session.id.slice(0, 8) })}
           </p>
           <p className="truncate text-[11px] text-c-text-muted">
             {t('methodWorkspace.methodPack', 'Method Pack {{version}}', { version: packVersionLabel })}

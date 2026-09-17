@@ -11,7 +11,7 @@ import { DRD_STRUCTURE } from '@/services/drdStructure';
 
 const SESSION_ID = '7f3c1a2e-9b41-4d55-a0c7-2e6d8b5f1a90';
 const AREA_ID = '1A';
-const session = { id: SESSION_ID, organizationId: 'org-northwind', projectId: null, module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', state: 'in_progress', domainStage: 'interview', mode: 'guided_manual', ownerUserId: 'user-northwind-owner', createdAt: '2026-09-15T08:00:00.000Z', updatedAt: '2026-09-16T07:20:00.000Z', version: 4, frozenSnapshotId: null } as MethodSession;
+const session = { id: SESSION_ID, name: 'Northwind digital maturity — September wave', organizationId: 'org-northwind', projectId: null, module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', state: 'in_progress', domainStage: 'interview', mode: 'guided_manual', ownerUserId: 'user-northwind-owner', createdAt: '2026-09-15T08:00:00.000Z', updatedAt: '2026-09-16T07:20:00.000Z', version: 4, frozenSnapshotId: null } as MethodSession;
 const readiness: MethodReadiness = { answeredUnits: 1, totalUnits: 39, unitsMissingEvidence: 38, openDiscrepancies: 0, pendingProposals: 0, freezeBlockers: [] };
 
 function answerEvent(level: number, state: string, text = ''): MethodEvent {
