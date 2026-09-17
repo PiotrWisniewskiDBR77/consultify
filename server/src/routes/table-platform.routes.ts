@@ -2232,9 +2232,8 @@ router.get(
     try {
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
 
-      const { CONSULTIFY_SUPPLIER_SCORECARD_PROFILE } = await import(
-        '../services/export/XlsxExportProfile.js'
-      );
+      const { CONSULTIFY_SUPPLIER_SCORECARD_PROFILE } =
+        await import('../services/export/XlsxExportProfile.js');
       if (rawProfile !== undefined && requestedProfile !== CONSULTIFY_SUPPLIER_SCORECARD_PROFILE) {
         return res.status(400).json({
           error: 'XLSX_EXPORT_PROFILE_INVALID',
@@ -2279,9 +2278,7 @@ router.get(
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
       let organizationName = 'Organization';
       if (authReq.organizationId) {
-        const organizationResult = (await (
-          await import('../database/Database.js')
-        )
+        const organizationResult = (await (await import('../database/Database.js'))
           .getDatabase()
           .query('SELECT name FROM organizations WHERE id = $1', [authReq.organizationId])) as {
           rows?: Array<{ name?: string }>;
