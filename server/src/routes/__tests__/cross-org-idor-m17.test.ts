@@ -316,7 +316,7 @@ describe('M17 GATE-NOTION — report-builder Notion export enforces export-readi
     mockExportReportToNotion.mockResolvedValue({ success: true, url: 'https://notion.so/p' });
   });
 
-  it('POST /:id/export/notion → 409 when the report fails quality gates (no external publish)', async () => {
+  it('POST /:id/export/notion → 200 with advisory warnings when quality gates fail', async () => {
     mockCheckQualityGates.mockResolvedValue({
       reportId: 'report-owned',
       canExport: false,
@@ -337,13 +337,15 @@ describe('M17 GATE-NOTION — report-builder Notion export enforces export-readi
 
     const res = await request(app).post('/api/report-builder/report-owned/export/notion').send({});
 
-    expect(res.status).toBe(409);
-    expect(res.body.error).toBe('REPORT_NOT_READY_FOR_EXPORT');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.headers['x-report-quality-result']).toBe('BLOCKED_P1');
+    expect(res.headers['x-report-quality-warning-count']).toBe('1');
     // The gate ran for the caller's own report/org…
     expect(mockCheckQualityGates).toHaveBeenCalledWith(ORG_A, 'report-owned');
-    // …and the external publish + export record never happened.
-    expect(mockExportReportToNotion).not.toHaveBeenCalled();
-    expect(mockCreateExportRecord).not.toHaveBeenCalled();
+    // …and the advisory result does not block the requested export.
+    expect(mockExportReportToNotion).toHaveBeenCalledTimes(1);
+    expect(mockCreateExportRecord).toHaveBeenCalledTimes(1);
   });
 
   it('POST /:id/export/notion → 200 + publish when the report passes quality gates', async () => {
