@@ -33,6 +33,8 @@ export interface DocSection {
   hint: string;
   /** czy generator AI wypełnia tę sekcję (vs pusta w output). */
   aiFilled: boolean;
+  /** Live product object family used to fill this block. */
+  source: TemplateSource;
 }
 
 /** deck — jeden slajd prezentacji. */
@@ -45,6 +47,7 @@ export interface DeckSlide {
   archetype: SlideArchetype;
   hint: string;
   aiFilled: boolean;
+  source: TemplateSource;
 }
 
 /** table — jedna kolumna arkusza (Excel/Sheet). */
@@ -77,7 +80,10 @@ export interface WorkbookTemplateSheet {
   id: string;
   name: string;
   columns: SheetColumn[];
+  source: TemplateSource;
 }
+
+export type TemplateSource = '' | 'DRD' | 'KPI' | 'Initiatives' | 'RAID' | 'Sheets' | 'Decisions';
 
 export type TemplateElement = DocSection | DeckSlide | WorkbookTemplateSheet;
 
@@ -229,6 +235,7 @@ export function newDocSection(tytul = 'New section'): DocSection {
     depth: 'medium',
     hint: '',
     aiFilled: true,
+    source: '',
   };
 }
 
@@ -239,6 +246,7 @@ export function newDeckSlide(tytul = 'New slide'): DeckSlide {
     archetype: 'content',
     hint: '',
     aiFilled: true,
+    source: '',
   };
 }
 
@@ -259,8 +267,11 @@ export function newSheetColumn(nazwa = 'New column'): SheetColumn {
  * Wcześniej stał tu polski literał „Arkusz 1"/„Nowa kolumna", więc konto
  * angielskie dostawało polską nazwę arkusza i kolumny.
  */
-export function newWorkbookSheet(name = 'Sheet 1', nazwaKolumny = 'New column'): WorkbookTemplateSheet {
-  return { id: nextId('sheet'), name, columns: [newSheetColumn(nazwaKolumny)] };
+export function newWorkbookSheet(
+  name = 'Sheet 1',
+  nazwaKolumny = 'New column'
+): WorkbookTemplateSheet {
+  return { id: nextId('sheet'), name, columns: [newSheetColumn(nazwaKolumny)], source: '' };
 }
 
 export function emptyDraft(type: TemplateType, name: string, scope: TemplateScope): TemplateDraft {
@@ -335,6 +346,7 @@ export function draftToPostBody(draft: TemplateDraft): TemplatePostBody {
           depth: s.depth,
           hint: s.hint,
           ai_filled: s.aiFilled,
+          source: s.source,
         })),
         theme_ref: draft.themeRef,
         scope: draft.scope,
@@ -350,6 +362,7 @@ export function draftToPostBody(draft: TemplateDraft): TemplatePostBody {
           archetype: s.archetype,
           hint: s.hint,
           ai_filled: s.aiFilled,
+          source: s.source,
         })),
         theme_ref: draft.themeRef,
         scope: draft.scope,
@@ -379,6 +392,7 @@ export function draftToPostBody(draft: TemplateDraft): TemplatePostBody {
           const cells: Record<string, StarterCell> = Object.fromEntries(cellEntries);
           return {
             name: sheet.name.trim() || `Arkusz ${sheetIndex + 1}`,
+            source: sheet.source,
             columns: sheet.columns.map((column, columnIndex) => ({
               key: columnKey(columnIndex),
               header: column.name.trim() || `Kolumna ${columnIndex + 1}`,

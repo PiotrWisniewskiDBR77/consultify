@@ -64,6 +64,11 @@ export interface TemplateBuilderProps {
   persistRailState?: boolean;
   /** Canonical id switches Save from create to persisted update. */
   templateId?: string;
+  centerHeader?: React.ReactNode;
+  workflow?: React.ComponentProps<typeof TemplateBuilderShell>['workflow'];
+  secondBar?: React.ReactNode;
+  artifactRightPanel?: React.ReactNode;
+  saveBlocked?: boolean;
 }
 
 export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
@@ -74,6 +79,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   saveFn = saveTemplate,
   persistRailState = true,
   templateId,
+  centerHeader,
+  workflow,
+  secondBar,
+  artifactRightPanel,
+  saveBlocked = false,
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n.language || 'pl';
@@ -130,7 +140,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       return draft.deck.map((s, i) => ({
         id: s.id,
         label: s.title || t('templateBuilder.container.untitled', 'Untitled'),
-        meta: pickTemplateLabel(SLIDE_ARCHETYPE_LABELS, SLIDE_ARCHETYPE_LABELS_EN, s.archetype, language),
+        meta: pickTemplateLabel(
+          SLIDE_ARCHETYPE_LABELS,
+          SLIDE_ARCHETYPE_LABELS_EN,
+          s.archetype,
+          language
+        ),
         index: i + 1,
       }));
     return draft.table.map((sheet, i) => ({
@@ -246,7 +261,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   // ── Zapis ─────────────────────────────────────────────────────────────────
   const validation = useMemo(() => validateTemplateDraft(draft), [draft]);
-  const canSave = validation.valid;
+  const canSave = validation.valid && !saveBlocked;
   const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
@@ -338,7 +353,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         onAdd={handleAdd}
         onMove={handleMove}
         onDelete={handleDelete}
-        centerEditor={centerEditor}
+        centerEditor={
+          <div className="flex h-full min-h-0 flex-col">
+            {centerHeader}
+            <div className="min-h-0 flex-1">{centerEditor}</div>
+          </div>
+        }
         themeOptions={themeOptions}
         activeRightTool={activeRightTool}
         onActiveRightToolChange={setActiveRightTool}
@@ -369,6 +389,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               }
             : undefined
         }
+        workflow={workflow}
+        secondBar={secondBar}
+        artifactRightPanel={artifactRightPanel}
         onBack={onClose}
         persistRailState={persistRailState}
       />

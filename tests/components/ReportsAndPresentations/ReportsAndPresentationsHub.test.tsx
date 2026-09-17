@@ -144,6 +144,7 @@ vi.mock('../../../src/components/ReportsAndPresentations/SheetsTabContent', () =
 }));
 
 vi.mock('../../../src/components/ReportsAndPresentations/TemplatesTabContent', () => ({
+  filterTemplatesBySearch: (rows: any[]) => rows,
   TemplatesTabContent: ({ initialArtifactId }: any) => (
     <div data-testid="templates-initial-artifact">{initialArtifactId || 'none'}</div>
   ),
@@ -179,8 +180,8 @@ vi.mock('../../../src/components/AIChat/KimiWorkspace/ExceleParametricTemplates'
   },
 }));
 vi.mock('../../../src/components/TemplateBuilder', () => ({
-  TemplateBuilderFlow: ({ initialType }: { initialType?: string }) => (
-    <div data-testid="excel-template-builder-flow">{initialType}</div>
+  GovernedTemplateBuilderFlow: () => (
+    <div data-testid="governed-template-builder-flow">governed</div>
   ),
 }));
 
@@ -429,23 +430,24 @@ describe('ReportsAndPresentationsHub', () => {
       expect(button.textContent?.trim()).toBe('New template');
     });
 
-    it('clicking the main part triggers the default "New template" action (opens the format/mode launcher)', () => {
+    it('clicking the main part opens the governed full-screen template artifact', () => {
       render(
         <MemoryRouter initialEntries={['/presentations?tab=templates']}>
           <ReportsAndPresentationsHub />
         </MemoryRouter>
       );
 
-      expect(screen.queryByTestId('template-library-create-launcher')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('template-builder-overlay')).not.toBeInTheDocument();
 
       act(() => {
         screen.getByTestId('outputs-new-btn').click();
       });
 
-      expect(screen.getByTestId('template-library-create-launcher')).toBeInTheDocument();
+      expect(screen.getByTestId('template-builder-overlay')).toBeInTheDocument();
+      expect(screen.getByTestId('governed-template-builder-flow')).toBeInTheDocument();
     });
 
-    it('opens the Excel Template Builder from the spreadsheet tile', () => {
+    it('does not route through the old format/mode modal', () => {
       render(
         <MemoryRouter initialEntries={['/presentations?tab=templates']}>
           <ReportsAndPresentationsHub />
@@ -453,14 +455,8 @@ describe('ReportsAndPresentationsHub', () => {
       );
 
       act(() => screen.getByTestId('outputs-new-btn').click());
-      act(() => screen.getByTestId('template-library-create-launcher-format-spreadsheet').click());
-      act(() => screen.getByTestId('template-library-create-launcher-mode-blank').click());
-
-      expect(screen.getByTestId('template-builder-overlay')).toBeInTheDocument();
-      expect(screen.getByTestId('excel-template-builder-flow')).toHaveTextContent('table');
-      expect(navigateMock).not.toHaveBeenCalledWith(
-        expect.stringContaining('tab=workbook_templates')
-      );
+      expect(screen.queryByTestId('template-library-create-launcher')).not.toBeInTheDocument();
+      expect(screen.getByTestId('governed-template-builder-flow')).toBeInTheDocument();
     });
 
     it('clicking the split arrow reveals "Architekt szablonów", and selecting it navigates into the embedded deck-architect mode', () => {
@@ -478,7 +474,7 @@ describe('ReportsAndPresentationsHub', () => {
 
       const architectOption = screen.getByTestId('templates-open-deck-architect');
       expect(architectOption).toBeInTheDocument();
-      expect(architectOption.textContent).toContain('Architekt szablonów');
+      expect(architectOption.textContent).toContain('Template Architect');
 
       act(() => {
         architectOption.click();

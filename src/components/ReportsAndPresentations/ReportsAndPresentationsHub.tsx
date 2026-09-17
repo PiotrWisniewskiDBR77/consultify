@@ -23,24 +23,18 @@ import {
   Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/ExceleParametricTemplates';
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLauncher';
-import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
+import { GovernedTemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
 import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 
-// DEC-423 (właściciel, 06.09.2026): dwa kanoniczne dropdowny Menu 2 zamiast
-// bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
-// (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
-// nowego komponentu, per instrukcję dyżuru 1.1-M-1.
-import { Menu2PresetDropdown } from '../standard/Menu2PresetDropdown';
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -55,6 +49,11 @@ import {
   Menu3Badge,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+// DEC-423 (właściciel, 06.09.2026): dwa kanoniczne dropdowny Menu 2 zamiast
+// bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
+// (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
+// nowego komponentu, per instrukcję dyżuru 1.1-M-1.
+import { Menu2PresetDropdown } from '../standard/Menu2PresetDropdown';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { resolveTemplatesDeepLink } from './artifactNavigation';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
@@ -67,9 +66,9 @@ import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCount
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import {
   TEMPLATE_SCOPE_ORDER,
-  templateTypeLabelPlural,
   TEMPLATE_TYPE_ORDER,
   templateScopeLabel,
+  templateTypeLabelPlural,
 } from './TemplatesGalleryView';
 import { filterTemplatesBySearch, TemplatesTabContent } from './TemplatesTabContent';
 import type { RapTab, TemplateScope, TemplateType } from './types';
@@ -489,7 +488,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         id: 'ai' as MaterialStart,
         icon: Sparkles,
         title: t('rap.materialsLauncher.aiTitle', 'Z AI'),
-        desc: t('rap.materialsLauncher.aiDesc', 'Describe the brief — AI will build the first draft.'),
+        desc: t(
+          'rap.materialsLauncher.aiDesc',
+          'Describe the brief — AI will build the first draft.'
+        ),
       },
       {
         id: 'from_template' as MaterialStart,
@@ -568,13 +570,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         id: 'blank' as TemplateStart,
         icon: PenLine,
         title: t('rap.templatesLauncher.blankTitle', 'Od czystego'),
-        desc: t('rap.templatesLauncher.blankDesc', 'A brand-new template built from scratch in the architect.'),
+        desc: t(
+          'rap.templatesLauncher.blankDesc',
+          'A brand-new template built from scratch in the architect.'
+        ),
       },
       {
         id: 'ai' as TemplateStart,
         icon: Sparkles,
         title: t('rap.templatesLauncher.aiTitle', 'Z AI'),
-        desc: t('rap.templatesLauncher.aiDesc', 'Describe the template — the architect will plan the structure.'),
+        desc: t(
+          'rap.templatesLauncher.aiDesc',
+          'Describe the template — the architect will plan the structure.'
+        ),
       },
       {
         id: 'from_existing' as TemplateStart,
@@ -611,7 +619,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         openMaterialsLauncher('spreadsheet');
         break;
       case 'templates':
-        setTemplateLauncherOpen(true);
+        setTemplateBuilderOpen(true);
         break;
       case 'outputs_all':
       case 'outputs_mine':
@@ -1123,11 +1131,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
      */
     if (activeTab === 'templates') {
       const currentType = activeFilters.find((f) => f.column === 'type')?.value as
-        | TemplateType
-        | undefined;
+        TemplateType | undefined;
       const currentScope = activeFilters.find((f) => f.column === 'scope')?.value as
-        | TemplateScope
-        | undefined;
+        TemplateScope | undefined;
 
       const typeCount = (type: TemplateType | null) =>
         templatesAfterSearch.filter(
@@ -1435,16 +1441,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // `onNewItem` button.
   // 2026-09-02: dropped the "Generator szablonów (Arkusz)" entry — see the
   // kanon note above `tabs` for why (owner decyzja „nie" on gen-excel-templates-tab).
-  /**
-   * DEC-423d (właściciel, 06.09.2026): „Nowy wzorzec" jest ZAMROŻONY do Fali 2 —
-   * dokładnie tak, jak „Nowy audyt" (DEC-417): natywnie `disabled` + powód w
-   * tooltipie (`StandardPrimaryCta.disabled`/`disabledReason`), nie znika i nie
-   * udaje działającego. Split-button z wejściem do Architekta szablonów ZOSTAJE
-   * w kodzie (nie kasujemy) — po prostu nic go dziś nie renderuje. Typ `boolean`
-   * (nie literal `true`) świadomie: to jeden przełącznik do odmrożenia w Fali 2.
-   */
-  const TEMPLATES_CTA_FROZEN: boolean = true;
-  const TEMPLATES_CTA_FROZEN_REASON = t('rap.templates.ctaFrozen', 'Template creation lands in wave 2');
+  // TPL-1b (W215): Fala 2 is active. The CTA opens the governed artifact flow
+  // (base -> structure/sources -> live test -> submit -> independent approval).
+  const TEMPLATES_CTA_FROZEN: boolean = false;
 
   const templatesLibraryCta =
     !TEMPLATES_CTA_FROZEN && activeTab === 'templates' && templatesView === 'library'
@@ -1501,10 +1500,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 onClick: handleNewItem,
                 testId: 'outputs-new-btn',
                 disabled: activeTab === 'templates' && TEMPLATES_CTA_FROZEN,
-                disabledReason:
-                  activeTab === 'templates' && TEMPLATES_CTA_FROZEN
-                    ? TEMPLATES_CTA_FROZEN_REASON
-                    : undefined,
+                disabledReason: undefined,
               }
         }
         primaryCtaContent={templatesLibraryCta}
@@ -1564,27 +1560,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           root) — owijamy w fixed inset-0 z-modal, tak jak inne pełnoekranowe nakładki. */}
       {templateBuilderOpen && (
         <div className="fixed inset-0 z-modal" data-testid="template-builder-overlay">
-          <TemplateBuilderFlow
-            initialType="table"
-            onClose={() => setTemplateBuilderOpen(false)}
-            onSaved={(id) => {
-              setTemplateBuilderOpen(false);
-              setActiveTab('templates');
-              setTemplatesView('workbookTemplates');
-              setWorkbookTemplateId(id);
-              const params = new URLSearchParams(location.search || '');
-              params.set('tab', 'workbook_templates');
-              params.set('workbookTemplateId', id);
-              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-              toast.success(
-                t(
-                  'rap.templateBuilder.savedBuildNow',
-                  'Template saved — pick "Build workbook"'
-                )
-              );
-              void fetchTemplates();
-            }}
-          />
+          <GovernedTemplateBuilderFlow onClose={() => setTemplateBuilderOpen(false)} />
         </div>
       )}
 

@@ -981,6 +981,15 @@ export async function createDeliverableTemplate(
           })
         : drafted;
 
+    // Legacy callers keep the historical one-step behaviour. TPL-1b uses the
+    // explicit `__workflowDraft` marker and persists the canonical draft; its
+    // separate live-test / submit / independent-approval workflow owns the
+    // later transition. The marker is control metadata and is never persisted.
+    if (metaObj.__workflowDraft === true) {
+      await persistDocStudioTemplateDurable(withSections);
+      return mapDocStudioTemplateToDeliverable(withSections);
+    }
+
     // Auto-approve: unlike the AI Template Architect flow (draft → human
     // review → approve), a Template Library template is authored directly,
     // end-to-end, by the same user in one step — there is no separate
