@@ -1,0 +1,70 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v2-w185-20260917
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v2-w185-20260917
+
+ ✓ tests/unit/scripts/template1-sheet-snapshot.test.ts > TEMPLATE-1 workbook snapshot > SHEET-BASE schema snapshot exactly matches the accepted XLSX 95ms
+ ✓ tests/unit/scripts/template1-sheet-snapshot.test.ts > TEMPLATE-1 workbook snapshot > font-normalized output keeps the accepted workbook structure 14ms
+ ✓ tests/unit/scripts/template1-sheet-snapshot.test.ts (2 tests) 111ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — rozdział tożsamości > rozdziela id wiersza indeksu od kanonicznego id szablonu 57ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — rozdział tożsamości > przenosi originRuntime i source z originSummary.template 1ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — rozdział tożsamości > nieznany originRuntime → null (nie zgadujemy runtime) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — rozdział tożsamości > NIE przekazuje structureBlueprint dalej — służy tylko do liczników 1ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > brak status → "unknown" (a NIE "active") 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > brak scope → "unknown" (a NIE "organization") 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > mapTemplateScope nigdy nie zwraca zakazanego "application" 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > mapTemplateStatus mapuje legacy wartości i nie domyśla się stanu 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > brak jakiejkolwiek daty → updatedAt === null (bez fabrykowania "teraz") 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — brak danych nie udaje poprawnego stanu > gdy indeks zna datę — przepisuje ją bez zmian 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — legacy report_builder_templates > report_template z flagą legacy → legacy:true, source:"legacy" 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — legacy report_builder_templates > samo source:"legacy" wystarczy, żeby wiersz był oznaczony jako legacy 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > mapCanonicalTemplateArtifact — legacy report_builder_templates > wiersz kanoniczny nie jest oznaczany jako legacy 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > szablon DOKUMENTU → Document Studio Mode 3 z id INDEKSU (serwer rozwiązuje kanoniczne) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > legacy report_template używa kanonicznego Report Buildera 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > deck zachowuje dotychczasową trasę, a sheet używa kanonicznego workbook buildera 2ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > wpis osierocony NIE daje ścieżki użycia 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > szablon dokumentu BEZ kanonicznego id w indeksie nadal daje trasę — rozstrzyga serwer 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateUsePath > mapper + trasa razem: wiersz indeksu dokumentu ląduje w Mode 3 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > karta otwiera dokładny kanoniczny builder dla DOC-BASE i DECK-BASE 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > szablon PREZENTACJI (edit) → Architekt szablonów, NIE /presentations/wizard 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > szablon PREZENTACJI (clone) → Architekt szablonów, NIE /presentations/wizard 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > szablon RAPORTU (edit/clone) bez zmian — trasa Report Buildera 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > szablon SHEET (edit) → persisted Excel Template Builder z kanonicznym id 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > Duplicate na trzech bazach otwiera właściwy runtime i zachowuje tożsamość 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > CZYTELNIK odczytuje adres wyprodukowany przez resolveTemplateEditPath (sheet) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > CZYTELNIK: bez kanonicznego id zostaje na liście wzorców 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > CZYTELNIK: stare deep linki dalej działają (?tab=workbook_templates / template_architect) 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts > resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27 > CZYTELNIK odczytuje adres wyprodukowany przez resolveTemplateProvenancePath 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateLibraryContract.test.ts (29 tests) 69ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > originSummary.template identity block > marks Document Studio templates canonical and report templates legacy 44ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > backfill adapter — document_studio_templates → document_template > indexes an approved Document Studio template under origin_runtime document_template 4ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > backfill adapter — document_studio_templates → document_template > reads all lifecycle states visible to the org (own rows + __system__ catalogue) 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > backfill adapter — document_studio_templates → document_template > indexes tp_base_templates as canonical sheet templates 1ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > returns SHEET-BASE and inventory #95 as canonical with real scopes while legacy runtime stays legacy 1ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > does not relabel a real legacy sheet that has no canonical sheet runtime 1ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > projects presentation lifecycle instead of treating every active row as published 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > flags a template whose canonical record is gone and keeps a live one clean 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > leaves non-template artifacts untouched 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan detection (measurement only) > countOrphanedTemplateLinks counts per runtime and never mutates the links table 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan measurement is wired into the production backfill path > emits the orphan count while backfilling 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan measurement is wired into the production backfill path > never issues a write against the links table while measuring 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts > orphan measurement is wired into the production backfill path > stays silent when there is nothing orphaned 0ms
+ ✓ server/src/services/v8/__tests__/templateIndexDocAdapter.test.ts (13 tests) 55ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > system base is read-only but remains usable and duplicable 39ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > organization copy exposes Build / Edit as a working action 7ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx (2 tests) 49ms
+
+ Test Files  4 passed (4)
+      Tests  46 passed (46)
+   Start at  07:18:40
+   Duration  5.20s (transform 1.37s, setup 520ms, import 1.96s, tests 283ms, environment 1.83s)
+
+
+ Test Files  4 passed (4)
+      Tests  46 passed (46)
+   Start at  07:18:40
+   Duration  5.20s (transform 1.37s, setup 520ms, import 1.96s, tests 283ms, environment 1.83s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v2-w185-20260917/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v2-w185-20260917/junit.xml

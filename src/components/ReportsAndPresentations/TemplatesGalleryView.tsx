@@ -36,7 +36,16 @@
  */
 import type { TFunction } from 'i18next';
 import type { LucideIcon } from 'lucide-react';
-import { AlertTriangle, Check, Eye, FileSpreadsheet, FileText, Presentation } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Pencil,
+  Presentation,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -59,10 +68,16 @@ import {
 // hardcoded Polish and leaked 74 Polish strings into the EN gallery).
 function blockCountLabel(item: TemplateItem, t: TFunction): string | null {
   if (item.type === 'report' && typeof item.sectionCount === 'number') {
-    return t('reports.gallery.sectionCount', { count: item.sectionCount, defaultValue: '{{count}} sections' });
+    return t('reports.gallery.sectionCount', {
+      count: item.sectionCount,
+      defaultValue: '{{count}} sections',
+    });
   }
   if (item.type === 'presentation' && typeof item.slideCount === 'number') {
-    return t('reports.gallery.slideCount', { count: item.slideCount, defaultValue: '{{count}} slides' });
+    return t('reports.gallery.slideCount', {
+      count: item.slideCount,
+      defaultValue: '{{count}} slides',
+    });
   }
   // sheet, or count unknown for this item → omit the metric instead of
   // fabricating a number.
@@ -211,8 +226,10 @@ const TemplateTile: React.FC<{
   usePath: string | null;
   scopeLabel: (scope: TemplateItem['scope']) => string;
   onUse: (item: TemplateItem) => void;
+  onBuild: (item: TemplateItem) => void;
+  onDuplicate: (item: TemplateItem) => void;
   onPreview: (item: TemplateItem) => void;
-}> = ({ item, usePath, scopeLabel, onUse, onPreview }) => {
+}> = ({ item, usePath, scopeLabel, onUse, onBuild, onDuplicate, onPreview }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const isDeprecated = String(item.status).toLowerCase() === 'deprecated';
@@ -255,7 +272,7 @@ const TemplateTile: React.FC<{
       </div>
 
       {/* akcja główna na hover/fokus — NIE w kebabie */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[152px] items-center justify-center gap-2 bg-c-surface/95 opacity-0 backdrop-blur-[3px] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[152px] flex-wrap items-center justify-center gap-2 bg-c-surface/95 px-3 opacity-0 backdrop-blur-[3px] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
         {disabledUse ? (
           <div className="px-4 text-center">
             <button
@@ -279,12 +296,39 @@ const TemplateTile: React.FC<{
           <>
             <button
               type="button"
+              data-testid={`template-gallery-build-${item.id}`}
+              className={MENU_3_ACTION_NEUTRAL}
+              disabled={item.scope === 'system'}
+              title={
+                item.scope === 'system'
+                  ? t(
+                      'rap.templates.systemReadOnly',
+                      'System templates are read-only. Duplicate this template to edit a copy.'
+                    )
+                  : undefined
+              }
+              onClick={() => onBuild(item)}
+            >
+              <Pencil size={12} />
+              {t('rap.actions.buildEdit', 'Build / Edit')}
+            </button>
+            <button
+              type="button"
               data-testid={`template-gallery-use-${item.id}`}
               className={MENU_1_PRIMARY_CTA}
               onClick={() => onUse(item)}
             >
               <Check size={16} />
               {t('rap.actions.useTemplate', 'Use template')}
+            </button>
+            <button
+              type="button"
+              data-testid={`template-gallery-duplicate-${item.id}`}
+              className={MENU_3_ACTION_NEUTRAL}
+              onClick={() => onDuplicate(item)}
+            >
+              <Copy size={12} />
+              {t('rap.actions.duplicate', 'Duplicate')}
             </button>
             <button type="button" className={MENU_3_ACTION_NEUTRAL} onClick={() => onPreview(item)}>
               <Eye size={12} />
@@ -339,6 +383,8 @@ export interface TemplatesGalleryViewProps {
   scopeLabel: (scope: TemplateItem['scope']) => string;
   resolveUsePath: (item: TemplateItem) => string | null;
   onUse: (item: TemplateItem) => void;
+  onBuild: (item: TemplateItem) => void;
+  onDuplicate: (item: TemplateItem) => void;
   onPreview: (item: TemplateItem) => void;
 }
 
@@ -347,6 +393,8 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
   scopeLabel,
   resolveUsePath,
   onUse,
+  onBuild,
+  onDuplicate,
   onPreview,
 }) => {
   const { t } = useTranslation();
@@ -372,6 +420,8 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
               usePath={resolveUsePath(item)}
               scopeLabel={scopeLabel}
               onUse={onUse}
+              onBuild={onBuild}
+              onDuplicate={onDuplicate}
               onPreview={onPreview}
             />
           ))}

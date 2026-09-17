@@ -137,9 +137,37 @@ export function resolveTemplateEditPath(
   return `/reports/builder?tab=templates&templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
 }
 
-export function resolveTemplateClonePath(templateId: string, templateType: TemplateType): string {
+/** Open the exact canonical template in its builder whenever its identity is known. */
+export function resolveTemplateBuildPath(target: TemplateUseTarget): string {
+  const canonicalId = String(target.canonicalTemplateId || '').trim();
+  if (canonicalId && target.originRuntime === 'document_template') {
+    return `/presentations/templates/document/${encodeURIComponent(canonicalId)}`;
+  }
+  if (canonicalId && target.originRuntime === 'presentation_template') {
+    return `/presentations/templates/deck/${encodeURIComponent(canonicalId)}`;
+  }
+  return resolveTemplateEditPath(target.artifactIndexId, target.templateType, canonicalId);
+}
+
+export function resolveTemplateClonePath(
+  templateId: string,
+  templateType: TemplateType,
+  canonicalTemplateId?: string | null,
+  originRuntime?: TemplateOriginRuntime | null
+): string {
+  const canonicalId = String(canonicalTemplateId || '').trim();
   if (templateType === 'presentation') {
-    return '/presentations?tab=template_architect';
+    return canonicalId
+      ? `/presentations/templates/deck/${encodeURIComponent(canonicalId)}`
+      : '/presentations?tab=template_architect';
+  }
+  if (templateType === 'sheet') {
+    return canonicalId
+      ? `/presentations?tab=workbook_templates&workbookTemplateId=${encodeURIComponent(canonicalId)}`
+      : '/presentations?tab=workbook_templates';
+  }
+  if (originRuntime === 'document_template' && canonicalId) {
+    return `/presentations/templates/document/${encodeURIComponent(canonicalId)}`;
   }
   return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
 }
@@ -202,7 +230,9 @@ export interface TemplatesDeepLinkTarget {
   openProvenance: boolean;
 }
 
-export function resolveTemplatesDeepLink(search: string | URLSearchParams): TemplatesDeepLinkTarget {
+export function resolveTemplatesDeepLink(
+  search: string | URLSearchParams
+): TemplatesDeepLinkTarget {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search;
   const openProvenance = (params.get('openProvenance') || '').trim() === '1';
   const editWorkbookTemplateId = (params.get('editWorkbookTemplateId') || '').trim();
