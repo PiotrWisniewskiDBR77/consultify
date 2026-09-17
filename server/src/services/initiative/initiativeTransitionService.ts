@@ -578,6 +578,7 @@ export async function executeInitiativeTransition(
           ).catch(() => ({ rows: [] as Array<{ lifecycle_state: string | null }> }))
         ).rows[0]?.lifecycle_state;
         const currentStage = resolveInitiativeStageForRow({
+          lifecycleStage: String(lockedRow.lifecycle_stage || '') || null,
           aggregateLifecycleState: aggregateStage ?? null,
           dbStatus: currentStatus,
         });
@@ -1097,6 +1098,25 @@ export async function executeInitiativeTransition(
       const now = new Date().toISOString();
       const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
       const lifecycleParams: unknown[] = [nextStatus, now];
+
+      // DEC-539: the twelve-stage column is now the product truth. A rejected
+      // initiative is a disposition, so it keeps the stage at which it died.
+      if (nextStage !== null) {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'lifecycle_stage',
+          nextStage
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'lifecycle_stage_source',
+          'writer'
+        );
+      }
 
       // H1d: kod 'PENDING_REVIEW' nie istnieje w słowniku siedmiu (CHECK P12);
       // prośba o recenzję to dziś PENDING_APPROVAL. UWAGA DO RAPORTU: na bazie

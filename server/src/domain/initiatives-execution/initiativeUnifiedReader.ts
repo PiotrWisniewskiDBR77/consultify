@@ -192,7 +192,7 @@ function legacyHeader(
   collector: HeaderIssueCollector
 ): InitiativeHeader | null {
   const id = text(row.id);
-  const rawState = text(row.status) || 'DRAFT';
+  const rawState = text(row.lifecycle_stage) || text(row.status) || 'DRAFT';
   const lifecycleState = resolveLifecycleState(rawState);
   if (lifecycleState === null) {
     collector.recordUnknownStatus(id);
@@ -269,7 +269,7 @@ export async function readInitiativeHeader(
       [organizationId, initiativeId]
     ),
     queryHelpers.queryOne<Record<string, unknown>>(
-      `SELECT id, organization_id, title, name, status, project_id,
+      `SELECT id, organization_id, title, name, status, lifecycle_stage, project_id,
               owner_business_id, owner_execution_id
          FROM initiatives WHERE organization_id = ? AND id = ?`,
       [organizationId, initiativeId]
@@ -295,7 +295,7 @@ export async function listInitiativeHeaders(
       [organizationId]
     ),
     queryHelpers.queryAll<Record<string, unknown>>(
-      `SELECT id, organization_id, title, name, status, project_id,
+      `SELECT id, organization_id, title, name, status, lifecycle_stage, project_id,
               owner_business_id, owner_execution_id
          FROM initiatives WHERE organization_id = ?`,
       [organizationId]

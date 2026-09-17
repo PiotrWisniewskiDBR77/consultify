@@ -18,6 +18,7 @@ import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
+import { resolveInitiativeStageWriteTarget } from '../../constants/initiativeLifecycleStages.js';
 import auditEventsService from '../AuditEventsService.js';
 import { assertCardMeetsFormula } from '../cardContentFormulaValidator.js';
 import {
@@ -169,10 +170,14 @@ export async function duplicateInitiative(
       if (column === 'organization_id') return orgId;
       if (column === 'title' || column === 'name') return title;
       if (column === 'status') return 'DRAFT';
+      if (column === 'lifecycle_stage') return 'REGISTERED_DRAFT';
+      if (column === 'lifecycle_stage_source') return 'writer';
       if (column === 'project_id') return projectId;
       if (column === 'created_at' || column === 'updated_at') return now;
-      if (column === 'created_by') return String(options.actor?.id || original.created_by || 'system');
-      if (column === 'updated_by') return String(options.actor?.id || original.updated_by || 'system');
+      if (column === 'created_by')
+        return String(options.actor?.id || original.created_by || 'system');
+      if (column === 'updated_by')
+        return String(options.actor?.id || original.updated_by || 'system');
       return original[column] ?? null;
     });
     await queryHelpers.queryRun(
@@ -190,7 +195,14 @@ export async function duplicateInitiative(
         resourceType: 'initiative',
         resourceId: id,
         organizationId: orgId,
-        after: { id, title, projectId, status: 'DRAFT', sourceType: 'duplicate', sourceId: originalId },
+        after: {
+          id,
+          title,
+          projectId,
+          status: 'DRAFT',
+          sourceType: 'duplicate',
+          sourceId: originalId,
+        },
         ip: options.actor.ip || undefined,
         userAgent: options.actor.userAgent || undefined,
       });
@@ -258,6 +270,12 @@ export async function createInitiative(
 
   // F1.11 — funnel normalizes the initial status to DRAFT unless one is explicit.
   const status = data.status && String(data.status).trim() ? String(data.status).trim() : 'DRAFT';
+  const lifecycleTarget = resolveInitiativeStageWriteTarget(status);
+  if (!lifecycleTarget) {
+    const err = new Error(`Unknown initiative lifecycle target: ${status}`);
+    (err as { statusCode?: number }).statusCode = 400;
+    throw err;
+  }
 
   // Zwornik Delta C anchoring (§5.2, D-J: every initiative MUST have a project).
   // This is the ONE choke point every creator funnels through (wizard via
@@ -315,7 +333,7 @@ export async function createInitiative(
   const newSql = `
     INSERT INTO initiatives (
       id, organization_id, project_id, program_id, name, title, category, priority, impact, effort,
-      axis, area, summary, hypothesis, status,
+      axis, area, summary, hypothesis, status, lifecycle_stage, lifecycle_stage_source,
       business_value, cost_capex, cost_opex, expected_roi,
       value_driver, confidence_level, value_timing,
       planned_start_date, planned_end_date,
@@ -323,7 +341,7 @@ export async function createInitiative(
       problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
       source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const newParams = [
     id,
@@ -340,7 +358,9 @@ export async function createInitiative(
     data.area ?? null,
     data.summary ?? null,
     data.hypothesis ?? data.description ?? null,
-    status,
+    lifecycleTarget.status,
+    lifecycleTarget.stage,
+    'writer',
     data.businessValue ?? null,
     data.costCapex ?? null,
     data.costOpex ?? null,
@@ -397,7 +417,7 @@ export async function createInitiative(
       data.area ?? null,
       data.summary ?? null,
       data.hypothesis ?? data.description ?? null,
-      status,
+      lifecycleTarget.status,
       data.businessValue ?? null,
       data.costCapex ?? null,
       data.costOpex ?? null,
@@ -453,7 +473,15 @@ export async function createInitiative(
         action: 'initiative.created',
         resourceType: 'initiative',
         resourceId: id,
-        after: { id, title, projectId, status, sourceType, sourceId: sourceId || null },
+        after: {
+          id,
+          title,
+          projectId,
+          status: lifecycleTarget.status,
+          lifecycleStage: lifecycleTarget.stage,
+          sourceType,
+          sourceId: sourceId || null,
+        },
         organizationId: orgId,
         ip: options.actor?.ip ?? undefined,
         userAgent: options.actor?.userAgent ?? undefined,
@@ -526,7 +554,7 @@ export async function createInitiative(
     id,
     name: title,
     title,
-    status,
+    status: lifecycleTarget.status,
     sourceType,
     sourceId: sourceId || null,
     projectId,

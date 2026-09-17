@@ -110,7 +110,7 @@ vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => appStoreState,
 }));
 
-import { InitiativesHub } from '../InitiativesHub';
+import { InitiativesHub, resolveInitiativesMenu3Statuses } from '../InitiativesHub';
 
 const renderHubAt = (entry: string) =>
   render(
@@ -144,10 +144,22 @@ describe('InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 
     const chips = screen.getAllByTestId(/^initiatives-menu3-chip-/);
     expect(chips).toHaveLength(3);
     expect(screen.getByTestId('initiatives-menu3-chip-all')).toBeInTheDocument();
+    // STAGE-1 is default OFF: the rendered hub must keep the seven-code ID.
     expect(screen.getByTestId('initiatives-menu3-chip-PENDING_APPROVAL')).toBeInTheDocument();
     expect(screen.getByTestId('initiatives-menu3-chip-IN_EXECUTION')).toBeInTheDocument();
 
     expect(screen.getByTestId('initiatives-lifecycle-dropdown')).toBeInTheDocument();
+  });
+
+  it('switches Menu 3 to the twelve-stage vocabulary only when STAGE-1 is ON', () => {
+    expect(resolveInitiativesMenu3Statuses(false)).toEqual([
+      'PENDING_APPROVAL',
+      'IN_EXECUTION',
+    ]);
+    expect(resolveInitiativesMenu3Statuses(true)).toEqual([
+      'READY_FOR_DECISION',
+      'IN_EXECUTION',
+    ]);
   });
 
   it('zakładka Plan: trzy chipy agregatów, filtr statusu i CTA w Menu 2', async () => {

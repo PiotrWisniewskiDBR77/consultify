@@ -10,6 +10,8 @@ import type { PortfolioInitiative } from '@/types';
 import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
+import { INITIATIVE_LIFECYCLE } from '@/contracts/initiatives-execution/foundation';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 
 import { nextStepForLifecycle } from './initiativeRegisterProjection';
 
@@ -53,11 +55,49 @@ export const INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS = ['source'] as const;
  * Oceny naprawiaja sie bez wlasnego kodu.
  */
 /** Kanoniczny stan cyklu zycia wiersza — niezaleznie od tego, ktory slownik go przyniosl. */
-export const resolveInitiativeRegisterLifecycle = (row: InitiativeRegisterRow): string => {
-  const raw = String(row.displayStatus || row.status || '').toUpperCase();
+export const resolveInitiativeRegisterDisplayStatus = (
+  row: InitiativeRegisterRow,
+  stages12Enabled = isInitiativesStages12Enabled()
+): string =>
+  String(
+    stages12Enabled
+      ? row.lifecycleStage || row.lifecycle_stage || row.displayStatus || row.status || ''
+      : row.displayStatus || row.status || ''
+  )
+    .trim()
+    .toUpperCase();
+
+export const resolveInitiativeRegisterLifecycle = (
+  row: InitiativeRegisterRow,
+  stages12Enabled = isInitiativesStages12Enabled()
+): string => {
+  if (
+    stages12Enabled &&
+    (row.status === InitiativeStatus.PROPOSED || row.status === InitiativeStatus.REJECTED)
+  ) {
+    return row.status;
+  }
+  const raw = resolveInitiativeRegisterDisplayStatus(row, stages12Enabled);
   if (!raw) return '';
+  if ((INITIATIVE_LIFECYCLE as readonly string[]).includes(raw)) return raw;
   return mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ?? '';
 };
+
+export const resolveInitiativePresetLifecycle = (
+  initiative: PortfolioInitiative,
+  stages12Enabled: boolean
+): string =>
+  stages12Enabled
+    ? resolveInitiativeRegisterLifecycle(initiative, true)
+    : String(initiative.displayStatus);
+
+export const resolveInitiativePlanLifecycle = (
+  initiative: PortfolioInitiative,
+  stages12Enabled: boolean
+): string =>
+  stages12Enabled
+    ? resolveInitiativeRegisterDisplayStatus(initiative, true)
+    : String(initiative.p11LifecycleState || initiative.displayStatus || initiative.status);
 
 export interface InitiativeRegisterColumnOptions {
   /** Dokłada kolumnę „Źródło" (np. „Ocena: DRD"). Domyślnie wyłączona. */
@@ -70,6 +110,8 @@ export interface InitiativeRegisterColumnOptions {
    * fallback (zachowanie sprzed zmiany, oba wołające miejsca dziś je podają).
    */
   t?: (key: string, fallback: string) => string;
+  /** Test/host override; defaults to the build-time DEC-539 flag. */
+  stages12Enabled?: boolean;
 }
 
 export type InitiativeRegisterRow = PortfolioInitiative & {
@@ -164,6 +206,7 @@ export const createInitiativeRegisterColumns = (
   options: InitiativeRegisterColumnOptions = {}
 ): TableColumn[] => {
   const t = options.t;
+  const stages12Enabled = options.stages12Enabled ?? isInitiativesStages12Enabled();
   /**
    * J17 (program JEZYK_EN_PL_20260908, zasady 4 i 6): etykieta kolumny i wartosc
    * enuma MUSZA przejsc przez `t()`. Przed ta zmiana naglowki byly polskimi
@@ -174,6 +217,7 @@ export const createInitiativeRegisterColumns = (
    * ANGIELSKI defaultValue — nigdy klucz i nigdy polski.
    */
   const tr = (key: string, fallback: string): string => (t ? t(key, fallback) : fallback);
+  const statusTr = (key: string): string => (t ? t(key, key) : key);
   const base: TableColumn[] = [
     {
       id: 'name',
@@ -204,10 +248,23 @@ export const createInitiativeRegisterColumns = (
       label: tr('initiatives.columns.status', 'Status'),
       width: '170px',
       filterable: true,
-      filterOptions: Object.values(InitiativeStatus).map((value) => ({
-        value,
-        label: getLocalizedStatusLabel(value, t ?? ((key) => key)),
-      })),
+      filterOptions: stages12Enabled
+        ? [...INITIATIVE_LIFECYCLE, InitiativeStatus.PROPOSED, InitiativeStatus.REJECTED].map(
+            (value) => ({
+              value,
+              label: (INITIATIVE_LIFECYCLE as readonly string[]).includes(value)
+                ? enumLabel(
+                    'initiativeLifecycle',
+                    value,
+                    t ?? ((_key: string, fallback: string) => fallback)
+                  )
+                : getLocalizedStatusLabel(value as InitiativeStatus, statusTr),
+            })
+          )
+        : Object.values(InitiativeStatus).map((value) => ({
+            value,
+            label: getLocalizedStatusLabel(value, statusTr),
+          })),
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const status = row.status as InitiativeStatus;
@@ -236,9 +293,13 @@ export const createInitiativeRegisterColumns = (
                 'initiatives.status.ON_HOLD',
                 'Wstrzymana'
               )
-            : row.canonicalLifecyclePresentation && isKnownEnumValue('initiativeLifecycle', String(row.displayStatus))
-              ? enumLabel('initiativeLifecycle', String(row.displayStatus), t ?? ((_key, fallback) => fallback || _key))
-              : getLocalizedStatusLabel(status, t ?? ((key) => key))
+            : stages12Enabled && row.status === InitiativeStatus.REJECTED
+              ? getLocalizedStatusLabel(InitiativeStatus.REJECTED, statusTr)
+              : stages12Enabled && row.status === InitiativeStatus.PROPOSED
+                ? getLocalizedStatusLabel(InitiativeStatus.PROPOSED, statusTr)
+            : stages12Enabled && isKnownEnumValue('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(row, true))
+              ? enumLabel('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(row, true), t ?? ((_key, fallback) => fallback || _key))
+              : getLocalizedStatusLabel(status, statusTr)
           )
         );
       },
@@ -250,7 +311,7 @@ export const createInitiativeRegisterColumns = (
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const value = String(
-          row.gateName || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).gate || ''
+          row.gateName || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row, stages12Enabled)).gate || ''
         );
         const label = value && value !== '—' ? enumLabel('initiativeGateName', value, tr) : '—';
         return h(
@@ -332,7 +393,7 @@ export const createInitiativeRegisterColumns = (
         // polskie zdanie („Zaplanuj realizację") także w wersji angielskiej.
         const kod =
           String((row as { nextActionKey?: string }).nextActionKey || '').trim() ||
-          nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).actionKey;
+          nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row, stages12Enabled)).actionKey;
         if (isKnownEnumValue('initiativeNextAction', kod)) {
           const etykieta = enumLabel('initiativeNextAction', kod, tr);
           return h(
