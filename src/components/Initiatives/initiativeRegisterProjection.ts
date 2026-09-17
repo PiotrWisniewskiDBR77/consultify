@@ -503,6 +503,9 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
     // CLOSED/REJECTED, a flaga zostawala w odpowiedzi bez odbiorcy.
     archived: row.archived === true,
     displayStatus: rawStatus || undefined,
+    lifecycleStage: row.lifecycleStage ?? null,
+    lifecycleStageSource: row.lifecycleStageSource ?? null,
+    canonicalLifecyclePresentation: Boolean(row.lifecycleStage),
     priority: (String(row.priority || 'MEDIUM').toUpperCase() ||
       'MEDIUM') as PortfolioInitiative['priority'],
     progress: typeof row.progress === 'number' ? row.progress : 0,
@@ -556,6 +559,9 @@ export const mergeLegacyInitiativesIntoRegister = (
       ...row,
       status: legacyMatch.status === row.status ? row.status : legacyMatch.status,
       displayStatus: legacyMatch.displayStatus ?? row.displayStatus,
+      canonicalLifecyclePresentation: Boolean(
+        legacyMatch.canonicalLifecyclePresentation || row.canonicalLifecyclePresentation
+      ),
       archived: Boolean(row.archived || legacyMatch.archived),
     };
   });

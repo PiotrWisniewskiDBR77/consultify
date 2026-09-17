@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
+import { isInitiativesStages12Enabled } from '@/utils/initiativesStages12Flag';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
 import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
@@ -15,6 +16,7 @@ import {
   createInitiativeRegisterRowMenu,
   formatPlannedWindow,
   INITIATIVE_REGISTER_COLUMN_IDS,
+  resolveInitiativeRegisterDisplayStatus,
   type InitiativeRegisterColumnOptions,
   type InitiativeRegisterRow,
 } from './initiativeRegisterColumns.shared';
@@ -75,10 +77,11 @@ export const CanonicalInitiativeRegister = ({
   onEmptyAction,
 }: CanonicalInitiativeRegisterProps) => {
   const { t } = useTranslation();
+  const stages12Enabled = isInitiativesStages12Enabled();
   const includeSource = !!columnOptions?.includeSource;
   const columns = useMemo(
-    () => createCanonicalInitiativeRegisterColumns({ includeSource, t }),
-    [includeSource, t]
+    () => createCanonicalInitiativeRegisterColumns({ includeSource, t, stages12Enabled }),
+    [includeSource, t, stages12Enabled]
   );
   const layoutRows = useMemo(
     () => rows.map((row) => ({ ...row, title: row.title || row.name })),
@@ -97,8 +100,8 @@ export const CanonicalInitiativeRegister = ({
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
             label: initiative.onHold
               ? t('initiatives.status.ON_HOLD', 'On hold')
-              : (isKnownEnumValue('initiativeLifecycle', String(initiative.displayStatus))
-                  ? enumLabel('initiativeLifecycle', String(initiative.displayStatus), t)
+              : (stages12Enabled && isKnownEnumValue('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(initiative, true))
+                  ? enumLabel('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(initiative, true), t)
                   : '') ||
                 getLocalizedStatusLabel(
                 String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
