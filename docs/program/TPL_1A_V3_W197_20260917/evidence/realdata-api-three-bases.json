@@ -1,0 +1,64 @@
+{
+  "capturedAt": "2026-09-17T17:35:00Z",
+  "environment": {
+    "mode": "local candidate API",
+    "database": "restored staging copy",
+    "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "organizationName": "Northwind Manufacturing Ltd.",
+    "httpStatus": 200,
+    "totalTemplates": 107
+  },
+  "bases": [
+    {
+      "artifactId": "template-1-sheetbase-673f789401f30e212db5c1c0cf163350",
+      "canonicalTemplateId": "2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1",
+      "title": "Supplier scorecard workbook",
+      "outputType": "sheet",
+      "deliveryState": "ready",
+      "visibilityScope": "organization",
+      "originRuntime": "sheet_template",
+      "status": "approved",
+      "scope": "system",
+      "source": "canonical",
+      "description": "English system workbook base with a scorecard and field map; contains no organization data.",
+      "descriptionLength": 91,
+      "sections": 0,
+      "slides": 0,
+      "sheets": 2
+    },
+    {
+      "artifactId": "514ebc26-52af-44f7-8cb3-48b845d314dd",
+      "canonicalTemplateId": "doc-template-system-en-client_final_report",
+      "title": "[System] Client final report (EN)",
+      "outputType": "report",
+      "deliveryState": "ready",
+      "visibilityScope": "organization",
+      "originRuntime": "document_template",
+      "status": "approved",
+      "scope": "system",
+      "source": "canonical",
+      "description": "Board-ready client report with a fixed eight-section structure.",
+      "descriptionLength": 63,
+      "sections": 8,
+      "slides": 0,
+      "sheets": 0
+    },
+    {
+      "artifactId": "4a8e72b7-5f97-4b50-88af-ad4215795e45",
+      "canonicalTemplateId": "dbr77-deck-board",
+      "title": "Board deck",
+      "outputType": "presentation",
+      "deliveryState": "ready",
+      "visibilityScope": "organization",
+      "originRuntime": "presentation_template",
+      "status": "approved",
+      "scope": "system",
+      "source": "canonical",
+      "description": "Board-ready eight-layout system deck. Modules replace content, not layout.",
+      "descriptionLength": 74,
+      "sections": 0,
+      "slides": 8,
+      "sheets": 0
+    }
+  ]
+}

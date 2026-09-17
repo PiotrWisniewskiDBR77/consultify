@@ -1,0 +1,10 @@
+docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-dark-1440x900.jpg:  JPEG image data, JFIF standard 1.01, aspect ratio, density 1x1, segment length 16, baseline, precision 8, 1440x900, components 3
+docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-light-1440x900.jpg: JPEG image data, JFIF standard 1.01, aspect ratio, density 1x1, segment length 16, baseline, precision 8, 1440x900, components 3
+/Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917/docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-dark-1440x900.jpg
+  pixelWidth: 1440
+  pixelHeight: 900
+/Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v3-stage2-w197-20260917/docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-light-1440x900.jpg
+  pixelWidth: 1440
+  pixelHeight: 900
+e17793968a6cfbf9de389e32b6868ef4028e838038bff2db287b8cf53bf3ad8e  docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-dark-1440x900.jpg
+e2a43b0ecd3a7660112f75d4fbecf1e7b994c392fd91647fabd6ae6a60cc8cd9  docs/program/TPL_1A_V3_W197_20260917/evidence/tpl-v3-realdata-en-light-1440x900.jpg
