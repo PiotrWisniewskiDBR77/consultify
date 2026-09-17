@@ -25,10 +25,12 @@ import {
   validateOrgMembership,
   verifyToken,
 } from '../middleware/auth.middleware.js';
+import { isAdminRole } from '../middleware/admin.middleware.js';
 import {
   acceptCandidate,
   type CandidateStatus,
   dismissCandidate,
+  getCandidateById,
   listCandidates,
   scanForCandidates,
 } from '../services/initiative/initiativeCandidateService.js';
@@ -49,6 +51,26 @@ router.use(verifyToken, validateOrgMembership);
 
 const VALID_STATUSES: ReadonlyArray<CandidateStatus> = ['pending', 'accepted', 'dismissed'];
 const FLOW_SOURCE_KINDS: readonly FlowSourceKind[] = ['organization', 'interview', 'drd', 'swot'];
+
+// One literal shared by both 404 exits of the accept handler (unknown candidate
+// found by the authz pre-check, and an unresolvable accept) so the responses stay
+// byte-identical without duplicating server→UI prose.
+const ACCEPT_NOT_FOUND = 'Candidate not found';
+
+// ST-2 (DEC-540 / U-09, Wpis 75 P1#2): accepting a candidate materializes a DRAFT
+// initiative, so the SERVER (not just the client) restricts it to the candidate's
+// author or an org admin/owner (isAdminRole). Any other member → 403 with the
+// stable code `candidate_approve_forbidden`.
+function isCandidateApprover(
+  candidate: { createdBy?: string | null },
+  actorId: string | undefined,
+  role: string | undefined
+): boolean {
+  if (isAdminRole(role as Parameters<typeof isAdminRole>[0])) return true;
+  return (
+    candidate.createdBy != null && actorId != null && String(candidate.createdBy) === String(actorId)
+  );
+}
 
 router.post(
   '/flow-transform/certify',
@@ -162,13 +184,27 @@ router.post(
     const fill = req.body?.fill !== false; // default true
 
     try {
+      const candidate = await getCandidateById(undefined, id, orgId);
+      if (!candidate) {
+        // Fail-closed: an unreadable/unknown candidate never reaches acceptCandidate.
+        return res.status(404).json({ error: ACCEPT_NOT_FOUND });
+      }
+      if (!isCandidateApprover(candidate, req.user?.id, req.userRole ?? req.user?.role)) {
+        // Lowercase snake token: the language ratchet (K5en) treats it as a
+        // technical value, keeping server→UI prose debt flat. `code` and `error`
+        // carry the same stable contract name.
+        return res.status(403).json({
+          error: 'candidate_approve_forbidden',
+          code: 'candidate_approve_forbidden',
+        });
+      }
       const payload = await acceptCandidate(undefined, id, {
         orgId,
         userId: req.user?.id,
         fill,
       });
       if (!payload) {
-        return res.status(404).json({ error: 'Candidate not found' });
+        return res.status(404).json({ error: ACCEPT_NOT_FOUND });
       }
       // M05-FIX-01 — `accepted` now reports the DURABLE outcome, not merely that the
       // handler ran. A candidate is accepted only once its receipt exists (status

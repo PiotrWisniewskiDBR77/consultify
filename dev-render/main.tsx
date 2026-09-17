@@ -1463,7 +1463,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'interview-candidate-card': {
     label:
-      'ST-2 (DEC-540 / U-09) etap 1 — REALNY <InterviewCandidateInbox /> w powłoce Interview (zakładka Initiatives): karta kandydata inicjatywy widoczna tylko dla autora (+ADMIN), akcja "Approve as draft → Initiatives" woła istniejący endpoint accept. Trzeci kandydat innego autora jest odfiltrowany.',
+      'ST-2 (DEC-540 / U-09) etap 1 — REALNY <InterviewHub /> na zakładce Initiatives przy VITE_ST2_CANDIDATE_CARD=true: produkcyjny <InterviewCandidateInbox /> w prawdziwej powłoce modułu (StandardModuleBar/rail/taby), karta kandydata widoczna tylko dla autora (+ADMIN), akcja "Approve as draft → Initiatives" woła istniejący endpoint accept. Trzeci kandydat innego autora jest odfiltrowany. &tab=initiatives &lang=en|pl &theme=light|dark',
     render: () => <InterviewCandidateCardScreen />,
   },
   'u05-sesja-wywiadu-powloka': {

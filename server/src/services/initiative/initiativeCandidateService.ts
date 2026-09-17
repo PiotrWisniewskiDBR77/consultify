@@ -687,6 +687,32 @@ export async function listCandidates(
   }
 }
 
+/**
+ * Fetch a single org-scoped candidate by id (null when absent). Used by the
+ * accept route to enforce author/admin authorization BEFORE materializing a
+ * draft. Fail-soft → null on any error.
+ */
+export async function getCandidateById(
+  db: CandidateDb = defaultDb,
+  id?: string,
+  orgId?: string
+): Promise<InitiativeCandidate | null> {
+  if (!id) return null;
+  try {
+    const params: unknown[] = [id];
+    let sql = `SELECT * FROM initiative_candidates WHERE id = ?`;
+    if (orgId) {
+      sql += ` AND organization_id = ?`;
+      params.push(orgId);
+    }
+    sql += ` LIMIT 1`;
+    const row = await db.queryOne<Record<string, unknown>>(sql, params);
+    return row ? mapRow(row) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // acceptCandidate
 // ---------------------------------------------------------------------------
