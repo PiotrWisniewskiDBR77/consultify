@@ -3,6 +3,7 @@
 Data: 2026-09-17
 Tor: B
 Właściciel: Codex-2
+Baza finalnego rebase: `9847032a375a65c64178cdc18b161f9c2e50220a`
 
 ## Wynik
 
@@ -24,10 +25,10 @@ nagłówków i bez zależności od opcjonalnej kolumny starszych wdrożeń.
 
 ## Dowody
 
-- focused: 5 plików / 58 PASS; kontrakt workflow: 7/7 PASS,
+- focused: 5 plików / 58 PASS; kontrakt workflow: 10/10 PASS,
 - server TypeScript: 0 przy `@types/node 22.19.3`,
-- frontend TypeScript exact-lock: 152 zastane diagnostyki; wiążący pomiar linii
-  z W182: 169; zero plików frontu w delcie,
+- frontend TypeScript exact-lock tą samą metodą: linia 150 = kandydat 150;
+  logi byte-identical, zero plików frontu w delcie,
 - parytet: 16/16 PASS; render LibreOffice: 6798 czerwonych i 6756 zielonych
   pikseli trendu,
 - mutacja `drop-trend-cf`: 4 RED, w tym piksele 112/102 poniżej progu 500,
