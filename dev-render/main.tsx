@@ -473,6 +473,11 @@ const Wave5InternalCrimsonScreen = React.lazy(() => import('./screens/wave5-inte
 const ZwornikProjectsScreen = React.lazy(() => import('./screens/zwornik-projects'));
 const Z41PmoProjektyScreen = React.lazy(() => import('./screens/z41-pmo-projekty'));
 const Z41PmoProjektyOffScreen = React.lazy(() => import('./screens/z41-pmo-projekty-off'));
+// W1 (DEC-573, Wpis 82) — retired Execution deep links must land on the canonical list.
+const W1ExecutionRetiredDeepLinkScreen = React.lazy(
+  () => import('./screens/w1-execution-retired-deeplink')
+);
+const W1RolloutLegacyPathScreen = React.lazy(() => import('./screens/w1-rollout-legacy-path'));
 const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
@@ -2577,6 +2582,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Z-41 (14.09) — S5 PMO E3: REALNY <AppRoutes/> na /projects przy VITE_PMO_PROJECTS OFF (domyślnie) — dowód przekierowania na /my-work. &lang=pl|en &theme=light|dark',
     render: () => <Z41PmoProjektyOffScreen />,
+  },
+  'w1-execution-retired-deeplink': {
+    label:
+      'W1 (17.09, DEC-573) — REALNY <AppRoutes/> na /execution?tab=rollout: wygaszony deep-link przekierowuje na kanoniczną listę Realizacji (Execution bank), nie w martwą powierzchnię. &lang=en &theme=light|dark',
+    render: () => <W1ExecutionRetiredDeepLinkScreen />,
+  },
+  'w1-rollout-legacy-path': {
+    label:
+      'W1 (17.09, DEC-573) — REALNY <AppRoutes/> na /rollout: stary pathname przekierowuje na listę Realizacji (nie 404). &lang=en &theme=light|dark',
+    render: () => <W1RolloutLegacyPathScreen />,
   },
   'settings-crimson-neutralized': {
     label: 'Fala 1 Settings — crimson CTA/toggle/selected → neutralne (PRZED/PO, kanon #1)',

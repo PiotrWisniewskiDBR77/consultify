@@ -16,6 +16,7 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
+import { buildExecutionRetiredTabRedirect } from '@/components/Execution/executionNavigationState';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
@@ -747,6 +748,27 @@ const RedirectToCanonicalTab: React.FC<{
   React.useEffect(() => {
     trackFunnelEvent('route_redirected', { from, to: target, reason });
   }, [from, target, reason]);
+  return <Navigate to={target} replace />;
+};
+
+/**
+ * W1 (DEC-573, plan row 39): Resources/Summary/Rollout lost their Menu-2 seats and have no MVP
+ * successor, so their deep links must land on the canonical Execution list instead of mounting a
+ * retired surface. The gate runs before the lazy hub, keeping the rest of the query and the hash.
+ */
+const ExecutionRetiredTabGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const target = buildExecutionRetiredTabRedirect(location);
+  const from = `${location.pathname}${location.search}${location.hash}`;
+  React.useEffect(() => {
+    if (!target) return;
+    trackFunnelEvent('route_redirected', {
+      from,
+      to: target,
+      reason: 'execution_retired_tab_to_canonical_list',
+    });
+  }, [from, target]);
+  if (!target) return <>{children}</>;
   return <Navigate to={target} replace />;
 };
 
@@ -2635,7 +2657,9 @@ export const AppRoutes: React.FC = () => {
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
                     <Suspense fallback={<LoadingScreen message={t('layout.loading.module')} />}>
-                      <ExecutionHub />
+                      <ExecutionRetiredTabGate>
+                        <ExecutionHub />
+                      </ExecutionRetiredTabGate>
                     </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
@@ -2654,7 +2678,9 @@ export const AppRoutes: React.FC = () => {
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
                     <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <ExecutionHub />
+                      <ExecutionRetiredTabGate>
+                        <ExecutionHub />
+                      </ExecutionRetiredTabGate>
                     </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
@@ -2672,16 +2698,17 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        {/* Rollout consolidated into ExecutionHub as a tab (Module 06 Realizacja).
-            Legacy FullRolloutView + SplitLayout retired — redirect to the tab. */}
+        {/* W1 (DEC-573): Rollout has no MVP successor — the legacy pathname redirects to the
+            canonical Execution list (never a 404, never a retired tab). Legacy FullRolloutView +
+            SplitLayout retired; the tab deep link is retired with them. */}
         <Route
           path={ROUTES.ROLLOUT}
           element={
             <RedirectToCanonicalTab
               from={ROUTES.ROLLOUT}
               to={ROUTES.EXECUTION}
-              tab="rollout"
-              reason="rollout_consolidated_into_execution_hub"
+              tab="list"
+              reason="rollout_retired_to_execution_list"
             />
           }
         />

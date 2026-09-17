@@ -1,4 +1,5 @@
 import {
+  EXECUTION_SUBVIEW_DEEP_LINK_IDS,
   type ExecutionFunctionId,
   type ExecutionTabOptions,
   resolveExecutionDeepLinkTab,
@@ -355,4 +356,34 @@ export function serializeExecutionNavigationState(
   next.delete('mode');
   next.delete('entityType');
   return next;
+}
+
+const RETIRED_EXECUTION_TABS: readonly string[] = EXECUTION_SUBVIEW_DEEP_LINK_IDS;
+
+/**
+ * W1 (DEC-573): `resources`/`summary`/`rollout` are retired Menu-2 surfaces with no MVP successor.
+ */
+export function isRetiredExecutionDeepLinkTab(rawTab: string | null): boolean {
+  return RETIRED_EXECUTION_TABS.includes(resolveExecutionDeepLinkTab(rawTab || ''));
+}
+
+/**
+ * Redirect target for a retired `?tab=` deep link: the canonical Execution list
+ * on the same pathname, keeping every other param and the hash. `subview` and
+ * `kokpit` belong to the retired surface, so they are dropped rather than
+ * carried into a list URL that would reject them. Returns null when the tab is
+ * not retired (no redirect).
+ */
+export function buildExecutionRetiredTabRedirect(location: {
+  pathname: string;
+  search?: string;
+  hash?: string;
+}): string | null {
+  const params = new URLSearchParams(location.search || '');
+  if (!isRetiredExecutionDeepLinkTab(params.get('tab'))) return null;
+  params.set('tab', 'list');
+  params.delete('subview');
+  params.delete('kokpit');
+  const query = params.toString();
+  return `${location.pathname}${query ? `?${query}` : ''}${location.hash || ''}`;
 }
