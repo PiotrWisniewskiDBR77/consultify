@@ -14,8 +14,13 @@ filtr statusu · linia + plakietka TODAY · paski na tokenach · zamrożenie (w 
 |---|---|---|
 | `src/components/Initiatives/__tests__/InitiativeGantt.planTimeline.test.tsx` (NOWY) | 8 | 8 passed |
 | `src/components/Initiatives/__tests__/InitiativeGantt.frozenWindows.test.tsx` | 6 | 6 passed |
-| `src/components/Initiatives/__tests__/InitiativeGantt.planHorizon.test.tsx` | 3 | 3 passed |
+| `src/components/Initiatives/__tests__/InitiativeGantt.planHorizon.test.tsx` | 1 | 1 passed |
 | `src/utils/__tests__/planTimelineV2Flag.test.ts` (NOWY) | 1 | 1 passed |
+| **RAZEM (4 pliki)** | **16** | **16 passed** |
+
+Sprostowanie własnego błędu (zmierzone, nie zgadywane): wcześniejszy szkic tego RECEIPT-a podawał
+`planHorizon = 3` (suma 18). Ponowny bieg wszystkich czterech plików mierzy `Tests 16 passed (16)`,
+a `grep` potwierdza JEDEN blok `it` w `planHorizon.test.tsx`. Liczba poprawiona przed meldunkiem.
 
 Pokrycie punktów: **1** (kolumna nazw + siatka 12 kolumn + geometria pasków jak w makiecie),
 **4** (PUBLISHED = zero `onPointerDown` + komunikat read-only + przycisk nowej wersji),
