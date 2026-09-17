@@ -168,10 +168,10 @@ beforeAll(async () => {
   );
 
   // ── GROUP (a): jedna encja na każdą z 9 tabel, wszystkie daty = D ──────────
-  // 1. tasks — due_date timestamptz, milestone_target_date date, sla_due_at text(ISO)
+  // 1. tasks — due_date timestamptz, milestone_target_date date, sla_due_at timestamp
   await q(
     `INSERT INTO tasks (id, organization_id, title, due_date, milestone_target_date, sla_due_at, created_at, updated_at)
-     VALUES ($1,$2,$3,$4::timestamptz,$5::date,$6, $7::timestamptz, $7::timestamptz)`,
+     VALUES ($1,$2,$3,$4::timestamptz,$5::date,$6::timestamp, $7::timestamptz, $7::timestamptz)`,
     [`${PREFIX}task-a`, ORG_A, 'Task A', ISO, DATEONLY, ISO, FIXED_AUDIT]
   );
   // 2. calendar_events — start_at/end_at text(ISO)
@@ -186,13 +186,13 @@ beforeAll(async () => {
      VALUES ($1,$2,$3,$4,$5::timestamp,$6::timestamp)`,
     [`${PREFIX}dec-a`, ORG_A, 'Dec A', USER, TS, TS]
   );
-  // 4. initiatives — 8 kolumn (text date-only + timestamptz)
+  // 4. initiatives — 8 kolumn (text date-only + timestamp)
   await q(
     `INSERT INTO initiatives (id, organization_id, name,
         planned_start_date, planned_end_date, baseline_start_date, baseline_end_date,
         forecast_start_date, forecast_end_date, start_date, end_date)
-     VALUES ($1,$2,$3,$4,$4,$4,$4,$4,$4,$5::timestamptz,$5::timestamptz)`,
-    [`${PREFIX}init-a`, ORG_A, 'Init A', DATEONLY, ISO]
+     VALUES ($1,$2,$3,$4::timestamp,$4::timestamp,$6,$6,$6,$6,$5::timestamp,$5::timestamp)`,
+    [`${PREFIX}init-a`, ORG_A, 'Init A', DATEONLY, ISO, DATEONLY]
   );
   // 5. initiative_milestones — target_date/baseline_date date (FK → initiatives)
   await q(
@@ -213,11 +213,11 @@ beforeAll(async () => {
      VALUES ($1,$2,'meeting','consultify',$3,$4,$4,$5,$5)`,
     [`${PREFIX}v8-a`, ORG_A, `${PREFIX}ref`, ISO, FIXED_AUDIT]
   );
-  // 8. interview_assignments — due_at timestamp (id ma default gen_random_uuid)
+  // 8. interview_assignments — due_at timestamp
   await q(
-    `INSERT INTO interview_assignments (organization_id, assignee_user_id, template_id, due_at)
-     VALUES ($1,$2,$3,$4::timestamp)`,
-    [ORG_A, USER, `${PREFIX}tpl`, TS]
+    `INSERT INTO interview_assignments (id, organization_id, assignee_user_id, template_id, due_at)
+     VALUES ($1,$2,$3,$4,$5::timestamp)`,
+    [`${PREFIX}ia-a`, ORG_A, USER, `${PREFIX}tpl`, TS]
   );
   // 9. report_schedules — next_run_at timestamp
   await q(
@@ -299,17 +299,17 @@ describe.skipIf(!REAL_PG)('SR-1 część 2 (Wpis 32) — showcase-roll na realny
     expect(a.perTable.interview_assignments).toBe(1);
     expect(a.perTable.report_schedules).toBe(1);
 
-    // 1. tasks — timestamptz / date / text(ISO)
+    // 1. tasks — timestamptz / date / timestamp
     const t = await one(
       `SELECT to_char(due_date AT TIME ZONE 'UTC','YYYY-MM-DD') AS due,
               to_char(milestone_target_date,'YYYY-MM-DD') AS mile,
-              sla_due_at AS sla
+              to_char(sla_due_at,'YYYY-MM-DD') AS sla
          FROM tasks WHERE id=$1`,
       [`${PREFIX}task-a`]
     );
     expect(t.due).toBe(D_PLUS_7);
     expect(t.mile).toBe(D_PLUS_7);
-    expect(t.sla).toBe(`${D_PLUS_7}T00:00:00.000Z`);
+    expect(t.sla).toBe(D_PLUS_7);
 
     // 2. calendar_events — text(ISO)
     const ce = await one(`SELECT start_at, end_at FROM calendar_events WHERE id=$1`, [
@@ -327,13 +327,14 @@ describe.skipIf(!REAL_PG)('SR-1 część 2 (Wpis 32) — showcase-roll na realny
     expect(dec.dl).toBe(D_PLUS_7);
     expect(dec.esc).toBe(D_PLUS_7);
 
-    // 4. initiatives — text date-only ×6 + timestamptz ×2
+    // 4. initiatives — timestamp ×2 + text ×4 + timestamp ×2
     const ini = await one(
-      `SELECT planned_start_date AS ps, planned_end_date AS pe,
+      `SELECT to_char(planned_start_date,'YYYY-MM-DD') AS ps,
+              to_char(planned_end_date,'YYYY-MM-DD') AS pe,
               baseline_start_date AS bs, baseline_end_date AS be,
               forecast_start_date AS fs, forecast_end_date AS fe,
-              to_char(start_date AT TIME ZONE 'UTC','YYYY-MM-DD') AS sd,
-              to_char(end_date AT TIME ZONE 'UTC','YYYY-MM-DD') AS ed
+              to_char(start_date,'YYYY-MM-DD') AS sd,
+              to_char(end_date,'YYYY-MM-DD') AS ed
          FROM initiatives WHERE id=$1`,
       [`${PREFIX}init-a`]
     );
