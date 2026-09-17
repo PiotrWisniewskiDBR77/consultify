@@ -1,9 +1,9 @@
 /**
  * @vitest-environment node
  *
- * OP-1/W101: Assessment → Insights "Session record" must open the live
- * AssessmentSessionEditorView by row click and by the preview/menu action. A
- * row without a live sessionId must not get a dead "Open session" action.
+ * OP-1/W205: Assessment → Insights row click must keep opening the frozen
+ * Output preview; the live AssessmentSessionEditorView is exposed only as an
+ * additional preview/menu action when a canonical session editor path exists.
  */
 import { readFileSync } from 'node:fs';
 
@@ -17,11 +17,11 @@ describe('AssessmentOutputsTab — live session opening contract', () => {
     expect(source).toContain('`/assessment/${frameworkPathForMethodPack(row.methodPackId)}/${encodeURIComponent(sessionId)}`');
   });
 
-  it('row click navigates to the session editor before falling back to preview', () => {
+  it('row click opens the frozen Output preview and does not navigate to the session editor', () => {
     const rowClick = source.slice(source.indexOf('onRowClick={(row) => {'), source.indexOf('rowMenu={rowMenu}'));
-    expect(rowClick).toContain('const sessionPath = sessionEditorPath(row as OutputRow);');
-    expect(rowClick).toContain('navigate(sessionPath);');
-    expect(rowClick.indexOf('navigate(sessionPath);')).toBeLessThan(rowClick.indexOf('jedenPanel.otworz();'));
+    expect(rowClick).toContain('jedenPanel.otworz();');
+    expect(rowClick).toContain('setSelectedOutputId(String(row.id));');
+    expect(rowClick).not.toContain('navigate(sessionPath);');
   });
 
   it('menu and preview expose Open session only when sessionEditorPath exists', () => {

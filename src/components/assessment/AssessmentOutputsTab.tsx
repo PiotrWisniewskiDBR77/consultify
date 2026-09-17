@@ -625,11 +625,6 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
             defaultSort={{ columnId: 'frozenAt', direction: 'desc' }}
             selectedRowId={selectedOutputId}
             onRowClick={(row) => {
-              const sessionPath = sessionEditorPath(row as OutputRow);
-              if (sessionPath) {
-                navigate(sessionPath);
-                return;
-              }
               jedenPanel.otworz();
               setSelectedOutputId(String(row.id));
             }}
