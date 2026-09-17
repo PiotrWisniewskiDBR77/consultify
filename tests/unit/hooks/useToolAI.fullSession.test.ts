@@ -81,7 +81,7 @@ describe('useToolAI full-session terminal lifecycle', () => {
     expect(useToolStore.getState().currentSession?.inputData).toEqual(initialData);
   });
 
-  it('aborts after the bounded timeout and settles without a delayed duplicate start', async () => {
+  it('aborts after the bounded first-content timeout without a delayed duplicate start', async () => {
     startStream.mockImplementation(() => new Promise<void>(() => {}));
     const { result } = renderHook(() => useToolAI({ toolType: 'dynamic-swot' }));
     let generation!: Promise<void>;
@@ -90,14 +90,113 @@ describe('useToolAI full-session terminal lifecycle', () => {
       generation = result.current.generateFullSession();
     });
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(90_000);
+      await vi.advanceTimersByTimeAsync(30_000);
       await generation;
     });
 
     expect(abortStream).toHaveBeenCalledTimes(1);
     expect(startStream).toHaveBeenCalledTimes(1);
-    expect(result.current.error).toContain('timed out');
+    expect(result.current.error).toContain('stream stalled');
     expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('error');
+  });
+
+  it('stops a silent open stream after 30 seconds without changing user work', async () => {
+    startStream.mockImplementation(() => new Promise<void>(() => {}));
+    isStreaming = true;
+    const initialData = useToolStore.getState().currentSession?.inputData;
+    const { result } = renderHook(() => useToolAI({ toolType: 'dynamic-swot' }));
+    let generation!: Promise<void>;
+
+    act(() => {
+      generation = result.current.generateFullSession();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(29_999);
+    });
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('generating');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+      await generation;
+    });
+
+    expect(abortStream).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toContain('stream stalled');
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('error');
+    expect(useToolStore.getState().currentSession?.inputData).toEqual(initialData);
+  });
+
+  it('resets the Dynamic SWOT inactivity timeout on fresh stream content', async () => {
+    startStream.mockImplementation(() => new Promise<void>(() => {}));
+    isStreaming = true;
+    const { result, rerender } = renderHook(() => useToolAI({ toolType: 'dynamic-swot' }));
+    let generation!: Promise<void>;
+
+    act(() => {
+      generation = result.current.generateFullSession();
+    });
+    streamStartedAt = 1234;
+    streamedContent = '{';
+    await act(async () => {
+      rerender();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(29_999);
+    });
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('generating');
+
+    streamedContent = '{"signals":';
+    await act(async () => {
+      rerender();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+      await generation;
+    });
+    expect(abortStream).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toContain('stream stalled');
+  });
+
+  it('does not apply the Dynamic SWOT inactivity limit to another tool', async () => {
+    useToolStore.getState().createSession('market-forces');
+    startStream.mockImplementation(() => new Promise<void>(() => {}));
+    isStreaming = true;
+    const { result } = renderHook(() => useToolAI({ toolType: 'market-forces' }));
+    let generation!: Promise<void>;
+
+    act(() => {
+      generation = result.current.generateFullSession();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('generating');
+    expect(abortStream).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+      await generation;
+    });
+    expect(result.current.error).toContain('timed out');
+  });
+
+  it('clears the inactivity timer after an invalid terminal result', async () => {
+    startStream.mockImplementation(async () => {
+      streamStartedAt = 1234;
+      streamedContent = 'not-json';
+    });
+    const { result, rerender } = renderHook(() => useToolAI({ toolType: 'dynamic-swot' }));
+    let generation!: Promise<void>;
+
+    await act(async () => {
+      generation = result.current.generateFullSession();
+      await Promise.resolve();
+      rerender();
+      await generation;
+    });
+
+    expect(result.current.error).toContain('invalid result');
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('applies one successful response and settles ready only for the fresh stream attempt', async () => {
@@ -135,6 +234,7 @@ describe('useToolAI full-session terminal lifecycle', () => {
     expect(startStream).toHaveBeenCalledTimes(1);
     expect(useToolStore.getState().currentSession?.sessionGenerationStatus).toBe('ready');
     expect((useToolStore.getState().currentSession?.inputData as any).items).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   // N3 (zgloszenie testera `6c07439e`, staging 2026-09-14 05:07 UTC): „AI Draft"

@@ -155,6 +155,7 @@ interface UseToolAIReturn {
  * Twarda górna granica (`fullSessionTimeoutRef`, 90 s) zostaje jako siatka.
  */
 const FULL_SESSION_SETTLE_MS = 1_500;
+const FULL_SESSION_INACTIVITY_TIMEOUT_MS = 30_000;
 
 // Operational/digital tools that share OperationalToolData and are deepened with
 // a single generic AI handler (sections + summary).
@@ -230,6 +231,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   } | null>(null);
   const fullSessionAttemptIdRef = useRef(0);
   const fullSessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fullSessionInactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // N3: czy poprzedni render zastał trwający strumień — bez tego nie wykryjemy
   // przejścia „strumień się skończył", jedynego pewnego momentu rozstrzygnięcia.
   const fullSessionWasStreamingRef = useRef(false);
@@ -522,6 +524,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       if (fullSessionAttemptRef.current?.id !== attempt.id) return;
       if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
       fullSessionTimeoutRef.current = null;
+      if (fullSessionInactivityTimeoutRef.current) {
+        clearTimeout(fullSessionInactivityTimeoutRef.current);
+      }
+      fullSessionInactivityTimeoutRef.current = null;
       if (message) {
         setSessionGenerationStatus('error');
         setPendingAction(null);
@@ -544,6 +550,18 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         setError('Generation timed out. Your work is safe — retry when ready.');
         finishAttempt();
       }, 90_000);
+      if (toolType === 'dynamic-swot') {
+        fullSessionInactivityTimeoutRef.current = setTimeout(() => {
+          if (fullSessionAttemptRef.current?.id !== attempt.id || attempt.cancelled) return;
+          attempt.cancelled = true;
+          abortStream();
+          setSessionGenerationStatus('error');
+          setPendingAction(null);
+          setActiveAiActionId(null);
+          setError('The AI stream stalled. Your work is safe — retry when ready.');
+          finishAttempt();
+        }, FULL_SESSION_INACTIVITY_TIMEOUT_MS);
+      }
       const sendForAttempt = (message: string) => sendMessage(message, true);
 
       if (OPERATIONAL_AI_TOOLS.has(toolType)) {
@@ -665,6 +683,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       attempt.cancelled = true;
       if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
       fullSessionTimeoutRef.current = null;
+      if (fullSessionInactivityTimeoutRef.current) {
+        clearTimeout(fullSessionInactivityTimeoutRef.current);
+      }
+      fullSessionInactivityTimeoutRef.current = null;
       setSessionGenerationStatus('error');
       setPendingAction(null);
       setActiveAiActionId(null);
@@ -682,6 +704,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       abortStream();
       if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
       fullSessionTimeoutRef.current = null;
+      if (fullSessionInactivityTimeoutRef.current) {
+        clearTimeout(fullSessionInactivityTimeoutRef.current);
+      }
+      fullSessionInactivityTimeoutRef.current = null;
       fullSessionAttemptRef.current = null;
       attempt.resolve();
     },
@@ -855,6 +881,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       if (!live || live.id !== attempt.id || live.cancelled) return;
       if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
       fullSessionTimeoutRef.current = null;
+      if (fullSessionInactivityTimeoutRef.current) {
+        clearTimeout(fullSessionInactivityTimeoutRef.current);
+      }
+      fullSessionInactivityTimeoutRef.current = null;
       setSessionGenerationStatus('error');
       setPendingAction(null);
       setActiveAiActionId(null);
@@ -865,6 +895,37 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     return () => clearTimeout(settle);
   }, [isStreaming, setSessionGenerationStatus]);
+
+  useEffect(() => {
+    const attempt = fullSessionAttemptRef.current;
+    if (
+      toolType !== 'dynamic-swot' ||
+      !streamedContent.trim() ||
+      !attempt ||
+      streamStartedAt === null ||
+      streamStartedAt === attempt.streamStartedAtBaseline
+    )
+      return;
+    if (fullSessionInactivityTimeoutRef.current) {
+      clearTimeout(fullSessionInactivityTimeoutRef.current);
+    }
+    const attemptId = attempt.id;
+    fullSessionInactivityTimeoutRef.current = setTimeout(() => {
+      const live = fullSessionAttemptRef.current;
+      if (!live || live.id !== attemptId || live.cancelled) return;
+      live.cancelled = true;
+      abortStream();
+      setSessionGenerationStatus('error');
+      setPendingAction(null);
+      setActiveAiActionId(null);
+      setError('The AI stream stalled. Your work is safe — retry when ready.');
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      fullSessionInactivityTimeoutRef.current = null;
+      fullSessionAttemptRef.current = null;
+      live.resolve();
+    }, FULL_SESSION_INACTIVITY_TIMEOUT_MS);
+  }, [abortStream, setSessionGenerationStatus, streamStartedAt, streamedContent, toolType]);
 
   useEffect(() => {
     if (
@@ -905,6 +966,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         if (attempt) {
           if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
           fullSessionTimeoutRef.current = null;
+          if (fullSessionInactivityTimeoutRef.current) {
+            clearTimeout(fullSessionInactivityTimeoutRef.current);
+          }
+          fullSessionInactivityTimeoutRef.current = null;
           fullSessionAttemptRef.current = null;
           attempt.resolve();
         }
@@ -1196,6 +1261,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       if (!attempt || attempt.cancelled) return;
       if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
       fullSessionTimeoutRef.current = null;
+      if (fullSessionInactivityTimeoutRef.current) {
+        clearTimeout(fullSessionInactivityTimeoutRef.current);
+      }
+      fullSessionInactivityTimeoutRef.current = null;
       fullSessionAttemptRef.current = null;
       attempt.resolve();
     }
