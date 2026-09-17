@@ -783,10 +783,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
             <th className="w-[18%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t('initiatives.initiativeGatesWorkflowTable.approver')}
             </th>
-            <th className="w-[12%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <th className="w-[11%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t('initiatives.initiativeGatesWorkflowTable.readiness')}
             </th>
-            <th className="w-[12%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <th className="w-[13%] px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Status
             </th>
             <th className="w-[36px] px-1 py-2" />
@@ -965,9 +965,9 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     <td className="px-3 py-2 min-w-0">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-start gap-1.5">
                             <span
-                              className={`text-sm font-medium truncate ${
+                              className={`text-sm font-medium break-words ${
                                 isCurrent
                                   ? 'text-c-focus'
                                   : isCompleted
@@ -984,7 +984,8 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             )}
                           </div>
                           <p
-                            className={`text-[11px] truncate mt-0.5 ${
+                            title={stage.description}
+                            className={`text-[11px] mt-0.5 break-words ${
                               isCompleted
                                 ? 'text-slate-500 dark:text-slate-500'
                                 : 'text-slate-600 dark:text-slate-400'
@@ -999,10 +1000,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {/* ── Gate Decision ─────────────────────────────── */}
                     <td className="px-3 py-2">
                       {gateKey && gateUi ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-start gap-1.5 min-w-0">
                           <div
                             className={`
-                              inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium truncate max-w-full
+                              inline-flex items-start gap-1.5 px-2 py-1 rounded-lg text-xs font-medium max-w-full min-w-0
                               ${
                                 gateIsActive
                                   ? `${gateUi.bgColor} ${gateUi.color}`
@@ -1011,8 +1012,8 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             `}
                             title={isPolish ? gateUi.actionLabel.pl : gateUi.actionLabel.en}
                           >
-                            <GateIcon size={13} className="flex-shrink-0" />
-                            <span className="truncate">
+                            <GateIcon size={13} className="flex-shrink-0 mt-0.5" />
+                            <span className="break-words whitespace-normal text-left min-w-0">
                               {isPolish ? gateUi.actionLabel.pl : gateUi.actionLabel.en}
                             </span>
                           </div>
@@ -1053,9 +1054,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {/* ── Approver (real users + role fallback) ──────── */}
                     <td className="px-3 py-2">
                       {hasAssignedApprover ? (
-                        <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex items-start gap-1 min-w-0">
                           <span
-                            className={`text-xs truncate ${
+                            title={approverNames.join(', ')}
+                            className={`text-xs break-words min-w-0 ${
                               isFuture
                                 ? 'text-slate-500 dark:text-slate-400'
                                 : 'text-slate-700 dark:text-slate-300'
@@ -1066,9 +1068,10 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           </span>
                         </div>
                       ) : roleLabel ? (
-                        <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex items-start gap-1 min-w-0">
                           <span
-                            className={`text-xs truncate italic ${
+                            title={roleLabel}
+                            className={`text-xs break-words italic min-w-0 ${
                               isCurrent
                                 ? 'text-amber-600 dark:text-amber-400'
                                 : 'text-slate-600 dark:text-slate-500'
@@ -1122,14 +1125,14 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     {/* ── Status ────────────────────────────────────── */}
                     <td className="px-3 py-2">
                       {gateKey ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                           <span
                             className={`
-                              inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                              inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium min-w-0 break-words
                               ${statusUi.bgColor} ${statusUi.color}
                             `}
                           >
-                            <StatusIcon size={10} />
+                            <StatusIcon size={10} className="flex-shrink-0" />
                             {isPolish ? statusUi.label.pl : statusUi.label.en}
                           </span>
                           {decisionStatus === 'PENDING' && daysWaiting > 0 && (
