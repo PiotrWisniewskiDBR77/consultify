@@ -294,6 +294,24 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(updateToolSessionMock).not.toHaveBeenCalled();
   });
 
+  it('shows an indeterminate AI state in the Properties progress field while drafting', async () => {
+    getToolSessionMock.mockResolvedValue(baseSwotSession({ completionPercent: 0 }));
+    const { unmount } = render(
+      <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
+    );
+
+    await waitFor(() => expect(getToolSessionMock).toHaveBeenCalledWith('sess-existing-1'));
+    act(() => {
+      useToolStore.getState().setSessionGenerationStatus('generating');
+    });
+
+    const properties = screen.getByTestId('tool-session-properties');
+    expect(within(properties).getByText('Generating…')).toBeInTheDocument();
+    expect(within(properties).queryByText('0%')).toBeNull();
+
+    unmount();
+  });
+
   it('does not write a persisted same-id session before its deferred GET and hydrate complete', async () => {
     // Reproduce the W124 race: zustand-persist already contains the same id,
     // while the authoritative GET is still in flight.
