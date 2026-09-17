@@ -7,7 +7,13 @@ export const SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS = [
   'docx',
 ] as const;
 
+export const SUPPORTED_CHAT_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'] as const;
+
 export const SUPPORTED_CHAT_ATTACHMENT_ACCEPT = SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS.map(
+  (ext) => `.${ext}`
+).join(',');
+
+export const SUPPORTED_CHAT_IMAGE_ACCEPT = SUPPORTED_CHAT_IMAGE_EXTENSIONS.map(
   (ext) => `.${ext}`
 ).join(',');
 
@@ -20,6 +26,25 @@ export const SUPPORTED_CHAT_ATTACHMENT_LABEL = 'PDF, DOCX, TXT, MD, CSV, JSON';
 // upload-error toast, not a substitute for the real server-side enforcement
 // (ai.routes.ts multer + conversations.routes.ts resolveAttachmentStatus()).
 export const MAX_CHAT_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+export const MAX_CHAT_IMAGE_BYTES = 5 * 1024 * 1024;
+
+export type ChatAttachmentKind = 'document' | 'image';
+
+/** Build-time, fail-closed feature gate. Missing/empty/anything but `true` is OFF. */
+export function isChatImagesEnabled(
+  env: Record<string, string | undefined> = import.meta.env as unknown as Record<
+    string,
+    string | undefined
+  >
+): boolean {
+  return env.VITE_CHAT_IMAGES === 'true';
+}
+
+export function getSupportedChatAttachmentAccept(imagesEnabled = isChatImagesEnabled()): string {
+  return imagesEnabled
+    ? `${SUPPORTED_CHAT_ATTACHMENT_ACCEPT},${SUPPORTED_CHAT_IMAGE_ACCEPT}`
+    : SUPPORTED_CHAT_ATTACHMENT_ACCEPT;
+}
 
 type AttachmentLike = {
   name?: string | null;
@@ -42,7 +67,34 @@ export function isImageChatAttachment(file: AttachmentLike): boolean {
   );
 }
 
-export function isSupportedChatAttachment(file: AttachmentLike): boolean {
+export function isSupportedChatImage(file: AttachmentLike): boolean {
+  if (file?.isFolder) return false;
+
+  const mimeType = String(file?.type || file?.mimeType || '')
+    .trim()
+    .toLowerCase();
+  const extension = String(file?.name || '')
+    .split('.')
+    .pop()
+    ?.trim()
+    .toLowerCase();
+
+  if (['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(mimeType)) return true;
+  return SUPPORTED_CHAT_IMAGE_EXTENSIONS.includes(
+    (extension || '') as (typeof SUPPORTED_CHAT_IMAGE_EXTENSIONS)[number]
+  );
+}
+
+export function getChatAttachmentKind(
+  file: AttachmentLike,
+  imagesEnabled = isChatImagesEnabled()
+): ChatAttachmentKind | null {
+  if (imagesEnabled && isSupportedChatImage(file)) return 'image';
+  if (isSupportedChatDocument(file)) return 'document';
+  return null;
+}
+
+function isSupportedChatDocument(file: AttachmentLike): boolean {
   if (file?.isFolder) return true;
 
   const mimeType = String(file?.type || file?.mimeType || '')
@@ -66,11 +118,24 @@ export function isSupportedChatAttachment(file: AttachmentLike): boolean {
   );
 }
 
+export function isSupportedChatAttachment(
+  file: AttachmentLike,
+  imagesEnabled = isChatImagesEnabled()
+): boolean {
+  return getChatAttachmentKind(file, imagesEnabled) !== null;
+}
+
 /** Size half of the matrix check — see MAX_CHAT_ATTACHMENT_BYTES. */
 export function isChatAttachmentSizeOk(file: { size?: number | null }): boolean {
   const size = Number(file?.size);
   if (!Number.isFinite(size) || size <= 0) return true; // unknown size (e.g. folders) — not a size rejection
   return size <= MAX_CHAT_ATTACHMENT_BYTES;
+}
+
+export function isChatImageSizeOk(file: { size?: number | null }): boolean {
+  const size = Number(file?.size);
+  if (!Number.isFinite(size) || size <= 0) return true;
+  return size <= MAX_CHAT_IMAGE_BYTES;
 }
 
 /**
@@ -81,9 +146,12 @@ export function isChatAttachmentSizeOk(file: { size?: number | null }): boolean 
  * actionable reason first.
  */
 export function getChatAttachmentRejectionReason(
-  file: AttachmentLike & { size?: number | null }
-): 'UNSUPPORTED_FORMAT' | 'SIZE_LIMIT_EXCEEDED' | null {
-  if (!isSupportedChatAttachment(file)) return 'UNSUPPORTED_FORMAT';
-  if (!isChatAttachmentSizeOk(file)) return 'SIZE_LIMIT_EXCEEDED';
+  file: AttachmentLike & { size?: number | null },
+  imagesEnabled = isChatImagesEnabled()
+): 'UNSUPPORTED_FORMAT' | 'SIZE_LIMIT_EXCEEDED' | 'IMAGE_SIZE_LIMIT_EXCEEDED' | null {
+  const kind = getChatAttachmentKind(file, imagesEnabled);
+  if (!kind) return 'UNSUPPORTED_FORMAT';
+  if (kind === 'image' && !isChatImageSizeOk(file)) return 'IMAGE_SIZE_LIMIT_EXCEEDED';
+  if (kind === 'document' && !isChatAttachmentSizeOk(file)) return 'SIZE_LIMIT_EXCEEDED';
   return null;
 }

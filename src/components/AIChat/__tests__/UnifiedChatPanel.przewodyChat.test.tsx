@@ -163,7 +163,33 @@ vi.mock('../../../store/useArtifactsStore', () => ({
 vi.mock('../../../store/useProposalLifecycleStore', () => ({
   useProposalLifecycleStore: () => ({ proposals: [], updateProposal: vi.fn() }),
 }));
-vi.mock('../EnhancedChatInput', () => ({ EnhancedChatInput: () => <div data-testid="chat-input" /> }));
+vi.mock('../EnhancedChatInput', () => ({
+  EnhancedChatInput: (props: { onSend: (message: string, attachments?: File[]) => void }) => (
+    <div data-testid="chat-input">
+      <button
+        type="button"
+        onClick={() =>
+          props.onSend('Describe this image', [
+            new File(['png'], 'screen.png', { type: 'image/png' }),
+          ])
+        }
+      >
+        send-test-image
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          props.onSend('Describe one image', [
+            new File(['one'], 'one.png', { type: 'image/png' }),
+            new File(['two'], 'two.png', { type: 'image/png' }),
+          ])
+        }
+      >
+        send-two-test-images
+      </button>
+    </div>
+  ),
+}));
 vi.mock('../ChatSlidingPanel', () => ({ ChatSlidingPanel: () => null }));
 vi.mock('../MessageRenderer', () => ({ MessageRenderer: () => null }));
 vi.mock('../ChatSignalsPanel', () => ({ ChatSignalsPanel: () => null }));
@@ -179,6 +205,7 @@ vi.mock('../../Chat/ChatSmartSuggestions', () => ({ ChatSmartSuggestions: () => 
 vi.mock('@/components/MyWork/table/ChatToSchemaPanel', () => ({ ChatToSchemaPanel: () => null }));
 
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
+import { Api } from '../../../services/api';
 
 describe('UnifiedChatPanel chat route wiring', () => {
   beforeEach(() => {
@@ -189,6 +216,96 @@ describe('UnifiedChatPanel chat route wiring', () => {
     harness.startStream.mockResolvedValue(undefined);
     harness.featureFlags.clear();
     harness.appState.chatKickoffMessage = undefined;
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('uploads an enabled image outside document ingest and forwards it in context.images', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const imagePayload = {
+      name: 'screen.png',
+      mimeType: 'image/png',
+      dataUrl: 'data:image/png;base64,cG5n',
+      width: 20,
+      height: 10,
+      size: 3,
+    };
+    const imageUpload = vi.spyOn(Api, 'uploadChatImage').mockResolvedValue({
+      success: true,
+      image: imagePayload,
+    });
+    const documentUpload = vi.spyOn(Api, 'uploadChatAttachment');
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(imageUpload).toHaveBeenCalledWith(expect.any(File));
+    expect(documentUpload).not.toHaveBeenCalled();
+    expect(harness.startStream.mock.calls[0]?.[3]).toEqual(
+      expect.objectContaining({
+        images: [imagePayload],
+        hasAttachments: true,
+        attachmentFileNames: ['screen.png'],
+      })
+    );
+  });
+
+  it('never transports more than one image in context.images', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    const imageUpload = vi.spyOn(Api, 'uploadChatImage').mockResolvedValue({
+      success: true,
+      image: {
+        name: 'one.png',
+        mimeType: 'image/png',
+        dataUrl: 'data:image/png;base64,b25l',
+        width: 1,
+        height: 1,
+        size: 3,
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-two-test-images' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(imageUpload).toHaveBeenCalledTimes(1);
+    expect(harness.startStream.mock.calls[0]?.[3]?.images).toHaveLength(1);
+  });
+
+  it('maps a server image error code to localized copy before transport', async () => {
+    vi.stubEnv('VITE_CHAT_IMAGES', 'true');
+    vi.spyOn(Api, 'uploadChatImage').mockRejectedValue({
+      message: 'Invalid or corrupted image data',
+      data: {
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: 'Invalid or corrupted image data',
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-test-image' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(harness.startStream.mock.calls[0]?.[3]?.failedAttachments).toEqual([
+      expect.objectContaining({
+        filename: 'screen.png',
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        error: expect.not.stringContaining('Invalid or corrupted image data'),
+      }),
+    ]);
   });
 
   it('keeps Business Actions hidden with the flag at its default OFF value', () => {

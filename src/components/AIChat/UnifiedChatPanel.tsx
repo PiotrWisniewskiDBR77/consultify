@@ -119,8 +119,11 @@ import TeresaMark from '../shared/TeresaMark';
 import { BranchSelector, type ConversationBranch } from './BranchSelector';
 import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
+  getChatAttachmentKind,
   getChatAttachmentRejectionReason,
+  isChatImagesEnabled,
   MAX_CHAT_ATTACHMENT_BYTES,
+  MAX_CHAT_IMAGE_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
 import {
@@ -4514,6 +4517,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         sourceUrl?: string;
         kind?: 'file' | 'url';
       }> = [];
+      const uploadedImages: Array<{
+        name: string;
+        mimeType: string;
+        dataUrl: string;
+        width: number;
+        height: number;
+        size: number;
+      }> = [];
       const failedAttachments: Array<{
         filename: string;
         error: string;
@@ -4552,7 +4563,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         // failedAttachments so it survives on the message the same way a
         // server-side ingest failure does (both feed the same "❌ Could not
         // process..." summary + persisted metadata.failedAttachments).
-        const rejectionReason = getChatAttachmentRejectionReason(file);
+        const chatImagesEnabled = isChatImagesEnabled();
+        const attachmentKind = getChatAttachmentKind(file, chatImagesEnabled);
+        const rejectionReason = getChatAttachmentRejectionReason(file, chatImagesEnabled);
         if (rejectionReason) {
           console.warn('[UnifiedChatPanel] Skipping attachment outside the matrix:', {
             name: file.name,
@@ -4560,12 +4573,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             size: file.size,
             reason: rejectionReason,
           });
-          if (rejectionReason === 'SIZE_LIMIT_EXCEEDED') {
-            const maxMb = Math.round(MAX_CHAT_ATTACHMENT_BYTES / (1024 * 1024));
+          if (
+            rejectionReason === 'SIZE_LIMIT_EXCEEDED' ||
+            rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED'
+          ) {
+            const isImageLimit = rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED';
+            const maxMb = Math.round(
+              (isImageLimit ? MAX_CHAT_IMAGE_BYTES : MAX_CHAT_ATTACHMENT_BYTES) / (1024 * 1024)
+            );
             toast.error(
               t(
-                'aiChat.attachments.sizeExceeded',
-                'File "{{name}}" exceeds the {{maxMb}} MB limit.',
+                isImageLimit
+                  ? 'aiChat.attachments.imageSizeExceeded'
+                  : 'aiChat.attachments.sizeExceeded',
                 { name: file.name, maxMb }
               ),
               { duration: 5000 }
@@ -4583,8 +4603,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           failedAttachments.push({
             filename: file.name,
             error:
-              rejectionReason === 'SIZE_LIMIT_EXCEEDED'
-                ? `File exceeds the ${Math.round(MAX_CHAT_ATTACHMENT_BYTES / (1024 * 1024))}MB limit`
+              rejectionReason === 'SIZE_LIMIT_EXCEEDED' ||
+              rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED'
+                ? `${rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED' ? 'Image' : 'File'} exceeds the ${Math.round(
+                    (rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED'
+                      ? MAX_CHAT_IMAGE_BYTES
+                      : MAX_CHAT_ATTACHMENT_BYTES) /
+                      (1024 * 1024)
+                  )}MB limit`
                 : `Unsupported format — allowed: ${SUPPORTED_CHAT_ATTACHMENT_LABEL}`,
             code: rejectionReason,
             mimeType: file.type || undefined,
@@ -4592,8 +4618,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           });
           continue;
         }
+        if (attachmentKind === 'image' && uploadedImages.length >= 1) {
+          const error = t('aiChat.attachments.imageCountExceeded');
+          toast.error(error, { duration: 5000 });
+          failedAttachments.push({
+            filename: file.name,
+            error,
+            code: 'IMAGE_COUNT_EXCEEDED',
+            mimeType: file.type || undefined,
+            kind: 'file',
+          });
+          continue;
+        }
 
         try {
+          if (attachmentKind === 'image') {
+            const resp = await Api.uploadChatImage(file);
+            const image = (resp as any)?.image;
+            if (!image?.dataUrl || !image?.mimeType) {
+              throw new Error('CHAT_IMAGE_DATA_MISSING');
+            }
+            uploadedImages.push({
+              name: String(image.name || file.name),
+              mimeType: String(image.mimeType),
+              dataUrl: String(image.dataUrl),
+              width: Number(image.width || 0),
+              height: Number(image.height || 0),
+              size: Number(image.size || file.size),
+            });
+            toast.success(t('aiChat.attachments.imageUploadSuccess', { name: file.name }), {
+              duration: 2000,
+            });
+            continue;
+          }
           const resp = await Api.uploadChatAttachment(file);
           const docId = String((resp as any)?.docId || '');
           if (!docId) {
@@ -4625,6 +4682,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
           const errMsg = String(err?.message || '');
           const data = (err as any)?.data || (err as any)?.response?.data || {};
+          const errorCode = String(data?.code || err?.errorCode || '').trim().toUpperCase();
+          if (attachmentKind === 'image') {
+            const localizedImageError =
+              errorCode === 'CHAT_IMAGE_TOO_LARGE'
+                ? t('aiChat.attachments.imageSizeExceeded', {
+                    name: file.name,
+                    maxMb: Math.round(MAX_CHAT_IMAGE_BYTES / (1024 * 1024)),
+                  })
+                : errorCode === 'CHAT_IMAGE_LIMIT' || errorCode === 'IMAGE_COUNT_EXCEEDED'
+                  ? t('aiChat.attachments.imageCountExceeded')
+                  : errorCode === 'CHAT_IMAGES_DISABLED'
+                    ? t('aiChat.attachments.imageUnsupported')
+                    : t('aiChat.attachments.imageInvalid', { name: file.name });
+            failedAttachments.push({
+              filename: file.name,
+              error: localizedImageError,
+              code: errorCode || 'CHAT_IMAGE_UPLOAD_FAILED',
+              mimeType: file.type || undefined,
+              kind: 'file',
+            });
+            toast.error(localizedImageError, { duration: 5000 });
+            continue;
+          }
           failedAttachments.push({
             filename: file.name,
             error:
@@ -4705,9 +4785,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Remove the "Analyzing file..." message once processing is done
       if (fileAnalysisMessageId) {
-        if (uploadedAttachments.length > 0) {
-          const processedNames = uploadedAttachments.map((a) => a.filename).join(', ');
-          const partialFailure = uploadedAttachments.length < sourcesCount;
+        const processedSourcesCount = uploadedAttachments.length + uploadedImages.length;
+        if (processedSourcesCount > 0) {
+          const processedNames = [
+            ...uploadedAttachments.map((a) => a.filename),
+            ...uploadedImages.map((image) => image.name),
+          ].join(', ');
+          const partialFailure = processedSourcesCount < sourcesCount;
           addChatMessage({
             id: fileAnalysisMessageId,
             role: 'assistant',
@@ -4716,7 +4800,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   'aiChat.attachments.filesPartial',
                   '⚠️ {{processed}}/{{total}} attachment(s) processed: {{names}}. Some sources could not be read and will not be referenced. You can retry them or continue.',
                   {
-                    processed: uploadedAttachments.length,
+                    processed: processedSourcesCount,
                     total: sourcesCount,
                     names: processedNames,
                   }
@@ -4724,7 +4808,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               : t(
                   'aiChat.attachments.filesReady',
                   '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
-                  { count: uploadedAttachments.length, names: processedNames }
+                  { count: processedSourcesCount, names: processedNames }
                 ),
             timestamp: new Date(),
           } as ChatMessage);
@@ -4924,11 +5008,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             }
           : {}),
         attachments: uploadedAttachments,
+        ...(uploadedImages.length > 0 ? { images: uploadedImages } : {}),
         failedAttachments,
         attachmentDocIds,
         // Provide file names and types so the AI can reference them in its response
-        attachmentFileNames: uploadedAttachments.map((a) => a.filename),
-        hasAttachments: uploadedAttachments.length > 0,
+        attachmentFileNames: [
+          ...uploadedAttachments.map((a) => a.filename),
+          ...uploadedImages.map((image) => image.name),
+        ],
+        hasAttachments: uploadedAttachments.length > 0 || uploadedImages.length > 0,
         // v3 context-awareness: pass project + screen context in the shape expected by backend
         projectId: workspaceContext?.projectId || null,
         screenContext: {

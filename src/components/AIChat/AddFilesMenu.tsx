@@ -19,7 +19,7 @@ import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
-import { SUPPORTED_CHAT_ATTACHMENT_ACCEPT } from './chatAttachmentSupport';
+import { getSupportedChatAttachmentAccept } from './chatAttachmentSupport';
 import {
   pushRecentAttachment,
   readRecentAttachments,
@@ -319,7 +319,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         type="file"
         className="hidden"
         multiple
-        accept={SUPPORTED_CHAT_ATTACHMENT_ACCEPT}
+        accept={getSupportedChatAttachmentAccept()}
         onChange={handleFileChange}
         data-testid="add-files-hidden-input"
       />

@@ -26,8 +26,12 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import {
+  getChatAttachmentRejectionReason,
+  isChatImagesEnabled,
   isImageChatAttachment,
+  isSupportedChatImage,
   isSupportedChatAttachment,
+  MAX_CHAT_IMAGE_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
 import { CloudFilePicker } from './CloudFilePicker';
@@ -120,6 +124,27 @@ type ComposerAttachment =
       name: string;
     };
 
+const ChatImageThumbnail: React.FC<{ file: File; alt: string }> = ({ file, alt }) => {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return undefined;
+    const objectUrl = URL.createObjectURL(file);
+    setSrc(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      data-testid="chat-image-thumbnail"
+      className="h-10 w-10 shrink-0 rounded-md object-cover border border-c-border"
+    />
+  );
+};
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -180,6 +205,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const [value, setValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const chatImagesEnabled = isChatImagesEnabled();
 
   // Voice state
   const [isDictating, setIsDictating] = useState(false);
@@ -923,8 +949,25 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   const handleFileSelect = useCallback(
     (files: File[]) => {
+      let acceptedImageCount = attachments.filter(
+        (attachment): attachment is File =>
+          attachment instanceof File && isSupportedChatImage(attachment)
+      ).length;
       const accepted = files.filter((file) => {
-        if (isImageChatAttachment(file)) {
+        const rejectionReason = getChatAttachmentRejectionReason(file, chatImagesEnabled);
+        if (rejectionReason === 'IMAGE_SIZE_LIMIT_EXCEEDED') {
+          const maxMb = Math.round(MAX_CHAT_IMAGE_BYTES / (1024 * 1024));
+          toast.error(t('aiChat.attachments.imageSizeExceeded', { name: file.name, maxMb }));
+          return false;
+        }
+        if (chatImagesEnabled && isSupportedChatImage(file)) {
+          if (acceptedImageCount >= 1) {
+            toast.error(t('aiChat.attachments.imageCountExceeded'));
+            return false;
+          }
+          acceptedImageCount += 1;
+        }
+        if (!chatImagesEnabled && isImageChatAttachment(file)) {
           toast.error(
             t(
               'aiChat.attachments.imageUnsupported',
@@ -933,7 +976,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           );
           return false;
         }
-        if (isSupportedChatAttachment(file)) return true;
+        if (isSupportedChatAttachment(file, chatImagesEnabled)) return true;
         toast.error(
           t(
             'aiChat.attachments.unsupportedType',
@@ -946,7 +989,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       if (accepted.length > 0) setAttachments((prev) => [...prev, ...accepted]);
       return accepted;
     },
-    [t]
+    [attachments, chatImagesEnabled, t]
   );
 
   // Re-attach an already-uploaded doc from the Recent flyout (A5). No re-upload:
@@ -1047,6 +1090,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         <div className="flex flex-wrap gap-2 mb-2 px-1">
           {attachments.map((att, idx) => {
             const isFileAtt = att instanceof File;
+            const isImageAtt = chatImagesEnabled && isFileAtt && isSupportedChatImage(att as File);
             const attKind = !isFileAtt ? (att as { kind?: string }).kind : 'file';
             const isUrlAttachment = attKind === 'url';
             const label = isFileAtt
@@ -1054,12 +1098,22 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               : (att as { name?: string; url?: string }).name ||
                 (att as { url?: string }).url ||
                 'attachment';
-            const badge = isUrlAttachment ? 'Link' : 'File';
+            const badge = isImageAtt
+              ? t('aiChat.attachments.imageBadge')
+              : isUrlAttachment
+                ? 'Link'
+                : 'File';
             return (
               <div
                 key={idx}
                 className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
               >
+                {isImageAtt && (
+                  <ChatImageThumbnail
+                    file={att as File}
+                    alt={t('aiChat.attachments.imagePreviewAlt', { name: label })}
+                  />
+                )}
                 <span className="inline-flex items-center gap-1">
                   <span>{badge}:</span>
                   <span className="max-w-[220px] truncate">{label}</span>

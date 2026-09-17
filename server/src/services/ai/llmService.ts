@@ -15,6 +15,7 @@ import {
   streamText,
   tool,
 } from 'ai';
+import type { ImagePart, ModelMessage, TextPart } from 'ai';
 import { createHash } from 'crypto';
 import { z } from 'zod';
 
@@ -138,11 +139,9 @@ type ModelConfig = {
   [key: string]: unknown;
 };
 
-type LLMMessage = {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
-  [key: string]: unknown;
-};
+export type LLMTextContentPart = TextPart;
+export type LLMImageContentPart = ImagePart;
+export type LLMMessage = ModelMessage;
 
 type ToolDefinition = {
   name: string;
@@ -756,7 +755,9 @@ export class LLMService {
 
     // Intelligent Caching (Skip for streams/tools/reasoning for now)
     // We can cache simple text/structured generation
-    const canCache = cache !== false && !stream && (!tools || tools.length === 0);
+    const hasMultimodalContent = params.messages.some((message) => Array.isArray(message.content));
+    const canCache =
+      cache !== false && !stream && (!tools || tools.length === 0) && !hasMultimodalContent;
     let cacheKey = '';
 
     if (canCache) {
@@ -1060,7 +1061,7 @@ export class LLMService {
         try {
           const result = await streamText({
             model,
-            messages: formattedMessages as any,
+            messages: formattedMessages,
             tools: toolDefinitions,
             // ai v6: `maxSteps` is gone; use `stopWhen: stepCountIs(n)` so the
             // SDK continues past the tool call to stream the confirmation turn.
@@ -1380,7 +1381,7 @@ export class LLMService {
             : timeoutSignal;
           const result = await streamText({
             model,
-            messages: formattedMessages as any,
+            messages: formattedMessages,
             abortSignal,
             ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
             ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
