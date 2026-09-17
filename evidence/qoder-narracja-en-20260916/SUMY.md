@@ -114,3 +114,40 @@ Katalog lokalny: `evidence/qoder-narracja-en-20260916/`
 
 To zdanie (slot `reportI18n('en').legacyLimitation`) zastąpiło zaszyty wcześniej
 PO POLSKU literał, który wyciekał do `finalConclusions` każdego raportu legacy EN.
+
+## Incydent 2026-09-17
+
+Siedem binariów z tabeli „Binaria lokalnie" wyżej zostało **usuniętych przez błąd
+wykonawcy** (komenda `rm` wykonana w złym katalogu roboczym, stanowisko A).
+Nie są odtwarzalne bajt w bajt: ich sumy CAŁYCH plików pozostają w tabeli wyżej
+jako **historyczne** i nie wolno pod nie podkładać świeżych renderów.
+Dowód DEC-461 niesie suma TREŚCI (`word/document.xml`, sklejone
+`ppt/slides/slideN.xml`) — ta jest odtwarzalna, co potwierdza przebieg
+kontrolny niżej. Decyzja CTO (Wpis 22): wyjście 1, luka jawna, zero podkładania.
+
+| plik | historyczne bajty | historyczny sha256 (nieodtwarzalny) |
+|---|---|---|
+| `report-en.docx` | 207493 | `5ee1ffee97501726fc0ecb4403609d516d8efd9bf78a94d6128a67d6a097cf00` |
+| `deck-en.pptx` | 410276 | `cdb907128747dc9df803198230abccf9c563139a9d1f55a3492508bdc76cceb4` |
+| `deck-en.pdf` | 52252 | `38c08c567bda20d3214a86eb98067c56685ee9ca32172b83a4b0af9659721d2a` |
+| `report-pl.docx` | 212546 | `3260a811931d456809637d538781250a94115766e43ca5aedde7880f8995a210` |
+| `report-pl.pdf` | 537006 | `26ed803ce011e781a17033959604d2d665f3d8dbe482e3a5d3da6880656094f8` |
+| `deck-pl.pptx` | 410370 | `d08eed9a9c4c21f5c5aabf87c2826b821ec9f01c9d849b19c831d435ed7f42b7` |
+| `deck-pl.pdf` | 53803 | `d72efd58a6e65993c4935db53b06fb91f32835bf7446444f93459fa4c8852f06` |
+
+Przebieg kontrolny 2026-09-17 (skrypt R4 po naprawie z Wpisu 17, linia
+`00f2e0d83f`): sumy TREŚCI identyczne z tabelami wyżej — DOCX EN
+`7d0ad7b3f43c9e83cdc9d5a2eb85f8c4a38d902a297c930d7b23b4bddbebea79`, DOCX PL
+`28b28b89e7412df7b47c9255ba285c47256686f3d07b1203c161966a75b184c0`, PPTX EN
+`5ebb7db9d36b6daeb7dab3b01a3645cfe10791e2eebcf053253ccd1b8d606329`, PPTX PL
+`88d41130f3e875034378642536ece06e78ab574559a0c1ed7e2c31d7c6225109`; diakrytyki
+EN 0/0/0, PL 763/113/118.
+
+**OTWARTE (obserwacja do rejestru, nie do naprawy teraz):** świeży render daje
+inny osadzony PNG wykresu niż binaria z 16.09 22:35 (213 723 B vs 195 799 B,
+oba 2100×1212; świeży ma obrysy serii radaru, zapisany nie), deterministycznie
+3/3 w przebiegu kontrolnym, przy identycznym źródle serwera
+(`git diff a46892635f..00f2e0d83f -- server/src` = jeden plik testowy) i tej
+samej wersji `@napi-rs/canvas` (1.0.9). Hipotezy: niedeterminizm rasteryzatora
+wykresów między środowiskami ALBO binaria z 16.09 powstały z niezacommitowanego
+stanu rasteryzatora. Decyzja, czy to zgłoszenie: sesja scalająca.
