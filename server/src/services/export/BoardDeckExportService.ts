@@ -94,6 +94,18 @@ export function contentStringsFrom(value: unknown, parentKey = ''): string[] {
   });
 }
 
+function tableFromBlocks(
+  blocks: Array<{ type?: string; content?: Record<string, unknown> }>
+): { headers: string[]; rows: Array<Array<string | number>> } | null {
+  const table = blocks.find((block) => block.type === 'table')?.content;
+  if (!table || !Array.isArray(table.headers) || !Array.isArray(table.rows)) return null;
+  const headers = table.headers.map((value) => String(value ?? ''));
+  const rows = table.rows
+    .filter((row): row is unknown[] => Array.isArray(row))
+    .map((row) => row.map((value) => (typeof value === 'number' ? value : String(value ?? ''))));
+  return headers.length > 0 ? { headers, rows } : null;
+}
+
 class BoardDeckExportService {
   async exportPresentationDeck(input: PresentationBoardDeckInput): Promise<Buffer> {
     const deck = input.deck;
@@ -107,6 +119,7 @@ class BoardDeckExportService {
       author: 'Consultify Deck Builder',
       slides: cards.map((card, index) => {
         const intent = String(card.intent || '').toLowerCase();
+        const table = tableFromBlocks(card.blocks || []);
         const role =
           index === 0 || intent.includes('cover')
             ? ('cover' as const)
@@ -114,9 +127,11 @@ class BoardDeckExportService {
               ? ('agenda' as const)
               : intent.includes('section')
                 ? ('section' as const)
-                : intent.includes('decision') || intent.includes('recommend')
-                  ? ('decision' as const)
-                  : ('content-one' as const);
+                : table
+                  ? ('table' as const)
+                  : intent.includes('decision') || intent.includes('recommend')
+                    ? ('decision' as const)
+                    : ('content-one' as const);
         const blockText = (card.blocks || []).flatMap((block) => contentStringsFrom(block.content));
         const body = blockText.join('\n');
         const source = (card.source_refs || [])
@@ -143,6 +158,16 @@ class BoardDeckExportService {
             title: card.title || `Slide ${index + 1}`,
             keyMessage: card.key_message,
             recommendation: body || card.key_message || 'Decision details are pending.',
+            source,
+          };
+        }
+        if (role === 'table') {
+          return {
+            role,
+            kicker: 'Deck Builder',
+            title: card.title || `Slide ${index + 1}`,
+            keyMessage: card.key_message,
+            table: table || undefined,
             source,
           };
         }

@@ -4,8 +4,7 @@
  * Zastępuje fałszywą zieleń network-testów p20 (które no-op bez live serwera)
  * deterministycznym kontraktem bramki jakości eksportu — bez localhost:3001.
  *
- * The legacy override parser remains compatible, while the export decision is
- * always HTTP 200 with structured `warnings[]` for every role.
+ * The export decision is always HTTP 200 with structured `warnings[]`.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,33 +17,41 @@ vi.mock('../../../server/src/services/presentationQualityGatesService.js', () =>
 import {
   canOverrideQualityGate,
   enforceQualityGateForExport,
+  setQualityWarningHeaders,
 } from '../../../server/src/routes/presentationExportGate.js';
 
-describe('M19 · L-02 — quality-gate override is role-gated', () => {
-  it('non-admin + overrideQualityGate=true → NOT allowed', () => {
+describe('M19 · final-export override audit metadata', () => {
+  it('records an explicit override only for governance roles', () => {
     expect(
       canOverrideQualityGate({ user: { role: 'MEMBER' }, query: { overrideQualityGate: 'true' } })
     ).toBe(false);
+    for (const role of ['ADMIN', 'OWNER', 'SUPERADMIN']) {
+      expect(
+        canOverrideQualityGate({ user: { role }, query: { overrideQualityGate: 'true' } })
+      ).toBe(true);
+    }
   });
+});
 
-  it('no role + param → NOT allowed', () => {
-    expect(canOverrideQualityGate({ query: { overrideQualityGate: 'true' } })).toBe(false);
-  });
-
-  it.each(['ADMIN', 'OWNER', 'SUPERADMIN'])('%s + param=true → allowed', (role) => {
-    expect(
-      canOverrideQualityGate({ user: { role }, query: { overrideQualityGate: 'true' } })
-    ).toBe(true);
-  });
-
-  it('ADMIN WITHOUT param → NOT allowed (must explicitly opt in)', () => {
-    expect(canOverrideQualityGate({ user: { role: 'ADMIN' }, query: {} })).toBe(false);
-  });
-
-  it('legacy req.userRole is honoured', () => {
-    expect(
-      canOverrideQualityGate({ userRole: 'OWNER', query: { overrideQualityGate: 'true' } })
-    ).toBe(true);
+describe('M19 · warning response headers', () => {
+  it('caps warning metadata and appends to existing exposed headers', () => {
+    const headers = new Map<string, string>([['Access-Control-Expose-Headers', 'X-Request-Id']]);
+    const response = {
+      getHeader: (name: string) => headers.get(name),
+      setHeader: (name: string, value: string) => headers.set(name, value),
+    };
+    setQualityWarningHeaders(response, {
+      report: { result: 'WARN' },
+      warnings: Array.from({ length: 30 }, (_, index) => ({ index, message: 'x'.repeat(500) })),
+    });
+    expect(headers.get('Access-Control-Expose-Headers')).toContain('X-Request-Id');
+    expect(headers.get('Access-Control-Expose-Headers')).toContain(
+      'X-Presentation-Quality-Warnings'
+    );
+    const encoded = headers.get('X-Presentation-Quality-Warnings') || '';
+    expect(encoded.length).toBeLessThanOrEqual(4096);
+    expect(JSON.parse(decodeURIComponent(encoded)).length).toBeLessThanOrEqual(20);
+    expect(headers.get('X-Presentation-Quality-Warning-Count')).toBe('30');
   });
 });
 
@@ -62,7 +69,6 @@ describe('M19 · DEC-543 — enforceQualityGateForExport warning contract', () =
       organizationId: 'org-1',
       deckId: 'deck-1',
       format: 'pdf',
-      allowOverride: false,
     });
     expect(res.ok).toBe(true);
     expect(res.status).toBe(200);
@@ -74,13 +80,17 @@ describe('M19 · DEC-543 — enforceQualityGateForExport warning contract', () =
     });
   });
 
-  it('review finding with legacy override has the same advisory result', async () => {
-    mockCheckGates.mockResolvedValue({ canExport: false, result: 'fail', scorecard: {}, gates: [] });
+  it('review finding has the same advisory result for every caller', async () => {
+    mockCheckGates.mockResolvedValue({
+      canExport: false,
+      result: 'fail',
+      scorecard: {},
+      gates: [],
+    });
     const res = await enforceQualityGateForExport({
       organizationId: 'org-1',
       deckId: 'deck-1',
       format: 'pdf',
-      allowOverride: true,
     });
     expect(res.ok).toBe(true);
     expect(res.status).toBe(200);
@@ -92,7 +102,6 @@ describe('M19 · DEC-543 — enforceQualityGateForExport warning contract', () =
       organizationId: 'org-1',
       deckId: 'deck-1',
       format: 'pptx',
-      allowOverride: false,
     });
     expect(res.ok).toBe(true);
     expect(res.warnings).toEqual([]);
