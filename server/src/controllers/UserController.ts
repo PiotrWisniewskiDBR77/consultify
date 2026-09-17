@@ -10,10 +10,13 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
+import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
+import { shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
 import { clearSchemaCache, getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { UpdateUserRequest, UpdateUserRoleRequest } from '../validators/user.validators.js';
 
@@ -93,15 +96,16 @@ export class UserController {
         return;
       }
 
-      // Feedback #d11ec6b0 — the org-admin "Users" panel previously pulled only
-      // rows where `users.organization_id = orgId`, which hid users whose
-      // primary tenant is another org but who are active members of THIS org
-      // via `organization_members` (e.g. Piotr=OWNER of APLIX with primary
-      // `users.organization_id='vts'`). We now UNION both sources and
-      // deduplicate on user id so each member shows up exactly once.
-      // Select only columns that exist in the users table
-      // Note: 'title' column doesn't exist - use 'job_title' if needed, or get from user_profiles table
-      let sql = `
+      try {
+        // Feedback #d11ec6b0 — the org-admin "Users" panel previously pulled only
+        // rows where `users.organization_id = orgId`, which hid users whose
+        // primary tenant is another org but who are active members of THIS org
+        // via `organization_members` (e.g. Piotr=OWNER of APLIX with primary
+        // `users.organization_id='vts'`). We now UNION both sources and
+        // deduplicate on user id so each member shows up exactly once.
+        // Select only columns that exist in the users table
+        // Note: 'title' column doesn't exist - use 'job_title' if needed, or get from user_profiles table
+        let sql = `
         SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.status, u.avatar_url, u.last_login
           FROM users u
          WHERE u.organization_id = ?
@@ -114,45 +118,52 @@ export class UserController {
          WHERE om.organization_id = ?
            AND (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')
       `;
-      type SQLParam = string | number | boolean | null | undefined;
-      const params: SQLParam[] = [orgId, orgId];
+        type SQLParam = string | number | boolean | null | undefined;
+        const params: SQLParam[] = [orgId, orgId];
 
-      // If canReview=true, filter to users with review permissions
-      if (canReview === 'true') {
-        sql = `SELECT * FROM (${sql}) scoped WHERE (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
+        // If canReview=true, filter to users with review permissions
+        if (canReview === 'true') {
+          sql = `SELECT * FROM (${sql}) scoped WHERE (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
+        }
+
+        sql += ' ORDER BY first_name, last_name';
+
+        const rows = await queryHelpers.queryAll(sql, params);
+
+        // PII guard (#20): the full org directory exposes everyone's email +
+        // last-login. Pilot/survey USERs only need this list to populate assignee
+        // pickers (My Work tasks, decision/initiative owners), so non-privileged
+        // roles get name + avatar but NOT email/last-login. Admin-class roles keep
+        // the full record for the org-admin "Users" panel.
+        const requesterRole = String(req.user?.role || '').toUpperCase();
+        const isPrivileged = ['ADMIN', 'OWNER', 'SUPERADMIN', 'MANAGER'].includes(requesterRole);
+
+        const users = rows.map((u: Record<string, unknown>) => ({
+          id: u.id,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          email: isPrivileged ? u.email : null,
+          role: u.role,
+          status: u.status || 'active',
+          avatarUrl: u.avatar_url,
+          lastLogin: isPrivileged ? u.last_login : null,
+          title: null, // title column doesn't exist in users table
+          // Default values for columns that may not exist
+          aiConfig: {},
+          licensePlanId: null,
+          isOwner: u.role === 'OWNER',
+          phone: null,
+          linkedinId: null,
+        }));
+
+        res.json({ users, total: users.length });
+      } catch (error: unknown) {
+        logger.error('[users] Error fetching users', {
+          error,
+          correlationId: (req as any).correlationId,
+        });
+        res.status(500).json({ error: 'Failed to fetch users', code: 'USERS_LIST_FAILED' });
       }
-
-      sql += ' ORDER BY first_name, last_name';
-
-      const rows = await queryHelpers.queryAll(sql, params);
-
-      // PII guard (#20): the full org directory exposes everyone's email +
-      // last-login. Pilot/survey USERs only need this list to populate assignee
-      // pickers (My Work tasks, decision/initiative owners), so non-privileged
-      // roles get name + avatar but NOT email/last-login. Admin-class roles keep
-      // the full record for the org-admin "Users" panel.
-      const requesterRole = String(req.user?.role || '').toUpperCase();
-      const isPrivileged = ['ADMIN', 'OWNER', 'SUPERADMIN', 'MANAGER'].includes(requesterRole);
-
-      const users = rows.map((u: Record<string, unknown>) => ({
-        id: u.id,
-        firstName: u.first_name,
-        lastName: u.last_name,
-        email: isPrivileged ? u.email : null,
-        role: u.role,
-        status: u.status || 'active',
-        avatarUrl: u.avatar_url,
-        lastLogin: isPrivileged ? u.last_login : null,
-        title: null, // title column doesn't exist in users table
-        // Default values for columns that may not exist
-        aiConfig: {},
-        licensePlanId: null,
-        isOwner: u.role === 'OWNER',
-        phone: null,
-        linkedinId: null,
-      }));
-
-      res.json({ users, total: users.length });
     }
   );
 
@@ -168,15 +179,39 @@ export class UserController {
         return;
       }
 
-      const sql = 'SELECT * FROM users WHERE id = ? AND organization_id = ?';
+      const sql = `
+        SELECT id, email, first_name, last_name, role, avatar_url, status, created_at, organization_id
+          FROM users
+         WHERE id = ? AND organization_id = ?
+      `;
       const user = await queryHelpers.queryOne(sql, [id, orgId]);
 
       if (!user) {
+        const foreignUser = await queryHelpers.queryOne('SELECT id FROM users WHERE id = ?', [id]);
+        if (foreignUser) {
+          res.status(403).json({ error: 'USERS_READ_FORBIDDEN' });
+          return;
+        }
         res.status(404).json({ error: 'User not found' });
         return;
       }
 
-      res.json(user);
+      const shaped = shapeOrgPersonPayload(
+        {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          avatarUrl: user.avatar_url,
+          status: user.status,
+          createdAt: user.created_at,
+          organizationId: user.organization_id,
+        },
+        getRequestAccessRole(req as any)
+      );
+
+      res.json(shaped);
     }
   );
 

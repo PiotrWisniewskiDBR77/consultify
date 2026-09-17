@@ -1,0 +1,2 @@
+{"id":"6aef8e3b-e295-5aef-ba46-bbfaa730ca21","email":"thomas.baker@northwind.example","firstName":"Thomas","lastName":"Baker","role":"MEMBER","avatarUrl":null,"status":"active","createdAt":"2026-09-08T19:46:45.821Z","organizationId":"468b234c-66c4-54e1-b626-5e0fb3a92f6a","displayName":"Thomas Baker","avatar":null}
+HTTP_STATUS=200

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-dec583-v4-w211-20260917
+
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-dec583-v4-w211-20260917
+
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts > mounted /api/users organization directory payload > returns a minimal same-org person without private or credential fields for MEMBER 31ms
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts > mounted /api/users organization directory payload > keeps email for OWNER but never selects or returns credential fields 5ms
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts > mounted /api/users organization directory payload > denies a MEMBER when the user id exists only outside the actor organization 4ms
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts > mounted /api/users organization directory payload > keeps a genuinely missing id as 404 2ms
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts > mounted /api/users organization directory payload > mounts /search before /:id and returns member-visible names without email 5ms
+ ✓ server/src/routes/__tests__/usersPersonDirectory.routes.test.ts (5 tests) 49ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  13:29:38
+   Duration  1.98s (transform 434ms, setup 590ms, import 1.09s, tests 49ms, environment 0ms)
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  13:29:38
+   Duration  1.98s (transform 434ms, setup 590ms, import 1.09s, tests 49ms, environment 0ms)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-dec583-v4-w211-20260917/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-dec583-v4-w211-20260917/junit.xml

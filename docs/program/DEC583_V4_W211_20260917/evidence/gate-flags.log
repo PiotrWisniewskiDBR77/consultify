@@ -1,0 +1,5 @@
+
+> consultinity@0.0.1 check:flagi:dockerfile
+> node scripts/check-flagi-dockerfile.mjs
+
+FLAGI_DOCKERFILE_GUARD analyzedFlags=197 dockerArgs=209 wyjatki=13 brakujace=0

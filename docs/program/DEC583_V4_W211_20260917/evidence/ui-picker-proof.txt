@@ -1,0 +1,9 @@
+DEC-583 v4 UI proof — 2026-09-17 13:27 CDT
+Runtime: candidate frontend :3478 -> candidate API :3477 -> local restored staging_copy.
+Actor: Laura Novak, Northwind MEMBER.
+Path: My Work -> Calendar -> Add event -> Attendees.
+Query: Tho
+Observed result: button "Thomas Baker".
+Selection readback: text "Thomas Baker" and button "Remove attendee Thomas Baker".
+Visual proof: two screenshots captured inline in the Codex task (dropdown and selected chip).
+Write behavior: Add was not clicked; no event was created.

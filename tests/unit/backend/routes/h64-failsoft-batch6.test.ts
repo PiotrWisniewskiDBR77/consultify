@@ -123,9 +123,8 @@ describe('/api/assessment-workflow-v2/* — access-request/role writes fail-clos
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/assessment-workflow-v2.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/assessment-workflow-v2.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/assessment-workflow-v2', router);
@@ -153,9 +152,7 @@ describe('/api/assessment-workflow-v2/* — access-request/role writes fail-clos
     );
     const app = await loadApp();
 
-    const res = await request(app).delete(
-      '/api/assessment-workflow-v2/asmt-1/roles/target-user'
-    );
+    const res = await request(app).delete('/api/assessment-workflow-v2/asmt-1/roles/target-user');
 
     expect(res.status).toBe(500);
     expect(res.body.code).toBe('ASSESSMENT_ROLE_REMOVE_FAILED');
@@ -195,9 +192,8 @@ describe('/api/assessments/canonical-index — read stays fail-closed (H6.4 batc
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/assessment/assessment-hub.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/assessment/assessment-hub.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/assessments', router);
@@ -250,9 +246,8 @@ describe('/api/assessment-workflow/* — access-request writes fail-closed (H6.4
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/assessment/assessment-workflow.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/assessment/assessment-workflow.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/assessment-workflow', router);
@@ -310,9 +305,8 @@ describe('/api/billing/* — subscription writes fail-closed (H6.4 batch6)', () 
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/billing/billing.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/billing/billing.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/billing', router);
@@ -325,9 +319,7 @@ describe('/api/billing/* — subscription writes fail-closed (H6.4 batch6)', () 
     );
     const app = await loadApp();
 
-    const res = await request(app)
-      .post('/api/billing/change-plan')
-      .send({ newPlanId: 'plan-pro' });
+    const res = await request(app).post('/api/billing/change-plan').send({ newPlanId: 'plan-pro' });
 
     expect(res.status).toBe(500);
     expect(res.body.code).toBe('BILLING_CHANGE_PLAN_FAILED');
@@ -376,9 +368,7 @@ describe('/api/help/feedback — write stays fail-closed (H6.4 batch6)', () => {
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/helpChat.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/helpChat.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/help', router);
@@ -498,9 +488,7 @@ describe('/api/my-work/* — chat-actions write fail-closed, ai-suggestions degr
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/my-work.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/my-work.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/my-work', router);
@@ -555,9 +543,8 @@ describe('/api/my-work/calendar/unified — read stays fail-closed (H6.4 batch6)
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/my-work/calendar.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/my-work/calendar.routes.js');
     const app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
@@ -618,9 +605,8 @@ describe('/api/branding/* — read + delete write fail-closed (H6.4 batch6)', ()
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/organization/branding.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/organization/branding.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/branding', router);
@@ -721,9 +707,7 @@ describe('/api/sync-hub/sync/:integrationId — write stays fail-closed (H6.4 ba
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/syncHub.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/syncHub.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/sync-hub', router);
@@ -786,9 +770,8 @@ describe('/api/table-platform/tables/:tableId/records/batch — write stays fail
   });
 
   async function loadApp(opts?: { corruptOperations?: boolean }) {
-    const { default: router } = await import(
-      '../../../../server/src/routes/table-platform.routes.js'
-    );
+    const { default: router } =
+      await import('../../../../server/src/routes/table-platform.routes.js');
     const app = express();
     app.use(express.json());
     if (opts?.corruptOperations) {
@@ -886,9 +869,7 @@ describe('/api/users/:id/avatar (nested router) — remove-avatar write fail-clo
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/user/users.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/user/users.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/users', router);
@@ -909,22 +890,39 @@ describe('/api/users/:id/avatar (nested router) — remove-avatar write fail-clo
 });
 
 // ============================================================================
-// 12. users.routes.ts (top-level legacy router)
+// 12. user/users.routes.ts (the router mounted by ApiGateway)
 // ============================================================================
-describe('/api/users — list read fail-closed, search degrades (H6.4 batch6)', () => {
+describe('/api/users — mounted list read fail-closed, search degrades (H6.4 batch6)', () => {
   const dbAll = vi.fn();
+  const queryAll = vi.fn();
 
   beforeEach(() => {
     dbAll.mockReset();
+    queryAll.mockReset();
+    vi.doUnmock('../../../../server/src/controllers/UserController.js');
     vi.doMock('../../../../server/src/middleware/auth.middleware.js', () => ({
       verifyToken: (req: any, _res: any, next: any) => {
         req.user = { id: 'user-1', role: 'ADMIN', organizationId: 'org-1' };
         next();
       },
-      requireRole:
-        (..._roles: string[]) =>
-        (_req: any, _res: any, next: any) =>
-          next(),
+    }));
+    vi.doMock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
+      apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
+    }));
+    vi.doMock('../../../../server/src/middleware/validation.middleware.js', () => ({
+      validateBody: () => (_req: any, _res: any, next: any) => next(),
+    }));
+    vi.doMock('../../../../server/src/services/legacyCutover/requireActiveMembership.js', () => ({
+      requireActiveMembership: (_req: any, _res: any, next: any) => next(),
+    }));
+    vi.doMock('../../../../server/src/validators/user.validators.js', () => ({
+      UpdateUserRoleSchema: {},
+      UpdateUserSchema: {},
+    }));
+    vi.doMock('../../../../server/src/utils/queryHelpers.js', () => ({
+      queryAll,
+      queryOne: vi.fn(),
+      queryRun: vi.fn(),
     }));
     vi.doMock('../../../../server/src/utils/DbPromise.js', () => ({
       all: dbAll,
@@ -934,9 +932,7 @@ describe('/api/users — list read fail-closed, search degrades (H6.4 batch6)', 
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/users.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/user/users.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/users', router);
@@ -944,7 +940,7 @@ describe('/api/users — list read fail-closed, search degrades (H6.4 batch6)', 
   }
 
   it('GET / (primary content) stays fail-closed: 500 + code, no err.message leak', async () => {
-    dbAll.mockRejectedValue(new Error('relation "users" does not exist'));
+    queryAll.mockRejectedValue(new Error('relation "users" does not exist'));
     const app = await loadApp();
 
     const res = await request(app).get('/api/users/');
@@ -1068,9 +1064,7 @@ describe('/api/v8/sync/integrations/:id/sync — write stays fail-closed (H6.4 b
   });
 
   async function loadApp() {
-    const { default: router } = await import(
-      '../../../../server/src/routes/v8/sync.routes.js'
-    );
+    const { default: router } = await import('../../../../server/src/routes/v8/sync.routes.js');
     const app = express();
     app.use(express.json());
     // This router reads identity via getV8Context(req) (mocked above) — it

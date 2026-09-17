@@ -15,10 +15,12 @@ import UserControllerRaw from '../../controllers/UserController.js';
 const UserController = UserControllerRaw as any;
 import { AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { getRequestAccessRole } from '../../middleware/requestAccess.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import { shapeOrgPersonPayload } from '../../services/orgPersonPayloadPolicy.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { resolveStoredRelativePath, uploadsDir } from '../../utils/storagePaths.js';
 import { UpdateUserRoleSchema, UpdateUserSchema } from '../../validators/user.validators.js';
@@ -74,6 +76,84 @@ router.use(verifyToken);
  * Get all users for organization
  */
 router.get('/', UserController.getUsers);
+
+/**
+ * GET /api/users/search
+ * Organization-scoped person lookup for canonical pickers.
+ */
+router.get(
+  '/search',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.user?.organizationId;
+    const query = String(req.query.q || '').trim();
+    const parsedLimit = Number.parseInt(String(req.query.limit || '10'), 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 50) : 10;
+
+    if (!organizationId) {
+      return res.status(400).json({ error: 'ORG_CONTEXT_REQUIRED' });
+    }
+    if (query.length < 2) {
+      return res.json({ users: [] });
+    }
+
+    try {
+      const searchPattern = `%${query}%`;
+      const users = await dbAll<{
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        avatar_url: string | null;
+      }>(
+        `SELECT id, email, first_name, last_name, avatar_url
+           FROM users
+          WHERE organization_id = ?
+            AND status = 'active'
+            AND (
+              email LIKE ?
+              OR first_name LIKE ?
+              OR last_name LIKE ?
+              OR (first_name || ' ' || last_name) LIKE ?
+            )
+          ORDER BY first_name, last_name
+          LIMIT ?`,
+        [organizationId, searchPattern, searchPattern, searchPattern, searchPattern, limit]
+      );
+
+      const viewerRole = getRequestAccessRole(req);
+      const mappedUsers = (users || []).map((user) => {
+        const shaped = shapeOrgPersonPayload(
+          {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            avatarUrl: user.avatar_url,
+          },
+          viewerRole
+        );
+        return {
+          id: shaped.id,
+          ...(shaped.email ? { email: shaped.email } : {}),
+          name: shaped.displayName,
+          displayName: shaped.displayName,
+          avatarUrl: shaped.avatarUrl,
+        };
+      });
+
+      logger.info(
+        `[users] Search for "${query}" in org ${organizationId} returned ${mappedUsers.length} results`
+      );
+      return res.json({ users: mappedUsers });
+    } catch (err: any) {
+      logger.warn('[users] search degraded', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.json({ users: [], degraded: true });
+    }
+  })
+);
 
 /**
  * GET /api/users/:id
