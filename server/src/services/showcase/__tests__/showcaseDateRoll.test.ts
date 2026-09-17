@@ -17,8 +17,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildShowcaseDateRoll,
+  buildTableCountSql,
+  buildTableUpdateSql,
   computeDeltaDays,
   computeWeeklyDeltaDays,
+  introspectShowcaseColumns,
+  kindFromRealType,
   SHOWCASE_DATE_FIELDS,
   toUtcDateOnly,
   type ShowcaseRollStatement,
@@ -34,12 +38,70 @@ interface Captured {
   selects: { sql: string; params: unknown[] }[];
 }
 
-/** Fake connection: `all` answers the watermark + per-table count SELECTs; `transaction` records statements. */
-function makeFakeDb(opts: { watermark?: string | null; count?: number } = {}) {
+/** information_shape row shape returned by the introspection query. */
+interface SchemaRow {
+  table_name: string;
+  column_name: string;
+  data_type: string;
+  udt_name: string;
+}
+
+/** The data_type/udt_name a declared kind maps to when the schema agrees with the label. */
+const KIND_TO_REAL: Record<string, { data_type: string; udt_name: string }> = {
+  text: { data_type: 'text', udt_name: 'text' },
+  timestamp: { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+  timestamptz: { data_type: 'timestamp with time zone', udt_name: 'timestamptz' },
+  date: { data_type: 'date', udt_name: 'date' },
+};
+
+/**
+ * Default information_schema rows: every declared column present, with a real
+ * type that matches its declared kind (no mismatch). Tests override individual
+ * `table.column` real types — or drop them — via the `schema` option.
+ */
+function defaultSchemaRows(): SchemaRow[] {
+  return SHOWCASE_DATE_FIELDS.flatMap((t) =>
+    t.columns.map((c) => ({
+      table_name: t.table,
+      column_name: c.column,
+      ...KIND_TO_REAL[c.kind],
+    }))
+  );
+}
+
+/**
+ * Fake connection: `all` answers the introspection, watermark and per-table
+ * count SELECTs; `transaction` records statements.
+ *
+ * `schema` overrides the real type of specific `table.column` keys (or, with a
+ * `null` value, removes the column) so the mismatch / missing / unsupported
+ * write-paths can be exercised deterministically without Postgres.
+ */
+function makeFakeDb(
+  opts: {
+    watermark?: string | null;
+    count?: number;
+    schema?: Record<string, { data_type: string; udt_name: string } | null>;
+  } = {}
+) {
   const captured: Captured = { transactions: [], selects: [] };
+  const baseRows = defaultSchemaRows();
+  const schemaRows: SchemaRow[] = baseRows
+    .map((row) => {
+      const key = `${row.table_name}.${row.column_name}`;
+      if (!opts.schema || !(key in opts.schema)) return row;
+      const override = opts.schema[key];
+      if (override === null) return null; // column absent from the schema
+      return { ...row, data_type: override.data_type, udt_name: override.udt_name };
+    })
+    .filter((r): r is SchemaRow => r !== null);
+
   const db = {
     all: async <T,>(sql: string, params?: unknown[]): Promise<T[]> => {
       captured.selects.push({ sql, params: params ?? [] });
+      if (/information_schema\.columns/.test(sql)) {
+        return schemaRows as unknown as T[];
+      }
       if (/FROM public\.showcase_date_roll/.test(sql)) {
         return (opts.watermark == null ? [] : [{ last_rolled_on: opts.watermark }]) as T[];
       }
@@ -450,5 +512,150 @@ describe('runShowcaseDateRollTick — job gating', () => {
     expect(roll).toHaveBeenCalledWith({ today: TODAY, orgIds: ['org-a', 'org-b'] });
     expect(out.enabled).toBe(true);
     expect(out.orgIds).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SR-1 v3 (Wpis 62): the generator trusts the REAL schema type, never `kind`.
+// On the live staging schema 7/47 columns carry a real type that differs from
+// their label — 3 fatally (text-declared but really timestamp, where the text
+// write-path emits `~`, an operator that does not exist for a timestamp).
+// ---------------------------------------------------------------------------
+
+describe('kindFromRealType — real schema type → shift write-path (SR-1 v3)', () => {
+  it('maps every supported information_schema type to its write-path', () => {
+    expect(kindFromRealType('text', 'text')).toBe('text');
+    expect(kindFromRealType('character varying', 'varchar')).toBe('text');
+    expect(kindFromRealType('timestamp without time zone', 'timestamp')).toBe('timestamp');
+    expect(kindFromRealType('timestamp with time zone', 'timestamptz')).toBe('timestamptz');
+    expect(kindFromRealType('date', 'date')).toBe('date');
+  });
+
+  it('returns unsupported for a type with no shift write-path', () => {
+    // MUTANT: mapping integer/jsonb/boolean onto a write-path makes this red.
+    expect(kindFromRealType('integer', 'int4')).toBe('unsupported');
+    expect(kindFromRealType('jsonb', 'jsonb')).toBe('unsupported');
+    expect(kindFromRealType('boolean', 'bool')).toBe('unsupported');
+  });
+});
+
+describe('introspectShowcaseColumns — declaration vs real type (SR-1 v3)', () => {
+  it('records a kindMismatch (declared text, real timestamp) without throwing', async () => {
+    const { db } = makeFakeDb({
+      schema: {
+        'tasks.sla_due_at': { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+      },
+    });
+    const intro = await introspectShowcaseColumns(db);
+    // MUTANT: trusting the declared kind (resolved = c.kind) makes this red.
+    expect(intro.resolved.get('tasks.sla_due_at')).toBe('timestamp');
+    expect(intro.kindMismatch).toEqual([
+      {
+        table: 'tasks',
+        column: 'sla_due_at',
+        declared: 'text',
+        real: 'timestamp',
+        realDataType: 'timestamp without time zone',
+      },
+    ]);
+    expect(intro.missing).toEqual([]);
+    expect(intro.unsupported).toEqual([]);
+  });
+
+  it('skips a column absent from the schema (missing), never fatal', async () => {
+    const { db } = makeFakeDb({ schema: { 'tasks.sla_due_at': null } });
+    const intro = await introspectShowcaseColumns(db);
+    expect(intro.missing).toEqual([{ table: 'tasks', column: 'sla_due_at' }]);
+    expect(intro.resolved.has('tasks.sla_due_at')).toBe(false);
+    const sql = buildTableUpdateSql(tableDef('tasks'), intro);
+    expect(sql).not.toBeNull();
+    expect(sql).not.toContain('sla_due_at');
+    expect(sql).toContain('"due_date" =');
+  });
+
+  it('skips a column whose real type has no write-path (unsupported)', async () => {
+    const { db } = makeFakeDb({
+      schema: { 'tasks.sla_due_at': { data_type: 'integer', udt_name: 'int4' } },
+    });
+    const intro = await introspectShowcaseColumns(db);
+    expect(intro.unsupported).toEqual([
+      { table: 'tasks', column: 'sla_due_at', realDataType: 'integer' },
+    ]);
+    expect(intro.resolved.has('tasks.sla_due_at')).toBe(false);
+    expect(buildTableUpdateSql(tableDef('tasks'), intro)).not.toContain('sla_due_at');
+  });
+
+  it('emits NO statement for a table whose only column is absent', async () => {
+    // MUTANT: emitting a SET-less UPDATE instead of null makes this red (invalid SQL).
+    const { db } = makeFakeDb({ schema: { 'okr_vnext_key_results.deadline': null } });
+    const intro = await introspectShowcaseColumns(db);
+    expect(buildTableUpdateSql(tableDef('okr_vnext_key_results'), intro)).toBeNull();
+    expect(buildTableCountSql(tableDef('okr_vnext_key_results'), intro)).toBeNull();
+  });
+});
+
+describe('buildTableUpdateSql — write-path follows the REAL type (SR-1 v3)', () => {
+  it('uses make_interval (not the regex ~) for a text-declared column that is really timestamp', async () => {
+    const { db } = makeFakeDb({
+      schema: {
+        'tasks.sla_due_at': { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+      },
+    });
+    const intro = await introspectShowcaseColumns(db);
+    const sql = buildTableUpdateSql(tableDef('tasks'), intro);
+    expect(sql).not.toBeNull();
+    // MUTANT: choosing the expression from the declared kind (text) makes these red.
+    expect(sql).toContain('"sla_due_at" = ("sla_due_at" + make_interval(days => $2::int))');
+    expect(sql).not.toContain('~'); // no regex anywhere: due_date=timestamptz, milestone=date
+    // the sibling columns keep their own real-type write-paths
+    expect(sql).toContain('"due_date" = ((("due_date" AT TIME ZONE \'UTC\')');
+    expect(sql).toContain('"milestone_target_date" = ("milestone_target_date" + $2::int)');
+  });
+});
+
+describe('rollShowcaseDates — survives the 3 fatal staging columns (SR-1 v3)', () => {
+  const FATAL_AS_TIMESTAMP = {
+    'tasks.sla_due_at': { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+    'initiatives.planned_start_date': { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+    'initiatives.planned_end_date': { data_type: 'timestamp without time zone', udt_name: 'timestamp' },
+  };
+
+  it('rolls without aborting and records kindMismatch in the result and the run proof', async () => {
+    const { db, captured } = makeFakeDb({
+      watermark: '2026-09-10',
+      count: 2,
+      schema: FATAL_AS_TIMESTAMP,
+    });
+    const res = await buildShowcaseDateRoll(db).roll({ today: TODAY, orgIds: ['org-a'] });
+
+    expect(res[0].skipped).toBeUndefined();
+    expect(res[0].deltaDays).toBe(7);
+    // MUTANT: trusting the declared text kind emits `~` on a timestamp → in a
+    // real run the transaction aborts; here the tasks SQL would contain `~`.
+    const tasksIdx = SHOWCASE_DATE_FIELDS.findIndex((t) => t.table === 'tasks');
+    const tasksSql = captured.transactions[0][tasksIdx].sql;
+    expect(tasksSql).toContain('"sla_due_at" = ("sla_due_at" + make_interval');
+    expect(tasksSql).not.toContain('~');
+
+    expect(res[0].kindMismatch?.map((m) => `${m.table}.${m.column}`).sort()).toEqual([
+      'initiatives.planned_end_date',
+      'initiatives.planned_start_date',
+      'tasks.sla_due_at',
+    ]);
+
+    const upsert = captured.transactions[0][captured.transactions[0].length - 1];
+    const proof = JSON.parse(upsert.params[3] as string);
+    expect(proof.tasks).toBe(2); // counts still ride alongside the mismatch note
+    expect(Array.isArray(proof.kindMismatch)).toBe(true);
+    expect(proof.kindMismatch).toHaveLength(3);
+  });
+
+  it('persists NO kindMismatch key when the schema agrees with every label', async () => {
+    const { db, captured } = makeFakeDb({ watermark: '2026-09-10', count: 1 });
+    const res = await buildShowcaseDateRoll(db).roll({ today: TODAY, orgIds: ['org-a'] });
+    expect(res[0].kindMismatch).toBeUndefined();
+    const upsert = captured.transactions[0][captured.transactions[0].length - 1];
+    const proof = JSON.parse(upsert.params[3] as string);
+    expect('kindMismatch' in proof).toBe(false);
   });
 });

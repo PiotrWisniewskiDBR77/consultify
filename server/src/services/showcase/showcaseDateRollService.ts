@@ -285,6 +285,21 @@ export const SHOWCASE_DATE_FIELDS: ShowcaseDateTable[] = [
   },
 ];
 
+/**
+ * A declared `kind` that disagrees with the column's REAL type on the live
+ * schema (information_schema). SR-1 v3 (Wpis 62): the generator trusts the
+ * measured type, never the label, so a divergence is recorded in the run proof
+ * and logged — it is NEVER an exception. `real` is the write-path the generator
+ * actually used; `realDataType` is the raw information_schema `data_type`.
+ */
+export interface ShowcaseKindMismatch {
+  table: string;
+  column: string;
+  declared: ShowcaseDateColumnKind;
+  real: ShowcaseDateColumnKind;
+  realDataType: string;
+}
+
 /** Per-organization outcome of one roll pass. */
 export interface ShowcaseRollOrgResult {
   orgId: string;
@@ -294,6 +309,12 @@ export interface ShowcaseRollOrgResult {
   deltaDays: number;
   /** Rows shifted per physical table (delta 0 → every count 0). */
   perTable: Record<string, number>;
+  /**
+   * Declared `kind` ≠ real schema type for these columns; the REAL type drove
+   * the shift. Present only when at least one divergence was measured, and also
+   * persisted into the `per_table` JSONB run proof under the `kindMismatch` key.
+   */
+  kindMismatch?: ShowcaseKindMismatch[];
   /** Set when the org was not rolled (first run / up-to-date / dry-run / error). */
   skipped?: string;
 }
@@ -437,21 +458,178 @@ function orgPredicate(t: ShowcaseDateTable): string {
   return t.orgScopeSql ?? `"${t.orgColumn ?? 'organization_id'}" = $1`;
 }
 
-/** One UPDATE per table shifting every column by the per-row day count for org $1. */
-function buildTableUpdateSql(t: ShowcaseDateTable): string {
+// ---------------------------------------------------------------------------
+// SR-1 v3 (Wpis 62): runtime type introspection.
+//
+// The live staging schema is NOT produced by the migrations alone (trap #1 of
+// this repo), so 7 of the 47 declared columns carry a REAL type that differs
+// from their `kind` label — 3 of them fatally (`tasks.sla_due_at`,
+// `initiatives.planned_start_date`, `initiatives.planned_end_date` are declared
+// `text` but are really `timestamp`, and the text write-path emits the regex
+// operator `~`, which does not exist for a timestamp → the whole per-org
+// transaction aborts). The generator therefore NEVER trusts `kind`: it reads the
+// real type from `information_schema.columns` and picks the write-path from the
+// MEASURED type. `kind` stays only as a hint; a divergence is recorded in the
+// run proof and logged, not thrown. A column absent from the schema, or of a
+// type with no shift write-path, is skipped (logged), never fatal.
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a real `information_schema.columns` type to the shift write-path. Returns
+ * 'unsupported' for any type the roll has no safe expression for (e.g. integer,
+ * jsonb) — the caller skips such a column instead of guessing.
+ */
+export function kindFromRealType(
+  dataType: string,
+  udtName: string
+): ShowcaseDateColumnKind | 'unsupported' {
+  const dt = String(dataType ?? '').toLowerCase();
+  const udt = String(udtName ?? '').toLowerCase();
+  if (dt === 'date' || udt === 'date') return 'date';
+  if (dt === 'timestamp with time zone' || udt === 'timestamptz') return 'timestamptz';
+  if (dt === 'timestamp without time zone' || udt === 'timestamp') return 'timestamp';
+  if (
+    dt === 'text' ||
+    dt === 'character varying' ||
+    dt === 'character' ||
+    udt === 'text' ||
+    udt === 'varchar' ||
+    udt === 'bpchar' ||
+    udt === 'name' ||
+    udt === 'citext'
+  ) {
+    return 'text';
+  }
+  return 'unsupported';
+}
+
+/** Result of measuring every declared column against the live schema. */
+export interface ColumnIntrospection {
+  /** `table.column` → the REAL write-path kind, for columns present AND supported. */
+  resolved: Map<string, ShowcaseDateColumnKind>;
+  /** `table.column` keys that exist in the schema (supported or not). */
+  present: Set<string>;
+  /** Declared `kind` ≠ real type (both supported): recorded + logged, never thrown. */
+  kindMismatch: ShowcaseKindMismatch[];
+  /** Declared columns absent from the schema: skipped + logged. */
+  missing: { table: string; column: string }[];
+  /** Present columns whose real type has no shift write-path: skipped + logged. */
+  unsupported: { table: string; column: string; realDataType: string }[];
+}
+
+const INTROSPECT_SQL =
+  `SELECT table_name, column_name, data_type, udt_name ` +
+  `FROM information_schema.columns ` +
+  `WHERE table_schema = 'public' AND table_name = ANY($1::text[])`;
+
+/** Measure the real type of every declared column in one information_schema read. */
+export async function introspectShowcaseColumns(
+  db: ShowcaseRollDb
+): Promise<ColumnIntrospection> {
+  const tables = Array.from(new Set(SHOWCASE_DATE_FIELDS.map((t) => t.table)));
+  const rows = await db.all<{
+    table_name: string;
+    column_name: string;
+    data_type: string;
+    udt_name: string;
+  }>(INTROSPECT_SQL, [tables]);
+
+  const realByKey = new Map<string, { dataType: string; udtName: string }>();
+  for (const r of rows) {
+    realByKey.set(`${r.table_name}.${r.column_name}`, {
+      dataType: r.data_type,
+      udtName: r.udt_name,
+    });
+  }
+
+  const intro: ColumnIntrospection = {
+    resolved: new Map(),
+    present: new Set(),
+    kindMismatch: [],
+    missing: [],
+    unsupported: [],
+  };
+
+  for (const t of SHOWCASE_DATE_FIELDS) {
+    for (const c of t.columns) {
+      const key = `${t.table}.${c.column}`;
+      const real = realByKey.get(key);
+      if (!real) {
+        intro.missing.push({ table: t.table, column: c.column });
+        continue;
+      }
+      intro.present.add(key);
+      const realKind = kindFromRealType(real.dataType, real.udtName);
+      if (realKind === 'unsupported') {
+        intro.unsupported.push({
+          table: t.table,
+          column: c.column,
+          realDataType: real.dataType,
+        });
+        continue;
+      }
+      intro.resolved.set(key, realKind);
+      if (realKind !== c.kind) {
+        intro.kindMismatch.push({
+          table: t.table,
+          column: c.column,
+          declared: c.kind,
+          real: realKind,
+          realDataType: real.dataType,
+        });
+      }
+    }
+  }
+  return intro;
+}
+
+/** The declared columns of a table that are present AND supported on the live schema. */
+function shiftableColumns(
+  t: ShowcaseDateTable,
+  intro: ColumnIntrospection
+): ShowcaseDateColumn[] {
+  return t.columns.filter((c) => intro.resolved.has(`${t.table}.${c.column}`));
+}
+
+/**
+ * One UPDATE per table shifting every SHIFTABLE column by the per-row day count
+ * for org $1, each column using the write-path for its REAL measured type.
+ * Returns null when the table has no shiftable column left (all absent or
+ * unsupported) so the caller emits no statement rather than an invalid
+ * `SET`-less UPDATE.
+ */
+export function buildTableUpdateSql(
+  t: ShowcaseDateTable,
+  intro: ColumnIntrospection
+): string | null {
+  const cols = shiftableColumns(t, intro);
+  if (cols.length === 0) return null;
   const days = deltaExpression(t);
-  const sets = t.columns.map((c) => `"${c.column}" = ${shiftExpression(c.column, c.kind, days)}`).join(', ');
+  const sets = cols
+    .map((c) => {
+      const realKind = intro.resolved.get(`${t.table}.${c.column}`) as ShowcaseDateColumnKind;
+      return `"${c.column}" = ${shiftExpression(c.column, realKind, days)}`;
+    })
+    .join(', ');
   return (
     `UPDATE public."${t.table}" SET ${sets} ` +
-    `WHERE ${orgPredicate(t)} AND (${anyNotNull(t.columns)})`
+    `WHERE ${orgPredicate(t)} AND (${anyNotNull(cols)})`
   );
 }
 
-/** Candidate count: org rows with at least one non-null shifted column. */
-function buildTableCountSql(t: ShowcaseDateTable): string {
+/**
+ * Candidate count: org rows with at least one non-null SHIFTABLE column. Null
+ * when the table has nothing shiftable (mirrors buildTableUpdateSql).
+ */
+export function buildTableCountSql(
+  t: ShowcaseDateTable,
+  intro: ColumnIntrospection
+): string | null {
+  const cols = shiftableColumns(t, intro);
+  if (cols.length === 0) return null;
   return (
     `SELECT count(*)::int AS n FROM public."${t.table}" ` +
-    `WHERE ${orgPredicate(t)} AND (${anyNotNull(t.columns)})`
+    `WHERE ${orgPredicate(t)} AND (${anyNotNull(cols)})`
   );
 }
 
@@ -483,11 +661,17 @@ const UPSERT_WATERMARK_SQL =
  */
 async function countCandidates(
   db: ShowcaseRollDb,
-  orgId: string
+  orgId: string,
+  intro: ColumnIntrospection
 ): Promise<Record<string, number>> {
   const perTable: Record<string, number> = {};
   for (const t of SHOWCASE_DATE_FIELDS) {
-    const r = await db.all<{ n: number }>(buildTableCountSql(t), [orgId]);
+    const sql = buildTableCountSql(t, intro);
+    if (!sql) {
+      perTable[t.table] = 0; // nothing shiftable on the live schema
+      continue;
+    }
+    const r = await db.all<{ n: number }>(sql, [orgId]);
     perTable[t.table] = Number(r[0]?.n ?? 0);
   }
   return perTable;
@@ -543,33 +727,70 @@ async function rollOne(
     return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'negative_delta' };
   }
 
-  const perTable = await countCandidates(db, orgId);
+  // SR-1 v3 (Wpis 62): measure the REAL schema types before building any SQL.
+  // A divergence from the declared `kind` is recorded + logged, never thrown; an
+  // absent or unsupported column is skipped so the transaction can never abort
+  // on a write-path that does not exist for the column's real type.
+  const intro = await introspectShowcaseColumns(db);
+  if (intro.kindMismatch.length > 0) {
+    logger.warn(
+      `[ShowcaseRoll] org ${orgId}: ${intro.kindMismatch.length} column(s) declared kind ≠ real schema type — using the REAL type`,
+      { kindMismatch: intro.kindMismatch }
+    );
+  }
+  if (intro.missing.length > 0) {
+    logger.warn(
+      `[ShowcaseRoll] org ${orgId}: ${intro.missing.length} declared column(s) absent from schema — skipped`,
+      { missing: intro.missing }
+    );
+  }
+  if (intro.unsupported.length > 0) {
+    logger.warn(
+      `[ShowcaseRoll] org ${orgId}: ${intro.unsupported.length} column(s) of an unsupported real type — skipped`,
+      { unsupported: intro.unsupported }
+    );
+  }
+
+  const perTable = await countCandidates(db, orgId, intro);
+  const kindMismatch = intro.kindMismatch.length > 0 ? intro.kindMismatch : undefined;
 
   if (dryRun) {
-    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable, skipped: 'dry_run' };
+    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable, kindMismatch, skipped: 'dry_run' };
   }
 
   const weeklyDelta = computeWeeklyDeltaDays(delta);
 
-  // One transaction per org: all table UPDATEs + the watermark/run-proof upsert.
-  const statements: ShowcaseRollStatement[] = SHOWCASE_DATE_FIELDS.map((t) => ({
-    sql: buildTableUpdateSql(t),
-    params: t.recurrence ? [orgId, delta, weeklyDelta] : [orgId, delta],
-  }));
+  // One transaction per org: every table UPDATE that still has a shiftable
+  // column + the watermark/run-proof upsert. Tables reduced to nothing by the
+  // introspection emit no statement (buildTableUpdateSql → null).
+  const statements: ShowcaseRollStatement[] = [];
+  for (const t of SHOWCASE_DATE_FIELDS) {
+    const sql = buildTableUpdateSql(t, intro);
+    if (!sql) continue;
+    statements.push({
+      sql,
+      params: t.recurrence ? [orgId, delta, weeklyDelta] : [orgId, delta],
+    });
+  }
+  // The run proof carries the per-table counts and, when measured, the
+  // declaration≠type divergences, so the ledger itself records what the
+  // generator did NOT trust.
+  const proof: Record<string, unknown> = { ...perTable };
+  if (kindMismatch) proof.kindMismatch = kindMismatch;
   statements.push({
     sql: UPSERT_WATERMARK_SQL,
-    params: [orgId, todayIso, delta, JSON.stringify(perTable)],
+    params: [orgId, todayIso, delta, JSON.stringify(proof)],
   });
 
   const tx = await db.transaction(statements);
   if (!tx.success) {
     logger.error(`[ShowcaseRoll] org ${orgId}: transaction failed: ${tx.error}`);
-    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, skipped: 'error' };
+    return { orgId, lastRolledOn: lastIso, deltaDays: delta, perTable: {}, kindMismatch, skipped: 'error' };
   }
 
   logger.info(`[ShowcaseRoll] org ${orgId}: rolled +${delta}d (weekly +${weeklyDelta}d)`, { perTable });
 
-  return { orgId, lastRolledOn: todayIso, deltaDays: delta, perTable };
+  return { orgId, lastRolledOn: todayIso, deltaDays: delta, perTable, kindMismatch };
 }
 
 /**
@@ -601,6 +822,11 @@ export function buildShowcaseDateRoll(db: ShowcaseRollDb = defaultDb) {
  *    row) initializes last_rolled_on = today WITHOUT shifting (delta 0).
  *  - one transaction per org; every shifted column moves by delta, except
  *    weekly-recurring meetings which move by round(delta/7)*7 (VARIANT B).
+ *  - SR-1 v3 (Wpis 62): each column's shift write-path is chosen from its REAL
+ *    information_schema type, never its declared `kind`; a divergence is
+ *    recorded in the run proof (`per_table.kindMismatch`) and logged, and an
+ *    absent/unsupported column is skipped — so a label that lies about the live
+ *    schema can never abort the transaction.
  *  - each actual roll persists its run proof (delta_days + per_table row counts).
  *  - idempotent: a second pass the same day has delta 0 → 0 changes, no write.
  *  - never touches orgs outside `orgIds` (every statement filters by org).
@@ -617,4 +843,8 @@ export default {
   SHOWCASE_DATE_FIELDS,
   computeDeltaDays,
   computeWeeklyDeltaDays,
+  kindFromRealType,
+  introspectShowcaseColumns,
+  buildTableUpdateSql,
+  buildTableCountSql,
 };
