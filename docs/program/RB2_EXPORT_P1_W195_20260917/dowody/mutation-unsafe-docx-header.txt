@@ -1,0 +1,56 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:37:10:3710 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 08:37:10:3710 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 08:37:10:3710 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 08:37:10:3710 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 08:37:10:3710 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export
+2026-09-17 08:37:17:3717 [32minfo[39m: [32m[ReportBuilder] Word (.docx) exported[39m {"reportId":"r-1","userId":"u-1"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export
+2026-09-17 08:37:17:3717 [31merror[39m: [31m[ReportBuilder] Error exporting Word (.docx): Invalid character in header content ["Content-Disposition"][39m {"code":"ERR_INVALID_CHAR","stack":"TypeError: Invalid character in header content [\"Content-Disposition\"]\n    at ServerResponse.setHeader (node:_http_outgoing:645:3)\n    at exportDocx (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3823:9)"}
+
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when pptx export generation throws
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when docx export persistence throws
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records completed canonical export trace for cloud publish success
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace for cloud publish failure
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > exports with advisory quality warnings when report is not export-ready
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > rejects cross-organization downloads and cloud publish before quality or audit writes
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pdf export
+ × tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export 176ms
+   → expected 500 to be 200 // Object.is equality
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pptx export
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pdf export
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public docx export
+ ↓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pptx export
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/routes/report-builder.export-trace.routes.test.ts:275:24
+    273|     const res = await request(app).get(url).buffer(true).parse(parseBi…
+    274|
+    275|     expect(res.status).toBe(200);
+       |                        ^
+    276|     const disposition = String(res.headers['content-disposition'] || '…
+    277|     expect(disposition).not.toContain('—');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  08:37:02
+   Duration  15.49s (transform 8.05s, setup 915ms, import 10.94s, tests 183ms, environment 2.96s)

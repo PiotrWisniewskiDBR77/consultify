@@ -1,0 +1,157 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:36:19:3619 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 08:36:19:3619 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 08:36:19:3619 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 08:36:19:3619 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 08:36:19:3619 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.659Z] [DEBUG] [AI:CircuitBreaker] Table circuit_breaker_state not ready yet, skipping state restoration[39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.661Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.662Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.662Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.663Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-17 08:36:27:3627 [32minfo[39m: [32m[2026-09-17T13:36:27.663Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when pptx export generation throws
+2026-09-17 08:36:27:3627 [31merror[39m: [31m[ReportBuilder] Error exporting PPTX: pptx generation failed[39m {"stack":"Error: pptx generation failed\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/tests/integration/routes/report-builder.export-trace.routes.test.ts:134:48\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at wrapper (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52\n    at run (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)\n    at limiterFn (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)\n    at runHook (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when docx export persistence throws
+2026-09-17 08:36:28:3628 [31merror[39m: [31m[ReportBuilder] Error exporting Word (.docx): persist boom[39m {"stack":"Error: persist boom\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/tests/integration/routes/report-builder.export-trace.routes.test.ts:176:50\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"}
+
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when pptx export generation throws 359ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace when docx export persistence throws 51ms
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace for cloud publish failure
+2026-09-17 08:36:28:3628 [31merror[39m: [31m[ReportBuilder] Error publishing to cloud: upload failed[39m {"stack":"Error: upload failed\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/tests/integration/routes/report-builder.export-trace.routes.test.ts:204:47\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"}
+
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records completed canonical export trace for cloud publish success 170ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > records failed canonical export trace for cloud publish failure 47ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > exports with advisory quality warnings when report is not export-ready 33ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > rejects cross-organization downloads and cloud publish before quality or audit writes 7ms
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pdf export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilder] PDF exported[39m {"reportId":"r-1","userId":"u-1"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilder] Word (.docx) exported[39m {"reportId":"r-1","userId":"u-1"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pptx export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilder] PPTX v1 exported[39m {"reportId":"r-1","userId":"u-1"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pdf export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilderPublic] PDF downloaded via public link[39m {"reportId":"r-1","token":"share-token"}
+
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pdf export 28ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private docx export 8ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for private pptx export 8ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pdf export 18ms
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public docx export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilderPublic] DOCX downloaded via public link[39m {"reportId":"r-1","token":"share-token"}
+
+stdout | tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pptx export
+2026-09-17 08:36:28:3628 [32minfo[39m: [32m[ReportBuilderPublic] PPTX downloaded via public link[39m {"reportId":"r-1","token":"share-token","slides":1}
+
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public docx export 82ms
+ ✓ tests/integration/routes/report-builder.export-trace.routes.test.ts > report-builder export trace failure parity > returns a safe UTF-8 attachment header for public pptx export 7ms
+stdout | tests/unit/services/pptx-esm-loading.test.ts > PPTX services in the Node ESM runtime > loads the legacy report exporter without a global require
+2026-09-17 08:36:31:3631 [32minfo[39m: [32m[PptxExport] Generating presentation for report: report-1[39m
+
+stdout | tests/unit/services/pptx-esm-loading.test.ts > PPTX services in the Node ESM runtime > loads the legacy report exporter without a global require
+2026-09-17 08:36:31:3631 [32minfo[39m: [32m[PptxExport] Presentation generated successfully[39m
+
+ ✓ tests/unit/services/pptx-esm-loading.test.ts > PPTX services in the Node ESM runtime > loads the legacy report exporter without a global require 646ms
+ ✓ tests/unit/services/pptx-esm-loading.test.ts > PPTX services in the Node ESM runtime > loads the assessment deck exporter without a global require 53ms
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts
+2026-09-17 08:36:33:3633 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 08:36:33:3633 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 08:36:33:3633 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 08:36:33:3633 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 08:36:33:3633 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (a) shadow mode (default): gated publishState does not block
+2026-09-17 08:36:36:3636 [33mwarn[39m: [33m[ExportApprovalGate] export of un-approved artifact[39m {"organizationId":"org-1","userId":"u-1","originRuntime":"report","originRecordId":"r-1","format":"pdf","publishState":"changes_requested","mode":"shadow","blocked":false}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (a) shadow mode (default): gated publishState does not block
+2026-09-17 08:36:36:3636 [31merror[39m: [31m[ReportBuilder] Error exporting PDF: Not a supported font format or standard PDF font.[39m {"stack":"Error: Not a supported font format or standard PDF font.\n    at PDFFontFactory.open (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2614:13)\n    at PDFDocument.font (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2671:33)\n    at registerPdfFonts (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/utils/pdfFonts.ts:143:7)\n    at writeReportBuilderPdf (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3265:3)\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3700:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (b) enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED
+2026-09-17 08:36:36:3636 [33mwarn[39m: [33m[ExportApprovalGate] export of un-approved artifact[39m {"organizationId":"org-1","userId":"u-1","originRuntime":"report","originRecordId":"r-1","format":"pdf","publishState":"changes_requested","mode":"enforce","blocked":true}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (c) enforce mode: approved publishState -> succeeds
+2026-09-17 08:36:36:3636 [31merror[39m: [31m[ReportBuilder] Error exporting PDF: Not a supported font format or standard PDF font.[39m {"stack":"Error: Not a supported font format or standard PDF font.\n    at PDFFontFactory.open (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2614:13)\n    at PDFDocument.font (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2671:33)\n    at registerPdfFonts (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/utils/pdfFonts.ts:143:7)\n    at writeReportBuilderPdf (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3265:3)\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3700:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (d) enforce mode: NULL publishState (never reviewed) -> always succeeds, never 403
+2026-09-17 08:36:36:3636 [31merror[39m: [31m[ReportBuilder] Error exporting PDF: Not a supported font format or standard PDF font.[39m {"stack":"Error: Not a supported font format or standard PDF font.\n    at PDFFontFactory.open (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2614:13)\n    at PDFDocument.font (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2671:33)\n    at registerPdfFonts (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/utils/pdfFonts.ts:143:7)\n    at writeReportBuilderPdf (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3265:3)\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3700:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > fail-open: no artifact registry link at all -> never 403s on approval (existence is a separate concern)
+2026-09-17 08:36:36:3636 [31merror[39m: [31m[ReportBuilder] Error exporting PDF: Not a supported font format or standard PDF font.[39m {"stack":"Error: Not a supported font format or standard PDF font.\n    at PDFFontFactory.open (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2614:13)\n    at PDFDocument.font (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/pdfkit/js/pdfkit.js:2671:33)\n    at registerPdfFonts (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/utils/pdfFonts.ts:143:7)\n    at writeReportBuilderPdf (/Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3265:3)\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/server/src/routes/report-builder.routes.ts:3700:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED
+2026-09-17 08:36:36:3636 [33mwarn[39m: [33m[ExportApprovalGate] export of un-approved artifact[39m {"organizationId":"org-1","userId":"u-1","originRuntime":"report","originRecordId":"r-1","format":"docx","publishState":"reviewable_share","mode":"enforce","blocked":true}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > shadow mode: gated publishState does not block
+2026-09-17 08:36:36:3636 [33mwarn[39m: [33m[ExportApprovalGate] export of un-approved artifact[39m {"organizationId":"org-1","userId":"u-1","originRuntime":"report","originRecordId":"r-1","format":"docx","publishState":"reviewable_share","mode":"shadow","blocked":false}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > shadow mode: gated publishState does not block
+2026-09-17 08:36:36:3636 [32minfo[39m: [32m[DocumentStudio][Seeder] system catalogue seeded[39m {"inserted":44,"skipped":0,"total":44}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > shadow mode: gated publishState does not block
+2026-09-17 08:36:37:3637 [32minfo[39m: [32m[ReportBuilder] Word (.docx) exported[39m {"reportId":"r-1","userId":"u-1"}
+
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (a) shadow mode (default): gated publishState does not block 201ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (b) enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED 15ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (c) enforce mode: approved publishState -> succeeds 13ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > (d) enforce mode: NULL publishState (never reviewed) -> always succeeds, never 403 56ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pdf > fail-open: no artifact registry link at all -> never 403s on approval (existence is a separate concern) 11ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED 3ms
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pptx > enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED (before quality gate / generation run)
+2026-09-17 08:36:37:3637 [33mwarn[39m: [33m[ExportApprovalGate] export of un-approved artifact[39m {"organizationId":"org-1","userId":"u-1","originRuntime":"report","originRecordId":"r-1","format":"pptx","publishState":"private_draft","mode":"enforce","blocked":true}
+
+stdout | tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pptx > enforce mode: approved publishState -> proceeds past the approval gate
+2026-09-17 08:36:37:3637 [32minfo[39m: [32m[ReportBuilder] PPTX v1 exported[39m {"reportId":"r-1","userId":"u-1"}
+
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/docx > shadow mode: gated publishState does not block 612ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pptx > enforce mode: gated publishState -> 403 EXPORT_NOT_APPROVED (before quality gate / generation run) 13ms
+ ✓ tests/integration/routes/report-builder.export-approval-gate.route.test.ts > M17 — report-builder export-approval gate (pdf/docx/pptx) > GET /:id/export/pptx > enforce mode: approved publishState -> proceeds past the approval gate 82ms
+stdout | tests/integration/routes/report-builder-public.docx.routes.test.ts
+2026-09-17 08:36:39:3639 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 08:36:39:3639 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 08:36:39:3639 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 08:36:39:3639 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 08:36:39:3639 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/report-builder-public.docx.routes.test.ts > public report DOCX download > GET /api/public/report/:token/docx returns docx (zip) with proper headers
+2026-09-17 08:36:40:3640 [32minfo[39m: [32m[ReportBuilderPublic] DOCX downloaded via public link[39m {"reportId":"r-1","token":"tok-1"}
+
+ ✓ tests/integration/routes/report-builder-public.docx.routes.test.ts > public report DOCX download > GET /api/public/report/:token/docx returns docx (zip) with proper headers 513ms
+stdout | tests/integration/routes/report-builder.fail-closed.contract.test.ts
+2026-09-17 08:36:42:3642 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 08:36:42:3642 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 08:36:42:3642 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 08:36:42:3642 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 08:36:42:3642 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/routes/report-builder.fail-closed.contract.test.ts > report-builder fail-closed contract > returns coded 500 for block type create failures without internals leak
+2026-09-17 08:36:47:3647 [31merror[39m: [31m[ReportBuilder] Error creating block type: RB_INTERNAL_SECRET_DB_CONN[39m {"stack":"Error: RB_INTERNAL_SECRET_DB_CONN\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/tests/integration/routes/report-builder.fail-closed.contract.test.ts:140:47\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"}
+
+stdout | tests/integration/routes/report-builder.fail-closed.contract.test.ts > report-builder fail-closed contract > returns coded 500 for notion export failures without internals leak
+2026-09-17 08:36:47:3647 [31merror[39m: [31m[ReportBuilder] Error exporting to Notion: NOTION_EXPORT_INTERNAL_PAYLOAD[39m {"stack":"Error: NOTION_EXPORT_INTERNAL_PAYLOAD\n    at /Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/tests/integration/routes/report-builder.fail-closed.contract.test.ts:155:41\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/piotrwisniewski/Developer/codex-wt/b-rb2-export-p1-w195-20260917/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"}
+
+ ✓ tests/integration/routes/report-builder.fail-closed.contract.test.ts > report-builder fail-closed contract > returns coded 500 for block type create failures without internals leak 76ms
+ ✓ tests/integration/routes/report-builder.fail-closed.contract.test.ts > report-builder fail-closed contract > returns coded 500 for notion export failures without internals leak 8ms
+
+ Test Files  5 passed (5)
+      Tests  26 passed (26)
+   Start at  08:36:08
+   Duration  39.00s (transform 13.60s, setup 2.03s, import 22.12s, tests 3.17s, environment 8.76s)

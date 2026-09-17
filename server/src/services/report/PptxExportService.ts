@@ -5,10 +5,13 @@
  * Uses pptxgenjs library for generating PPTX files.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const PptxGenJS: any = require('pptxgenjs');
+import { createRequire } from 'module';
 
 import logger from '../../utils/Logger.js';
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const PptxGenJS: any = require('pptxgenjs');
 
 // ============================================
 // TYPES
