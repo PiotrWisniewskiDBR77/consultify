@@ -2,14 +2,14 @@ import { Pin, PinOff } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { registerEmbeddedModuleChatHost } from '@/components/shared/embeddedModuleChatHost';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import {
   PREVIEW_HEADER_ICON_BUTTON,
   PREVIEW_HEADER_ICON_BUTTON_ACTIVE,
   PREVIEW_HEADER_ICON_SIZE,
   PREVIEW_HEADER_OPEN_BUTTON,
 } from '@/components/shared/PreviewPane/previewStyles';
-import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
-import { registerEmbeddedModuleChatHost } from '@/components/shared/embeddedModuleChatHost';
 import type { StandardPreviewProps } from '@/components/standard/StandardPreview';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import type { WorkspaceContext } from '@/types/workspace';
@@ -91,7 +91,7 @@ export function JedenPrawyPanel({ rekord, className }: JedenPrawyPanelProps) {
           title={props.openDisabledReason}
           className={PREVIEW_HEADER_OPEN_BUTTON}
         >
-          {t('common.open', 'Open')}
+          {props.openLabel ?? t('common.open', 'Open')}
         </button>
       ) : null}
     </>
@@ -100,10 +100,7 @@ export function JedenPrawyPanel({ rekord, className }: JedenPrawyPanelProps) {
   return (
     <aside
       data-right-panel
-      className={[
-        'h-full shrink-0 overflow-hidden bg-c-surface-raised p-3',
-        className,
-      ]
+      className={['h-full shrink-0 overflow-hidden bg-c-surface-raised p-3', className]
         .filter(Boolean)
         .join(' ')}
       style={{ width: PREVIEW_PANE_WIDTH }}

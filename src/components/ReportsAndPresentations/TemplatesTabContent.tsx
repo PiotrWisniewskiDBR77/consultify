@@ -264,12 +264,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     />
   );
 
-  const columns: StandardTableColumn[] = useMemo(
-    () => [
+  const columns: StandardTableColumn[] = useMemo(() => {
+    const allColumns: StandardTableColumn[] = [
       {
         id: 'title',
         label: t('rap.columns.name', 'Name'),
-        width: '280px',
+        width: '240px',
         render: (row: TemplateItem) => (
           <div className="flex items-center gap-2 min-w-0">
             {row.type === 'report' ? (
@@ -321,7 +321,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       {
         id: 'type',
         label: t('rap.columns.type', 'Typ'),
-        width: '130px',
+        width: '150px',
         filterable: true,
         filterOptions: [
           { value: 'report', label: t('reports.report'), color: 'bg-blue-400' },
@@ -335,9 +335,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_TYPE_META[row.type];
           return (
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-c-surface-raised">
-              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-xs font-medium text-c-text-secondary">
+            <div className="inline-flex items-center gap-0.5 px-0.5 py-0.5 rounded-full bg-c-surface-raised">
+              <span className={`w-1.5 h-1.5 rounded-full ${meta.dotColor}`} />
+              <span className="text-[11px] font-medium text-c-text-secondary">
                 {isPolish ? meta.labelPl : meta.label}
               </span>
             </div>
@@ -419,7 +419,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       {
         id: 'scope',
         label: t('rap.columns.scope', 'Scope'),
-        width: '160px',
+        width: '150px',
         dataType: 'text',
         pinned: 'right',
         filterable: true,
@@ -512,9 +512,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           );
         },
       },
-    ],
-    [t, isPolish, scopeLabel]
-  );
+    ];
+
+    // With the canonical right preview open, the table lane is 912 px wide.
+    // Category and Last change are secondary metadata already visible in the
+    // preview. Removing them keeps the remaining 4 data columns inside that
+    // lane, so sticky Scope/Status never paint over Type.
+    return selectedId
+      ? allColumns.filter((column) => column.id !== 'category' && column.id !== 'updatedAt')
+      : allColumns;
+  }, [t, isPolish, scopeLabel, selectedId]);
 
   // Triada standard (canon A6 / ANEKS #4): moduł deklaruje TYLKO bloki 1-3;
   // StandardTable sam dokłada blok 4 (Open preview · Edit · Archive) i blok 5
@@ -650,6 +657,21 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   }, [initialArtifactId, filteredData]);
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
+  const selectedUsePath = selectedItem ? resolveUsePath(selectedItem) : null;
+  const selectedUseBlockedReason = selectedItem
+    ? String(selectedItem.status).toLowerCase() === 'deprecated'
+      ? t('rap.templates.deprecatedUseBlocked', 'A deprecated template cannot be used.')
+      : !selectedUsePath
+        ? t(
+            selectedItem.originRuntime === 'sheet_template'
+              ? 'rap.templates.sheetUseBlocked'
+              : 'rap.templates.useBlocked',
+            selectedItem.originRuntime === 'sheet_template'
+              ? 'Use Duplicate to create an editable scorecard workbook.'
+              : 'No canonical template record — there is nothing to use.'
+          )
+        : undefined
+    : undefined;
 
   // Triada standard (canon A7/A8): StandardPreview action grid — row 1
   // rozstrzygnięcia (none — templates have no approve/reject step), row 2
@@ -684,8 +706,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 shortcut: 'O',
                 // Sierota → akcja wyłączona (bez cichego fallbacku).
                 disabled:
-                  !resolveUsePath(selectedItem) ||
-                  String(selectedItem.status).toLowerCase() === 'deprecated',
+                  !selectedUsePath || String(selectedItem.status).toLowerCase() === 'deprecated',
                 onClick: () => handleUseTemplate(selectedItem),
               },
               {
@@ -724,10 +745,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       t,
       navigate,
       openChat,
-      resolveUsePath,
       handleUseTemplate,
       duplicateBusyId,
       handleDuplicateTemplate,
+      selectedUsePath,
     ]
   );
 
@@ -914,7 +935,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       }}
       rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
       defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-      persistKey="rap.templates.list"
+      persistKey="rap.templates.list.v4"
       selection={{ selectedIds, onChange: setSelectedIds }}
       minTableWidth="columns"
       empty={{
@@ -959,8 +980,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           <StandardPreview
             title={selectedItem.title}
             onClose={() => setSelectedId(null)}
-            onOpenFull={() => handleUseTemplate(selectedItem)}
+            onOpenFull={
+              selectedUsePath && !selectedUseBlockedReason
+                ? () => handleUseTemplate(selectedItem)
+                : undefined
+            }
             openLabel={t('rap.actions.useTemplate', 'Use template')}
+            openDisabledReason={selectedUseBlockedReason}
             meta={{
               pills: [
                 ...(typeMeta

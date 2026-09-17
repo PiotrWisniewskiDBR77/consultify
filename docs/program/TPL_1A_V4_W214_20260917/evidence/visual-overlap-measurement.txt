@@ -1,0 +1,2 @@
+EVAL: {"viewport":{"width":1344,"height":900},"lane":{"clientWidth":912,"scrollWidth":912},"headers":["","Name","Type","Scope","Status",""],"rowCount":5,"coveredCount":0,"truncatedCount":0,"covered":[],"truncated":[],"disabledUse":[{"label":"Use template","title":"Use Duplicate to create an editable scorecard workbook.","describedBy":null},{"label":"Use templateO","title":"","describedBy":"preview-action-use-note"}],"reason":"Use Duplicate to create an editable scorecard workbook."}
+OK -> docs/program/TPL_1A_V4_W214_20260917/evidence/tpl1a-v4-preview-lane912.png

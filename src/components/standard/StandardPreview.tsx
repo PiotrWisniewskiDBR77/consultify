@@ -353,66 +353,66 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   const actionRows = orderPreviewActionRows(actions);
 
   const footer = (
-      // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
-      <div className="space-y-2.5">
-        {/* Blok 4 — ramka AI. Ramkę rysuje sam `PreviewAIHintStrip` (jedno
+    // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
+    <div className="space-y-2.5">
+      {/* Blok 4 — ramka AI. Ramkę rysuje sam `PreviewAIHintStrip` (jedno
             miejsce w całej aplikacji) — tutaj NIE opakowujemy, bo dałoby to
             podwójną ramkę. Patrz nota w `PreviewAIHintStrip.tsx`. */}
-        {ai ? <PreviewAIHintStrip {...ai} /> : null}
+      {ai ? <PreviewAIHintStrip {...ai} /> : null}
 
-        {/* Blok 5 — Relations */}
-        <PreviewRelations
-          items={relations ?? []}
-          emptyLabel={
-            relationsEmptyLabel ??
-            t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
-          }
-        />
+      {/* Blok 5 — Relations */}
+      <PreviewRelations
+        items={relations ?? []}
+        emptyLabel={
+          relationsEmptyLabel ??
+          t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+        }
+      />
 
-        {/* Blok 6 — pełny blok akcji na dole */}
-        {actionRows.length > 0 ? (
-          <div data-preview-block="actions" className="space-y-2.5 py-1">
-            {actionRows.map((row, idx) => (
-              <ActionGridRow key={idx} actions={row} />
-            ))}
-          </div>
-        ) : null}
+      {/* Blok 6 — pełny blok akcji na dole */}
+      {actionRows.length > 0 ? (
+        <div data-preview-block="actions" className="space-y-2.5 py-1">
+          {actionRows.map((row, idx) => (
+            <ActionGridRow key={idx} actions={row} />
+          ))}
+        </div>
+      ) : null}
 
-        {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
+      {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
             tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
-        {whatsNext ? (
-          /* Ramka bloku „Co dalej" mieszka w JEDNYM miejscu w aplikacji —
+      {whatsNext ? (
+        /* Ramka bloku „Co dalej" mieszka w JEDNYM miejscu w aplikacji —
              `PreviewWhatsNextCard`. Do 2026-09-02 `StandardPreview` trzymał tu
              WŁASNĄ kopię tej ramki (te same klasy, osobny literał), przez co
              fasada kanonu i wołacze spoza niej (np. `IdeaPreview`) mogły się
              rozjechać bez śladu w kodzie. Powłoka deklaruje treść, ramkę
              narzuca komponent. */
-          <PreviewWhatsNextCard
-            label={whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
-            isPolish={isPolish}
-            note={whatsNext.note}
-          >
-            <div className="flex flex-wrap gap-1.5">
-              {whatsNext.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={item.onClick}
-                    disabled={item.disabled}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    {Icon ? <Icon size={12} /> : null}
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </PreviewWhatsNextCard>
-        ) : null}
-      </div>
-    );
+        <PreviewWhatsNextCard
+          label={whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
+          isPolish={isPolish}
+          note={whatsNext.note}
+        >
+          <div className="flex flex-wrap gap-1.5">
+            {whatsNext.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={item.onClick}
+                  disabled={item.disabled}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {Icon ? <Icon size={12} /> : null}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </PreviewWhatsNextCard>
+      ) : null}
+    </div>
+  );
 
   return (
     <PreviewPaneShell
@@ -464,7 +464,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               title={openDisabledReason}
               className={PREVIEW_HEADER_OPEN_BUTTON}
             >
-              {t('common.open', isPolish ? 'Otwórz' : 'Open')}
+              {openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
             </button>
           ) : null}
         </>
@@ -532,9 +532,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   // notatka spychała to na wywołujących („owned by other lanes") —
                   // ale poprawka domyślnej wartości naprawia wszystkie naraz,
                   // a wywołujący ze swoją etykietą dalej ją nadpisują.
-                  propertyLabel={
-                    details.propertyLabel ?? t('standardPreview.property', 'Property')
-                  }
+                  propertyLabel={details.propertyLabel ?? t('standardPreview.property', 'Property')}
                   valueLabel={details.valueLabel ?? t('standardPreview.value', 'Value')}
                 />
               ) : null}

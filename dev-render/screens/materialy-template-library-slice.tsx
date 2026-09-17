@@ -115,22 +115,20 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 'idx-5555-5555-5555-555555555555',
     artifactIndexId: 'idx-5555-5555-5555-555555555555',
-    canonicalTemplateId: 'wb-tpl-3333-4444-5555-666666666666',
-    originRuntime: null,
+    canonicalTemplateId: '2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1',
+    originRuntime: 'sheet_template',
     source: 'canonical',
     legacy: false,
     orphaned: false,
-    title: 'Model budżetu operacyjnego (arkusz)',
+    title: 'Supplier scorecard workbook',
     description:
-      'TemplateItem nie niesie żadnego pola struktury dla arkuszy (mapCanonicalTemplateArtifact ' +
-      'nigdy nie ustawia licznika dla type=sheet) — miniatura Galerii ma być zawsze ta sama ' +
-      'neutralna sylwetka, nie zmyślona liczba kolumn/wierszy/zakładek.',
+      'English system workbook base with a scorecard and field map; duplicate it to create an editable copy.',
     type: 'sheet',
     category: 'custom',
-    scope: 'organization',
-    status: 'published',
-    updatedAt: '2026-07-20T07:55:00.000Z',
-    createdBy: 'Zespół DRD',
+    scope: 'system',
+    status: 'approved',
+    updatedAt: '2026-09-16T07:55:00.000Z',
+    createdBy: 'System',
   },
 ];
 
@@ -144,7 +142,10 @@ export default function MaterialyTemplateLibrarySliceScreen(): React.ReactElemen
     <MemoryRouter initialEntries={['/materialy?tab=templates']}>
       <FeatureFlagsProvider showDevTools={false}>
         <div className="h-screen w-screen bg-c-bg flex flex-col">
-          <div className="border-b border-c-border px-6 py-3 shrink-0" data-dev-render-chrome="true">
+          <div
+            className="border-b border-c-border px-6 py-3 shrink-0"
+            data-dev-render-chrome="true"
+          >
             <div className="text-sm font-semibold text-c-text">
               Materiały ▸ Biblioteka wzorców — slice „szablon dokumentu"
             </div>

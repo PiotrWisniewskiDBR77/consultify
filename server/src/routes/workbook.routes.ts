@@ -14,10 +14,12 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { resolveLocale } from '../services/ai/languagePolicy.js';
 import ArtifactApprovalService from '../services/artifactApprovalService.js';
 import {
   type ArtifactClassification,
@@ -36,28 +38,26 @@ import {
   undoWorkbookCommand,
   WorkbookCommandError,
 } from '../services/workbook/workbookCommandService.js';
+import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import {
   pruneWorkbookRuntimeCache,
   workbookRuntimeCache as workbookCache,
 } from '../services/workbook/workbookRuntimeCache.js';
-import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
-import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
 import {
+  type CellStyle,
   ChartImageSchema,
   ConditionalFormattingBlockSchema,
-  type CellStyle,
   type WorkbookSchema,
   WorkbookSchemaValidator,
 } from '../services/workbook/WorkbookSchema.js';
+import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { resolveLocale } from '../services/ai/languagePolicy.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
-import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -1152,14 +1152,14 @@ async function resolveWorkbookTemplateLocale(
 ): Promise<import('../services/workbook/templates/index.js').WorkbookLocale> {
   const { normalizeWorkbookLocale } = await import('../services/workbook/templates/index.js');
   const explicit = normalizeWorkbookLocale(
-    (req.query?.lang as string | undefined) ?? (req.body as { locale?: unknown } | undefined)?.locale
+    (req.query?.lang as string | undefined) ??
+      (req.body as { locale?: unknown } | undefined)?.locale
   );
   if (explicit) return explicit;
 
   try {
     const userRow = (await dbGet(`SELECT language FROM users WHERE id = ?`, [user.id])) as
-      | { language?: string | null }
-      | undefined;
+      { language?: string | null } | undefined;
     const userLocale = normalizeWorkbookLocale(userRow?.language);
     if (userLocale) return userLocale;
   } catch {
@@ -1167,8 +1167,7 @@ async function resolveWorkbookTemplateLocale(
   }
   try {
     const userRow = (await dbGet(`SELECT locale FROM users WHERE id = ?`, [user.id])) as
-      | { locale?: string | null }
-      | undefined;
+      { locale?: string | null } | undefined;
     const legacyLocale = normalizeWorkbookLocale(userRow?.locale);
     if (legacyLocale) return legacyLocale;
   } catch {
@@ -1314,7 +1313,7 @@ router.post(
             templateSnapshotHash: custom.snapshotHash,
           },
         });
-        res.json(payload);
+        res.status(201).json(payload);
         return;
       }
       res.status(404).json({
@@ -1957,9 +1956,11 @@ router.post(
       res.json({ ok: true, ...result });
     } catch (error) {
       if (error instanceof WorkbookCommandError) {
-        res
-          .status(error.statusCode)
-          .json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code, ...error.details });
+        res.status(error.statusCode).json({
+          ...mapAppErrorResponse(error, req, 'error'),
+          code: error.code,
+          ...error.details,
+        });
       } else {
         throw error;
       }

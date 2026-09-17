@@ -1,0 +1,23 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v4-w214-20260917
+
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > system SHEET-BASE is read-only, explains unavailable Use, and remains duplicable 50ms
+ ✓ src/components/ReportsAndPresentations/__tests__/TemplatesGalleryView.tpl1a.test.tsx > TPL-1a template card actions > organization copy exposes Build / Edit as a working action 13ms
+stdout | tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ✓ tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx > TemplatesTabContent deep-link selection > selects matching template id from initialArtifactId deep link 68ms
+ ✓ tests/components/ReportsAndPresentations/TemplatesTabContent.deeplink.test.tsx > TemplatesTabContent deep-link selection > keeps the 912px preview lane readable and explains disabled SHEET Use in the header 10ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > lists system, organization and owned private templates without cross-tenant access 31ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > converts the legacy TemplateBuilder columns snapshot, including formulas 6ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > rejects an incompatible snapshot with actionable validation detail 1ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > converts seeded fields and consulting tables fields into workbook columns 1ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > converts the accepted SHEET-BASE visual snapshot into two buildable workbook sheets 2ms
+ ✓ server/src/services/workbook/__tests__/customWorkbookTemplateService.test.ts > customWorkbookTemplateService > resolves a visible system, org or owned private template 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateDuplicateService.test.ts > duplicateTemplateFromLibrary > creates DOC, DECK and SHEET copies through three real runtime endpoints 44ms
+ ✓ src/components/ReportsAndPresentations/__tests__/templateDuplicateService.test.ts > duplicateTemplateFromLibrary > fails closed before a write for an orphaned template 3ms
+
+ Test Files  4 passed (4)
+      Tests  12 passed (12)
+   Start at  14:27:38
+   Duration  6.75s (transform 1.75s, setup 834ms, import 2.50s, tests 262ms, environment 2.46s)
