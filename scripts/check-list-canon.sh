@@ -176,6 +176,27 @@ violations_for() {
     fi
   fi
 
+  # 7) cellAttributes przemycający handler zdarzenia (on*) albo `as any`
+  # ── B3 / DEC-575 (2026-09-17) ──────────────────────────────────────────────
+  # `TableCellMetadata` (kompilacja) i kolejność propów na <td> (runtime dla
+  # className/style) bronią kanonu, ALE spread `{...cellAttributeProps}` NIE
+  # deklaruje ponownie `onClick` — więc `onClick` (albo `as any` obejszjący typ)
+  # przemycony w `cellAttributes` PRZEDOSTAŁBY się do DOM. Flaga pada na
+  # literale/funkcji, która to niesie. Dosłowny dwukropek `cellAttributes:`
+  # celowo NIE łapie deklaracji typu `cellAttributes?:` ani call-site
+  # `column.cellAttributes?.()` — tylko miejsce, gdzie ekran PODAJE wartość.
+  local ca_ln ca_hit
+  while IFS= read -r ca_ln; do
+    [ -n "$ca_ln" ] || continue
+    # Okno: linia `cellAttributes:` + 6 następnych — obejmuje literał obiektu /
+    # krótkie ciało strzałki, dość ciasne, by nie krwawić w sąsiedni `render:`.
+    ca_hit=$(sed -n "${ca_ln},$((ca_ln + 6))p" "$f" 2>/dev/null \
+      | grep -Eq 'on[A-Z][A-Za-z0-9]*[[:space:]]*:|as[[:space:]]+any' && echo yes || true)
+    if [ "$ca_hit" = "yes" ]; then
+      echo "R7|${ca_ln}|cellAttributes przemyca handler on*/as any — furtka przez spread {...cellAttributeProps} mimo typu TableCellMetadata (kanon list, DEC-575)"
+    fi
+  done < <(grep -nE 'cellAttributes:' "$f" 2>/dev/null | cut -d: -f1)
+
   # 3) previewStyles.ts — pill regression guard (#36, decyzja Piotra D21 07-12:
   # akcje w preview = pill/rounded-full, NIE rounded-lg; to już raz się cofnęło).
   if [ "$bn" = "previewStyles.ts" ]; then
@@ -239,6 +260,11 @@ narrow_scope() {
     # K5-7: prefiltr dla reguł R4/R5/R6 — bez tego pełny skan by ich nie widział.
     printf '%s\n' "$all" | tr '\n' '\0' \
       | xargs -0 grep -lE '<(StandardTable|FilterableTable|PreviewPaneShell)[ >]|No relations|Brak powiązań|Brak powiazan' 2>/dev/null || true
+    # B3/DEC-575: pliki z `cellAttributes:` muszą trafić do pełnego skanu, żeby
+    # R7 (handler on*/as any przemycony w cellAttributes) nie został pominięty,
+    # gdy plik nie zawiera żadnego z wzorców tabeli/podglądu powyżej.
+    printf '%s\n' "$all" | tr '\n' '\0' \
+      | xargs -0 grep -lE 'cellAttributes:' 2>/dev/null || true
     baseline_paths
   } | grep -v '^$' | sort -u
 }
