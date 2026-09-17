@@ -169,6 +169,46 @@ function bulletRuns(items: string[]): Array<Record<string, unknown>> {
   }));
 }
 
+function addKeyMessageBand(slide: any, keyMessage: string | undefined): void {
+  if (!keyMessage) return;
+  slide.addShape('rect', {
+    x: 0.95,
+    y: 5.85,
+    w: 11.35,
+    h: 0.72,
+    fill: { color: C.surface },
+    line: { color: C.surface },
+  });
+  slide.addShape('rect', {
+    x: 0.95,
+    y: 5.85,
+    w: 0.08,
+    h: 0.72,
+    fill: { color: C.blue },
+    line: { color: C.blue },
+  });
+  addText(slide, 'SO WHAT', {
+    x: 1.2,
+    y: 5.96,
+    w: 2,
+    h: 0.16,
+    fontSize: 6.5,
+    bold: true,
+    charSpacing: 1.2,
+    color: C.blue,
+  });
+  addText(slide, keyMessage, {
+    x: 1.2,
+    y: 6.15,
+    w: 10.75,
+    h: 0.26,
+    fontSize: 10,
+    bold: true,
+    color: C.text,
+    fit: 'shrink',
+  });
+}
+
 function renderCover(slide: any, item: BoardDeckSlide, src: BoardDeckSource): void {
   addText(slide, (item.kicker || 'CLIENT FINAL REVIEW').toUpperCase(), {
     x: 1.15,
@@ -343,44 +383,7 @@ function renderContentOne(slide: any, item: BoardDeckSlide): void {
       });
     });
   }
-  if (item.keyMessage) {
-    slide.addShape('rect', {
-      x: 0.95,
-      y: 5.85,
-      w: 11.35,
-      h: 0.72,
-      fill: { color: C.surface },
-      line: { color: C.surface },
-    });
-    slide.addShape('rect', {
-      x: 0.95,
-      y: 5.85,
-      w: 0.08,
-      h: 0.72,
-      fill: { color: C.blue },
-      line: { color: C.blue },
-    });
-    addText(slide, 'SO WHAT', {
-      x: 1.2,
-      y: 5.96,
-      w: 2,
-      h: 0.16,
-      fontSize: 6.5,
-      bold: true,
-      charSpacing: 1.2,
-      color: C.blue,
-    });
-    addText(slide, item.keyMessage, {
-      x: 1.2,
-      y: 6.15,
-      w: 10.75,
-      h: 0.26,
-      fontSize: 10,
-      bold: true,
-      color: C.text,
-      fit: 'shrink',
-    });
-  }
+  addKeyMessageBand(slide, item.keyMessage);
 }
 
 function renderContentTwo(slide: any, item: BoardDeckSlide): void {
@@ -427,6 +430,20 @@ function renderContentTwo(slide: any, item: BoardDeckSlide): void {
 
 function renderTable(slide: any, item: BoardDeckSlide): void {
   addHeader(slide, item);
+  const hasBody = Boolean(item.body?.trim());
+  if (hasBody) {
+    addText(slide, item.body, {
+      x: 0.95,
+      y: 1.43,
+      w: 11.35,
+      h: 0.62,
+      fontSize: 10.5,
+      color: C.text,
+      breakLine: true,
+      fit: 'shrink',
+      valign: 'top',
+    });
+  }
   const table = item.table || { headers: [], rows: [] };
   const dataRows = table.totalRow ? [...table.rows, table.totalRow] : table.rows;
   const lastRowIndex = dataRows.length;
@@ -464,23 +481,30 @@ function renderTable(slide: any, item: BoardDeckSlide): void {
       };
     })
   );
-  const rowHeights = [
+  const naturalRowHeights = [
     0.42,
     ...dataRows.map((row) => (row.some((value) => String(value).length > 34) ? 0.62 : 0.42)),
   ];
+  const tableY = hasBody ? 2.18 : 1.55;
+  const tableBottom = item.keyMessage ? 5.62 : 6.58;
+  const availableHeight = tableBottom - tableY;
+  const naturalHeight = naturalRowHeights.reduce((sum, height) => sum + height, 0);
+  const scale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
+  const rowHeights = naturalRowHeights.map((height) => height * scale);
   slide.addTable(rows, {
     x: 0.95,
-    y: 1.55,
+    y: tableY,
     w: 11.35,
     colW: table.columnWidths,
     rowH: rowHeights,
-    fontSize: 9,
+    fontSize: scale < 0.85 ? 7.5 : 9,
     color: C.text,
     border: { type: 'solid', color: C.line, pt: 0.5 },
     fill: C.white,
-    margin: 0.08,
+    margin: scale < 0.85 ? 0.04 : 0.08,
     autoFit: false,
   });
+  addKeyMessageBand(slide, item.keyMessage);
 }
 
 function renderChart(slide: any, item: BoardDeckSlide, pptx: any): void {

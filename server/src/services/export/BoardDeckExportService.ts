@@ -127,13 +127,19 @@ class BoardDeckExportService {
               ? ('agenda' as const)
               : intent.includes('section')
                 ? ('section' as const)
-                : table
-                  ? ('table' as const)
-                  : intent.includes('decision') || intent.includes('recommend')
-                    ? ('decision' as const)
+                : intent.includes('decision') || intent.includes('recommend')
+                  ? ('decision' as const)
+                  : table
+                    ? ('table' as const)
                     : ('content-one' as const);
         const blockText = (card.blocks || []).flatMap((block) => contentStringsFrom(block.content));
         const body = blockText.join('\n');
+        const renderedTitle = String(card.title || '').trim();
+        const nonTableBody = (card.blocks || [])
+          .filter((block) => block.type !== 'table')
+          .flatMap((block) => contentStringsFrom(block.content))
+          .filter((text) => text !== renderedTitle)
+          .join('\n');
         const source = (card.source_refs || [])
           .map((ref) => ref.artifact_name)
           .filter((name): name is string => Boolean(name))
@@ -167,6 +173,7 @@ class BoardDeckExportService {
             kicker: 'Deck Builder',
             title: card.title || `Slide ${index + 1}`,
             keyMessage: card.key_message,
+            body: nonTableBody || undefined,
             table: table || undefined,
             source,
           };
