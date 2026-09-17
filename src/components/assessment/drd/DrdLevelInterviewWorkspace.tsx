@@ -11,6 +11,26 @@ export type DrdLevelDecision = 'yes' | 'no' | 'help';
 
 export class DrdLevelDecisionSaveError extends Error {}
 
+export class DrdPostPersistActionError extends Error {
+  constructor(cause?: unknown) {
+    super('DRD_POST_PERSIST_ACTION_FAILED', { cause });
+    this.name = 'DrdPostPersistActionError';
+  }
+}
+
+export async function persistDrdLevelDecision(input: {
+  recordAnswer: () => Promise<void>;
+  afterPersist?: () => Promise<void>;
+}): Promise<void> {
+  await input.recordAnswer();
+  if (!input.afterPersist) return;
+  try {
+    await input.afterPersist();
+  } catch (error) {
+    throw new DrdPostPersistActionError(error);
+  }
+}
+
 const HELP_MARKER = '[DRD_NEED_HELP]';
 
 export function drdLevelDecisions(events: readonly MethodEvent[], unitId: string): Map<number, DrdLevelDecision> {

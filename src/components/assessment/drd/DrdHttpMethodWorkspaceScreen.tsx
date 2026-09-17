@@ -46,9 +46,11 @@ import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import {
   DRD_HELP_JUSTIFICATION_MARKER,
+  DrdPostPersistActionError,
   DrdLevelDecisionSaveError,
   DrdLevelInterviewWorkspace,
   drdLevelDecisions,
+  persistDrdLevelDecision,
   pickDrdEvidenceOwnerId,
   type DrdLevelDecision,
 } from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
@@ -1078,67 +1080,87 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     async (decision: DrdLevelDecision, text: string) => {
       const questionId = focusQuestions[0]?.questionId;
       if (!questionId || !runtime || !canWrite || !state?.session) return;
+      const session = state.session;
 
       const answerState = decision === 'yes' ? 'confirmed' : decision === 'no' ? 'no' : 'dont_know';
       const helpDecisionSignature = JSON.stringify({ answerState, text });
       chosenAnswerStateRef.current[questionId] = answerState;
       cancelPending();
-      if (
-        decision !== 'help' ||
-        savedHelpDecisionRef.current[questionId] !== helpDecisionSignature
-      ) {
-        await queueAnswerWrite(() =>
-          runtime.recordAnswer({
-            unitId: activeArea.id,
-            level: focusLevelFallback,
-            questionId,
-            answerState,
-            text,
-            justification:
-              decision === 'help'
-                ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
-                : undefined,
-          })
-        );
-        if (decision === 'help') {
-          savedHelpDecisionRef.current[questionId] = helpDecisionSignature;
-        } else {
-          // A previously persisted Help may still be waiting for its task
-          // retry. Once the operator successfully saves a different decision,
-          // that retry token is stale and must not suppress a later Help
-          // answer for the same question.
-          delete savedHelpDecisionRef.current[questionId];
-        }
-      }
+      const answerAlreadyPersisted =
+        decision === 'help' &&
+        savedHelpDecisionRef.current[questionId] === helpDecisionSignature;
 
-      if (decision === 'help') {
-        try {
-          const roleRoster = await Api.get(`/method/sessions/${state.session.id}/roles`);
-          const evidenceOwnerId = pickDrdEvidenceOwnerId(roleRoster, state.session.ownerUserId);
-          await Api.post('/tasks', {
-            title: t('assessment.drd.levelInterview.helpTaskTitle', 'Evidence needed: {{area}}, level {{level}}', {
-              area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
-              level: focusLevelFallback,
-            }),
-            description: t(
-              'assessment.drd.levelInterview.helpTaskDescription',
-              'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
-              { sessionId: state.session.id, area: activeArea.id, level: focusLevelFallback }
-            ),
-            status: 'todo',
-            priority: 'medium',
-            projectId: state.session.projectId ?? null,
-            assigneeId: evidenceOwnerId,
-            source: 'assessment',
-            sourceType: 'method_session',
-            sourceId: state.session.id,
-            idempotencyKey: `drd-help:${state.session.id}:${activeArea.id}:${focusLevelFallback}`,
-          });
-        } catch {
+      try {
+        await persistDrdLevelDecision({
+          recordAnswer: async () => {
+            if (answerAlreadyPersisted) return;
+            await queueAnswerWrite(() =>
+              runtime.recordAnswer({
+                unitId: activeArea.id,
+                level: focusLevelFallback,
+                questionId,
+                answerState,
+                text,
+                justification:
+                  decision === 'help'
+                    ? `${DRD_HELP_JUSTIFICATION_MARKER} Evidence owner task requested.`
+                    : undefined,
+              })
+            );
+            if (decision === 'help') {
+              savedHelpDecisionRef.current[questionId] = helpDecisionSignature;
+            } else {
+              // A previously persisted Help may still be waiting for its task
+              // retry. Once the operator successfully saves a different decision,
+              // that retry token is stale and must not suppress a later Help
+              // answer for the same question.
+              delete savedHelpDecisionRef.current[questionId];
+            }
+          },
+          afterPersist:
+            decision === 'help'
+              ? async () => {
+                  const roleRoster = await Api.get(`/method/sessions/${session.id}/roles`);
+                  const evidenceOwnerId = pickDrdEvidenceOwnerId(
+                    roleRoster,
+                    session.ownerUserId
+                  );
+                  await Api.post('/tasks', {
+                    title: t(
+                      'assessment.drd.levelInterview.helpTaskTitle',
+                      'Evidence needed: {{area}}, level {{level}}',
+                      {
+                        area: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+                        level: focusLevelFallback,
+                      }
+                    ),
+                    description: t(
+                      'assessment.drd.levelInterview.helpTaskDescription',
+                      'Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.',
+                      { sessionId: session.id, area: activeArea.id, level: focusLevelFallback }
+                    ),
+                    status: 'todo',
+                    priority: 'medium',
+                    projectId: session.projectId ?? null,
+                    assigneeId: evidenceOwnerId,
+                    source: 'assessment',
+                    sourceType: 'method_session',
+                    sourceId: session.id,
+                    idempotencyKey: `drd-help:${session.id}:${activeArea.id}:${focusLevelFallback}`,
+                  });
+                }
+              : undefined,
+        });
+      } catch (error) {
+        if (error instanceof DrdPostPersistActionError) {
           throw new DrdLevelDecisionSaveError(
             `${t('common.saved')}. ${t('documents.taskCreateFailed')}`
           );
         }
+        throw error;
+      }
+
+      if (decision === 'help') {
         delete savedHelpDecisionRef.current[questionId];
       }
 
@@ -1176,13 +1198,15 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     async (reasonCode: DrdSkipReasonCode) => {
       const questionId = focusQuestions[0]?.questionId;
       if (questionId && runtime && canWrite) {
-        await runtime.recordAnswer({
-          unitId: activeArea.id,
-          level: focusLevelFallback,
-          questionId,
-          answerState: 'no_evidence',
-          text: draftAnswerText[questionId],
-          justification: formatSkipJustification(reasonCode),
+        await persistDrdLevelDecision({
+          recordAnswer: () => runtime.recordAnswer({
+            unitId: activeArea.id,
+            level: focusLevelFallback,
+            questionId,
+            answerState: 'no_evidence',
+            text: draftAnswerText[questionId],
+            justification: formatSkipJustification(reasonCode),
+          }),
         });
         const sessionId = state?.session?.id;
         if (sessionId) {

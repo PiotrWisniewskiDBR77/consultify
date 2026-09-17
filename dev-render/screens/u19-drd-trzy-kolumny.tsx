@@ -1,10 +1,9 @@
-import { Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { DrdLevelInterviewWorkspace, type DrdLevelDecision } from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
 import { buildNavigatorNodes, confirmedLevelsFor, targetLevelFor } from '@/components/assessment/drd/drdWorkspaceViewModel';
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import type { MethodEvent, MethodReadiness, MethodSession } from '@/method-core/contracts';
 import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
@@ -20,7 +19,6 @@ function answerEvent(level: number, state: string, text = ''): MethodEvent {
 }
 
 export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
-  const { t } = useTranslation();
   const pack = useMemo(() => compileDrdPack('en').pack, []);
   const axis = DRD_STRUCTURE[0];
   const area = axis.areas.find((item) => item.id === AREA_ID)!;
@@ -55,6 +53,13 @@ export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
       answerText={answer} canWrite onAnswerChange={(_questionId, text) => setAnswer(text)} onSelectLevel={setSelectedLevel}
       onSaveDecision={saveDecision} onEvidenceDrop={() => {}} onAskTeresa={() => {}}
     />}
-    aiButton={<button type="button" className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary"><Sparkles size={13}/>{t('toolContextPanel.workWithAi')}</button>}
+    aiButton={<PracujZAI
+      onAnalizuj={() => {}}
+      analizaOtwarta={false}
+      aktywnaSekcja={primaryQuestion?.questionId ?? null}
+      kontekstArtefaktu={{ type: 'assessment-question', title: 'DRD · Sales Processes · Level 2', status: session.state }}
+      moznaEdytowac
+      isPolish={false}
+    />}
   /></div>;
 }

@@ -6,7 +6,9 @@ import type { MethodEvent, MethodLevel, MethodQuestion } from '@/method-core/con
 import {
   DRD_HELP_JUSTIFICATION_MARKER,
   DrdLevelInterviewWorkspace,
+  DrdPostPersistActionError,
   drdLevelDecisions,
+  persistDrdLevelDecision,
   pickDrdEvidenceOwnerId,
 } from '../DrdLevelInterviewWorkspace';
 
@@ -93,5 +95,23 @@ describe('DRD-2 DEC-552 level interview', () => {
     expect(screen.getByRole('button', { name: 'Yes' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Save & next level' })).toBeEnabled();
     expect(onSaveDecision).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists the decision before the optional follow-up action', async () => {
+    const calls: string[] = [];
+
+    await expect(
+      persistDrdLevelDecision({
+        recordAnswer: async () => {
+          calls.push('recordAnswer');
+        },
+        afterPersist: async () => {
+          calls.push('createHelpTask');
+          throw new Error('task service unavailable');
+        },
+      })
+    ).rejects.toBeInstanceOf(DrdPostPersistActionError);
+
+    expect(calls).toEqual(['recordAnswer', 'createHelpTask']);
   });
 });
