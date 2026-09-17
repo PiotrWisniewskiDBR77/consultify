@@ -16,6 +16,19 @@ type WorkRow = {
   project_title: string | null;
 };
 
+type TaskRow = {
+  aggregate_id: string;
+  title: string | null;
+  status: string | null;
+  assignee_id: string | null;
+  due_date: string | Date | null;
+  completed_at: string | Date | null;
+  priority: string | null;
+  initiative_id: string | null;
+  project_id: string | null;
+  project_title: string | null;
+};
+
 export interface ExecutionWorkAnalysisGeneration {
   id: string;
   created: boolean;
@@ -62,6 +75,11 @@ function stringValue(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
+function isoValue(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString();
+  return stringValue(value);
+}
+
 function workItem(row: WorkRow) {
   const value = row.payload_json;
   const kind = row.aggregate_type === 'execution_task' ? 'TASK' : row.aggregate_type === 'execution_decision' ? 'DECISION' : 'MILESTONE';
@@ -78,6 +96,25 @@ function workItem(row: WorkRow) {
     initiativeId: row.initiative_id,
     projectId: row.project_id,
     projectTitle: row.project_title,
+    sourceType: 'runtime-v1',
+  };
+}
+
+function taskItem(row: TaskRow) {
+  return {
+    id: row.aggregate_id,
+    kind: 'TASK',
+    title: stringValue(row.title) ?? row.aggregate_id,
+    status: stringValue(row.status) ?? 'UNKNOWN',
+    ownerId: stringValue(row.assignee_id),
+    dueAt: isoValue(row.due_date),
+    completedAt: isoValue(row.completed_at),
+    priority: stringValue(row.priority) ?? 'UNKNOWN',
+    version: 1,
+    initiativeId: row.initiative_id,
+    projectId: row.project_id,
+    projectTitle: row.project_title,
+    sourceType: 'tasks',
   };
 }
 
@@ -127,7 +164,38 @@ export async function generateExecutionWorkAnalysis(args: {
       ORDER BY work.aggregate_type, work.aggregate_id`,
     [args.organizationId]
   );
-  const items = rows.map(workItem);
+  const taskRows = await dbAll<TaskRow>(
+    `SELECT t.id AS aggregate_id, t.title, t.status, t.assignee_id, t.due_date,
+            t.completed_at, t.priority, t.initiative_id,
+            COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId') AS project_id,
+            project.name AS project_title
+       FROM tasks t
+       LEFT JOIN initiatives i
+         ON i.organization_id = t.organization_id
+        AND i.id = t.initiative_id
+       LEFT JOIN ie_aggregate_state initiative
+         ON initiative.organization_id = t.organization_id
+        AND initiative.aggregate_type = 'initiative'
+        AND initiative.aggregate_id = t.initiative_id
+       LEFT JOIN projects project
+         ON project.organization_id = t.organization_id
+        AND project.id = COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId')
+      WHERE t.organization_id = ?
+        AND t.initiative_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+            FROM ie_aggregate_state ec
+           WHERE ec.organization_id = t.organization_id
+             AND ec.aggregate_type = 'execution_case'
+             AND ec.payload_json->>'initiativeId' = t.initiative_id
+        )
+      ORDER BY t.id`,
+    [args.organizationId]
+  );
+  const runtimeItems = rows.map(workItem);
+  const runtimeTaskIds = new Set(runtimeItems.filter((item) => item.kind === 'TASK').map((item) => item.id));
+  const taskItems = taskRows.map(taskItem).filter((item) => !runtimeTaskIds.has(item.id));
+  const items = [...runtimeItems, ...taskItems];
   const inWindow = (value: string | null, from: Date, to: Date) => {
     const timestamp = value ? Date.parse(value) : Number.NaN;
     return Number.isFinite(timestamp) && timestamp >= from.getTime() && timestamp < to.getTime();
@@ -145,9 +213,19 @@ export async function generateExecutionWorkAnalysis(args: {
     if (!item.dueAt) reasons.push('NO_DUE_DATE');
     return reasons.length ? [{ ...item, reasons }] : [];
   });
+  const taskSourceItems = items.filter((item) => item.kind === 'TASK');
+  const workTabCounts = {
+    total: taskSourceItems.length,
+    overdue: taskSourceItems.filter((item) => !isClosed(item.status) && item.dueAt && Date.parse(item.dueAt) < Date.now()).length,
+    blocked: taskSourceItems.filter((item) => item.status.toUpperCase() === 'BLOCKED').length,
+  };
+  if (!runtimeItems.length && taskRows.length && !taskSourceItems.length) {
+    throw new Error('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
+  }
   const rowShape = (item: (typeof items)[number]) => ({
     record: item.title,
     type: item.kind,
+    source: item.sourceType,
     project: item.projectTitle ?? 'Project name unavailable',
     priority: item.priority,
     status: item.status,
@@ -162,6 +240,9 @@ export async function generateExecutionWorkAnalysis(args: {
     period: { start: startIso, end: endIso },
     asOf: new Date().toISOString(),
     metrics: [
+      { id: 'workTasksTotal', label: 'Work tasks total', value: String(workTabCounts.total) },
+      { id: 'workTasksOverdue', label: 'Work tasks overdue', value: String(workTabCounts.overdue), tone: workTabCounts.overdue ? 'WARN' : 'OK' },
+      { id: 'workTasksBlocked', label: 'Work tasks blocked', value: String(workTabCounts.blocked), tone: workTabCounts.blocked ? 'CRIT' : 'OK' },
       { id: 'previousWeek', label: 'Previous week', value: String(previous.length) },
       { id: 'nextWeek', label: 'Next week', value: String(next.length) },
       { id: 'nextMonth', label: 'Next month', value: String(month.length) },
@@ -191,7 +272,8 @@ export async function generateExecutionWorkAnalysis(args: {
           columns: [
             { id: 'record', label: 'Record' }, { id: 'type', label: 'Type' },
             { id: 'project', label: 'Project' }, { id: 'priority', label: 'Priority' },
-            { id: 'status', label: 'Status' }, { id: 'due', label: 'Due' },
+            { id: 'status', label: 'Status' },
+            { id: 'due', label: 'Due' },
           ],
           rows: (sectionItems as typeof items).map(rowShape),
         },
