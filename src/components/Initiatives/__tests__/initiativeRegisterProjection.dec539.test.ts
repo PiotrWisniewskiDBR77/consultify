@@ -3,12 +3,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import type { PortfolioInitiative } from '@/types';
 import {
+  countInitiativeRegisterStatuses,
   resolveInitiativePlanLifecycle,
   resolveInitiativePresetLifecycle,
   resolveInitiativeRegisterLifecycle,
 } from '../initiativeRegisterColumns.shared';
 import { createInitiativeRegisterColumns } from '../initiativeRegisterColumns.shared';
-import { toCanonicalInitiativeRegisterItemFromLegacyRow } from '../initiativeRegisterProjection';
+import {
+  runtimeLifecycleToInitiativeStatus,
+  toCanonicalInitiativeRegisterItemFromLegacyRow,
+} from '../initiativeRegisterProjection';
 
 describe('STAGE-1 / DEC-539 initiative register projection', () => {
   it('renders the persisted lifecycle stage instead of the seven-code compatibility status', () => {
@@ -71,6 +75,35 @@ describe('STAGE-1 / DEC-539 initiative register projection', () => {
     expect(resolveInitiativeRegisterLifecycle(row)).toBe('READY_FOR_DECISION');
   });
 
+  it.each(['EXECUTING', '', '???'])(
+    'never returns an undefined seven-code status for malformed runtime lifecycle %j',
+    (rawLifecycle) => {
+      expect(runtimeLifecycleToInitiativeStatus(rawLifecycle)).toBeDefined();
+      expect(runtimeLifecycleToInitiativeStatus(rawLifecycle)).toBe(
+        rawLifecycle === 'EXECUTING' ? 'IN_EXECUTION' : 'DRAFT'
+      );
+    }
+  );
+
+  it('puts an unknown stage in a visible counter/filter bucket while stage-12 mode is ON', () => {
+    const row = toCanonicalInitiativeRegisterItemFromLegacyRow({
+      id: 'initiative-unknown-stage',
+      name: 'Unknown stage',
+      status: 'DRAFT',
+      lifecycleStage: 'FUTURE_STAGE',
+    });
+    const columns = createInitiativeRegisterColumns({
+      stages12Enabled: true,
+      t: (_key, fallback) => fallback,
+    });
+    const statusColumn = columns.find((column) => column.id === 'status');
+
+    expect(resolveInitiativeRegisterLifecycle(row, true)).toBe('UNKNOWN');
+    expect(countInitiativeRegisterStatuses([row], true)).toEqual({ all: 1, UNKNOWN: 1 });
+    expect(statusColumn?.filterOptions?.some((option) => option.value === 'UNKNOWN')).toBe(true);
+    expect(renderToStaticMarkup(statusColumn!.render!(row))).toContain('Unknown / Other');
+  });
+
   it('keeps the seven-code filter contract when OFF and exposes stages plus dispositions when ON', () => {
     const offStatus = createInitiativeRegisterColumns({ stages12Enabled: false }).find(
       (column) => column.id === 'status'
@@ -103,6 +136,7 @@ describe('STAGE-1 / DEC-539 initiative register projection', () => {
       'ARCHIVED',
       'PROPOSED',
       'REJECTED',
+      'UNKNOWN',
     ]);
   });
 });

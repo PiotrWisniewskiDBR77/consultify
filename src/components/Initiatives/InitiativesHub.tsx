@@ -125,7 +125,9 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import {
+  countInitiativeRegisterStatuses,
   resolveInitiativeRegisterLifecycle,
+  UNKNOWN_INITIATIVE_LIFECYCLE,
   resolveInitiativePlanLifecycle,
   resolveInitiativePresetLifecycle,
 } from './initiativeRegisterColumns.shared';
@@ -1016,16 +1018,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   }, [initiativesFourButtonsEnabled]);
 
   // Status counts for dropdown — jedyne miejsce liczenia (podawane w dół).
-  const statusCounts: Record<string, number> = useMemo(() => {
-    const counts: Record<string, number> = { all: registerCountBase.length };
-    registerCountBase.forEach((i) => {
-      const stage = INITIATIVES_STAGES_12_ENABLED
-        ? resolveInitiativeRegisterLifecycle(i)
-        : i.status;
-      if (stage) counts[stage] = (counts[stage] || 0) + 1;
-    });
-    return counts;
-  }, [registerCountBase]);
+  const statusCounts: Record<string, number> = useMemo(
+    () => countInitiativeRegisterStatuses(registerCountBase, INITIATIVES_STAGES_12_ENABLED),
+    [registerCountBase]
+  );
 
   const fourButtonsProjectOptions = useMemo(() => {
     const projects = new Map<string, string>();
@@ -3044,12 +3040,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const lifecycleDropdownOptions = [
     { id: 'all', label: t('common.all', 'All'), count: statusCounts.all ?? 0 },
     ...(INITIATIVES_STAGES_12_ENABLED
-      ? [...INITIATIVE_LIFECYCLE, InitiativeStatus.PROPOSED, InitiativeStatus.REJECTED].map(
+      ? [...INITIATIVE_LIFECYCLE, InitiativeStatus.PROPOSED, InitiativeStatus.REJECTED, UNKNOWN_INITIATIVE_LIFECYCLE].map(
           (status) => ({
             id: status,
-            label: (INITIATIVE_LIFECYCLE as readonly string[]).includes(status)
-              ? enumLabel('initiativeLifecycle', status, t)
-              : getLocalizedStatusLabel(status as InitiativeStatus, t),
+            label: status === UNKNOWN_INITIATIVE_LIFECYCLE
+              ? t('initiatives.status.UNKNOWN_OTHER', 'Unknown / Other')
+              : (INITIATIVE_LIFECYCLE as readonly string[]).includes(status)
+                ? enumLabel('initiativeLifecycle', status, t)
+                : getLocalizedStatusLabel(status as InitiativeStatus, t),
             count: statusCounts[status] ?? 0,
           })
         )

@@ -129,7 +129,7 @@ const lifecycleForDemoStatus = (status: InitiativeStatus): string => {
     case InitiativeStatus.DRAFT:
       return 'REGISTERED_DRAFT';
     case InitiativeStatus.PENDING_APPROVAL:
-      return 'DEFINING';
+      return 'DEFINED';
     case InitiativeStatus.PENDING_APPROVAL:
       return 'ANALYZING';
     case InitiativeStatus.PENDING_APPROVAL:

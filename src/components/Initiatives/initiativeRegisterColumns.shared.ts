@@ -4,7 +4,10 @@ import React from 'react';
 import i18n from '@/i18n';
 import { executionTypeLabel, UNKNOWN_EXECUTION_TYPE_LABEL } from '@/labels/executionTypeLabels';
 import type { StandardRowMenu, TableColumn } from '@/components/standard';
-import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
+import {
+  getInitiativeStatusChipTone,
+  getLocalizedStatusLabel,
+} from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
 import type { PortfolioInitiative } from '@/types';
 import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
@@ -39,6 +42,9 @@ export const INITIATIVE_REGISTER_COLUMN_IDS = [
  * ktora wolno miedzy tymi powierzchniami wystapic.
  */
 export const INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS = ['source'] as const;
+
+/** Visible fail-safe bucket for malformed or future lifecycle values. */
+export const UNKNOWN_INITIATIVE_LIFECYCLE = 'UNKNOWN';
 
 /**
  * Rejestr kanoniczny (`runtime-v1`) trzyma `lifecycleState`
@@ -78,9 +84,12 @@ export const resolveInitiativeRegisterLifecycle = (
     return row.status;
   }
   const raw = resolveInitiativeRegisterDisplayStatus(row, stages12Enabled);
-  if (!raw) return '';
+  if (!raw) return stages12Enabled ? UNKNOWN_INITIATIVE_LIFECYCLE : '';
   if ((INITIATIVE_LIFECYCLE as readonly string[]).includes(raw)) return raw;
-  return mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ?? '';
+  return (
+    mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ??
+    (stages12Enabled ? UNKNOWN_INITIATIVE_LIFECYCLE : '')
+  );
 };
 
 export const resolveInitiativePresetLifecycle = (
@@ -130,6 +139,19 @@ export type InitiativeRegisterRow = PortfolioInitiative & {
   sourceFreshness?: string;
   sourceLabel?: string;
   ownerName?: string;
+};
+
+/** One counter projection shared by the register and its status filters. */
+export const countInitiativeRegisterStatuses = (
+  rows: readonly InitiativeRegisterRow[],
+  stages12Enabled: boolean
+): Record<string, number> => {
+  const counts: Record<string, number> = { all: rows.length };
+  rows.forEach((row) => {
+    const status = stages12Enabled ? resolveInitiativeRegisterLifecycle(row, true) : row.status;
+    if (status) counts[status] = (counts[status] || 0) + 1;
+  });
+  return counts;
 };
 
 const h = React.createElement;
@@ -217,7 +239,7 @@ export const createInitiativeRegisterColumns = (
    * ANGIELSKI defaultValue — nigdy klucz i nigdy polski.
    */
   const tr = (key: string, fallback: string): string => (t ? t(key, fallback) : fallback);
-  const statusTr = (key: string): string => (t ? t(key, key) : key);
+  const statusTr = (key: string, fallback = key): string => (t ? t(key, fallback) : fallback);
   const base: TableColumn[] = [
     {
       id: 'name',
@@ -249,18 +271,24 @@ export const createInitiativeRegisterColumns = (
       width: '170px',
       filterable: true,
       filterOptions: stages12Enabled
-        ? [...INITIATIVE_LIFECYCLE, InitiativeStatus.PROPOSED, InitiativeStatus.REJECTED].map(
-            (value) => ({
-              value,
-              label: (INITIATIVE_LIFECYCLE as readonly string[]).includes(value)
-                ? enumLabel(
-                    'initiativeLifecycle',
-                    value,
-                    t ?? ((_key: string, fallback: string) => fallback)
-                  )
-                : getLocalizedStatusLabel(value as InitiativeStatus, statusTr),
-            })
-          )
+        ? [
+            ...INITIATIVE_LIFECYCLE,
+            InitiativeStatus.PROPOSED,
+            InitiativeStatus.REJECTED,
+            UNKNOWN_INITIATIVE_LIFECYCLE,
+          ].map((value) => ({
+            value,
+            label:
+              value === UNKNOWN_INITIATIVE_LIFECYCLE
+                ? statusTr('initiatives.status.UNKNOWN_OTHER', 'Unknown / Other')
+                : (INITIATIVE_LIFECYCLE as readonly string[]).includes(value)
+                  ? enumLabel(
+                      'initiativeLifecycle',
+                      value,
+                      t ?? ((_key: string, fallback: string) => fallback)
+                    )
+                  : getLocalizedStatusLabel(value as InitiativeStatus, statusTr),
+          }))
         : Object.values(InitiativeStatus).map((value) => ({
             value,
             label: getLocalizedStatusLabel(value, statusTr),
@@ -268,6 +296,7 @@ export const createInitiativeRegisterColumns = (
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const status = row.status as InitiativeStatus;
+        const resolvedLifecycle = resolveInitiativeRegisterLifecycle(row, stages12Enabled);
         /*
          * K5-7 (2026-09-13): etykieta statusu w WŁASNYM spanie z `truncate`.
          * Do 13.09 tekst siedział wprost we `flexie`, więc przy ciasnej kolumnie
@@ -286,20 +315,28 @@ export const createInitiativeRegisterColumns = (
           h('span', {
             className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status), row.onHold)}`,
           }),
-          h('span', { className: 'truncate' },
-          // Odbior nocny 08.09: wstrzymana inicjatywa ma miec SLOWO, nie tylko kolor kropki.
-          row.onHold === true
-            ? (t ?? ((_key: string, fallback?: string) => fallback ?? _key))(
-                'initiatives.status.ON_HOLD',
-                'Wstrzymana'
-              )
-            : stages12Enabled && row.status === InitiativeStatus.REJECTED
-              ? getLocalizedStatusLabel(InitiativeStatus.REJECTED, statusTr)
-              : stages12Enabled && row.status === InitiativeStatus.PROPOSED
-                ? getLocalizedStatusLabel(InitiativeStatus.PROPOSED, statusTr)
-            : stages12Enabled && isKnownEnumValue('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(row, true))
-              ? enumLabel('initiativeLifecycle', resolveInitiativeRegisterDisplayStatus(row, true), t ?? ((_key, fallback) => fallback || _key))
-              : getLocalizedStatusLabel(status, statusTr)
+          h(
+            'span',
+            { className: 'truncate' },
+            // Odbior nocny 08.09: wstrzymana inicjatywa ma miec SLOWO, nie tylko kolor kropki.
+            row.onHold === true
+              ? (t ?? ((_key: string, fallback?: string) => fallback ?? _key))(
+                  'initiatives.status.ON_HOLD',
+                  'Wstrzymana'
+                )
+              : stages12Enabled && row.status === InitiativeStatus.REJECTED
+                ? getLocalizedStatusLabel(InitiativeStatus.REJECTED, statusTr)
+                : stages12Enabled && row.status === InitiativeStatus.PROPOSED
+                  ? getLocalizedStatusLabel(InitiativeStatus.PROPOSED, statusTr)
+                  : stages12Enabled && resolvedLifecycle === UNKNOWN_INITIATIVE_LIFECYCLE
+                    ? statusTr('initiatives.status.UNKNOWN_OTHER', 'Unknown / Other')
+                    : stages12Enabled && isKnownEnumValue('initiativeLifecycle', resolvedLifecycle)
+                      ? enumLabel(
+                          'initiativeLifecycle',
+                          resolvedLifecycle,
+                          t ?? ((_key, fallback) => fallback || _key)
+                        )
+                      : getLocalizedStatusLabel(status, statusTr)
           )
         );
       },
@@ -311,7 +348,9 @@ export const createInitiativeRegisterColumns = (
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const value = String(
-          row.gateName || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row, stages12Enabled)).gate || ''
+          row.gateName ||
+            nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row, stages12Enabled)).gate ||
+            ''
         );
         const label = value && value !== '—' ? enumLabel('initiativeGateName', value, tr) : '—';
         return h(
