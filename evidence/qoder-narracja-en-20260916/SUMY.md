@@ -23,11 +23,44 @@ R2 `955b6bde09`, R3 `726945502f`, R4 (ten commit).
 ## Reprodukcja
 
 ```bash
-# z korzenia repo; jeden proces na jeden język (renderer pdfkit/pptxgenjs/jszip
-# segfaultuje niedeterministycznie w workerach — patrz W8-2, ZASTANA infrastruktura)
+# z korzenia repo; jeden proces na jeden język
 npx tsx scripts/dev/qoder-r4-render.mts en
 npx tsx scripts/dev/qoder-r4-render.mts pl
 ```
+
+Skrypt działa, bo `pdf-parse` jest w nim importowany LENIWIE (`await import(...)`),
+dopiero po renderach DOCX i PPTX. Przyczyna padu jest zmierzona, nie domniemana:
+`pdf-parse` ciągnie własną, zagnieżdżoną kopię natywnego `@napi-rs/canvas` (0.1.80),
+a rasteryzator bloku `chart` w `renderDocumentSchemaToDocxBuffer` ładuje kopię
+aplikacyjną (1.0.9). Dwa fizyczne buildy Skia w jednym procesie Node zabijają
+proces przy pierwszym rysowaniu po imporcie — bez `pdf-parse` render DOCX daje
+226 614 B i RC=0, z importem top-level RC=139 (dowody i raporty macOS `.ips`:
+`evidence/qoder-vitest-render-20260917/DIAGNOZA.md`). Dawniejszy opis „renderer
+segfaultuje w workerach, ZASTANE" był nietrafny: pada każdy proces (vitest i tsx),
+w którym spotkają się obie kopie.
+
+Sumy PPTX liczone są po POSORTOWANIU `slideNames` numerem slajdu — kolejność
+wpisów w zip nie jest stabilna, więc bez sortowania `contentSha256` slajdów
+mógłby się różnić między przebiegami tego samego renderu.
+
+### Przebieg kontrolny 2026-09-17 (linia `00f2e0d83f`, ten sam skrypt)
+
+- SUMY TEKSTU odtwarzają się bajt w bajt: DOCX EN `7d0ad7b3…`, DOCX PL
+  `28b28b89…`, PPTX EN `5ebb7db9…`, PPTX PL `88d41130…` — identyczne z tabelami
+  wyżej; sortowanie `slideNames` ich NIE zmienia (zmierzone).
+- Diakrytyki: EN 0/0/0, PL 763/113/118 — jak w tabeli wyżej.
+- Sumy CAŁYCH plików binarnych z tabeli niżej się NIE odtwarzają i nigdy nie
+  miały: zipy niosą timestampy wpisów (dwa przebiegi `en` z 2026-09-17 dały
+  `report-en.docx` o identycznym rozmiarze 226 614 B i różnych sha256).
+- ★ ROZBIEŻNOŚĆ DO DECYZJI CTO: osadzony PNG wykresu w świeżo renderowanym DOCX
+  różni się od osadzonego w binariach z 16.09 22:35 (213 723 B vs 195 799 B,
+  oba 2100×1212, deterministycznie 3/3 w przebiegu kontrolnym; wizualnie świeży
+  ma obrysy serii radaru, zapisany nie). Źródło serwera między commitami R4
+  a linią `00f2e0d83f` nie zmieniało rendererów (`git diff a46892635f..00f2e0d83f
+  -- server/src` = jeden plik testowy), wersja `@napi-rs/canvas` ta sama (1.0.9).
+  Podejrzenie: binaria z 16.09 powstały z niezacommitowanego stanu rasteryzatora.
+  NIE nadpisuję przyjętych sum — dowód DEC-461 stoi na sumach TEKSTU, te są
+  identyczne.
 
 ## Diakrytyki (polskie znaki) w warstwie tekstowej
 

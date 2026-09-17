@@ -6,10 +6,14 @@
  * samym silnikiem, którym eksportuje `assessment-reports.routes.ts`. Wynik idzie
  * do `evidence/qoder-narracja-en-20260916/`.
  *
- * Dlaczego tsx a nie vitest: pipeline renderer'ów (pdfkit + pptxgenjs + jszip)
- * segfaultuje w vitest workerach ZASTANE na tym stanowisku (EXIT=139/138),
- * ale w plain node przez tsx działa niezawodnie. Ten sam test-fixture; tylko
- * warstwa uruchomienia inna.
+ * Dlaczego tsx a nie vitest i dlaczego `pdf-parse` jest importowany LENIWIE:
+ * `pdf-parse` ciągnie własną, zagnieżdżoną kopię natywnego `@napi-rs/canvas`
+ * (0.1.80), a rasteryzator bloku `chart` w `renderDocumentSchemaToDocxBuffer`
+ * ładuje kopię aplikacyjną (1.0.9). Dwa fizyczne buildy Skia w jednym procesie
+ * Node zabijają proces przy pierwszym rysowaniu po imporcie (zmierzone: bez
+ * `pdf-parse` render DOCX daje 226 614 B i RC=0, z importem RC=139). Ten sam
+ * warunek wywracał `g1.reportLanguage.test.ts` — tam rozwiązaniem jest podział
+ * na dwa pliki (osobne procesy vitest), tu: import po renderach.
  */
 import { writeFileSync, statSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -17,7 +21,6 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import JSZip from 'jszip';
-import { PDFParse } from 'pdf-parse';
 
 import { renderDocumentSchemaToDocxBuffer } from '../../server/src/services/documentStudio/documentDocxRenderer.js';
 import { buildAssessmentDeckModel } from '../../server/src/services/assessment/assessmentDeckModel.js';
@@ -119,15 +122,23 @@ async function renderAll(language: 'pl' | 'en', outputSuffix = '') {
   const model = buildAssessmentDeckModel(contract, organizationName);
   const pptx = await renderAssessmentDeckPptx(model);
   const pptxZip = await JSZip.loadAsync(pptx);
-  const slideNames = Object.keys(pptxZip.files).filter((name) =>
-    /^ppt\/slides\/slide\d+\.xml$/u.test(name)
-  );
+  // Kolejność wpisów w zip nie jest stabilna — bez sortowania `contentSha256`
+  // slajdów różnił się między przebiegami tego samego renderu.
+  const slideNames = Object.keys(pptxZip.files)
+    .filter((name) => /^ppt\/slides\/slide\d+\.xml$/u.test(name))
+    .sort((a, b) => {
+      const numer = (value: string): number => Number(/slide(\d+)\.xml$/u.exec(value)?.[1] ?? 0);
+      return numer(a) - numer(b);
+    });
   const slideXml = (
     await Promise.all(slideNames.map((name) => pptxZip.file(name)!.async('string')))
   ).join('\n');
   const pptxDiacritics = (slideXml.match(POLSKIE) ?? []).length;
 
   const pdf = await renderAssessmentDeckPdf(model);
+  // Leniwie i dopiero PO renderach DOCX/PPTX — patrz nagłówek pliku (dwie kopie
+  // natywnego Skia w jednym procesie zabijają proces).
+  const { PDFParse } = await import('pdf-parse');
   const parser = new PDFParse({ data: pdf });
   const pdfText = String((await parser.getText()).text ?? '');
   await parser.destroy();
