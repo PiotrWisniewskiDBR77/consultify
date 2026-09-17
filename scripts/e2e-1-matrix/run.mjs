@@ -15,6 +15,7 @@ import {
 } from './contract.mjs';
 import { validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
 import { isDomainMutationRequest } from './network.mjs';
+import { settle as settleAndWait } from './settle.mjs';
 
 const args = process.argv.slice(2);
 const value = (name, fallback) => {
@@ -142,6 +143,7 @@ async function authenticate(page) {
     organizationId: target.id,
     organizationName: target.name,
     role: actualRole,
+    userId: user.id,
     restoreOrganizationId:
       beforeUser.organizationId && beforeUser.organizationId !== target.id
         ? beforeUser.organizationId
@@ -174,11 +176,19 @@ async function captureFlags(page) {
   };
 }
 
-async function setPresentationState(page) {
-  await page.evaluate(({ locale, theme }) => {
+async function setPresentationState(page, userId) {
+  await page.evaluate(({ locale, theme, userId }) => {
     localStorage.setItem('i18nextLng', locale);
     localStorage.setItem('consultify_language', locale);
     localStorage.setItem('theme', theme);
+    // DEC-590 (Wpis 39): the first-run onboarding modal covered every screen in
+    // run 1 (147/154 FAIL on locator.click timeout). useFirstRunOnboarding reads
+    // `consultify_onboarding_done:{userId}` === 'true' as an instant local guard
+    // BEFORE any server call, so setting it here dismisses onboarding for the
+    // service account without touching the server-side preference.
+    if (userId) {
+      localStorage.setItem(`consultify_onboarding_done:${userId}`, 'true');
+    }
     const raw = localStorage.getItem('consultify-storage');
     let parsed = {};
     try {
@@ -187,16 +197,13 @@ async function setPresentationState(page) {
     parsed.state = { ...(parsed.state || {}), theme };
     parsed.version ??= 2;
     localStorage.setItem('consultify-storage', JSON.stringify(parsed));
-  }, variant);
+  }, { locale: variant.locale, theme: variant.theme, userId });
 }
 
 async function settle(page, route) {
-  await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
-  // Staging keeps polling connections open. A long networkidle wait multiplies
-  // into hours across 128 module runs, so cap it and then give React one frame
-  // budget to settle. Surface-level HTTP errors remain captured independently.
-  await page.waitForLoadState('networkidle', { timeout: 4_000 }).catch(() => {});
-  await page.waitForTimeout(700);
+  // DEC-590 (Wpis 39): spinner-aware wait lives in settle.mjs. This wrapper only
+  // binds BASE and the console logger so the 7 call sites stay (page, route).
+  return settleAndWait(page, route, { base: BASE, log: (message) => console.log(message) });
 }
 
 async function screenshot(page, moduleId, kind, control) {
@@ -481,7 +488,7 @@ async function main() {
   });
   const page = await context.newPage();
   const principal = await authenticate(page);
-  await setPresentationState(page);
+  await setPresentationState(page, principal.userId);
   const flags = await captureFlags(page);
   const mutatingRequests = [];
   // The matrix package proves entry-surface reachability without leaving test

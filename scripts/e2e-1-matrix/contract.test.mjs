@@ -120,3 +120,26 @@ test('mutation gate counts only same-origin domain writes', () => {
   );
   assert.equal(isDomainMutationRequest({ url: `${base}/api/tasks`, method: 'GET' }, base), false);
 });
+
+test('web-vitals beacon is whitelisted by exact path+method, not a blanket /api/analytics rule', () => {
+  const base = 'https://staging.consultify.ai';
+  // DEC-590 (Wpis 39): the app fires POST /api/analytics/web-vitals on its own;
+  // run 1 counted it as 248 false "unexpected writes" and blocked all 16 menu1.
+  assert.equal(
+    isDomainMutationRequest({ url: `${base}/api/analytics/web-vitals`, method: 'POST' }, base),
+    false,
+    'passive web-vitals POST must be allowed'
+  );
+  // A real domain write that happens to live under /api/analytics is still caught.
+  assert.equal(
+    isDomainMutationRequest({ url: `${base}/api/analytics/custom-events`, method: 'POST' }, base),
+    true,
+    'a non-whitelisted /api/analytics POST must still count as a domain write'
+  );
+  // The whitelist is method-aware: same path, different method is a write.
+  assert.equal(
+    isDomainMutationRequest({ url: `${base}/api/analytics/web-vitals`, method: 'PUT' }, base),
+    true,
+    'web-vitals under a non-whitelisted method must count as a domain write'
+  );
+});
