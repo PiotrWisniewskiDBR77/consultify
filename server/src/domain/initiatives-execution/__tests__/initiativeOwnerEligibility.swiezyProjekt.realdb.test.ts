@@ -57,8 +57,8 @@ describe('uprawniony wlasciciel inicjatywy w swiezej organizacji — realny Post
         `${id}@p14.test`,
       ]);
       await pool.query(
-        `INSERT INTO organization_members(organization_id,user_id,role,status) VALUES($1,$2,$3,$4)`,
-        [org, id, rola, status]
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,$4,$5)`,
+        [randomUUID(), org, id, rola, status]
       );
     }
     // Projekt zalozony tak, jak zaklada go dzis `createProject`: BEZ project_members.
@@ -71,8 +71,12 @@ describe('uprawniony wlasciciel inicjatywy w swiezej organizacji — realny Post
       [projektZCzlonkiemId, organizationId, 'Projekt z jawnym czlonkiem', null]
     );
     await pool.query(
-      `INSERT INTO project_members(project_id,user_id,project_role) VALUES($1,$2,'TASK_ASSIGNEE')`,
-      [projektZCzlonkiemId, czlonekId]
+      `INSERT INTO project_members(id,project_id,user_id,project_role) VALUES($1,$2,$3,'TASK_ASSIGNEE')`,
+      [randomUUID(), projektZCzlonkiemId, czlonekId]
+    );
+    await pool.query(
+      `INSERT INTO project_members(id,project_id,user_id,project_role) VALUES($1,$2,$3,'TASK_ASSIGNEE')`,
+      [randomUUID(), projektZCzlonkiemId, zawieszonyId]
     );
     reader = new PostgresInitiativeReader(pool);
   });
@@ -128,5 +132,16 @@ describe('uprawniony wlasciciel inicjatywy w swiezej organizacji — realny Post
     await expect(
       reader.isEligibleInitiativeOwner(organizationId, projektId, obcyId)
     ).resolves.toBe(false);
+  });
+
+  it('kanoniczna lista pomija REVOKED mimo pozostawionego project_members', async () => {
+    const owners = await reader.listEligibleInitiativeOwners(
+      organizationId,
+      projektZCzlonkiemId
+    );
+    expect(owners.map((owner) => owner.id).sort()).toEqual(
+      [czlonekId, wlascicielId].sort()
+    );
+    expect(owners.some((owner) => owner.id === zawieszonyId)).toBe(false);
   });
 });

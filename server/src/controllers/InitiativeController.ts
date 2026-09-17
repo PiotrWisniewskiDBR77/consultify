@@ -235,6 +235,26 @@ const getMultilingualText = (text: string | null | undefined, userLang: string =
 // ==========================================
 
 export class InitiativeController {
+  static getEligibleInitiativeOwners = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const projectId = String(req.query.projectId || '').trim();
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
+        return;
+      }
+      if (!projectId) {
+        res.status(400).json({ error: 'PROJECT_ID_REQUIRED', code: 'PROJECT_ID_REQUIRED' });
+        return;
+      }
+      const owners = await canonicalInitiativeWriteReader.listEligibleInitiativeOwners(
+        orgId,
+        projectId
+      );
+      res.json({ owners });
+    }
+  );
+
   /**
    * Get all initiatives for organization
    */

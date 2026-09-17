@@ -463,6 +463,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
    * z `currentProjectId` jako wartoscia poczatkowa.
    */
   const [newProjectId, setNewProjectId] = useState('');
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [newInitiativeOwnerOptions, setNewInitiativeOwnerOptions] = useState<
+    Array<{ id: string; label: string }>
+  >([]);
+  const [isLoadingNewOwnerOptions, setIsLoadingNewOwnerOptions] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const closeNewModal = useCallback(() => {
     if (!isCreating) setShowNewModal(false);
@@ -529,6 +534,60 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     (currentUser as any)?.displayName ||
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
+  useEffect(() => {
+    if (!showNewModal || !newProjectId) {
+      setNewInitiativeOwnerOptions([]);
+      setNewOwnerId('');
+      setIsLoadingNewOwnerOptions(false);
+      return;
+    }
+
+    let cancelled = false;
+    setNewOwnerId('');
+    setIsLoadingNewOwnerOptions(true);
+
+    void Api.get(`/initiatives/eligible-owners?projectId=${encodeURIComponent(newProjectId)}`)
+      .then((ownersResponse) => {
+        if (cancelled) return;
+        const eligibleOwners = Array.isArray(ownersResponse)
+          ? ownersResponse
+          : Array.isArray((ownersResponse as any)?.owners)
+            ? (ownersResponse as any).owners
+            : [];
+        const byId = new Map<string, string>();
+        const addOption = (candidate: any) => {
+          const id = String(candidate?.id || '').trim();
+          if (!id) return;
+          const label =
+            String(candidate?.displayName || candidate?.name || candidate?.userName || '').trim() ||
+            [candidate?.firstName, candidate?.lastName].filter(Boolean).join(' ').trim() ||
+            String(candidate?.email || '').trim();
+          if (!label) return;
+          byId.set(id, label);
+        };
+
+        for (const owner of eligibleOwners) addOption(owner);
+
+        const signedInId = String(currentUserId || '').trim();
+        const signedInIsEligible = signedInId && byId.has(signedInId);
+        const options = Array.from(byId, ([id, label]) => ({ id, label }));
+        setNewInitiativeOwnerOptions(options);
+        setNewOwnerId(signedInIsEligible ? signedInId : options[0]?.id || '');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNewInitiativeOwnerOptions([]);
+          setNewOwnerId('');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingNewOwnerOptions(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, newProjectId, showNewModal]);
   const initiativeFetchScopeKey = `${currentOrganization?.id ?? ''}:${currentUserId ?? ''}`;
   initiativeFetchScopeRef.current = initiativeFetchScopeKey;
 
@@ -3195,6 +3254,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                               ),
                               onSelect: () => {
                                 setNewProjectId(currentProjectId || '');
+                                setNewOwnerId('');
                                 setShowNewModal(true);
                               },
                             },
@@ -3390,10 +3450,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   (DEC-499 Q3: zakres = cała organizacja do czasu PMO). */}
               <RequiredProjectPicker
                 value={newProjectId}
-                onChange={setNewProjectId}
+                onChange={(projectId) => {
+                  setNewOwnerId('');
+                  setNewProjectId(projectId);
+                }}
                 language={i18n.language === 'pl' ? 'pl' : 'en'}
                 autoSelectFirst
               />
+
+              <div>
+                <label
+                  htmlFor="initiatives-new-modal-owner"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
+                  {t('initiatives.form.ownerRequired', 'Owner *')}
+                </label>
+                <select
+                  id="initiatives-new-modal-owner"
+                  value={newOwnerId}
+                  onChange={(event) => setNewOwnerId(event.target.value)}
+                  disabled={isLoadingNewOwnerOptions || newInitiativeOwnerOptions.length === 0}
+                  required
+                  aria-required="true"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
+                >
+                  <option value="">{t('initiatives.form.selectOwner', 'Select owner…')}</option>
+                  {newInitiativeOwnerOptions.map((owner) => (
+                    <option key={owner.id} value={owner.id}>
+                      {owner.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Summary */}
               <div>
@@ -3436,7 +3524,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                  * ludzku i osobno dla każdego brakującego składnika.
                  */
                 const scopeProjectId = String(newProjectId || currentProjectId || '').trim();
-                const scopeOwnerId = String((currentUser as any)?.id || '').trim();
+                const scopeOwnerId = String(newOwnerId || '').trim();
                 if (!scopeProjectId) {
                   toast.error(
                     t(
@@ -3448,10 +3536,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 }
                 if (!scopeOwnerId) {
                   toast.error(
-                    t(
-                      'initiatives.form.ownerUnavailableError',
-                      'Your user account could not be resolved. Sign in again and retry.'
-                    )
+                    t('initiatives.form.ownerRequiredError', 'Choose an owner for this initiative.')
                   );
                   return;
                 }
@@ -3485,6 +3570,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewSummary('');
                   setNewLevel('standard');
                   setNewProjectId('');
+                  setNewOwnerId('');
                   if (createdId) {
                     try {
                       const full =

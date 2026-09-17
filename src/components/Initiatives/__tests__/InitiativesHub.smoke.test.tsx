@@ -36,6 +36,9 @@ const {
   getInitiative,
   listRegisteredInitiatives,
   apiGet,
+  getUsers,
+  getProjects,
+  createInitiativeWriteTruth,
   portfolioStoreState,
   appStoreState,
   conversationStoreState,
@@ -45,6 +48,9 @@ const {
   getInitiative: vi.fn(),
   listRegisteredInitiatives: vi.fn(),
   apiGet: vi.fn(),
+  getUsers: vi.fn(),
+  getProjects: vi.fn(),
+  createInitiativeWriteTruth: vi.fn(),
   portfolioStoreState: { refreshTrigger: 0 },
   appStoreState: {
     currentProjectId: 'proj-1',
@@ -53,6 +59,11 @@ const {
   },
   conversationStoreState: { addMessage: vi.fn() },
   demoModeState: { enabled: false },
+}));
+
+vi.mock('@/services/initiativeWriteTruth', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/initiativeWriteTruth')>()),
+  createInitiativeWriteTruth,
 }));
 
 vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) => ({
@@ -75,10 +86,10 @@ vi.mock('@/services/api', () => ({
     post: vi.fn(async () => ({})),
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
-    getUsers: vi.fn(async () => []),
+    getUsers,
     // D-15: reczny formularz ma teraz kanoniczny wybor projektu
     // (`RequiredProjectPicker`), ktory czyta `GET /api/projects`.
-    getProjects: vi.fn(async () => [{ id: 'proj-1', name: 'Northwind 2027' }]),
+    getProjects,
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
   shouldAllowDemoData: () => demoModeState.enabled,
@@ -151,7 +162,50 @@ beforeEach(() => {
   listRegisteredInitiatives.mockReset();
   listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
   apiGet.mockReset();
-  apiGet.mockResolvedValue({});
+  apiGet.mockImplementation(async (path: string) => {
+    if (path === '/initiatives/eligible-owners?projectId=proj-1') {
+      return {
+        owners: [
+          { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+          { id: 'u5', firstName: 'Project', lastName: 'One', role: 'MEMBER' },
+        ],
+      };
+    }
+    if (path === '/initiatives/eligible-owners?projectId=proj-2') {
+      return {
+        owners: [
+          { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+          { id: 'u2', firstName: 'Olivia', lastName: 'Owner', role: 'MEMBER' },
+        ],
+      };
+    }
+    return {};
+  });
+  getUsers.mockReset();
+  getUsers.mockResolvedValue([
+    { id: 'u1', firstName: 'T', lastName: 'U', status: 'ACTIVE', role: 'ADMIN' },
+    { id: 'u2', firstName: 'Olivia', lastName: 'Owner', status: 'ACTIVE', role: 'MEMBER' },
+    { id: 'u3', firstName: 'Inactive', lastName: 'Owner', status: 'INACTIVE' },
+    { id: 'u4', firstName: 'Outside', lastName: 'Member', status: 'ACTIVE', role: 'MEMBER' },
+    { id: 'u5', firstName: 'Project', lastName: 'One', status: 'ACTIVE', role: 'MEMBER' },
+  ]);
+  getProjects.mockReset();
+  getProjects.mockResolvedValue([
+    { id: 'proj-1', name: 'Northwind 2027', status: 'active' },
+    { id: 'proj-2', name: 'Northwind Operations', status: 'active' },
+  ]);
+  createInitiativeWriteTruth.mockReset();
+  createInitiativeWriteTruth.mockResolvedValue({
+    createdId: 'new-initiative-1',
+    truth: {
+      initiative: {
+        id: 'new-initiative-1',
+        title: 'Stable initiative',
+        status: 'DRAFT',
+        projectId: 'proj-2',
+      },
+    },
+  });
 });
 
 afterEach(() => {
@@ -325,6 +379,55 @@ describe('InitiativesHub smoke', () => {
     fireEvent.click(primaryWizardButton);
     fireEvent.click(await screen.findByRole('menuitem', { name: /Fill in the form/i }));
     expect(await screen.findByText('initiatives.form.createNew')).toBeInTheDocument();
+  });
+
+  it('K-08: keeps project and owner selections while typing and submits both identities', async () => {
+    renderHub();
+    await screen.findByTestId('initiatives-hub');
+    const [primaryWizardButton] = await screen.findAllByRole('button', {
+      name: 'New Initiative',
+    });
+    fireEvent.click(primaryWizardButton);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Fill in the form/i }));
+
+    const project = (await screen.findByLabelText('Project *')) as HTMLSelectElement;
+    const owner = (await screen.findByLabelText('Owner *')) as HTMLSelectElement;
+    await waitFor(() => expect(project.value).toBe('proj-1'));
+    await waitFor(() => expect(owner.value).toBe('u1'));
+    expect(screen.queryByRole('option', { name: 'Inactive Owner' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Outside Member' })).not.toBeInTheDocument();
+    fireEvent.change(owner, { target: { value: 'u5' } });
+    expect(owner.value).toBe('u5');
+
+    fireEvent.change(project, { target: { value: 'proj-2' } });
+    await screen.findByRole('option', { name: 'Olivia Owner' });
+    expect(screen.queryByRole('option', { name: 'Project One' })).not.toBeInTheDocument();
+    await waitFor(() => expect(owner.value).toBe('u1'));
+    fireEvent.change(owner, { target: { value: 'u2' } });
+    fireEvent.change(screen.getByLabelText('initiatives.form.titleRequired'), {
+      target: { value: 'Stable initiative' },
+    });
+    expect(project.value).toBe('proj-2');
+    expect(owner.value).toBe('u2');
+    fireEvent.change(screen.getByPlaceholderText('initiatives.form.summaryPlaceholder'), {
+      target: { value: 'A summary that forces another parent rerender.' },
+    });
+    expect(project.value).toBe('proj-2');
+    expect(owner.value).toBe('u2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'initiatives.form.create' }));
+    await waitFor(() =>
+      expect(createInitiativeWriteTruth).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: 'proj-2',
+          initiativeOwnerId: 'u2',
+          title: 'Stable initiative',
+          problem: 'A summary that forces another parent rerender.',
+        })
+      )
+    );
+    expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('opens a wizard-created draft in the persisted initiative document, not unregistered runtime', async () => {

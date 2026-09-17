@@ -54,6 +54,14 @@ export interface InitiativeListPage {
   nextCursor: InitiativeListCursor | null;
 }
 
+export interface EligibleInitiativeOwnerReadModel {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  role: string;
+}
+
 export interface InitiativeCardVersionReadModel {
   cardKey: string;
   cardVersion: number;
@@ -386,6 +394,44 @@ export class PostgresInitiativeReader {
       [organizationId, projectId, userId]
     );
     return result.rowCount === 1;
+  }
+
+  async listEligibleInitiativeOwners(
+    organizationId: string,
+    projectId: string
+  ): Promise<EligibleInitiativeOwnerReadModel[]> {
+    const result = await this.pool.query<{
+      id: string;
+      first_name: string | null;
+      last_name: string | null;
+      email: string | null;
+      role: string;
+    }>(
+      `SELECT DISTINCT u.id, u.first_name, u.last_name, u.email, om.role
+         FROM projects p
+         JOIN organization_members om
+           ON om.organization_id=p.organization_id
+          AND UPPER(COALESCE(om.status, ''))='ACTIVE'
+         JOIN users u ON u.id=om.user_id
+        WHERE p.id=$2 AND p.organization_id=$1
+          AND (
+            EXISTS (
+              SELECT 1 FROM project_members pm
+               WHERE pm.project_id=p.id AND pm.user_id=om.user_id
+            )
+            OR p.owner_id=om.user_id
+            OR UPPER(COALESCE(om.role, '')) IN ('OWNER', 'ADMIN')
+          )
+        ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST, u.id`,
+      [organizationId, projectId]
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      email: row.email,
+      role: row.role,
+    }));
   }
 
   /**
