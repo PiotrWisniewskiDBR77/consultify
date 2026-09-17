@@ -1685,7 +1685,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         isCurrent
                           ? 'text-c-info dark:text-c-info font-medium'
                           : isAnswered
-                            ? 'text-c-text-muted line-through decoration-c-border-strong dark:decoration-c-border-strong'
+                            ? 'text-c-text-muted'
                             : 'text-c-text-secondary font-medium'
                       }`}
                     >
@@ -2208,7 +2208,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <span
                                 className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                   immersive
-                                    ? 'text-amber-400/70'
+                                    ? 'text-c-warning'
                                     : 'text-amber-700 dark:text-amber-400/70'
                                 }`}
                               >
@@ -2217,7 +2217,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <p
                                 className={`text-sm leading-relaxed ${
                                   immersive
-                                    ? 'text-amber-200/90'
+                                    ? 'text-c-warning dark:text-amber-200/90'
                                     : 'text-amber-950 dark:text-amber-200/90'
                                 }`}
                               >
