@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveTemplateBuildPath,
   resolveTemplateClonePath,
   resolveTemplateEditPath,
   resolveTemplateProvenancePath,
@@ -253,6 +254,25 @@ describe('resolveTemplateUsePath', () => {
 });
 
 describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejść prezentacji 2026-07-27', () => {
+  it('karta otwiera dokładny kanoniczny builder dla DOC-BASE i DECK-BASE', () => {
+    expect(
+      resolveTemplateBuildPath({
+        artifactIndexId: ARTIFACT_INDEX_ID,
+        templateType: 'report',
+        canonicalTemplateId: CANONICAL_ID,
+        originRuntime: 'document_template',
+      })
+    ).toBe(`/presentations/templates/document/${CANONICAL_ID}`);
+    expect(
+      resolveTemplateBuildPath({
+        artifactIndexId: ARTIFACT_INDEX_ID,
+        templateType: 'presentation',
+        canonicalTemplateId: CANONICAL_ID,
+        originRuntime: 'presentation_template',
+      })
+    ).toBe(`/presentations/templates/deck/${CANONICAL_ID}`);
+  });
+
   it('szablon PREZENTACJI (edit) → Architekt szablonów, NIE /presentations/wizard', () => {
     const path = resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'presentation');
     expect(path).toBe('/presentations?tab=template_architect');
@@ -281,6 +301,23 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
     expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', null)).toBe(
       '/presentations?tab=templates'
     );
+  });
+
+  it('Duplicate na trzech bazach otwiera właściwy runtime i zachowuje tożsamość', () => {
+    expect(
+      resolveTemplateClonePath(ARTIFACT_INDEX_ID, 'report', CANONICAL_ID, 'document_template')
+    ).toBe(`/presentations/templates/document/${CANONICAL_ID}`);
+    expect(
+      resolveTemplateClonePath(
+        ARTIFACT_INDEX_ID,
+        'presentation',
+        CANONICAL_ID,
+        'presentation_template'
+      )
+    ).toBe(`/presentations/templates/deck/${CANONICAL_ID}`);
+    expect(
+      resolveTemplateClonePath(ARTIFACT_INDEX_ID, 'sheet', CANONICAL_ID, 'sheet_template')
+    ).toBe(`/presentations?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
   });
 
   /**
@@ -312,14 +349,14 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
   });
 
   it('CZYTELNIK: stare deep linki dalej działają (?tab=workbook_templates / template_architect)', () => {
-    expect(resolveTemplatesDeepLink(`?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`)).toEqual(
-      {
-        templatesView: 'workbookTemplates',
-        workbookTemplateId: CANONICAL_ID,
-        forcesTemplatesTab: true,
-        openProvenance: false,
-      }
-    );
+    expect(
+      resolveTemplatesDeepLink(`?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`)
+    ).toEqual({
+      templatesView: 'workbookTemplates',
+      workbookTemplateId: CANONICAL_ID,
+      forcesTemplatesTab: true,
+      openProvenance: false,
+    });
     expect(resolveTemplatesDeepLink('?tab=template_architect')).toEqual({
       templatesView: 'deckArchitect',
       workbookTemplateId: null,

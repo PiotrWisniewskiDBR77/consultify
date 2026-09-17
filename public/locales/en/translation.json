@@ -36791,6 +36791,8 @@
       "newReport": "New report",
       "newPresentation": "New presentation",
       "useTemplate": "Use template",
+      "buildEdit": "Build / Edit",
+      "duplicate": "Duplicate",
       "clone": "Clone",
       "edit": "Edit",
       "archive": "Archive",
@@ -37116,6 +37118,7 @@
     },
     "templates": {
       "legacySourceLine": "Older template registry — works unchanged",
+      "systemReadOnly": "System templates are read-only. Duplicate this template to edit a copy.",
       "legacyHint": "Template from the older registry (report_builder_templates) — generation works unchanged.",
       "ctaFrozen": "Template creation lands in wave 2",
       "viewToggle": "Template library view",

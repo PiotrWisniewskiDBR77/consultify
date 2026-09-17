@@ -1,0 +1,2 @@
+consultinity@0.0.1 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v2-w185-20260917
+└── @types/node@22.19.3 -> ./../../codex-lock-ci/b-tpl1a-v2-w185-20260917/node_modules/@types/node

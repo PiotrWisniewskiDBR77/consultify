@@ -25,6 +25,7 @@ import {
   FileSpreadsheet,
   FileText,
   MessageSquare,
+  Pencil,
   Play,
   Presentation,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
+  resolveTemplateBuildPath,
   resolveTemplateClonePath,
   resolveTemplateEditPath,
   resolveTemplateUsePath,
@@ -449,6 +451,32 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   // (backend)", automatycznie przez StandardTable, NIE ukryte).
   const buildRowMenu = (row: TemplateItem): StandardRowMenu => ({
     primary: [
+      {
+        id: 'build_edit',
+        label: t('rap.actions.buildEdit', 'Build / Edit'),
+        icon: Pencil,
+        disabled: row.scope === 'system' || row.orphaned,
+        note:
+          row.scope === 'system'
+            ? t(
+                'rap.templates.systemReadOnly',
+                'System templates are read-only. Duplicate this template to edit a copy.'
+              )
+            : undefined,
+        onClick:
+          row.scope === 'system' || row.orphaned
+            ? undefined
+            : () =>
+                navigate(
+                  resolveTemplateBuildPath({
+                    artifactIndexId: row.artifactIndexId ?? row.id,
+                    templateType: row.type,
+                    canonicalTemplateId: row.canonicalTemplateId,
+                    originRuntime: row.originRuntime,
+                    orphaned: row.orphaned,
+                  })
+                ),
+      },
       // ★ Wpis osierocony / bez kanonicznego rekordu NIE jest oferowany jako
       // gotowy do użycia — pozycja disabled z jawnym powodem, zamiast trasy,
       // która po kliknięciu i tak nie miałaby czego wygenerować.
@@ -473,9 +501,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       })(),
       {
         id: 'clone',
-        label: t('rap.actions.clone', 'Clone'),
+        label: t('rap.actions.duplicate', 'Duplicate'),
         icon: Copy,
-        onClick: () => navigate(resolveTemplateClonePath(row.id, row.type)),
+        onClick: () =>
+          navigate(
+            resolveTemplateClonePath(row.id, row.type, row.canonicalTemplateId, row.originRuntime)
+          ),
       },
       {
         id: 'ask_ai',
@@ -522,7 +553,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     ],
     universalHandlers: {
       preview: () => setSelectedId(row.id),
-      edit: () => navigate(resolveTemplateEditPath(row.id, row.type, row.canonicalTemplateId)),
+      edit:
+        row.scope === 'system'
+          ? undefined
+          : () => navigate(resolveTemplateEditPath(row.id, row.type, row.canonicalTemplateId)),
       // Brak API archiwizacji wzorca — pozycja disabled z notą (StandardTable dokłada ją sama).
     },
     // Brak API kasowania wzorca — blok 5 disabled z notą (StandardTable dokłada ją sama).
@@ -553,6 +587,23 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         ? {
             informational: [
               {
+                id: 'build_edit',
+                variant: 'neutral',
+                label: t('rap.actions.buildEdit', 'Build / Edit'),
+                icon: Pencil,
+                disabled: selectedItem.scope === 'system' || selectedItem.orphaned,
+                onClick: () =>
+                  navigate(
+                    resolveTemplateBuildPath({
+                      artifactIndexId: selectedItem.artifactIndexId ?? selectedItem.id,
+                      templateType: selectedItem.type,
+                      canonicalTemplateId: selectedItem.canonicalTemplateId,
+                      originRuntime: selectedItem.originRuntime,
+                      orphaned: selectedItem.orphaned,
+                    })
+                  ),
+              },
+              {
                 id: 'use',
                 variant: 'neutral',
                 label: t('rap.actions.useTemplate', 'Use template'),
@@ -567,10 +618,17 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               {
                 id: 'clone',
                 variant: 'neutral',
-                label: t('rap.actions.clone', 'Clone'),
+                label: t('rap.actions.duplicate', 'Duplicate'),
                 icon: Copy,
                 onClick: () =>
-                  navigate(resolveTemplateClonePath(selectedItem.id, selectedItem.type)),
+                  navigate(
+                    resolveTemplateClonePath(
+                      selectedItem.id,
+                      selectedItem.type,
+                      selectedItem.canonicalTemplateId,
+                      selectedItem.originRuntime
+                    )
+                  ),
               },
               {
                 id: 'ask_ai',
@@ -746,7 +804,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             const tpl = filteredData.find((t) => t.id === item.id);
             if (!tpl) return;
             if (actionId === 'open') handleUseTemplate(tpl);
-            if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
+            if (actionId === 'duplicate')
+              navigate(
+                resolveTemplateClonePath(
+                  tpl.id,
+                  tpl.type,
+                  tpl.canonicalTemplateId,
+                  tpl.originRuntime
+                )
+              );
             if (actionId === 'edit')
               navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
           }}
@@ -801,6 +867,22 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       scopeLabel={scopeLabel}
       resolveUsePath={resolveUsePath}
       onUse={(item) => handleUseTemplate(item)}
+      onBuild={(item) =>
+        navigate(
+          resolveTemplateBuildPath({
+            artifactIndexId: item.artifactIndexId ?? item.id,
+            templateType: item.type,
+            canonicalTemplateId: item.canonicalTemplateId,
+            originRuntime: item.originRuntime,
+            orphaned: item.orphaned,
+          })
+        )
+      }
+      onDuplicate={(item) =>
+        navigate(
+          resolveTemplateClonePath(item.id, item.type, item.canonicalTemplateId, item.originRuntime)
+        )
+      }
       onPreview={(item) => setSelectedId(item.id)}
     />
   );
