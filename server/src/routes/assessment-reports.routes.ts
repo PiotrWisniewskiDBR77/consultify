@@ -20,6 +20,7 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
+import { resolveAssessmentReportLanguage } from '../services/assessment/assessmentReportLanguage.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
@@ -1098,7 +1099,12 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
 
     // The report/job locale is frozen with the report. `?lang=` remains an explicit
     // preview override; older rows fall through user → organization → EN (DEC-510).
-    const language = await resolveAssessmentReportLanguage(req, organizationId, reportRow.language);
+    const language = await resolveAssessmentReportLanguage({
+      organizationId,
+      explicit: req.query?.lang,
+      userId: req.user?.id ?? null,
+      jobLocale: reportRow.language,
+    });
 
     // Wire the real LLM narrator (fail-safe). If the service is unavailable the
     // narrator is simply omitted and the deterministic stub authors the prose.
@@ -1263,11 +1269,12 @@ router.post('/:reportId/conclusion', async (req: AuthRequest, res: Response) => 
       /* non-fatal — fall back to default label */
     }
 
-    const language = await resolveAssessmentReportLanguage(
-      req,
+    const language = await resolveAssessmentReportLanguage({
       organizationId,
-      req.body?.language ?? reportRow.language
-    );
+      explicit: req.query?.lang,
+      userId: req.user?.id ?? null,
+      jobLocale: req.body?.language ?? reportRow.language,
+    });
 
     // Narrator LLM i ugruntowanie ksiazkowe — identycznie fail-safe jak w
     // `/:reportId/drd-report`: brak uslugi = narrator deterministyczny, wniosek
@@ -1446,11 +1453,12 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
       return notConfigured(res);
     }
 
-    const lang = await resolveAssessmentReportLanguage(
-      req,
+    const lang = await resolveAssessmentReportLanguage({
       organizationId,
-      language ?? reportRow.language
-    );
+      explicit: req.query?.lang,
+      userId: req.user?.id ?? null,
+      jobLocale: language ?? reportRow.language,
+    });
     const langLabel = lang === 'pl' ? 'Polish' : 'English';
     const assessmentContext = `Assessment: "${reportRow.assessmentName}" (${reportRow.assessmentType || 'DRD'}), Status: ${reportRow.assessmentStatus || 'IN_PROGRESS'}`;
     const axisDataSummary =
@@ -3087,70 +3095,6 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
  * (stanowisko lokalne: `method_sessions` = 0). Bez tych tras ekran raportu
  * oceny zastanej nie ma z czego pobrać pliku.
  */
-/**
- * Język STAŁYCH napisów raportu (DEC-461: domyślnie `en`, `pl` tylko na
- * jawne żądanie). Kolejność, pierwsza trafiona wygrywa:
- *   1. `?lang=` w URL (jawny wybór — np. link z ekranu, gdzie użytkownik
- *      przełączył język podglądu);
- *   2. `users.language` żądającego (kolumna z migracji
- *      `20260726_users_language_preference.sql` — realnie istnieje na
- *      lokalnej kopii stagingu, zweryfikowane `\d users`);
- *   3. `organizations.default_language` organizacji (istnieje realnie —
- *      `\d organizations`; PUSTA dla DBR77 w danych testowych, więc spada do
- *      domyślnej);
- *   4. `en`.
- * Każdy krok bazy jest best-effort: błąd zapytania NIGDY nie wywraca
- * eksportu, tylko cofa do następnego kandydata (fail-safe w stronę `en`, bo
- * to jest teraz domyślny język aplikacji — odwrotnie niż
- * `languagePolicy.ts`, które jest SSOT WYŁĄCZNIE dla odpowiedzi czatu AI
- * Teresy, nie dla plików eksportu).
- */
-function parseExplicitReportLanguage(value: unknown): 'pl' | 'en' | null {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  if (normalized.startsWith('pl')) return 'pl';
-  if (normalized.startsWith('en')) return 'en';
-  return null;
-}
-
-async function resolveAssessmentReportLanguage(
-  req: AuthRequest,
-  organizationId: string,
-  jobLocale?: unknown
-): Promise<'pl' | 'en'> {
-  const explicit = parseExplicitReportLanguage(req.query?.lang);
-  if (explicit) return explicit;
-
-  const frozenJobLocale = parseExplicitReportLanguage(jobLocale);
-  if (frozenJobLocale) return frozenJobLocale;
-
-  try {
-    const userId = req.user?.id;
-    if (userId) {
-      const row = await get<{ language: string | null }>(
-        `SELECT language FROM users WHERE id = ?`,
-        [userId]
-      );
-      const fromUser = parseExplicitReportLanguage(row?.language ?? null);
-      if (fromUser) return fromUser;
-    }
-  } catch {
-    /* users.language niedostępne — schodzimy do organizacji, potem do 'en' */
-  }
-
-  try {
-    const org = await get<{ default_language: string | null }>(
-      `SELECT default_language FROM organizations WHERE id = ?`,
-      [organizationId]
-    );
-    const fromOrg = parseExplicitReportLanguage(org?.default_language ?? null);
-    if (fromOrg) return fromOrg;
-  } catch {
-    /* organizations.default_language niedostępne — 'en' */
-  }
-
-  return 'en';
-}
 
 const eksportOceny = (
   format: 'docx' | 'pptx' | 'pdf',
@@ -3161,7 +3105,11 @@ const eksportOceny = (
       const organizationId = requireRequestOrganizationId(req, res);
       if (!organizationId) return;
       const assessmentId = queryString(req, 'assessmentId');
-      const language = await resolveAssessmentReportLanguage(req, organizationId);
+      const language = await resolveAssessmentReportLanguage({
+        organizationId,
+        explicit: req.query?.lang,
+        userId: req.user?.id ?? null,
+      });
 
       const { assessmentLegacyReportContractService } = await import(
         '../services/assessment/assessmentLegacyReportContractService.js'

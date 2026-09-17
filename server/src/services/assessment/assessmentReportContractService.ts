@@ -1,7 +1,7 @@
 import { methodOutputService } from '../../method-core/outputs/index.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { composeReportContract } from './assessmentReportContractComposer.js';
-import { reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
+import { formatReportDate, reportI18n, type ReportLanguage } from './assessmentReportI18n.js';
 import { computeAssessmentReportCoverage } from './assessmentReportCoverage.js';
 import {
   AssessmentSkipReasonError,
@@ -102,32 +102,44 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
   );
 }
 
-const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-const PL_DATE_NO_YEAR = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long' });
+// [DEC-461/R2] Nazwy miesięcy w wariancie bez roku muszą się zmienić razem
+// z językiem raportu (data pełna idzie już przez `formatReportDate`, żeby
+// nie utrzymywać dwóch źródeł tego samego formatu). Renderer pokazuje ten
+// napis w polu okładkowym „Okres oceny” / „Assessment period”, więc PL/EN
+// leak byłby czytelnie widoczny dla klienta.
+const DATE_NO_YEAR_FORMATTERS: Record<ReportLanguage, Intl.DateTimeFormat> = {
+  pl: new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long' }),
+  en: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long' }),
+};
 
 // The only two real anchors for "when was this assessment actually
 // conducted" are the ANSWER_CONFIRMED events on the session — everything
 // else on method_sessions/method_outputs is bookkeeping (row created,
 // output frozen), not fieldwork. When there are no confirmed answers yet
 // (empty/draft session) there is genuinely no period to report.
-function formatAssessmentPeriod(startedAt: string | null, endedAt: string | null): string | null {
+function formatAssessmentPeriod(
+  startedAt: string | null,
+  endedAt: string | null,
+  language: ReportLanguage
+): string | null {
   if (!startedAt || !endedAt) return null;
   const start = new Date(startedAt);
   const end = new Date(endedAt);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
-  if (isSameCalendarDay(start, end)) return PL_DATE.format(end);
+  if (isSameCalendarDay(start, end)) return formatReportDate(end, language);
   if (start.getUTCFullYear() === end.getUTCFullYear()) {
-    return `${PL_DATE_NO_YEAR.format(start)} – ${PL_DATE.format(end)}`;
+    return `${DATE_NO_YEAR_FORMATTERS[language].format(start)} – ${formatReportDate(end, language)}`;
   }
-  return `${PL_DATE.format(start)} – ${PL_DATE.format(end)}`;
+  return `${formatReportDate(start, language)} – ${formatReportDate(end, language)}`;
 }
 
 export class AssessmentReportContractService {
-  async build(organizationId: string, sessionId: string, outputId?: string) {
+  async build(
+    organizationId: string,
+    sessionId: string,
+    outputId?: string,
+    language: ReportLanguage = 'en'
+  ) {
     const session = await DbPromise.get<{
       id: string;
       method_pack_version: string;
@@ -200,7 +212,8 @@ export class AssessmentReportContractService {
     );
     const assessmentPeriod = formatAssessmentPeriod(
       answerSpan?.started_at ?? null,
-      answerSpan?.ended_at ?? null
+      answerSpan?.ended_at ?? null,
+      language
     );
 
     // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 — ile obszarów metodyki ma
@@ -249,6 +262,7 @@ export class AssessmentReportContractService {
       methodVersion: output?.methodPackVersion ?? session.method_pack_version,
       sourceKind: 'method-core',
       coverage,
+      language,
       sessionLabel: {
         displayName: project?.name ?? null,
         source: project ? ('project' as const) : null,
@@ -259,8 +273,8 @@ export class AssessmentReportContractService {
         normalizeIndustry(organization?.industry) ??
         null,
       employment:
-        formatEmployeeCount(organizationProfile?.employee_count) ??
-        extractEmploymentFromDescription(project?.description ?? null),
+        formatEmployeeCount(organizationProfile?.employee_count, language) ??
+        extractEmploymentFromDescription(project?.description ?? null, language),
       assessmentPeriod,
       assessor,
       // `clientSponsor` nie ma dziś nigdzie w schemacie swojego miejsca —

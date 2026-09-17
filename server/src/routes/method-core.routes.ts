@@ -98,6 +98,7 @@ import {
   assessmentSkipReasonService,
 } from '../services/assessment/assessmentSkipReasonService.js';
 import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
+import { resolveAssessmentReportLanguage } from '../services/assessment/assessmentReportLanguage.js';
 import { buildAssessmentDrdReportSchema } from '../services/assessment/assessmentDrdReportSchemaService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
 import { ASSESSMENT_REPORT_INSUFFICIENT_COVERAGE } from '../services/assessment/assessmentReportCoverage.js';
@@ -631,10 +632,16 @@ router.get(
     if (!organizationId) return;
     const sessionId = queryString(req, 'sessionId');
     try {
+      const language = await resolveAssessmentReportLanguage({
+        organizationId,
+        explicit: req.query?.lang,
+        userId: req.userId ?? null,
+      });
       const reportContract = await assessmentReportContractService.build(
         organizationId,
         sessionId,
-        queryString(req, 'outputId') || undefined
+        queryString(req, 'outputId') || undefined,
+        language
       );
       res.status(200).json({ reportContract });
     } catch (error) {
@@ -650,10 +657,16 @@ router.get(
     if (!organizationId) return;
     const sessionId = queryString(req, 'sessionId');
     try {
+      const language = await resolveAssessmentReportLanguage({
+        organizationId,
+        explicit: req.query?.lang,
+        userId: req.userId ?? null,
+      });
       const reportContract = await assessmentReportContractService.build(
         organizationId,
         sessionId,
-        queryString(req, 'outputId') || undefined
+        queryString(req, 'outputId') || undefined,
+        language
       );
 
       // [ODMROZENIE 04_ASSESSMENT DEC-496] P-P12 (`b7ac5351`) — nie wydajemy
