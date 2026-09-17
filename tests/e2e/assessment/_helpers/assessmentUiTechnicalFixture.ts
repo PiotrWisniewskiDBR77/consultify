@@ -173,9 +173,25 @@ export async function prepareForReview(
     { type: 'EVIDENCE_ATTACHED', unitId: '1A', level: 2, payload: { evidenceId: `asm-evidence-${sessionId}`, evidenceType: 'document', strength: 'E2' } },
     { type: 'DECISION_APPROVED', unitId: '1A', level: 4, payload: { decisionId: `asm-target-${sessionId}`, subject: 'target_level', decidedValue: 4, rationale: 'Approved target' } },
   ].entries()) {
+    // K-02: every event append may advance the session CAS version. Read the
+    // current canonical version immediately before the next write so this
+    // fixture exercises the same fail-closed contract as the product client.
+    const sessionResponse = await request.get(`${API}/api/method/sessions/${sessionId}`, {
+      headers,
+    });
+    if (!sessionResponse.ok()) {
+      throw new Error(
+        `read session before event ${index}: ${sessionResponse.status()} ${await sessionResponse.text()}`
+      );
+    }
+    const sessionPayload = (await sessionResponse.json()) as { session?: { version?: unknown } };
+    const expectedVersion = sessionPayload.session?.version;
+    if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
+      throw new Error(`read session before event ${index}: invalid version ${String(expectedVersion)}`);
+    }
     const response = await request.post(`${API}/api/method/sessions/${sessionId}/events`, {
       headers: { ...headers, 'Idempotency-Key': `asm:${sessionId}:event:${index}` },
-      data: event,
+      data: { ...event, expectedVersion },
     });
     if (!response.ok()) throw new Error(`event ${index}: ${response.status()} ${await response.text()}`);
   }

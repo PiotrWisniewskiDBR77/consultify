@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -62,6 +62,10 @@ const baseProps = {
 };
 
 describe('Interview single-question owner behavior', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('renders the immersive list, progress and stable navigation controls', () => {
     render(<InterviewSingleQuestionRuntime {...baseProps} immersive onUpdateQuestion={vi.fn()} />);
     expect(
@@ -113,6 +117,111 @@ describe('Interview single-question owner behavior', () => {
     expect(
       screen.getByRole('button', { name: 'interview.singleQuestionRuntime.reviewAndSubmit' })
     ).toBeEnabled();
+  });
+
+  it('reopens the same question for the same interview session', async () => {
+    const onUpdateQuestion = vi.fn().mockResolvedValue(undefined);
+    const first = render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        sessionId="session-1"
+        immersive
+        onUpdateQuestion={onUpdateQuestion}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'interview.singleQuestionRuntime.nextQuestion' })
+    );
+    expect(
+      await screen.findByRole('heading', { name: questions[1].questionText })
+    ).toBeInTheDocument();
+    first.unmount();
+
+    render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        sessionId="session-1"
+        immersive
+        onUpdateQuestion={onUpdateQuestion}
+      />
+    );
+    expect(
+      await screen.findByRole('heading', { name: questions[1].questionText })
+    ).toBeInTheDocument();
+  });
+
+  it('restores the position for a new session scope instead of copying the previous session cursor', async () => {
+    localStorage.setItem('interview_current_question:session-1', 'q-1');
+    localStorage.setItem('interview_current_question:session-2', 'q-2');
+    const view = render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        sessionId="session-1"
+        immersive
+        onUpdateQuestion={vi.fn()}
+      />
+    );
+    expect(
+      await screen.findByRole('heading', { name: questions[0].questionText })
+    ).toBeInTheDocument();
+
+    view.rerender(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        sessionId="session-2"
+        immersive
+        onUpdateQuestion={vi.fn()}
+      />
+    );
+    expect(
+      await screen.findByRole('heading', { name: questions[1].questionText })
+    ).toBeInTheDocument();
+    expect(localStorage.getItem('interview_current_question:session-2')).toBe('q-2');
+  });
+
+  it('reports a failed registered Save and keeps the draft in place', async () => {
+    const onUpdateQuestion = vi.fn().mockRejectedValue(new Error('write failed'));
+    let saveCurrent: (() => Promise<boolean>) | null = null;
+    render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        sessionId="session-1"
+        immersive
+        onUpdateQuestion={onUpdateQuestion}
+        registerSaveCurrentQuestion={(save) => {
+          saveCurrent = save;
+        }}
+      />
+    );
+    const textarea = screen.getByPlaceholderText(
+      'interview.singleQuestionRuntime.writeTheAnswerOrRecord'
+    );
+    fireEvent.change(textarea, { target: { value: 'Do not lose this draft.' } });
+    await waitFor(() => expect(saveCurrent).not.toBeNull());
+
+    let saved = true;
+    await act(async () => {
+      saved = await saveCurrent!();
+    });
+    expect(saved).toBe(false);
+    expect(textarea).toHaveValue('Do not lose this draft.');
+  });
+
+  it('marks the workspace dirty while the current answer differs from the server readback', async () => {
+    const onDraftDirtyChange = vi.fn();
+    render(
+      <InterviewSingleQuestionRuntime
+        {...baseProps}
+        immersive
+        onUpdateQuestion={vi.fn()}
+        onDraftDirtyChange={onDraftDirtyChange}
+      />
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText('interview.singleQuestionRuntime.writeTheAnswerOrRecord'),
+      { target: { value: 'A pending answer.' } }
+    );
+    await waitFor(() => expect(onDraftDirtyChange).toHaveBeenLastCalledWith(true));
   });
 
   it('uses the per-question approval lock while a returned sibling stays editable', async () => {

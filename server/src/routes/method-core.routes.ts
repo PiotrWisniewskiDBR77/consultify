@@ -48,6 +48,7 @@ import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { getAxisForArea } from '../data/drdStructure.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { queryString } from '../utils/paramHelpers.js';
+import { withPgTransaction } from '../utils/queryHelpers.js';
 
 import {
   isMethodEventType,
@@ -1382,6 +1383,22 @@ router.post(
     const supersedes = isNonEmptyString(body.supersedes) ? body.supersedes : undefined;
     const idempotencyKey = req.get('Idempotency-Key') ?? undefined;
     const payload = body.payload ?? {};
+    const expectedVersion =
+      typeof body.expectedVersion === 'number' && Number.isInteger(body.expectedVersion)
+        ? body.expectedVersion
+        : undefined;
+
+    const isDrdAnswerWrite =
+      session.methodPackId === DRD_METHOD_PACK_ID &&
+      (type === 'ANSWER_DRAFTED' || type === 'ANSWER_CONFIRMED');
+    if (isDrdAnswerWrite && expectedVersion === undefined) {
+      res.status(400).json({
+        error: 'expected_version_required',
+        code: 'EXPECTED_VERSION_REQUIRED',
+        currentVersion: session.version,
+      });
+      return;
+    }
 
     // --- DEC-137 (P1): DRD target_level must stay on the pinned scale ------
     // Assessment-owned, NOT a kernel rule (Z16/Z17: the method-core event
@@ -1421,7 +1438,7 @@ router.post(
       }
     }
 
-    const event = await methodEventStore.append({
+    const appendInput = {
       organizationId,
       sessionId: session.id,
       type: type as MethodEventType,
@@ -1433,7 +1450,28 @@ router.post(
       supersedes,
       idempotencyKey,
       payload,
-    });
+    };
+
+    let event;
+    if (expectedVersion === undefined) {
+      // Compatibility path for SIRI and non-answer method events. Those
+      // importers have not opted into session-level CAS yet.
+      event = await methodEventStore.append(appendInput);
+    } else {
+      const outcome = await withPgTransaction((client) =>
+        methodEventStore.appendWithExpectedSessionVersion(client, appendInput, expectedVersion)
+      );
+
+      if (!outcome.ok) {
+        res.status(409).json({
+          error: 'version_conflict',
+          code: 'VERSION_CONFLICT',
+          currentVersion: outcome.currentVersion,
+        });
+        return;
+      }
+      event = outcome.event;
+    }
 
     res.status(201).json({ event });
   })

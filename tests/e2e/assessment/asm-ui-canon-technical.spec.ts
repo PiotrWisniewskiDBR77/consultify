@@ -38,6 +38,20 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     const sessionId = sessionIdFrom(ownerPage.url());
     await grantApprover(request, owner, sessionId, approver);
     await prepareForReview(request, owner, sessionId);
+    const preparedSession = await request.get(`/api/method/sessions/${sessionId}`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+    });
+    expect(preparedSession.status()).toBe(200);
+    expect((await preparedSession.json()).session.version).toBe(6);
+    const preparedEvents = await request.get(`/api/method/sessions/${sessionId}/events`, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+    });
+    expect(preparedEvents.status()).toBe(200);
+    expect((await preparedEvents.json()).events.map((event: { type: string }) => event.type)).toEqual([
+      'ANSWER_CONFIRMED',
+      'EVIDENCE_ATTACHED',
+      'DECISION_APPROVED',
+    ]);
     await ownerPage.reload();
     const ownerSession = await request.get(`/api/method/sessions/${sessionId}`, {
       headers: { Authorization: `Bearer ${owner.token}` },

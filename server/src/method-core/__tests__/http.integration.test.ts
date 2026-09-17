@@ -262,6 +262,109 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
+  it('K-02: a stale DRD answer is refused, while an idempotent replay returns the original event', async () => {
+    const createRes = await createSession(ownerToken, {
+      methodPackId: 'drd',
+      methodPackVersion: '2.0.0-methodpack.1',
+    });
+    expect(createRes.status).toBe(201);
+    const sessionId = createRes.body.session.id as string;
+    const idemKey = `k02-answer:${randomUUID()}`;
+    const answer = {
+      type: 'ANSWER_CONFIRMED',
+      unitId: '1A',
+      level: 1,
+      expectedVersion: 1,
+      payload: { questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'Confirmed' },
+    };
+
+    const first = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', idemKey)
+      .send(answer);
+    expect(first.status).toBe(201);
+
+    const replay = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', idemKey)
+      .send(answer);
+    expect(replay.status).toBe(201);
+    expect(replay.body.event.id).toBe(first.body.event.id);
+
+    const stale = await request(app)
+      .post(`/api/method/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `k02-stale:${randomUUID()}`)
+      .send({
+        ...answer,
+        type: 'ANSWER_DRAFTED',
+        payload: { questionId: '1A-L1-Q1', answerState: 'partial', text: 'Stale draft' },
+      });
+    expect(stale.status).toBe(409);
+    expect(stale.body).toMatchObject({ error: 'version_conflict', currentVersion: 2 });
+
+    const readback = await pool.query(
+      `SELECT s.version,
+              (SELECT COUNT(*)::int FROM method_events e WHERE e.session_id = s.id) event_count
+         FROM method_sessions s WHERE s.id = $1`,
+      [sessionId]
+    );
+    expect(readback.rows[0]).toMatchObject({ version: 2, event_count: 1 });
+  });
+
+  it('K-02: an event INSERT failure rolls back the session-version increment on the same connection', async () => {
+    const createRes = await createSession(ownerToken, {
+      methodPackId: 'drd',
+      methodPackVersion: '2.0.0-methodpack.1',
+    });
+    expect(createRes.status).toBe(201);
+    const sessionId = createRes.body.session.id as string;
+    const failingKey = `k02-force-insert-failure:${randomUUID()}`;
+    const fn = `k02_fail_event_${SUFFIX}`;
+    const trigger = `k02_fail_event_trigger_${SUFFIX}`;
+
+    await pool.query(
+      `CREATE OR REPLACE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$
+       BEGIN
+         IF NEW.idempotency_key = '${failingKey}' THEN
+           RAISE EXCEPTION 'forced_k02_event_insert_failure';
+         END IF;
+         RETURN NEW;
+       END $$`
+    );
+    await pool.query(
+      `CREATE TRIGGER ${trigger} BEFORE INSERT ON method_events
+       FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      const failed = await request(app)
+        .post(`/api/method/sessions/${sessionId}/events`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .set('Idempotency-Key', failingKey)
+        .send({
+          type: 'ANSWER_CONFIRMED',
+          unitId: '1A',
+          level: 1,
+          expectedVersion: 1,
+          payload: { questionId: '1A-L1-Q1', answerState: 'confirmed' },
+        });
+      expect(failed.status).toBe(500);
+
+      const readback = await pool.query(
+        `SELECT s.version,
+                (SELECT COUNT(*)::int FROM method_events e WHERE e.session_id = s.id) event_count
+           FROM method_sessions s WHERE s.id = $1`,
+        [sessionId]
+      );
+      expect(readback.rows[0]).toMatchObject({ version: 1, event_count: 0 });
+    } finally {
+      await pool.query(`DROP TRIGGER IF EXISTS ${trigger} ON method_events`);
+      await pool.query(`DROP FUNCTION IF EXISTS ${fn}()`);
+    }
+  });
+
   // ---------------------------------------------------------------------------
   // 4. freeze -> Output; retry freeze -> SAME Output, not a second one
   // ---------------------------------------------------------------------------

@@ -82,6 +82,11 @@ interface InterviewSingleQuestionRuntimeProps {
   onDeleteEvidence?: (evidenceId: string) => Promise<void>;
   onSubmitSession: () => Promise<void>;
   onSaveAndExit?: () => void;
+  /** Stable session scope used to restore the last question after reopening. */
+  sessionId?: string;
+  /** Lets the workspace Save action flush the answer draft before saving metadata. */
+  registerSaveCurrentQuestion?: (save: (() => Promise<boolean>) | null) => void;
+  onDraftDirtyChange?: (dirty: boolean) => void;
   sessionName?: string;
   readOnly?: boolean;
   answerApprovals?: V8InterviewAnswerApproval[];
@@ -221,6 +226,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onDeleteEvidence,
   onSubmitSession,
   onSaveAndExit,
+  sessionId,
+  registerSaveCurrentQuestion,
+  onDraftDirtyChange,
   sessionName,
   readOnly: workspaceReadOnly = false,
   answerApprovals = [],
@@ -272,6 +280,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   }, [orderedQuestions]);
 
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const restoredSessionIdRef = useRef<string | undefined>(undefined);
+  const skipPositionPersistenceForSessionRef = useRef<string | undefined>(undefined);
   const [answerDraft, setAnswerDraft] = useState('');
   const [contextDraft, setContextDraft] = useState('');
   const [inputMode, setInputMode] = useState<DraftInputMode>('text_answer');
@@ -356,12 +366,40 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       return;
     }
 
-    const stillVisible = pool.some((question) => question.id === currentQuestionId);
-    if (stillVisible) return;
+    const sessionChanged = restoredSessionIdRef.current !== sessionId;
+    if (sessionChanged) {
+      restoredSessionIdRef.current = sessionId;
+      skipPositionPersistenceForSessionRef.current = sessionId;
+    }
 
-    const preferred = pool.find((question) => question.status !== 'answered') || pool[0];
+    const stillVisible = pool.some((question) => question.id === currentQuestionId);
+    if (!sessionChanged && stillVisible) return;
+
+    let restored: InterviewQuestion | undefined;
+    if (sessionId) {
+      try {
+        const savedQuestionId = localStorage.getItem(`interview_current_question:${sessionId}`);
+        restored = pool.find((question) => question.id === savedQuestionId);
+      } catch {
+        // Storage is an enhancement; a blocked browser store must not block the interview.
+      }
+    }
+    const preferred = restored || pool.find((question) => question.status !== 'answered') || pool[0];
     setCurrentQuestionId(preferred?.id || null);
-  }, [categoryQuestions, currentQuestionId, immersive, orderedQuestions]);
+  }, [categoryQuestions, currentQuestionId, immersive, orderedQuestions, sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !currentQuestionId) return;
+    if (skipPositionPersistenceForSessionRef.current === sessionId) {
+      skipPositionPersistenceForSessionRef.current = undefined;
+      return;
+    }
+    try {
+      localStorage.setItem(`interview_current_question:${sessionId}`, currentQuestionId);
+    } catch {
+      // Keep navigation usable when storage is unavailable.
+    }
+  }, [currentQuestionId, sessionId]);
 
   useEffect(() => {
     if (!currentQuestion) {
@@ -475,6 +513,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         (currentQuestion.answerMode === 'voice_answer' ? 'voice_answer' : 'text_answer') ||
       voiceTranscriptDraft !== (currentQuestion.voiceTranscript || ''));
 
+  useEffect(() => {
+    onDraftDirtyChange?.(hasUnsavedChanges);
+    return () => onDraftDirtyChange?.(false);
+  }, [hasUnsavedChanges, onDraftDirtyChange]);
+
   const persistCurrentQuestion = useCallback(async () => {
     if (!currentQuestion || readOnly) return true;
     if (!hasUnsavedChanges) return true;
@@ -522,6 +565,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     readOnly,
     voiceTranscriptDraft,
   ]);
+
+  useEffect(() => {
+    if (!registerSaveCurrentQuestion) return;
+    registerSaveCurrentQuestion(persistCurrentQuestion);
+    return () => registerSaveCurrentQuestion(null);
+  }, [persistCurrentQuestion, registerSaveCurrentQuestion]);
 
   // Debounced auto-save: persist after 5s of inactivity
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1665,8 +1714,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <button
               type="button"
               onClick={() => {
-                void persistCurrentQuestion();
-                setRuntimeView('review');
+                void persistCurrentQuestion().then((ok) => {
+                  if (ok) setRuntimeView('review');
+                });
               }}
               aria-label={t('interview.singleQuestionRuntime.goToReview')}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
@@ -1678,7 +1728,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <button
                 type="button"
                 onClick={() => {
-                  void persistCurrentQuestion().then(() => onSaveAndExit?.());
+                  void persistCurrentQuestion().then((ok) => {
+                    if (ok) onSaveAndExit?.();
+                  });
                 }}
                 aria-label={t('interview.singleQuestionRuntime.saveAndExit')}
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
@@ -1734,8 +1786,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             <button
               type="button"
               onClick={() => {
-                void persistCurrentQuestion();
-                setRuntimeView('review');
+                void persistCurrentQuestion().then((ok) => {
+                  if (ok) setRuntimeView('review');
+                });
               }}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
             >
@@ -1746,7 +1799,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <button
                 type="button"
                 onClick={() => {
-                  void persistCurrentQuestion().then(() => onSaveAndExit?.());
+                  void persistCurrentQuestion().then((ok) => {
+                    if (ok) onSaveAndExit?.();
+                  });
                 }}
                 className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-c-text-muted hover:bg-c-bg dark:hover:bg-c-surface/50 w-full text-left transition-colors"
               >
@@ -2987,9 +3042,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               {isLastQuestion ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    void persistCurrentQuestion().then(() => setRuntimeView('review'));
-                  }}
+                onClick={() => {
+                  void persistCurrentQuestion().then((ok) => {
+                    if (ok) setRuntimeView('review');
+                  });
+                }}
                   disabled={readOnly || isPersisting}
                   aria-label={t('interview.singleQuestionRuntime.reviewAndSubmit')}
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/20"
