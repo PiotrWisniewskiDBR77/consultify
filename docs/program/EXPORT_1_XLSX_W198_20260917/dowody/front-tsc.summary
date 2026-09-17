@@ -1,2 +1,9 @@
-LINE RC=2 DIAGNOSTICS=150
-CANDIDATE RC=2 DIAGNOSTICS=150
+base=9ad0a303c394e172a85e1a200f1de1462be41810
+method=NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false
+line_rc=2
+line_error_ts=150
+line_sha256=a0b221476113ce03cc04f90b34b1d1b9628b18583b2903425bc7ec7a156742ae
+candidate_rc=2
+candidate_error_ts=150
+candidate_sha256=a0b221476113ce03cc04f90b34b1d1b9628b18583b2903425bc7ec7a156742ae
+own_delta=0
