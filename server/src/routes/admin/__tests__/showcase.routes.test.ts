@@ -7,7 +7,9 @@
  *   - 409 when the flag is OFF (checked before any roll work),
  *   - 200 + the bare ShowcaseRollResult[] array when superadmin + flag ON,
  *   - orgIds fall back to SHOWCASE_ORG_IDS when the body omits them,
- *   - 400 on a malformed orgIds body.
+ *   - 400 on a malformed orgIds body,
+ *   - 403 SHOWCASE_ORG_NOT_ALLOWED when a body org is outside SHOWCASE_ORG_IDS,
+ *     all-or-nothing so nothing is rolled (Wpis 58 / P2).
  *
  * The DB-touching roll is mocked here; the real SQL is proven by the sibling
  * RealPG suite (showcaseDateRoll.pg.test.ts).
@@ -102,6 +104,7 @@ describe('POST /api/admin/showcase/roll', () => {
   });
 
   it('200 + the bare ShowcaseRollResult[] array for a superadmin with the flag ON', async () => {
+    process.env.SHOWCASE_ORG_IDS = 'org-a, org-b';
     const res = await request(await buildApp())
       .post('/api/admin/showcase/roll')
       .send({ orgIds: ['org-a', 'org-b'] });
@@ -115,6 +118,7 @@ describe('POST /api/admin/showcase/roll', () => {
   });
 
   it('passes dryRun through to the service', async () => {
+    process.env.SHOWCASE_ORG_IDS = 'org-a';
     const res = await request(await buildApp())
       .post('/api/admin/showcase/roll')
       .send({ orgIds: ['org-a'], dryRun: true });
@@ -143,5 +147,40 @@ describe('POST /api/admin/showcase/roll', () => {
     expect(res.status).toBe(400);
     expect(['SHOWCASE_ORG_IDS_INVALID', 'SHOWCASE_NO_ORGS']).toContain(res.body.code);
     expect(state.rollCalls).toHaveLength(0);
+  });
+
+  // Wpis 58 (P2): a manual roll that names orgs in the body is confined to the
+  // configured SHOWCASE_ORG_IDS. Removing the intersection in the route turns
+  // test (a) red (it would roll an arbitrary org and answer 200).
+  it('403 SHOWCASE_ORG_NOT_ALLOWED when a body org is outside SHOWCASE_ORG_IDS (service not called)', async () => {
+    process.env.SHOWCASE_ORG_IDS = 'org-a, org-b';
+    const res = await request(await buildApp())
+      .post('/api/admin/showcase/roll')
+      .send({ orgIds: ['evil-tester-org'] });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SHOWCASE_ORG_NOT_ALLOWED');
+    expect(res.body.rejected).toEqual(['evil-tester-org']);
+    expect(state.rollCalls).toHaveLength(0);
+  });
+
+  it('403 all-or-nothing: a mix of allowed + outside orgs rolls NOTHING and lists only the outside ids', async () => {
+    process.env.SHOWCASE_ORG_IDS = 'org-a, org-b';
+    const res = await request(await buildApp())
+      .post('/api/admin/showcase/roll')
+      .send({ orgIds: ['org-a', 'evil-tester-org', 'org-b'] });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SHOWCASE_ORG_NOT_ALLOWED');
+    expect(res.body.rejected).toEqual(['evil-tester-org']);
+    expect(state.rollCalls).toHaveLength(0);
+  });
+
+  it('200 when the body orgIds are a subset of SHOWCASE_ORG_IDS', async () => {
+    process.env.SHOWCASE_ORG_IDS = 'org-a, org-b, org-c';
+    const res = await request(await buildApp())
+      .post('/api/admin/showcase/roll')
+      .send({ orgIds: ['org-a', 'org-c'] });
+    expect(res.status).toBe(200);
+    expect(state.rollCalls).toHaveLength(1);
+    expect(state.rollCalls[0].orgIds).toEqual(['org-a', 'org-c']);
   });
 });

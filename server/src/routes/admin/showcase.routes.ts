@@ -18,6 +18,12 @@
  * no-op feature unless the deployment opted in, so an OFF flag answers 409 rather
  * than silently returning an empty result.
  *
+ * Org allow-list (Wpis 58 / P2): a manual roll that names orgs in the body is
+ * confined to the configured SHOWCASE_ORG_IDS — the same list the nightly job
+ * uses. Any id outside it answers 403 SHOWCASE_ORG_NOT_ALLOWED (with the rejected
+ * ids) and rolls nothing, so a SUPERADMIN cannot shift the planning dates of an
+ * arbitrary org. All-or-nothing: one offending id rejects the whole request.
+ *
  * Response (Wpis 32: "odpowiedź = ShowcaseRollResult[]"): the bare per-org array.
  */
 import { Router } from 'express';
@@ -89,6 +95,21 @@ router.post(
           success: false,
           code: 'SHOWCASE_ORG_IDS_INVALID',
           guidance: 'orgIds must be a non-empty array of organization IDs.',
+        });
+      }
+      // Wpis 58 (P2): an explicit body list must stay INSIDE the configured
+      // showcase list — the same source the nightly job uses. Without this a
+      // SUPERADMIN could roll the planning dates of ANY org (tester orgs live on
+      // staging). All-or-nothing: one id outside the list rejects the whole
+      // request BEFORE any shift, so allowed ids in the same body are not rolled.
+      const allowed = new Set(parseShowcaseOrgIds(process.env.SHOWCASE_ORG_IDS));
+      const rejected = normalized.filter((id) => !allowed.has(id));
+      if (rejected.length > 0) {
+        return res.status(403).json({
+          success: false,
+          code: 'SHOWCASE_ORG_NOT_ALLOWED',
+          rejected,
+          guidance: 'orgIds must be a subset of SHOWCASE_ORG_IDS; nothing was rolled.',
         });
       }
       orgIds = normalized;
