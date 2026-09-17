@@ -33,6 +33,7 @@ import organizationProfileAdminRoutes from './routes/admin/organization-profile.
 import seatsAdminRoutes from './routes/admin/seats.routes.js';
 import securityAlertsAdminRoutes from './routes/admin/security-alerts.routes.js';
 import serviceAccountsAdminRoutes from './routes/admin/service-accounts.routes.js';
+import adminShowcaseRoutes from './routes/admin/showcase.routes.js';
 import sessionsAdminRoutes from './routes/admin/sessions.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
@@ -793,6 +794,7 @@ export class ApiGateway {
       app.use('/api/admin/legal-hold', legalHoldAdminRoutes);
       app.use('/api/admin/audit-export-history', auditExportHistoryAdminRoutes);
       app.use('/api/admin/service-accounts', serviceAccountsAdminRoutes);
+      app.use('/api/admin/showcase', adminShowcaseRoutes);
       app.use('/api/admin/domains', adminDomainsRoutes);
       app.use('/api/admin/organization-profile', organizationProfileAdminRoutes);
       // Wiring (2026-07-15): route was defined but never mounted (0 Gateway refs).
