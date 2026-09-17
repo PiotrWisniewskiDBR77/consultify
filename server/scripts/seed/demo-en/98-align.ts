@@ -22,7 +22,7 @@
  */
 import pg from 'pg';
 
-import { processOrg } from '../../align-initiative-aggregate-state';
+import { processOrg } from '../../../src/services/initiatives/alignInitiativeAggregateService';
 
 import { ORG_ID, ORG_NAZWA, czytajWspolneArgumenty, sprawdzCel, wymaganyUrl } from './00-wspolne';
 

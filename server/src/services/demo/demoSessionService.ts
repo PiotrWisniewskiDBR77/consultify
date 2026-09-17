@@ -1,4 +1,8 @@
+import pg from 'pg';
+
+import { resolveReachableDatabaseUrl } from '../../config/databaseTargetResolver.js';
 import { DEMO_ORG_ID } from '../../middleware/demoGuard.middleware.js';
+import { processOrg } from '../initiatives/alignInitiativeAggregateService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
@@ -405,6 +409,50 @@ export async function cleanupExpiredDemoSessions(): Promise<number> {
   return expiredSessions.length;
 }
 
+/**
+ * D-19 v3 (Wpis 77, DEC-539): the seed writes `initiatives.status` directly and
+ * lands the canonical aggregate at REGISTERED_DRAFT, so EVERY fresh clone is
+ * born divergent (the 2267-row staging finding). Repair it with the SAME planner
+ * the CLI and the static seed step use, right after the seed's writes are
+ * durable. The seed runs autocommit (one statement per write, no wrapping
+ * transaction), so "after the seed commit" is exactly "after
+ * `seedAtelierToysDemoDataset` returned" — there is no transaction to join, and
+ * joining one would be impossible without rewriting the whole seed. Placed after
+ * the `seed.complete` guard so a half-provisioned tenant (purged below) is never
+ * aligned, and before the `demo_sessions` insert so a clone is never observable
+ * while still divergent. Best-effort but loud: a failure is logged, and the CLI
+ * stays the operator's repair path.
+ */
+async function alignCloneAggregateAfterSeed(organizationId: string): Promise<void> {
+  const resolved = resolveReachableDatabaseUrl({
+    databaseUrl: String(process.env.DATABASE_URL || '').trim() || undefined,
+    publicDatabaseUrl: String(process.env.DATABASE_PUBLIC_URL || '').trim() || undefined,
+  });
+  if (!resolved.databaseUrl) {
+    logger.error(
+      `[demoSessionService] live aggregate align SKIPPED — no reachable DATABASE_URL (org=${organizationId})`
+    );
+    return;
+  }
+  const client = new pg.Client({ connectionString: resolved.databaseUrl });
+  try {
+    await client.connect();
+    const { counts, wrote, allowed } = await processOrg(client, organizationId, true);
+    const skipped = counts['skip-short-circuit'] + counts['skip-no-stage'];
+    logger.info(
+      `[demoSessionService] live aggregate align org=${organizationId} allowed=${allowed ? 'YES' : 'NO'} :: ` +
+        `aligned=${counts.align} already=${counts['skip-aligned']} skipped=${skipped} wrote=${wrote}`
+    );
+  } catch (error) {
+    logger.error(
+      `[demoSessionService] live aggregate align FAILED for org=${organizationId}: ` +
+        (error instanceof Error ? error.message : String(error))
+    );
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
 export async function startDemoSession(
   userId: string,
   source = 'demo_toggle',
@@ -470,6 +518,11 @@ export async function startDemoSession(
       cleanedUp,
     });
   }
+
+  // D-19 v3 (Wpis 77): the seed's writes are durable (autocommit), so repair the
+  // aggregate/column divergence the seed just created, before the session row
+  // makes the clone observable.
+  await alignCloneAggregateAfterSeed(session.session_org_id);
 
   await dbRun(
     `INSERT INTO demo_sessions (
