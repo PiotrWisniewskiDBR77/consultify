@@ -145,4 +145,18 @@ describe('execution work analysis Work task source', () => {
     expect(JSON.stringify(result.payload)).toContain('Runtime task');
     expect(JSON.stringify(result.payload)).not.toContain('Legacy duplicate');
   });
+
+
+  it('refuses to persist an empty analysis when source tasks exist', async () => {
+    const { assertNonEmptyExecutionWorkSnapshot } = await import('../executionWorkTaskSource.js');
+
+    expect(() =>
+      assertNonEmptyExecutionWorkSnapshot({
+        taskItems: [],
+        decisionItems: [],
+        sourceTaskRows: [{ aggregate_id: 'task-from-work-tab' }],
+        sourceDecisionRows: [],
+      })
+    ).toThrow('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
+  });
 });

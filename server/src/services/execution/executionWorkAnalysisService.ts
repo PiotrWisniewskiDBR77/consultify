@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import {
+  assertNonEmptyExecutionWorkSnapshot,
+  buildExecutionWorkTaskItems,
+  countExecutionWorkTasks,
+  type WorkTabTaskRow,
+} from './executionWorkTaskSource.js';
 
 const DAY = 86_400_000;
 const CLOSED = new Set(['COMPLETED', 'DONE', 'DECIDED', 'APPROVED', 'CANCELED', 'CANCELLED']);
@@ -11,19 +17,6 @@ type WorkRow = {
   aggregate_id: string;
   version: number;
   payload_json: Record<string, unknown>;
-  initiative_id: string | null;
-  project_id: string | null;
-  project_title: string | null;
-};
-
-type TaskRow = {
-  aggregate_id: string;
-  title: string | null;
-  status: string | null;
-  assignee_id: string | null;
-  due_date: string | Date | null;
-  completed_at: string | Date | null;
-  priority: string | null;
   initiative_id: string | null;
   project_id: string | null;
   project_title: string | null;
@@ -75,11 +68,6 @@ function stringValue(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
-function isoValue(value: unknown): string | null {
-  if (value instanceof Date) return value.toISOString();
-  return stringValue(value);
-}
-
 function workItem(row: WorkRow) {
   const value = row.payload_json;
   const kind = row.aggregate_type === 'execution_task' ? 'TASK' : row.aggregate_type === 'execution_decision' ? 'DECISION' : 'MILESTONE';
@@ -97,24 +85,6 @@ function workItem(row: WorkRow) {
     projectId: row.project_id,
     projectTitle: row.project_title,
     sourceType: 'runtime-v1',
-  };
-}
-
-function taskItem(row: TaskRow) {
-  return {
-    id: row.aggregate_id,
-    kind: 'TASK',
-    title: stringValue(row.title) ?? row.aggregate_id,
-    status: stringValue(row.status) ?? 'UNKNOWN',
-    ownerId: stringValue(row.assignee_id),
-    dueAt: isoValue(row.due_date),
-    completedAt: isoValue(row.completed_at),
-    priority: stringValue(row.priority) ?? 'UNKNOWN',
-    version: 1,
-    initiativeId: row.initiative_id,
-    projectId: row.project_id,
-    projectTitle: row.project_title,
-    sourceType: 'tasks',
   };
 }
 
@@ -164,7 +134,7 @@ export async function generateExecutionWorkAnalysis(args: {
       ORDER BY work.aggregate_type, work.aggregate_id`,
     [args.organizationId]
   );
-  const taskRows = await dbAll<TaskRow>(
+  const taskRows = await dbAll<WorkTabTaskRow>(
     `SELECT t.id AS aggregate_id, t.title, t.status, t.assignee_id, t.due_date,
             t.completed_at, t.priority, t.initiative_id,
             COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId') AS project_id,
@@ -192,9 +162,22 @@ export async function generateExecutionWorkAnalysis(args: {
       ORDER BY t.id`,
     [args.organizationId]
   );
-  const runtimeItems = rows.map(workItem);
-  const runtimeTaskIds = new Set(runtimeItems.filter((item) => item.kind === 'TASK').map((item) => item.id));
-  const taskItems = taskRows.map(taskItem).filter((item) => !runtimeTaskIds.has(item.id));
+  const taskItems = buildExecutionWorkTaskItems({
+    runtimeRows: rows
+      .filter((row) => row.aggregate_type === 'execution_task')
+      .map((row) => ({
+        aggregate_id: row.aggregate_id,
+        version: row.version,
+        payload_json: row.payload_json,
+        initiative_id: row.initiative_id,
+        project_id: row.project_id,
+        project_title: row.project_title,
+      })),
+    taskRows,
+  });
+  const runtimeItems = rows
+    .filter((row) => row.aggregate_type !== 'execution_task')
+    .map(workItem);
   const items = [...runtimeItems, ...taskItems];
   const inWindow = (value: string | null, from: Date, to: Date) => {
     const timestamp = value ? Date.parse(value) : Number.NaN;
@@ -214,14 +197,14 @@ export async function generateExecutionWorkAnalysis(args: {
     return reasons.length ? [{ ...item, reasons }] : [];
   });
   const taskSourceItems = items.filter((item) => item.kind === 'TASK');
-  const workTabCounts = {
-    total: taskSourceItems.length,
-    overdue: taskSourceItems.filter((item) => !isClosed(item.status) && item.dueAt && Date.parse(item.dueAt) < Date.now()).length,
-    blocked: taskSourceItems.filter((item) => item.status.toUpperCase() === 'BLOCKED').length,
-  };
-  if (!runtimeItems.length && taskRows.length && !taskSourceItems.length) {
-    throw new Error('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
-  }
+  const decisionSourceItems = items.filter((item) => item.kind === 'DECISION');
+  assertNonEmptyExecutionWorkSnapshot({
+    taskItems,
+    decisionItems: decisionSourceItems,
+    sourceTaskRows: taskRows,
+    sourceDecisionRows: rows.filter((row) => row.aggregate_type === 'execution_decision'),
+  });
+  const workTabCounts = countExecutionWorkTasks(taskSourceItems);
   const rowShape = (item: (typeof items)[number]) => ({
     record: item.title,
     type: item.kind,

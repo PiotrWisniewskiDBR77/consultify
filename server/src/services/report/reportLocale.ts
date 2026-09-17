@@ -31,6 +31,10 @@ const MESSAGES = {
     en: 'No KPI results have been recorded for initiatives in this organization.',
     pl: 'Nie zapisano wyników KPI dla inicjatyw w tej organizacji.',
   },
+  'executionReports.workAnalysis.emptySnapshot': {
+    en: 'The analysis was not saved because Consultify found work records but could not assemble a report snapshot. Refresh the Work tab and try again.',
+    pl: 'Analiza nie została zapisana, ponieważ Consultify znalazł zadania, ale nie złożył migawki raportu. Odśwież zakładkę Praca i spróbuj ponownie.',
+  },
   'executionReports.status.DRAFT': { en: 'Draft', pl: 'Szkic' },
   'executionReports.status.PUBLISHED': { en: 'Published', pl: 'Opublikowany' },
   'executionReports.level.OWNER': { en: 'Initiative owner', pl: 'Właściciel inicjatywy' },

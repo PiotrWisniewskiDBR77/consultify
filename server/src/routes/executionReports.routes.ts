@@ -512,13 +512,27 @@ router.post(
     }
     const authorName =
       [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || null;
-    const result = await generateExecutionWorkAnalysis({
-      organizationId: orgId,
-      weekOf: new Date(`${parsed.data.weekOf}T12:00:00.000Z`),
-      actorId: req.user?.id ?? null,
-      actorName: authorName,
-    });
-    res.status(result.created ? 201 : 200).json(result);
+    try {
+      const result = await generateExecutionWorkAnalysis({
+        organizationId: orgId,
+        weekOf: new Date(`${parsed.data.weekOf}T12:00:00.000Z`),
+        actorId: req.user?.id ?? null,
+        actorName: authorName,
+      });
+      res.status(result.created ? 201 : 200).json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT') {
+        const locale = await resolveExecutionReportLocale(req, orgId);
+        res.status(409).json({
+          error: reportMessage(locale, 'executionReports.workAnalysis.emptySnapshot'),
+          code: 'EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT',
+          messageKey: 'executionReports.workAnalysis.emptySnapshot',
+          locale,
+        });
+        return;
+      }
+      throw error;
+    }
   })
 );
 

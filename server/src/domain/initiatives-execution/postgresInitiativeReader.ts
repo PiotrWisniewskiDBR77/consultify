@@ -13,6 +13,11 @@ import type {
   InitiativeWorkReportContent,
   InitiativeWorkReportTemplate,
 } from '../../services/initiativeWorkReportService.js';
+import {
+  buildExecutionWorkTaskItems,
+  type RuntimeExecutionTaskRow,
+  type WorkTabTaskRow,
+} from '../../services/execution/executionWorkTaskSource.js';
 import { getExecutionResourcePlan } from '../../services/workloadCapacityService.js';
 
 export interface SourceProposalReadModel {
@@ -762,19 +767,66 @@ export class PostgresInitiativeReader {
     }));
   }
   async listExecutionTasks(organizationId: string, executionCaseId?: string) {
-    const result = await this.pool.query<{
-      version: number;
-      aggregate_id: string;
-      payload_json: Record<string, unknown>;
-    }>(
-      `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='execution_task' AND ($2::text IS NULL OR payload_json->>'executionCaseId'=$2) ORDER BY (payload_json->>'dueAt')::timestamptz`,
+    const runtimeResult = await this.pool.query<RuntimeExecutionTaskRow>(
+      `WITH case_scope AS (
+         SELECT aggregate_id AS execution_case_id, payload_json->>'initiativeId' AS initiative_id
+           FROM ie_aggregate_state
+          WHERE organization_id=$1
+            AND aggregate_type='execution_case'
+            AND ($2::text IS NULL OR aggregate_id=$2)
+       )
+       SELECT work.version, work.aggregate_id, work.payload_json,
+              case_scope.initiative_id,
+              initiative.payload_json->>'projectId' AS project_id,
+              project.name AS project_title
+         FROM ie_aggregate_state work
+         JOIN case_scope
+           ON case_scope.execution_case_id = work.payload_json->>'executionCaseId'
+         LEFT JOIN ie_aggregate_state initiative
+           ON initiative.organization_id = work.organization_id
+          AND initiative.aggregate_type = 'initiative'
+          AND initiative.aggregate_id = case_scope.initiative_id
+         LEFT JOIN projects project
+           ON project.organization_id = work.organization_id
+          AND project.id = initiative.payload_json->>'projectId'
+        WHERE work.organization_id=$1
+          AND work.aggregate_type='execution_task'
+        ORDER BY (work.payload_json->>'dueAt')::timestamptz NULLS LAST, work.aggregate_id`,
       [organizationId, executionCaseId ?? null]
     );
-    return result.rows.map((r) => ({
-      version: r.version,
-      taskId: r.aggregate_id,
-      ...r.payload_json,
-    }));
+    const taskResult = await this.pool.query<WorkTabTaskRow>(
+      `WITH case_scope AS (
+         SELECT payload_json->>'initiativeId' AS initiative_id
+           FROM ie_aggregate_state
+          WHERE organization_id=$1
+            AND aggregate_type='execution_case'
+            AND ($2::text IS NULL OR aggregate_id=$2)
+       )
+       SELECT t.id AS aggregate_id, t.title, t.status, t.assignee_id, t.due_date,
+              t.completed_at, t.priority, t.initiative_id,
+              COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId') AS project_id,
+              project.name AS project_title
+         FROM tasks t
+         JOIN case_scope
+           ON case_scope.initiative_id = t.initiative_id
+         LEFT JOIN initiatives i
+           ON i.organization_id = t.organization_id
+          AND i.id = t.initiative_id
+         LEFT JOIN ie_aggregate_state initiative
+           ON initiative.organization_id = t.organization_id
+          AND initiative.aggregate_type = 'initiative'
+          AND initiative.aggregate_id = t.initiative_id
+         LEFT JOIN projects project
+           ON project.organization_id = t.organization_id
+          AND project.id = COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId')
+        WHERE t.organization_id=$1
+        ORDER BY t.due_date NULLS LAST, t.id`,
+      [organizationId, executionCaseId ?? null]
+    );
+    return buildExecutionWorkTaskItems({
+      runtimeRows: runtimeResult.rows,
+      taskRows: taskResult.rows,
+    });
   }
   private async listExecutionControlProjection(
     organizationId: string,
