@@ -6,8 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/components/standard/StandardArtifactShell', () => ({
   StandardArtifactShell: ({ sections }: any) => <>{sections.map((section: any) => <section key={section.id}>{section.component}</section>)}</>,
 }));
-import { CapacityAnalysisCard } from '../cards/CapacityAnalysisCard';
 import { encodePlanSolverReason } from '../../../../server/src/domain/initiatives-execution/planSolverReason';
+import { CapacityAnalysisCard } from '../cards/CapacityAnalysisCard';
 
 const scenario = {
   scenarioId: 'capacity-123456789',
@@ -134,6 +134,20 @@ describe('P15-K5 — arkusz okres x rola w karcie', () => {
     // [ODMROZENIE 05_INITIATIVES DEC-453]), nigdy zero.
     expect(screen.getAllByText('Unknown').length).toBeGreaterThanOrEqual(1);
   });
+
+  it('M1b pokazuje godziny, pochodne FTE i źródło popytu z zadań', () => {
+    render(<CapacityAnalysisCard onBack={() => undefined} onAnalyze={() => undefined} onPublish={() => undefined} scenario={{
+      ...scenario,
+      periods: [{ periodId: 'Tydzień 1', demand: range(60), supply: range(80), roles: [{
+        roleId: 'controls-engineer', roleLabel: 'Controls Engineer', demand: 60, supply: 80,
+        unit: 'HOURS', demandFte: 1.5, supplyFte: 2, taskDemandHours: 60,
+        manualDemandHours: null, demandOverrideLabel: null, demandSource: 'TASKS', supplySource: 'RESOURCE_PLAN',
+      }] }],
+    }} />);
+    expect(screen.getByText(/60 h \(1[.,]5 FTE\)/)).toBeInTheDocument();
+    expect(screen.getByText(/80 h \(2 FTE\)/)).toBeInTheDocument();
+    expect(screen.getByText('From tasks')).toBeInTheDocument();
+  });
 });
 
 /**
@@ -183,7 +197,7 @@ describe('P15 scalenie K3+K5 — założenia wariantu', () => {
         ]}
       />
     );
-    expect(screen.getByText(/Cykl zależności: init-a → init-b/)).toBeInTheDocument();
+    expect(screen.getByText(/(?:Cykl zależności|Dependency cycle): init-a → init-b/)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(kod.slice(0, 12)))).toBeNull();
   });
 });

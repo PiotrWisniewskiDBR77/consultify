@@ -3,37 +3,37 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
   memberNameOrUnknown,
-  useOrganizationMemberNames,
   type MemberNameResolver,
+  useOrganizationMemberNames,
 } from '@/hooks/useOrganizationMemberNames';
 import i18n from '@/i18n';
 import { capacityUnitLabel } from '@/labels/capacityUnitLabels';
 import {
   acceptResourceCommitment,
+  computeCapacityScenario,
+  createPlanAnalysisProposal,
   decideResourceCommitment,
   listCapacityOptions,
   listCapacityScenarioRegister,
   listPlanScenarioRegister,
   proposeCapacityOptions,
   readCapacityScenario,
+  readPlanScenario,
   requestResourceCommitment,
   RuntimeApiError,
   selectCapacityOption,
   writeCapacityScenario,
-  computeCapacityScenario,
-  createPlanAnalysisProposal,
-  readPlanScenario,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
-import { CapacityOptionsPanel, type CapacityComparison } from './CapacityOptionsPanel';
+import { type CapacityComparison,CapacityOptionsPanel } from './CapacityOptionsPanel';
 import { CapacityAnalysisCard } from './cards/CapacityAnalysisCard';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
@@ -171,7 +171,13 @@ type Scenario = {
       demand: number | null;
       supply: number | null;
       supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
-      demandSource: 'PLAN' | 'MANUAL' | 'UNKNOWN';
+      demandSource: 'PLAN' | 'TASKS' | 'MANUAL' | 'UNKNOWN';
+      unit?: 'HOURS' | 'FTE';
+      demandFte?: number | null;
+      supplyFte?: number | null;
+      taskDemandHours?: number | null;
+      manualDemandHours?: number | null;
+      demandOverrideLabel?: string | null;
     }>;
   }>;
   constraints: Array<{ constraintId: string; state: K; detail: string; ownerId: string }>;

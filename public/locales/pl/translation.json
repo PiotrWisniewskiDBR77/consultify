@@ -12933,7 +12933,10 @@
         "role": "Rola",
         "demand": "Popyt (FTE)",
         "supply": "Podaż (FTE)",
+        "demandHours": "Popyt (h)",
+        "supplyHours": "Podaż (h)",
         "gap": "Luka",
+        "demandSourceShort": "Źródło popytu",
         "supplySourceShort": "Źródło podaży"
       },
       "unknownValue": "Nieznane",
@@ -12944,10 +12947,12 @@
       "panelAria": "Szczegóły analizy obciążenia",
       "primaryNone": "Publikacja jest w sekcji Decyzje.",
       "worksheetHint": "Popyt pochodzi z „Obciążenia ról” opublikowanego planu, podaż ze stanowisk osób w organizacji (1 FTE = 40 h/tydzień). Podaż możesz poprawić ręcznie.",
+      "worksheetHintTasks": "Popyt pochodzi z zadań; wartość wpisana w opublikowanym planie jest pokazana jako ręczne nadpisanie. Godziny są jednostką bazową, a FTE jest pochodną (1 FTE = 40 h/tydzień).",
       "noRoleSheet": "Ta analiza powstała przed wprowadzeniem wymiaru roli. Utwórz nową analizę z opublikowanego planu, aby zobaczyć arkusz okres × rola.",
       "noGaps": "Żadna rola nie jest przeciążona.",
       "noGapsLegacy": "Brak wykrytych luk (analiza bez wymiaru roli).",
       "gapLine": "popyt {{demand}} FTE wobec podaży {{supply}} FTE (brakuje {{gap}})",
+      "gapLineHours": "popyt {{demand}} h wobec podaży {{supply}} h (brakuje {{gap}} h)",
       "needsPublish": "Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje”, potem uruchom „Pracuj z AI”.",
       "noConstraints": "Brak zapisanych ograniczeń.",
       "noComments": "Brak mechanizmu komentarzy dla analizy.",
@@ -12960,6 +12965,7 @@
       },
       "demandSource": {
         "plan": "Z planu",
+        "tasks": "Z zadań",
         "manual": "Ręcznie",
         "unknown": "Nieznane (brak podziału na role)"
       },

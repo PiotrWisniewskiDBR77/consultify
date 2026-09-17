@@ -6,24 +6,30 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  findRoleGaps,
+  NoCapacityPressureError,
+  proposeCapacityOptions,
+} from '../capacityOptionsAdvisor.js';
+import {
   buildRoleSheet,
   periodWeeks,
   roleSlug,
-  windowCoversPeriod,
   UNASSIGNED_ROLE_ID,
+  windowCoversPeriod,
 } from '../capacityRoleSheet.js';
-import { findRoleGaps, NoCapacityPressureError, proposeCapacityOptions } from '../capacityOptionsAdvisor.js';
 import {
+  type CapacityScenario,
   sumRoleLines,
   validateCapacityScenario,
-  type CapacityScenario,
 } from '../capacityScenario.js';
-import { validatePlanScenario, type PlanScenario } from '../planScenario.js';
+import { type PlanScenario,validatePlanScenario } from '../planScenario.js';
 import { solvePlanScenario } from '../planSolver.js';
 
 const period = (id: string, start: string, end: string) => ({ periodId: id, start, end });
 
-const plan = (roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>): PlanScenario => ({
+const plan = (
+  roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>
+): PlanScenario => ({
   scenarioId: 'plan-k5',
   name: 'Plan K5',
   scenarioVersion: 2,
@@ -185,8 +191,12 @@ describe('P15-K5 — arkusz okres x rola', () => {
   });
 
   it('okres tygodniowy liczy sie jako jeden tydzien, dwutygodniowy jako dwa', () => {
-    expect(periodWeeks(period('a', '2026-09-07T00:00:00.000Z', '2026-09-14T00:00:00.000Z'))).toBe(1);
-    expect(periodWeeks(period('b', '2026-09-07T00:00:00.000Z', '2026-09-21T00:00:00.000Z'))).toBe(2);
+    expect(periodWeeks(period('a', '2026-09-07T00:00:00.000Z', '2026-09-14T00:00:00.000Z'))).toBe(
+      1
+    );
+    expect(periodWeeks(period('b', '2026-09-07T00:00:00.000Z', '2026-09-21T00:00:00.000Z'))).toBe(
+      2
+    );
   });
 
   it('okres styczny z koncem okna NIE liczy popytu (przedzial polotwarty)', () => {
@@ -208,6 +218,117 @@ describe('P15-K5 — arkusz okres x rola', () => {
         period('a', '2026-09-07T00:00:00.000Z', '2026-09-14T00:00:00.000Z')
       )
     ).toBe(false);
+  });
+
+  it('M1b liczy w godzinach, zachowuje provenance i wylicza FTE jako pochodna', () => {
+    const taskDemand = {
+      asOf: '2026-09-16T12:00:00.000Z',
+      initiativeIds: ['ini-1'],
+      periods: plan().periods,
+      knowledgeState: 'UNKNOWN' as const,
+      incompleteTasks: [{ taskId: 'tester-incomplete', reasons: ['MISSING_ESTIMATE' as const] }],
+      cells: [
+        {
+          periodId: 'Tydzień 1',
+          roleId: 'controls-engineer',
+          roleLabel: 'Controls Engineer',
+          demandHours: 60,
+          knowledgeState: 'KNOWN' as const,
+          contributions: [
+            {
+              taskId: 'task-1',
+              userId: 'user-1',
+              hours: 60,
+              startSource: 'created_at' as const,
+              incompleteReasons: [],
+            },
+          ],
+        },
+      ],
+    };
+    const periods = buildRoleSheet({ plan: plan(), supply, taskDemand, ownerId: 'pmo' });
+    const line = periods[0].roles?.find((role) => role.roleId === 'controls-engineer');
+    expect(line).toMatchObject({
+      demand: 60,
+      supply: 80,
+      unit: 'HOURS',
+      demandFte: 1.5,
+      supplyFte: 2,
+      taskDemandHours: 60,
+      demandSource: 'TASKS',
+    });
+    expect(line?.contributions?.map((item) => item.taskId)).toEqual(['task-1']);
+    // Kryterium M1b nie zależy od globalnego KNOWN: niekompletne zadanie testera
+    // nie odbiera poprawnej liczby komórce Controls Engineer.
+    expect(periods[0].demand.base).toBe(60);
+  });
+
+  it('M1b traktuje roleDemand jako jawne ręczne nadpisanie i zachowuje liczbę z zadań', () => {
+    const taskDemand = {
+      asOf: '2026-09-16T12:00:00.000Z',
+      initiativeIds: ['ini-1'],
+      periods: plan().periods,
+      knowledgeState: 'KNOWN' as const,
+      incompleteTasks: [],
+      cells: [
+        {
+          periodId: 'Tydzień 1',
+          roleId: 'controls-engineer',
+          roleLabel: 'Controls Engineer',
+          demandHours: 60,
+          knowledgeState: 'KNOWN' as const,
+          contributions: [],
+        },
+      ],
+    };
+    const periods = buildRoleSheet({
+      plan: plan([{ roleId: 'controls-engineer', roleLabel: 'Controls Engineer', fte: 3 }]),
+      supply,
+      taskDemand,
+      ownerId: 'pmo',
+    });
+    expect(periods[0].roles?.find((role) => role.roleId === 'controls-engineer')).toMatchObject({
+      demand: 120,
+      demandFte: 3,
+      taskDemandHours: 60,
+      manualDemandHours: 120,
+      demandSource: 'MANUAL',
+      demandOverrideLabel: 'Ręczne nadpisanie popytu z planu',
+    });
+  });
+
+  it('M1b przelicza zachowaną ręczną podaż starego scenariusza z FTE na godziny', () => {
+    const legacy = buildRoleSheet({
+      plan: plan([{ roleId: 'controls-engineer', roleLabel: 'Controls Engineer', fte: 3 }]),
+      supply,
+      ownerId: 'pmo',
+    });
+    const legacyLine = legacy[0].roles?.find((role) => role.roleId === 'controls-engineer');
+    if (legacyLine) {
+      legacyLine.supply = 2.5;
+      legacyLine.supplySource = 'MANUAL';
+    }
+    const taskDemand = {
+      asOf: '2026-09-16T12:00:00.000Z',
+      initiativeIds: ['ini-1'],
+      periods: plan().periods,
+      knowledgeState: 'KNOWN' as const,
+      incompleteTasks: [],
+      cells: [],
+    };
+    const converted = buildRoleSheet({
+      plan: plan(),
+      supply,
+      taskDemand,
+      ownerId: 'pmo',
+      previous: { periods: legacy } as unknown as CapacityScenario,
+    });
+    expect(converted[0].roles?.find((role) => role.roleId === 'controls-engineer')).toMatchObject({
+      supply: 100,
+      supplyFte: 2.5,
+      unit: 'HOURS',
+      supplySource: 'MANUAL',
+    });
   });
 });
 
@@ -317,9 +438,9 @@ describe('P15-K5 — roleDemand w planie', () => {
     expect(() => validatePlanScenario(plan())).not.toThrow();
   });
   it('ujemne FTE jest odrzucane', () => {
-    expect(() =>
-      validatePlanScenario(plan([{ roleId: 'a', roleLabel: 'A', fte: -1 }]))
-    ).toThrow(/zero or greater/);
+    expect(() => validatePlanScenario(plan([{ roleId: 'a', roleLabel: 'A', fte: -1 }]))).toThrow(
+      /zero or greater/
+    );
   });
   it('powtorzona rola w jednym oknie jest odrzucana', () => {
     expect(() =>

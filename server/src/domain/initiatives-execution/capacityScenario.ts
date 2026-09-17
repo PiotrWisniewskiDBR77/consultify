@@ -31,7 +31,14 @@ export interface CapacityRange {
  * `null` znaczy „Nieznane", NIGDY zero — zero to twierdzenie o braku popytu/podaży.
  */
 export type RoleSupplySource = 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
-export type RoleDemandSource = 'PLAN' | 'MANUAL' | 'UNKNOWN';
+export type RoleDemandSource = 'PLAN' | 'TASKS' | 'MANUAL' | 'UNKNOWN';
+export interface CapacityDemandContribution {
+  taskId: string;
+  userId: string | null;
+  hours: number | null;
+  startSource: 'started_at' | 'created_at' | 'due_date' | null;
+  incompleteReasons: string[];
+}
 export interface CapacityRoleLine {
   roleId: string;
   roleLabel: string;
@@ -39,6 +46,15 @@ export interface CapacityRoleLine {
   supply: number | null;
   supplySource: RoleSupplySource;
   demandSource: RoleDemandSource;
+  /** M1b: `demand`/`supply` use this base unit. Old stored scenarios omit it and remain FTE. */
+  unit?: 'HOURS' | 'FTE';
+  /** Derived display values. They are never the calculation basis in task-demand mode. */
+  demandFte?: number | null;
+  supplyFte?: number | null;
+  taskDemandHours?: number | null;
+  manualDemandHours?: number | null;
+  demandOverrideLabel?: string | null;
+  contributions?: CapacityDemandContribution[];
 }
 export interface CapacityPeriod {
   periodId: string;
@@ -122,7 +138,11 @@ function roleLines(period: CapacityPeriod) {
       if (value !== null && (!Number.isFinite(value) || value < 0))
         throw new MaterialCommandValidationError('Capacity role value must be zero or greater');
     }
-    if (role.demand === null && role.demandSource !== 'UNKNOWN')
+    if (
+      role.demand === null &&
+      role.demandSource !== 'UNKNOWN' &&
+      !(role.unit === 'HOURS' && role.demandSource === 'TASKS')
+    )
       throw new MaterialCommandValidationError('Unknown role demand must declare UNKNOWN source');
     if (role.supply === null && role.supplySource !== 'UNKNOWN')
       throw new MaterialCommandValidationError('Unknown role supply must declare UNKNOWN source');

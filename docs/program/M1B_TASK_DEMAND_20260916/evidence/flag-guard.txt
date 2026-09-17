@@ -1,0 +1,1 @@
+FLAGI_DOCKERFILE_GUARD analyzedFlags=195 dockerArgs=207 wyjatki=13 brakujace=0

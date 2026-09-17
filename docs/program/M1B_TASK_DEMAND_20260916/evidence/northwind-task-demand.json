@@ -1,0 +1,405 @@
+{
+  "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+  "scenarioId": "6696c99d-22ff-50e5-a6aa-dfcde4e20336",
+  "knowledgeState": "UNKNOWN",
+  "initiativeCount": 8,
+  "periodCount": 8,
+  "cellCount": 16,
+  "taskCount": 30,
+  "knownDemandHours": 1440,
+  "incompleteTasks": [
+    {
+      "taskId": "d6ef7f66-89e5-4fb2-a9a4-75eb4c3a7ee7",
+      "reasons": [
+        "MISSING_ASSIGNEE",
+        "MISSING_DUE_DATE",
+        "MISSING_ESTIMATE",
+        "MISSING_ROLE"
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "periodId": "2026-Q3",
+      "roleId": "automation-engineer",
+      "roleLabel": "Automation Engineer",
+      "demandHours": 316,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "0811cf08-be33-514b-a4e2-051401a23fc1",
+          "userId": "d62073a5-7095-5817-b383-4dc8942937d6",
+          "hours": 48,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "09ae6d5a-71ac-56ba-b484-f021d438e2af",
+          "userId": "d62073a5-7095-5817-b383-4dc8942937d6",
+          "hours": 120,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "2e70a548-2e0c-5cda-b299-a5bb2b328a15",
+          "userId": "d62073a5-7095-5817-b383-4dc8942937d6",
+          "hours": 84,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "a0645cfc-b073-5525-8bf3-11e69bce4c8c",
+          "userId": "d62073a5-7095-5817-b383-4dc8942937d6",
+          "hours": 64,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "controls-engineer",
+      "roleLabel": "Controls Engineer",
+      "demandHours": 205.33,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "692fd8a6-3e8a-543e-818c-345dacb9d4e6",
+          "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+          "hours": 69.33,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "a1dbc6ba-880d-56ca-ab52-bb0f0681a994",
+          "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+          "hours": 96,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "a76022da-da41-5ed3-a4c7-3c1573753f09",
+          "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+          "hours": 40,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "data-analyst",
+      "roleLabel": "Data Analyst",
+      "demandHours": 130.5,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "93329d79-ddc5-5d04-836f-73dcd9c0188c",
+          "userId": "3e49a320-ef11-5b8d-99d1-57af7be662fe",
+          "hours": 40,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "b666fe27-00b8-525f-a816-cca556608661",
+          "userId": "3e49a320-ef11-5b8d-99d1-57af7be662fe",
+          "hours": 52,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "f213008c-95cc-5c2b-801b-0adaf6b2690b",
+          "userId": "3e49a320-ef11-5b8d-99d1-57af7be662fe",
+          "hours": 38.5,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "finance-controller",
+      "roleLabel": "Finance Controller",
+      "demandHours": 36,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "3331ff63-a2a6-512a-a4d1-9c2b375cc193",
+          "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+          "hours": 8,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "42381a11-9806-5d67-8159-b9f869bdfd5f",
+          "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+          "hours": 28,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "head-of-quality",
+      "roleLabel": "Head of Quality",
+      "demandHours": 76,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "4ff88b86-275d-53b6-a2fb-2d71d7855f1d",
+          "userId": "559eec35-24d9-55ce-be88-0063e45635de",
+          "hours": 36,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "5edb2fa0-9ae8-51e7-9a92-3533ff39c4b1",
+          "userId": "559eec35-24d9-55ce-be88-0063e45635de",
+          "hours": 40,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "hr-business-partner",
+      "roleLabel": "HR Business Partner",
+      "demandHours": 147.71,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "696dca66-3a33-5e54-b6ed-26c5f03d1701",
+          "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+          "hours": 30,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "a1f35e13-4367-5165-adcd-24233e4874b7",
+          "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+          "hours": 37.71,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "f6c2d8ba-8fe1-5bbe-bf95-883159661ade",
+          "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+          "hours": 44,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "f9c386c1-8b09-5276-a5a0-4452f1e283b8",
+          "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+          "hours": 36,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "operations-director",
+      "roleLabel": "Operations Director",
+      "demandHours": 20,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "541eaaf3-1c76-5b4d-8331-601dcabc87c9",
+          "userId": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "hours": 20,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "plant-manager",
+      "roleLabel": "Plant Manager",
+      "demandHours": 32,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "0512a736-c0b5-53c4-acf1-ed7abbb1a829",
+          "userId": "bf70ce19-b249-5c08-839f-449e1d5cddd8",
+          "hours": 32,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q3",
+      "roleId": "production-planner",
+      "roleLabel": "Production Planner",
+      "demandHours": 234,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "157cd991-6789-568d-9df8-ab6ca1129161",
+          "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+          "hours": 24,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "6c3e394a-896b-54b1-baf2-5821f0b58d11",
+          "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+          "hours": 26,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "b8e44347-9e14-5637-a012-96b53910c181",
+          "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+          "hours": 72,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "d1daea6b-7582-55aa-a1c8-9d14c782ca13",
+          "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+          "hours": 112,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q4",
+      "roleId": "controls-engineer",
+      "roleLabel": "Controls Engineer",
+      "demandHours": 82.67,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "692fd8a6-3e8a-543e-818c-345dacb9d4e6",
+          "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+          "hours": 34.67,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "ea0e2b16-4974-5d07-a596-1f93a6320121",
+          "userId": "78b08b13-887e-5446-b80c-8647d3fc9e0f",
+          "hours": 48,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q4",
+      "roleId": "data-analyst",
+      "roleLabel": "Data Analyst",
+      "demandHours": 5.5,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "f213008c-95cc-5c2b-801b-0adaf6b2690b",
+          "userId": "3e49a320-ef11-5b8d-99d1-57af7be662fe",
+          "hours": 5.5,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q4",
+      "roleId": "finance-controller",
+      "roleLabel": "Finance Controller",
+      "demandHours": 60,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "1cbd7cc0-b8e6-5a5c-9983-716e5d2fd051",
+          "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+          "hours": 28,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "3331ff63-a2a6-512a-a4d1-9c2b375cc193",
+          "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+          "hours": 24,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        },
+        {
+          "taskId": "6d09ae83-eca2-5b1e-acd9-4be81087e325",
+          "userId": "6aef8e3b-e295-5aef-ba46-bbfaa730ca21",
+          "hours": 8,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q4",
+      "roleId": "hr-business-partner",
+      "roleLabel": "HR Business Partner",
+      "demandHours": 50.29,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "a1f35e13-4367-5165-adcd-24233e4874b7",
+          "userId": "a0e18893-9740-557d-92c5-66a50a43b3bb",
+          "hours": 50.29,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2026-Q4",
+      "roleId": "plant-manager",
+      "roleLabel": "Plant Manager",
+      "demandHours": 8,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "9ffdf421-5c68-5e9e-9a36-6786455c2de7",
+          "userId": "bf70ce19-b249-5c08-839f-449e1d5cddd8",
+          "hours": 8,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2027-Q1",
+      "roleId": "plant-manager",
+      "roleLabel": "Plant Manager",
+      "demandHours": 16,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "3960a7ca-a883-5820-9d70-96badc168567",
+          "userId": "bf70ce19-b249-5c08-839f-449e1d5cddd8",
+          "hours": 16,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    },
+    {
+      "periodId": "2027-Q1",
+      "roleId": "production-planner",
+      "roleLabel": "Production Planner",
+      "demandHours": 20,
+      "knowledgeState": "KNOWN",
+      "contributions": [
+        {
+          "taskId": "dda43272-341e-574f-8512-bae38cba0ae9",
+          "userId": "550c4ac3-da1e-500a-9be2-f6e4ee18e93e",
+          "hours": 20,
+          "startSource": "created_at",
+          "incompleteReasons": []
+        }
+      ]
+    }
+  ]
+}

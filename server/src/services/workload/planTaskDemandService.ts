@@ -1,5 +1,3 @@
-import DbPromise from '../../utils/DbPromise.js';
-
 const CLOSED_STATUSES = "('done','completed','validated','cancelled')";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -261,6 +259,9 @@ export async function readPlanTaskDemand(
   periods: PlanDemandPeriod[],
   options: { asOf?: string } = {}
 ): Promise<PlanTaskDemandResult> {
+  // Lazy import keeps pure readers/proof scripts free from Database.ts startup,
+  // which can initialize schema. Production calls still use the canonical adapter.
+  const { default: DbPromise } = await import('../../utils/DbPromise.js');
   const scope = [...new Set(initiativeIds.map((id) => String(id).trim()).filter(Boolean))];
   if (!organizationId.trim()) throw new Error('M1_ORGANIZATION_REQUIRED');
   if (!scope.length || scope.length > 100) throw new Error('M1_INITIATIVE_SCOPE_INVALID');

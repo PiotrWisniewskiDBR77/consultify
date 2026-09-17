@@ -10,6 +10,7 @@
  * Reguła nadrzędna: brak danych = „Nieznane" (`null`), NIGDY zero. Zero jest
  * twierdzeniem („nikogo nie potrzeba" / „nikogo nie ma"), a my go nie mamy.
  */
+import type { PlanTaskDemandResult } from '../../services/workload/planTaskDemandService.js';
 import type {
   CapacityPeriod,
   CapacityRange,
@@ -49,6 +50,8 @@ export interface RoleSheetInput {
   supply: RoleWeeklySupply[];
   /** `initiatives.required_capacity_fte` — awaryjny popyt BEZ podziału na role. */
   fallbackDemandFte?: Record<string, number>;
+  /** Present only when CAPACITY_DEMAND_FROM_TASKS is enabled. */
+  taskDemand?: PlanTaskDemandResult;
   /** Poprzednia wersja analizy: zachowujemy ręczne korekty podaży (`MANUAL`). */
   previous?: CapacityScenario | null;
   ownerId: string;
@@ -87,9 +90,7 @@ export function windowCoversPeriod(
   // Okno punktowe (sam `target`): liczy się okres, który tę chwilę zawiera.
   if (earliest !== null && latest !== null && earliest === latest)
     return period.start <= earliest && period.end > earliest;
-  return (
-    (earliest === null || period.end > earliest) && (latest === null || period.start < latest)
-  );
+  return (earliest === null || period.end > earliest) && (latest === null || period.start < latest);
 }
 
 const round3 = (value: number) => Math.round(value * 1000) / 1000;
@@ -143,11 +144,13 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
   const asOf = input.asOf ?? new Date().toISOString();
   const fallback = input.fallbackDemandFte ?? {};
   const planIsRoleAware = plan.windows.some((window) => (window.roleDemand ?? []).length > 0);
+  const taskMode = Boolean(input.taskDemand);
 
   const labels = new Map<string, string>();
   for (const role of supply) labels.set(role.roleId, role.roleLabel);
   for (const window of plan.windows)
     for (const line of window.roleDemand ?? []) labels.set(line.roleId, line.roleLabel);
+  for (const cell of input.taskDemand?.cells ?? []) labels.set(cell.roleId, cell.roleLabel);
   const needsUnassigned = plan.windows.some(
     (window) => !(window.roleDemand ?? []).length && (fallback[window.initiativeId] ?? 0) > 0
   );
@@ -171,7 +174,7 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
     const roles: CapacityRoleLine[] = roleIds.map((roleId) => {
       const roleLabel = labels.get(roleId) as string;
 
-      // --- POPYT (D3'): suma FTE z okien planu obejmujących ten okres ---
+      // --- POPYT: legacy FTE albo M1b godziny z zadań z ręcznym override planu ---
       let demand: number | null = null;
       let demandSource: CapacityRoleLine['demandSource'] = 'UNKNOWN';
       let declared = 0;
@@ -180,7 +183,7 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
         const line = (window.roleDemand ?? []).find((item) => item.roleId === roleId);
         if (line) {
           declared += line.fte;
-          demandSource = 'PLAN';
+          demandSource = taskMode ? 'MANUAL' : 'PLAN';
           continue;
         }
         if (roleId === UNASSIGNED_ROLE_ID && !(window.roleDemand ?? []).length) {
@@ -188,7 +191,22 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
           if (requiredFte > 0) fallbackTotal += requiredFte;
         }
       }
-      if (demandSource === 'PLAN') demand = round3(declared + fallbackTotal);
+      const taskCell = input.taskDemand?.cells.find(
+        (cell) => cell.periodId === period.periodId && cell.roleId === roleId
+      );
+      const taskDemandHours = taskMode
+        ? (taskCell?.demandHours ?? (taskCell ? null : 0))
+        : undefined;
+      const manualDemandHours =
+        taskMode && demandSource === 'MANUAL' ? round3(declared * 40 * weeks) : undefined;
+      if (taskMode && demandSource === 'MANUAL') demand = manualDemandHours ?? null;
+      else if (taskMode && taskCell) {
+        demand = taskCell.demandHours;
+        demandSource = 'TASKS';
+      } else if (taskMode) {
+        demand = 0;
+        demandSource = 'TASKS';
+      } else if (demandSource === 'PLAN') demand = round3(declared + fallbackTotal);
       else if (fallbackTotal > 0) {
         demand = round3(fallbackTotal);
         demandSource = 'UNKNOWN';
@@ -199,24 +217,44 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
 
       // --- PODAŻ (D2'): osoby z tym stanowiskiem × tygodnie okresu ---
       const manual = previousById.get(period.periodId)?.get(roleId);
+      const supply = supplyById.get(roleId);
+      const calculatedSupply = supply
+        ? round3(supply.fteWeekly * weeks * (taskMode ? 40 : 1))
+        : null;
+      const decorate = (line: CapacityRoleLine): CapacityRoleLine =>
+        taskMode
+          ? {
+              ...line,
+              unit: 'HOURS',
+              demandFte: line.demand === null ? null : round3(line.demand / (40 * weeks)),
+              supplyFte: line.supply === null ? null : round3(line.supply / (40 * weeks)),
+              taskDemandHours,
+              manualDemandHours: manualDemandHours ?? null,
+              demandOverrideLabel:
+                demandSource === 'MANUAL' ? 'Ręczne nadpisanie popytu z planu' : null,
+              contributions: taskCell?.contributions ?? [],
+            }
+          : line;
       if (manual?.supplySource === 'MANUAL' && manual.supply !== null)
-        return {
+        return decorate({
           roleId,
           roleLabel,
           demand,
-          supply: manual.supply,
+          supply:
+            taskMode && manual.unit !== 'HOURS'
+              ? round3(manual.supply * 40 * weeks)
+              : manual.supply,
           supplySource: 'MANUAL',
           demandSource,
-        };
-      const available = supplyById.get(roleId);
-      return {
+        });
+      return decorate({
         roleId,
         roleLabel,
         demand,
-        supply: available ? round3(available.fteWeekly * weeks) : null,
-        supplySource: available ? 'RESOURCE_PLAN' : 'UNKNOWN',
+        supply: calculatedSupply,
+        supplySource: supply ? 'RESOURCE_PLAN' : 'UNKNOWN',
         demandSource,
-      };
+      });
     });
 
     const demandSum = sumRoleLines(roles, 'demand');
@@ -230,7 +268,7 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
         demandSum.contributing,
         'demand',
         input.ownerId,
-        `plan-scenario:${plan.scenarioId}`,
+        taskMode ? `plan-task-demand:${plan.scenarioId}` : `plan-scenario:${plan.scenarioId}`,
         Math.max(1, plan.scenarioVersion),
         asOf,
         'Plan nie podaje popytu na role w tym okresie.'

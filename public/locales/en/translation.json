@@ -13729,7 +13729,10 @@
         "role": "Role",
         "demand": "Demand (FTE)",
         "supply": "Supply (FTE)",
+        "demandHours": "Demand (h)",
+        "supplyHours": "Supply (h)",
         "gap": "Gap",
+        "demandSourceShort": "Demand source",
         "supplySourceShort": "Supply source"
       },
       "unknownValue": "Unknown",
@@ -13740,10 +13743,12 @@
       "panelAria": "Load analysis details",
       "primaryNone": "Publishing is a decision in the Decisions section.",
       "worksheetHint": "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.",
+      "worksheetHintTasks": "Demand comes from tasks; a value entered in the published plan is shown as a manual override. Hours are the base unit and FTE is derived (1 FTE = 40 h/week).",
       "noRoleSheet": "This analysis predates the role dimension. Create a new analysis from a published plan to see the period × role worksheet.",
       "noGaps": "No role is overloaded.",
       "noGapsLegacy": "No gaps detected (analysis without the role dimension).",
       "gapLine": "demand {{demand}} FTE against supply {{supply}} FTE (short by {{gap}})",
+      "gapLineHours": "demand {{demand}} h against supply {{supply}} h (short by {{gap}} h)",
       "needsPublish": "The advisor computes options for a published analysis. Publish the analysis in “Decisions”, then run “Work with AI”.",
       "noConstraints": "No recorded constraints.",
       "noComments": "No comment thread for this analysis.",
@@ -13756,6 +13761,7 @@
       },
       "demandSource": {
         "plan": "From plan",
+        "tasks": "From tasks",
         "manual": "Manual",
         "unknown": "Unknown (no role breakdown)"
       },

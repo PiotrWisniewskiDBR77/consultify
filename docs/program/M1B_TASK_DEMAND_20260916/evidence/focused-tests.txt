@@ -1,0 +1,81 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1b-task-demand-w156-20260916
+
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-m1b-task-demand-w156-20260916
+
+stdout | src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+stdout | src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P11 — brak presji > pokazuje komunikat zamiast pustego ekranu lub błędu 250ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P15-K5 — propozycje zmian z doradcy > (j) renderuje 3 warianty z odpowiedzi, z nazwa przeciazonej roli 39ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P15-K5 — propozycje zmian z doradcy > bez odpowiedzi doradcy mowi wprost, ze porownania nie ma 4ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P15-K5 — arkusz okres x rola w karcie > rysuje wiersz per (okres, rola) z luka i zrodlem podazy 40ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P15-K5 — arkusz okres x rola w karcie > M1b pokazuje godziny, pochodne FTE i źródło popytu z zadań 12ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P15 scalenie K3+K5 — założenia wariantu > konflikt solvera renderuje się po polsku, nie jako surowy kod 9ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx (6 tests) 363ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > spreads hours over working days and keeps task provenance in each cell 74ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > uses created_at as the explicit temporary fallback when started_at is absent 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps the local calendar day of database Date values 0ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > returns UNKNOWN instead of zero when a contributing task has no estimate 3ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > does not invent a period for a task without a due date 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > keeps weekend-only work in the period containing the due date 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > treats a plan end-of-day timestamp as an inclusive calendar date 0ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > reads only the explicit organization and initiative scope 1ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts > M1a plan task demand > rejects an invalid scope or period contract before reading data 3ms
+ ✓ server/src/services/__tests__/planTaskDemandService.test.ts (9 tests) 90ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > (g) popyt bierze sie z roleDemand okna planu, per rola i per okres 34ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > (f) podaz roli pochodzi z podazy organizacji (stanowiska), nie ze stalej 1ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > (h) rola bez ani jednej osoby ma podaz „Nieznane", nie zero 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > (i) skalary okresu sa suma linii rol i przechodza walidacje domeny 15ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > popyt awaryjny z required_capacity_fte ladnie ląduje w „Bez stanowiska" jako UNKNOWN 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > reczna korekta podazy przetrwa przeliczenie 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > slug stanowiska sprowadza polskie znaki do ASCII 1ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > okres tygodniowy liczy sie jako jeden tydzien, dwutygodniowy jako dwa 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > okres styczny z koncem okna NIE liczy popytu (przedzial polotwarty) 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > okno bez zadnej daty nie obejmuje zadnego okresu 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > M1b liczy w godzinach, zachowuje provenance i wylicza FTE jako pochodna 2ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > M1b traktuje roleDemand jako jawne ręczne nadpisanie i zachowuje liczbę z zadań 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — arkusz okres x rola > M1b przelicza zachowaną ręczną podaż starego scenariusza z FTE na godziny 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — luka liczona per rola > (e) doradca widzi luke roli mimo zbilansowanej sumy okresu 3ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — luka liczona per rola > brak luki w zadnej roli = brak presji do rozwiazania 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — luka liczona per rola > (i) solver dalej czyta SKALARY okresu — zgodnosc wstecz 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — roleDemand w planie > plan bez roleDemand nadal sie waliduje (zgodnosc wstecz) 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — roleDemand w planie > ujemne FTE jest odrzucane 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts > P15-K5 — roleDemand w planie > powtorzona rola w jednym oknie jest odrzucana 0ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityRoleSheet.test.ts (19 tests) 65ms
+ ✓ server/src/config/__tests__/capacityDemandFromTasksFlag.test.ts > CAPACITY_DEMAND_FROM_TASKS > is OFF in code and enables only for exact true 42ms
+ ✓ server/src/config/__tests__/capacityDemandFromTasksFlag.test.ts (1 test) 45ms
+stdout | server/src/domain/initiatives-execution/__tests__/capacityScenarioReadback.test.ts
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/domain/initiatives-execution/__tests__/capacityScenarioReadback.test.ts
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-16 22:02:35:235 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityScenarioReadback.test.ts > capacity scenario readback > propagates a database failure instead of turning it into scenario not found 50ms
+ ✓ server/src/domain/initiatives-execution/__tests__/capacityScenarioReadback.test.ts (1 test) 53ms
+
+ Test Files  5 passed (5)
+      Tests  36 passed (36)
+   Start at  22:02:26
+   Duration  9.79s (transform 1.84s, setup 1.96s, import 2.25s, tests 616ms, environment 3.81s)
+
+
+ Test Files  5 passed (5)
+      Tests  36 passed (36)
+   Start at  22:02:26
+   Duration  9.80s (transform 1.84s, setup 1.96s, import 2.25s, tests 616ms, environment 3.81s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-m1b-task-demand-w156-20260916/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-m1b-task-demand-w156-20260916/junit.xml

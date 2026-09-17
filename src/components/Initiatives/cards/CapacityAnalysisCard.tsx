@@ -1,16 +1,17 @@
 import React, { useMemo, useState } from 'react';
+
+import {
+  type CapacityComparison,
+  CapacityOptionsPanel,
+} from '@/components/Initiatives/CapacityOptionsPanel';
+import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { CAPACITY_ANALYSIS_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
 import { StandardArtifactShell } from '@/components/standard/StandardArtifactShell';
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
-import { CAPACITY_ANALYSIS_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
-import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
 import i18n from '@/i18n';
 import { localeListy } from '@/utils/listDateFormat';
-import {
-  CapacityOptionsPanel,
-  type CapacityComparison,
-} from '@/components/Initiatives/CapacityOptionsPanel';
 
 type Range = { knowledgeState: string; base: number | null };
 /**
@@ -23,7 +24,13 @@ export interface CapacityRoleLine {
   demand: number | null;
   supply: number | null;
   supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
-  demandSource: 'PLAN' | 'MANUAL' | 'UNKNOWN';
+  demandSource: 'PLAN' | 'TASKS' | 'MANUAL' | 'UNKNOWN';
+  unit?: 'HOURS' | 'FTE';
+  demandFte?: number | null;
+  supplyFte?: number | null;
+  taskDemandHours?: number | null;
+  manualDemandHours?: number | null;
+  demandOverrideLabel?: string | null;
 }
 export interface CapacityCardScenario {
   scenarioId: string;
@@ -88,6 +95,7 @@ const supplySourceLabel = (value: CapacityRoleLine['supplySource']) =>
 const demandSourceLabel = (value: CapacityRoleLine['demandSource']) =>
   ({
     PLAN: i18n.t('initiatives.capacityAnalysis.demandSource.plan', 'From plan'),
+    TASKS: i18n.t('initiatives.capacityAnalysis.demandSource.tasks', 'From tasks'),
     MANUAL: i18n.t('initiatives.capacityAnalysis.demandSource.manual', 'Manual'),
     UNKNOWN: i18n.t(
       'initiatives.capacityAnalysis.demandSource.unknown',
@@ -140,6 +148,9 @@ export function CapacityAnalysisCard({
   const roleGaps = useMemo(() => capacityRoleGaps(scenario), [scenario]);
   const gaps = useMemo(() => countCapacityGaps(scenario), [scenario]);
   const hasSheet = scenario.periods.some((period) => (period.roles ?? []).length > 0);
+  const hoursMode = scenario.periods.some((period) =>
+    (period.roles ?? []).some((role) => role.unit === 'HOURS')
+  );
   const decidedComparisons = useMemo(
     () => comparisons.filter((comparison) => comparison.selectedOptionId !== null),
     [comparisons]
@@ -164,10 +175,9 @@ export function CapacityAnalysisCard({
   const worksheet = hasSheet ? (
     <div className={`${box} overflow-x-auto`}>
       <p className="mb-3 text-sm text-c-text-muted">
-        {i18n.t(
-          'initiatives.capacityAnalysis.worksheetHint',
-          "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually."
-        )}
+        {hoursMode
+          ? i18n.t('initiatives.capacityAnalysis.worksheetHintTasks', 'Demand comes from tasks; a value entered in the published plan is shown as a manual override. Hours are the base unit and FTE is derived (1 FTE = 40 h/week).')
+          : i18n.t('initiatives.capacityAnalysis.worksheetHint', "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.")}
       </p>
       <table /* §27-exempt: ARKUSZ okres x rola w karcie artefaktu (siatka wartosci
                do wpisania), nie lista encji do przegladania — StandardTable nie ma
@@ -176,9 +186,10 @@ export function CapacityAnalysisCard({
           <tr className="border-b border-c-border-subtle">
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.period', 'Period')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.role', 'Role')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demand', 'Demand (FTE)')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}</th>
+            <th className={head}>{hoursMode ? i18n.t('initiatives.capacityAnalysis.columns.demandHours', 'Demand (h)') : i18n.t('initiatives.capacityAnalysis.columns.demand', 'Demand (FTE)')}</th>
+            <th className={head}>{hoursMode ? i18n.t('initiatives.capacityAnalysis.columns.supplyHours', 'Supply (h)') : i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.gap', 'Gap')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demandSourceShort', 'Demand source')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supplySourceShort', 'Supply source')}</th>
           </tr>
         </thead>
@@ -194,13 +205,13 @@ export function CapacityAnalysisCard({
                 <tr key={key} className="border-b border-c-border-subtle">
                   <td className={cell}>{period.periodId}</td>
                   <td className={cell}>{role.roleLabel}</td>
-                  <td className={cell} title={demandSourceLabel(role.demandSource)}>
-                    {num(role.demand)}
+                  <td className={cell} title={role.demandOverrideLabel ?? demandSourceLabel(role.demandSource)}>
+                    {num(role.demand)} {role.unit === 'HOURS' ? `h (${num(role.demandFte ?? null)} FTE)` : 'FTE'}
                   </td>
                   <td className={cell}>
                     {onSupplyOverride && scenario.status === 'DRAFT' && !readMode ? (
                       <input
-                        aria-label={`${i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')} ${period.periodId} ${role.roleLabel}`}
+                        aria-label={`${hoursMode ? i18n.t('initiatives.capacityAnalysis.columns.supplyHours', 'Supply (h)') : i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')} ${period.periodId} ${role.roleLabel}`}
                         className="w-20 rounded border border-c-border bg-c-surface px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                         inputMode="decimal"
                         disabled={supplyBusy}
@@ -215,7 +226,7 @@ export function CapacityAnalysisCard({
                         }}
                       />
                     ) : (
-                      num(role.supply)
+                      <>{num(role.supply)} {role.unit === 'HOURS' ? `h (${num(role.supplyFte ?? null)} FTE)` : 'FTE'}</>
                     )}
                   </td>
                   <td className={cell}>
@@ -226,6 +237,9 @@ export function CapacityAnalysisCard({
                     ) : (
                       num(gap)
                     )}
+                  </td>
+                  <td className={`${cell} text-c-text-muted`}>
+                    {demandSourceLabel(role.demandSource)}
                   </td>
                   <td className={`${cell} text-c-text-muted`}>
                     {supplySourceLabel(role.supplySource)}
@@ -274,8 +288,8 @@ export function CapacityAnalysisCard({
             {roleGaps.map((gap) => (
               <li key={`${gap.periodId}|${gap.roleId}`}>
                 <b>{gap.roleLabel}</b> · {gap.periodId} ·{' '}
-                {i18n.t('initiatives.capacityAnalysis.gapLine', {
-                  defaultValue: 'popyt {{demand}} FTE wobec podaży {{supply}} FTE (brakuje {{gap}})',
+                {i18n.t(hoursMode ? 'initiatives.capacityAnalysis.gapLineHours' : 'initiatives.capacityAnalysis.gapLine', {
+                  defaultValue: hoursMode ? 'demand {{demand}} h against supply {{supply}} h (short by {{gap}} h)' : 'demand {{demand}} FTE against supply {{supply}} FTE (short by {{gap}})',
                   demand: num(gap.demand),
                   supply: num(gap.supply),
                   gap: num(Math.abs(gap.gap)),

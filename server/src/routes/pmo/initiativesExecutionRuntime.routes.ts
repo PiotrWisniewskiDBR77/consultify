@@ -41,6 +41,7 @@ import { isExecutionReportE4Enabled } from '../../config/executionReportE4Flag.j
 import { isInitiativesWorkloadEnabled } from '../../config/FeatureFlags.js';
 import { isInitiativesPlanEnabled } from '../../config/initiativesPlanFlag.js';
 import { isInitiativesWorkReportEnabled } from '../../config/initiativesWorkReportFlag.js';
+import { isCapacityDemandFromTasksEnabled } from '../../config/capacityDemandFromTasksFlag.js';
 import { InitiativeStatus, type InitiativeStatusType } from '../../constants/initiativeStatuses.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
 import { adoptChatDraftInitiative } from '../../domain/initiatives-execution/adoptChatDraftInitiative.js';
@@ -67,6 +68,7 @@ import {
   getInitiativeWorkloadProposals,
   getRoleWeeklySupply,
 } from '../../services/workloadCapacityService.js';
+import { readPlanTaskDemand } from '../../services/workload/planTaskDemandService.js';
 import {
   ConfiguredPortfolioConsultingModelGateway,
   isPortfolioConsultingAnalysisEnabled,
@@ -792,7 +794,24 @@ const CapacityScenarioSchema = z.object({
               demand: z.number().min(0).nullable(),
               supply: z.number().min(0).nullable(),
               supplySource: z.enum(['RESOURCE_PLAN', 'MANUAL', 'UNKNOWN']),
-              demandSource: z.enum(['PLAN', 'MANUAL', 'UNKNOWN']),
+              demandSource: z.enum(['PLAN', 'TASKS', 'MANUAL', 'UNKNOWN']),
+              unit: z.enum(['HOURS', 'FTE']).optional(),
+              demandFte: z.number().min(0).nullable().optional(),
+              supplyFte: z.number().min(0).nullable().optional(),
+              taskDemandHours: z.number().min(0).nullable().optional(),
+              manualDemandHours: z.number().min(0).nullable().optional(),
+              demandOverrideLabel: z.string().nullable().optional(),
+              contributions: z
+                .array(
+                  z.object({
+                    taskId: z.string().min(1),
+                    userId: z.string().nullable(),
+                    hours: z.number().min(0).nullable(),
+                    startSource: z.enum(['started_at', 'created_at', 'due_date']).nullable(),
+                    incompleteReasons: z.array(z.string()),
+                  })
+                )
+                .optional(),
             })
           )
           .optional(),
@@ -5201,6 +5220,13 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         plan.scenario.windows.map((window) => window.initiativeId)
       );
+      const taskDemand = isCapacityDemandFromTasksEnabled()
+        ? await readPlanTaskDemand(
+            actor.organizationId,
+            plan.scenario.windows.map((window) => window.initiativeId),
+            plan.scenario.periods
+          )
+        : undefined;
       // Reczne korekty z arkusza wchodza jako `MANUAL` do wejscia przeliczenia,
       // zeby przeliczenie ich NIE ZGUBILO (i zeby nie trzeba bylo dwoch zapisow).
       const previous: CapacityScenario | null = existing
@@ -5223,6 +5249,7 @@ export function createInitiativesExecutionRuntimeRouter(
         plan: plan.scenario,
         supply,
         fallbackDemandFte,
+        taskDemand,
         previous,
         ownerId: actor.userId,
       });
