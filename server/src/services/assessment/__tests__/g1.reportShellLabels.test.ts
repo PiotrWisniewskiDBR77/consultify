@@ -155,3 +155,79 @@ describe('Etykiety powłoki raportu DRD idą za contract.language', () => {
     expect(stopka).not.toMatch(/\s+of\s+/u);
   });
 });
+
+// ── [A] Wpis 35 — dwa P1 z odbioru: językowy fallback poufności DRD oraz
+// profil client-final czytający pageLabel/pageSeparator (nie twardo „Page/of").
+
+function drdSchemat(language: 'pl' | 'en') {
+  return buildAssessmentDrdReportSchema(kontrakt(language), 'Northwind Manufacturing Ltd.');
+}
+
+/** DRD z PUSTYM `footers.content` → wymusza językowy fallback poufności. */
+function drdPustyContent(language: 'pl' | 'en') {
+  const s = drdSchemat(language);
+  return {
+    ...s,
+    formattingSchema: {
+      ...s.formattingSchema,
+      footers: { ...s.formattingSchema.footers, content: '' },
+    },
+  };
+}
+
+/** Profil client-final (ta sama treść, nakładka kolorów `consultify-client-final`). */
+function clientFinalSchemat(language: 'pl' | 'en') {
+  const s = drdSchemat(language);
+  return {
+    ...s,
+    formattingSchema: { ...s.formattingSchema, colorTemplateId: 'consultify-client-final' },
+  };
+}
+
+async function stopkaZeSchematu(
+  schema: Parameters<typeof renderDocumentSchemaToDocxBuffer>[0]
+): Promise<string> {
+  const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(schema));
+  const names = Object.keys(zip.files)
+    .filter((name) => /^word\/footer\d*\.xml$/u.test(name))
+    .sort();
+  expect(names.length, 'raport musi mieć stopki').toBeGreaterThan(0);
+  const xml = (await Promise.all(names.map((name) => zip.file(name)!.async('string')))).join('\n');
+  return xml.replace(/<[^>]+>/gu, '');
+}
+
+describe('Wpis 35 — fallback poufności DRD i profil client-final idą za językiem', () => {
+  it('drd-report z pustym footers.content, EN: fallback „Confidential — …", bez PL „Poufne"', async () => {
+    // MUTANT: przywrócenie twardego `Poufne — ${audience}` robi ten test czerwonym.
+    const stopka = await stopkaZeSchematu(drdPustyContent('en'));
+    expect(stopka).toMatch(/Confidential\s+—/u);
+    expect(stopka).toMatch(/Page\s+.*\s+of\s+/u);
+    expect(stopka).not.toMatch(/Poufne/u);
+    expect(stopka).not.toMatch(/\s+z\s+/u);
+  });
+
+  it('drd-report z pustym footers.content, PL: fallback „Poufne — …" i „Strona … z …"', async () => {
+    const stopka = await stopkaZeSchematu(drdPustyContent('pl'));
+    expect(stopka).toMatch(/Poufne\s+—/u);
+    expect(stopka).toMatch(/Strona\s+.*\s+z\s+/u);
+    expect(stopka).not.toMatch(/\s+of\s+/u);
+  });
+
+  it('client-final, EN: „Page … of …" i „Confidential", bez PL „Poufne"/„z"', async () => {
+    // MUTANT: przywrócenie `'\tPage '`/`' of '` w profilu client-final jest
+    // niewidoczne w EN (byte-stable), ale PL poniżej robi się czerwony.
+    const stopka = await stopkaZeSchematu(clientFinalSchemat('en'));
+    expect(stopka).toMatch(/Page\s+.*\s+of\s+/u);
+    expect(stopka).toMatch(/Confidential/u);
+    expect(stopka).not.toMatch(/Poufne/u);
+    expect(stopka).not.toMatch(/\s+z\s+/u);
+  });
+
+  it('client-final, PL: „Strona … z …" (nie twardo „Page … of …")', async () => {
+    // MUTANT: przywrócenie `'\tPage '` robi ten test czerwonym (brak „Strona");
+    // przywrócenie `' of '` robi go czerwonym (pojawia się „of").
+    const stopka = await stopkaZeSchematu(clientFinalSchemat('pl'));
+    expect(stopka).toMatch(/Strona\s+.*\s+z\s+/u);
+    expect(stopka).not.toMatch(/\s+of\s+/u);
+  });
+});

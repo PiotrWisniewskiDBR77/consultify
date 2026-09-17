@@ -2115,6 +2115,10 @@ async function renderDocumentSchemaToDocxBufferInternal(
   }
   const pageLabel = schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ';
   const pageSeparator = schema.language.toLowerCase().startsWith('pl') ? ' z ' : ' of ';
+  // Single source for the DRD footer confidentiality fallback (reached when a
+  // drd-report builder leaves `footers.content` empty). Mirrors pageLabel/
+  // pageSeparator so the fallback follows the report language, not a hardcoded PL.
+  const confidentialLabel = schema.language.toLowerCase().startsWith('pl') ? 'Poufne' : 'Confidential';
   if (formatting.footers.pageNumbering) {
     // Slice E15.5.formatting.render — `pageNumberingFormat` honors a
     // template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
@@ -2203,14 +2207,14 @@ async function renderDocumentSchemaToDocxBufferInternal(
                 color: CLIENT_FINAL_REPORT_PALETTE.muted,
                 font: ctx.bodyFont,
               }),
-              new TextRun({ text: '\tPage ', size: 16, font: ctx.bodyFont }),
+              new TextRun({ text: `\t${pageLabel}`, size: 16, font: ctx.bodyFont }),
               new TextRun({
                 children: [PageNumber.CURRENT],
                 size: 16,
                 color: CLIENT_FINAL_REPORT_PALETTE.muted,
                 font: ctx.bodyFont,
               }),
-              new TextRun({ text: ' of ', size: 16, font: ctx.bodyFont }),
+              new TextRun({ text: pageSeparator, size: 16, font: ctx.bodyFont }),
               new TextRun({
                 children: [PageNumber.TOTAL_PAGES],
                 size: 16,
@@ -2234,7 +2238,8 @@ async function renderDocumentSchemaToDocxBufferInternal(
               children: [
                 new TextRun({
                   text:
-                    formatting.footers.content?.trim() || `Poufne — ${schema.audience[0] ?? ''}`,
+                    formatting.footers.content?.trim() ||
+                    `${confidentialLabel} — ${schema.audience[0] ?? ''}`,
                   size: 16,
                   color: DRD_REPORT_PALETTE.muted,
                   font: ctx.bodyFont,
