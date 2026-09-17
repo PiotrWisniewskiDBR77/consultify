@@ -5130,9 +5130,12 @@ export type DocumentStatus =
   | 'uploaded'
   | 'processing'
   | 'ready'
+  | 'partial_ready'
   | 'ocr_required'
   | 'unreadable'
-  | 'failed';
+  | 'failed'
+  | 'policy_blocked'
+  | 'quota_blocked';
 
 export interface Document {
   id: string;

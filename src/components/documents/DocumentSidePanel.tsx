@@ -31,6 +31,19 @@ interface DocumentSidePanelProps {
   projectId?: string;
 }
 
+const UPLOAD_READBACK_GRACE_MS = 60_000;
+const CONFIRMED_UPLOAD_STATUSES = new Set([
+  'ready',
+  'active',
+  'processing',
+  'uploaded',
+  'ocr_required',
+  'unreadable',
+  'failed',
+  'partial_ready',
+  'policy_blocked',
+]);
+
 export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId }) => {
   const { t } = useTranslation();
   const { activeSidePanel, closeSidePanel, currentUser, setCurrentView } = useAppStore();
@@ -43,11 +56,12 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
   );
 
   // Internal state
-  const [activeTab, setActiveTab] = useState<'project' | 'user'>('project');
+  const [activeTab, setActiveTab] = useState<'project' | 'user'>(projectId ? 'project' : 'user');
   const [projectDocs, setProjectDocs] = useState<Document[]>([]);
   const [userDocs, setUserDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const pendingUploadIdsRef = React.useRef<Map<string, number>>(new Map());
   /**
    * ★ P-P05 (pilotaż Pawła 14.09: „Document upload finishes silently but the
    * file never appears"). Wynik wysyłki szedł WYŁĄCZNIE do `console.error` —
@@ -57,6 +71,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
    * — obie odpowiedzi ginęły w ciszy.
    */
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [acknowledgingDocId, setAcknowledgingDocId] = useState<string | null>(null);
   const [creatingTaskDocId, setCreatingTaskDocId] = useState<string | null>(null);
   const [createdTaskByDocId, setCreatedTaskByDocId] = useState<Record<string, string>>({});
@@ -70,10 +85,32 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     try {
       if (activeTab === 'project' && projectId) {
         const docs = await Api.getProjectDocuments(projectId);
-        setProjectDocs(docs);
+        setProjectDocs((current) => {
+          const serverIds = new Set(docs.map((doc) => String(doc.id)));
+          const pending = current.filter(
+            (doc) =>
+              (pendingUploadIdsRef.current.get(String(doc.id)) || 0) > Date.now() &&
+              !serverIds.has(String(doc.id))
+          );
+          for (const [id, expiresAt] of pendingUploadIdsRef.current) {
+            if (expiresAt <= Date.now()) pendingUploadIdsRef.current.delete(id);
+          }
+          return [...pending, ...docs];
+        });
       } else if (activeTab === 'user') {
         const docs = await Api.getUserDocuments();
-        setUserDocs(docs);
+        setUserDocs((current) => {
+          const serverIds = new Set(docs.map((doc) => String(doc.id)));
+          const pending = current.filter(
+            (doc) =>
+              (pendingUploadIdsRef.current.get(String(doc.id)) || 0) > Date.now() &&
+              !serverIds.has(String(doc.id))
+          );
+          for (const [id, expiresAt] of pendingUploadIdsRef.current) {
+            if (expiresAt <= Date.now()) pendingUploadIdsRef.current.delete(id);
+          }
+          return [...pending, ...docs];
+        });
       }
       setLastRefreshedAt(new Date().toISOString());
     } catch (error) {
@@ -107,6 +144,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     if (!file) return;
 
     setUploadError(null);
+    setUploadSuccess(null);
 
     // Serwer odmówi (400 DOCUMENTS_PROJECT_ID_REQUIRED) — powiedz to od razu i
     // wskaż wyjście, zamiast wysyłać plik w próżnię.
@@ -123,11 +161,93 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
 
     setUploading(true);
     try {
-      await Api.uploadDocumentToLibrary(file, {
+      const result = await Api.uploadDocumentToLibrary(file, {
         scope: activeTab,
         projectId: activeTab === 'project' ? projectId : undefined,
       });
-      await loadDocuments();
+      const candidate = (result as any)?.document;
+      const confirmedId = typeof candidate?.id === 'string' ? candidate.id.trim() : '';
+      const confirmedOriginalName =
+        typeof candidate?.originalName === 'string' ? candidate.originalName.trim() : '';
+      const confirmedFilename =
+        typeof candidate?.filename === 'string' ? candidate.filename.trim() : '';
+      const confirmedName = confirmedOriginalName || confirmedFilename;
+      const confirmedStatus =
+        typeof candidate?.status === 'string' ? candidate.status.trim().toLowerCase() : '';
+      if (
+        !candidate ||
+        typeof candidate !== 'object' ||
+        !confirmedId ||
+        !confirmedName ||
+        !CONFIRMED_UPLOAD_STATUSES.has(confirmedStatus)
+      ) {
+        throw new Error(
+          t(
+            'documents.uploadNotConfirmed',
+            'The server did not confirm the uploaded document. Try again.'
+          )
+        );
+      }
+      const uploadedDocument = {
+        ...candidate,
+        id: confirmedId,
+        originalName: confirmedOriginalName || confirmedFilename,
+        filename: confirmedFilename || confirmedOriginalName,
+        status: confirmedStatus,
+      } as Document;
+      pendingUploadIdsRef.current.set(confirmedId, Date.now() + UPLOAD_READBACK_GRACE_MS);
+      const upsertUploaded = (documents: Document[]) => {
+        const withoutUploaded = documents.filter(
+          (doc) => String(doc.id) !== String(uploadedDocument.id)
+        );
+        return [uploadedDocument, ...withoutUploaded];
+      };
+      const reconcileUpload = (readback: Document[], current: Document[]) => {
+        const confirmedByReadback = readback.some(
+          (doc) => String(doc.id) === String(uploadedDocument.id)
+        );
+        return confirmedByReadback ? readback : upsertUploaded(current);
+      };
+      // Prefer the richer GET record when it already exists. A stale/empty GET
+      // keeps the confirmed POST record for the bounded readback grace window.
+      try {
+        if (activeTab === 'project' && projectId) {
+          const readback = await Api.getProjectDocuments(projectId);
+          setProjectDocs((current) => reconcileUpload(readback, current));
+        } else {
+          const readback = await Api.getUserDocuments();
+          setUserDocs((current) => reconcileUpload(readback, current));
+        }
+        setLastRefreshedAt(new Date().toISOString());
+      } catch (readbackError) {
+        console.error('Error reconciling uploaded document:', readbackError);
+        if (activeTab === 'project') {
+          setProjectDocs(upsertUploaded);
+        } else {
+          setUserDocs(upsertUploaded);
+        }
+      }
+      const normalizedStatus = String(uploadedDocument.status || '').toLowerCase();
+      const statusLabel =
+        normalizedStatus === 'ready' || normalizedStatus === 'active'
+          ? t('documents.ready', 'Ready')
+          : normalizedStatus === 'ocr_required'
+            ? t('documents.ocrRequired', 'OCR required')
+            : normalizedStatus === 'unreadable' || normalizedStatus === 'failed'
+              ? t('documents.unreadable', 'Unreadable')
+              : normalizedStatus === 'partial_ready'
+                ? t('documents.partialReady', 'Partially ready')
+                : normalizedStatus === 'policy_blocked'
+                  ? t('documents.policyBlocked', 'Blocked by policy')
+                  : normalizedStatus === 'processing' || normalizedStatus === 'uploaded'
+                    ? t('documents.processing', 'Processing')
+                    : normalizedStatus;
+      setUploadSuccess(
+        t('documents.uploadAccepted', '“{{name}}” was uploaded. Status: {{status}}.', {
+          name: uploadedDocument.originalName || uploadedDocument.filename || file.name,
+          status: statusLabel,
+        })
+      );
     } catch (error) {
       console.error('Upload error:', error);
       const reason = error instanceof Error && error.message ? error.message : null;
@@ -297,6 +417,18 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
         className: 'bg-amber-500/10 text-amber-500',
       };
     }
+    if (normalized === 'partial_ready') {
+      return {
+        label: t('documents.partialReady', 'Partially ready'),
+        className: 'bg-amber-500/10 text-amber-500',
+      };
+    }
+    if (normalized === 'policy_blocked') {
+      return {
+        label: t('documents.policyBlocked', 'Blocked by policy'),
+        className: 'bg-danger-500/10 text-danger-500',
+      };
+    }
     if (normalized === 'unreadable' || normalized === 'failed') {
       return {
         label: t('documents.unreadable', 'Unreadable'),
@@ -384,12 +516,23 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
         {/* Tabs */}
         <div className="flex border-b border-slate-200 dark:border-navy-700 px-2 shrink-0">
           <button
+            type="button"
             onClick={() => setActiveTab('project')}
+            disabled={!projectId}
+            aria-describedby={!projectId ? 'documents-project-tab-hint' : undefined}
+            title={
+              projectId
+                ? undefined
+                : t(
+                    'documents.projectTabNeedsProject',
+                    'Open Documents from a project to add project documents.'
+                  )
+            }
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
               activeTab === 'project'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <FolderOpen size={14} />
             {t('documents.projectDocs')}
@@ -406,6 +549,17 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
             {t('documents.myDocs')}
           </button>
         </div>
+        {!projectId && (
+          <p
+            id="documents-project-tab-hint"
+            className="border-b border-slate-200 px-3 py-1.5 text-[10px] text-slate-600 dark:border-navy-700 dark:text-slate-400"
+          >
+            {t(
+              'documents.projectTabNeedsProject',
+              'Open Documents from a project to add project documents.'
+            )}
+          </p>
+        )}
 
         {/* Upload Button */}
         <div className="p-3 border-b border-slate-200 dark:border-navy-700 shrink-0">
@@ -438,6 +592,15 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
               className="mt-2 rounded-lg border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-[11px] text-c-danger"
             >
               {uploadError}
+            </p>
+          )}
+          {uploadSuccess && (
+            <p
+              role="status"
+              data-testid="document-upload-success"
+              className="mt-2 rounded-lg border border-c-success/40 bg-c-success/10 px-2 py-1.5 text-[11px] text-c-success"
+            >
+              {uploadSuccess}
             </p>
           )}
           {hasProcessingDocuments && (

@@ -39761,6 +39761,11 @@
       "loadingDocuments": "Loading documents...",
       "orgWideResearchModeSearches": "Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected."
     },
+    "projectTabNeedsProject": "Open Documents from a project to add project documents.",
+    "uploadNotConfirmed": "The server did not confirm the uploaded document. Try again.",
+    "uploadAccepted": "“{{name}}” was uploaded. Status: {{status}}.",
+    "partialReady": "Partially ready",
+    "policyBlocked": "Blocked by policy",
     "uploadNeedsProject": "This view has no project selected, so the file cannot be added to project documents. Upload it under “My documents”, or open the panel from a project.",
     "uploadFailed": "Upload of “{{name}}” failed. The file was not saved.",
     "uploadFailedWithReason": "Upload of “{{name}}” failed: {{reason}}",

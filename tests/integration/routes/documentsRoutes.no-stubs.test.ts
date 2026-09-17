@@ -155,7 +155,15 @@ describe('Documents routes (context document service)', () => {
   it('POST /api/documents/upload returns 400 when file missing', async () => {
     const res = await request(mount()).post(`${basePath}/upload`);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'fail',
+        error: expect.objectContaining({
+          code: 'DOCUMENTS_UPLOAD_FILE_REQUIRED',
+          message: expect.any(String),
+        }),
+      })
+    );
   });
 
   it('POST /api/documents/upload never returns fake 503 fallback', async () => {

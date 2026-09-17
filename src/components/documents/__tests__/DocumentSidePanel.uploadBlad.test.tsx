@@ -23,7 +23,11 @@ const hoisted = vi.hoisted(() => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: hoisted.language },
-    t: (key: string, defaultValue?: string | Record<string, unknown>, options?: Record<string, unknown>) => {
+    t: (
+      key: string,
+      defaultValue?: string | Record<string, unknown>,
+      options?: Record<string, unknown>
+    ) => {
       const catalogue: Record<string, Record<'en' | 'pl', string>> = {
         'documents.myDocs': { en: 'My documents', pl: 'Moje dokumenty' },
         'documents.createTask': { en: 'Create task', pl: 'Utwórz zadanie' },
@@ -212,6 +216,220 @@ describe('S1.14 — dokument tworzy prawdziwe zadanie My Work', () => {
 });
 
 describe('P-P05 — wysyłka dokumentu nie kończy się w ciszy', () => {
+  it('pokazuje stan wysyłania i blokuje input do czasu odpowiedzi', async () => {
+    let finishUpload!: (value: Record<string, unknown>) => void;
+    hoisted.uploadDocumentToLibrary.mockReturnValue(
+      new Promise<Record<string, unknown>>((resolve) => {
+        finishUpload = resolve;
+      })
+    );
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+
+    wyslijPlik();
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeDisabled();
+    expect(screen.getByText('documents.uploading')).toBeInTheDocument();
+
+    finishUpload({
+      document: {
+        id: 'doc-loading-1',
+        originalName: 'MapaRozwoju.pdf',
+        filename: 'mapa-rozwoju.pdf',
+        createdAt: '2026-09-17T00:00:00.000Z',
+        status: 'processing',
+      },
+    });
+    expect(await screen.findByTestId('document-upload-success')).toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+  });
+
+  it('bez projektu startuje w Moich dokumentach i zachowuje potwierdzony upload mimo pustego readbacku', async () => {
+    const uploaded = {
+      id: 'doc-upload-1',
+      originalName: 'MapaRozwoju.pdf',
+      filename: 'mapa-rozwoju.pdf',
+      fileType: 'pdf',
+      fileSize: 1200,
+      createdAt: '2026-09-17T00:00:00.000Z',
+      status: 'processing',
+    };
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({ document: uploaded });
+    hoisted.getUserDocuments.mockResolvedValue([]);
+    render(<DocumentSidePanel />);
+
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+    wyslijPlik();
+
+    expect(await screen.findByTestId('document-upload-success')).toHaveTextContent(
+      /MapaRozwoju\.pdf.*Processing/
+    );
+    expect(screen.getByText('MapaRozwoju.pdf')).toBeInTheDocument();
+    expect(hoisted.uploadDocumentToLibrary).toHaveBeenCalledWith(
+      expect.any(File),
+      expect.objectContaining({ scope: 'user', projectId: undefined })
+    );
+
+    fireEvent.click(screen.getByTitle('Refresh document status'));
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalledTimes(3));
+    expect(screen.getByText('MapaRozwoju.pdf')).toBeInTheDocument();
+  });
+
+  it('odpowiedź bez document.id nie udaje sukcesu', async () => {
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({ message: 'ok' });
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+
+    wyslijPlik();
+
+    expect(await screen.findByTestId('document-upload-error')).toHaveTextContent(
+      /did not confirm the uploaded document/i
+    );
+    expect(screen.queryByTestId('document-upload-success')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    {
+      document: {
+        id: '   ',
+        originalName: 'MapaRozwoju.pdf',
+        status: 'processing',
+      },
+    },
+    {
+      document: {
+        id: 'doc-without-name',
+        status: 'processing',
+      },
+    },
+    {
+      document: {
+        id: 'doc-without-status',
+        originalName: 'MapaRozwoju.pdf',
+      },
+    },
+    {
+      document: {
+        id: 'doc-unknown-status',
+        originalName: 'MapaRozwoju.pdf',
+        status: 'mystery',
+      },
+    },
+  ])('nie potwierdza niepełnego rekordu 201: %#', async (response) => {
+    hoisted.uploadDocumentToLibrary.mockResolvedValue(response);
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+
+    wyslijPlik();
+
+    expect(await screen.findByTestId('document-upload-error')).toHaveTextContent(
+      /did not confirm the uploaded document/i
+    );
+    expect(screen.queryByTestId('document-upload-success')).not.toBeInTheDocument();
+    expect(screen.queryByText('MapaRozwoju.pdf')).not.toBeInTheDocument();
+  });
+
+  it('normalizuje nazwę z odpowiedzi 201, aby nie renderować pustego wiersza', async () => {
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({
+      document: {
+        id: ' doc-normalized-name ',
+        originalName: '   ',
+        filename: ' mapa-rozwoju.pdf ',
+        status: ' READY ',
+      },
+    });
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+
+    wyslijPlik();
+
+    expect(await screen.findByText('mapa-rozwoju.pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('document-upload-success')).toHaveTextContent(
+      /mapa-rozwoju\.pdf.*Ready/
+    );
+  });
+
+  it('zachowuje bogatszy readback i chroni go przed kolejnym pustym odczytem', async () => {
+    const postDocument = {
+      id: 'doc-enriched-1',
+      originalName: 'MapaRozwoju.pdf',
+      filename: 'mapa-rozwoju.pdf',
+      createdAt: '2026-09-17T00:00:00.000Z',
+      status: 'processing',
+    };
+    const enrichedDocument = {
+      ...postDocument,
+      ownerName: 'Pawel Mroczkowski',
+      processingState: { status: 'queued' },
+    };
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({ document: postDocument });
+    hoisted.getUserDocuments
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([enrichedDocument])
+      .mockResolvedValueOnce([]);
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalledTimes(1));
+
+    wyslijPlik();
+
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalledTimes(2));
+    expect(await hoisted.getUserDocuments.mock.results[1].value).toEqual([enrichedDocument]);
+    expect(await screen.findByText(/Pawel Mroczkowski/)).toBeInTheDocument();
+    expect(screen.getByText('Queued for organization context processing.')).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Refresh document status'));
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalledTimes(3));
+    expect(screen.getByText(/Pawel Mroczkowski/)).toBeInTheDocument();
+    expect(screen.getByText('MapaRozwoju.pdf')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['partial_ready', 'Partially ready'],
+    ['policy_blocked', 'Blocked by policy'],
+  ])('pokazuje czytelną etykietę statusu %s', async (status, label) => {
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({
+      document: {
+        id: `doc-${status}`,
+        originalName: 'MapaRozwoju.doc',
+        filename: 'mapa-rozwoju.doc',
+        createdAt: '2026-09-17T00:00:00.000Z',
+        status,
+      },
+    });
+    render(<DocumentSidePanel />);
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
+
+    wyslijPlik();
+
+    expect(await screen.findByTestId('document-upload-success')).toHaveTextContent(label);
+    expect(screen.getByText(label)).toBeInTheDocument();
+  });
+
+  it('z projektu zachowuje scope/projectId i nie duplikuje wiersza z readbacku', async () => {
+    const uploaded = {
+      id: 'doc-project-1',
+      originalName: 'MapaRozwoju.pdf',
+      filename: 'mapa-rozwoju.pdf',
+      fileType: 'pdf',
+      fileSize: 1200,
+      createdAt: '2026-09-17T00:00:00.000Z',
+      status: 'ready',
+    };
+    hoisted.getProjectDocuments.mockResolvedValueOnce([]).mockResolvedValueOnce([uploaded]);
+    hoisted.uploadDocumentToLibrary.mockResolvedValue({ document: uploaded });
+    render(<DocumentSidePanel projectId="project-7" />);
+    await waitFor(() => expect(hoisted.getProjectDocuments).toHaveBeenCalledWith('project-7'));
+
+    wyslijPlik();
+
+    expect(await screen.findByTestId('document-upload-success')).toHaveTextContent(/Ready/);
+    expect(screen.getAllByText('MapaRozwoju.pdf')).toHaveLength(1);
+    expect(hoisted.uploadDocumentToLibrary).toHaveBeenCalledWith(
+      expect.any(File),
+      expect.objectContaining({ scope: 'project', projectId: 'project-7' })
+    );
+  });
+
   it('odmowa serwera pokazuje powód na ekranie, nie tylko w konsoli', async () => {
     hoisted.uploadDocumentToLibrary.mockRejectedValue(new Error('Failed to upload document'));
     render(<DocumentSidePanel projectId="proj-1" />);
@@ -224,13 +442,21 @@ describe('P-P05 — wysyłka dokumentu nie kończy się w ciszy', () => {
     expect(alert).toHaveTextContent(/Failed to upload document/);
   });
 
-  it('zakładka „Dokumenty projektu" bez projektu mówi o tym ZANIM wyśle plik', async () => {
+  it('bez projektu nie oferuje aktywnej zakładki uploadu projektowego', async () => {
     render(<DocumentSidePanel />);
-    await waitFor(() => expect(hoisted.getUserDocuments).not.toHaveBeenCalled());
+    await waitFor(() => expect(hoisted.getUserDocuments).toHaveBeenCalled());
 
-    wyslijPlik();
-
-    expect(await screen.findByTestId('document-upload-error')).toBeInTheDocument();
-    expect(hoisted.uploadDocumentToLibrary).not.toHaveBeenCalled();
+    const projectTab = screen.getByRole('button', { name: 'documents.projectDocs' });
+    expect(projectTab).toBeDisabled();
+    expect(projectTab).toHaveAttribute(
+      'title',
+      'Open Documents from a project to add project documents.'
+    );
+    expect(projectTab).toHaveAccessibleDescription(
+      'Open Documents from a project to add project documents.'
+    );
+    expect(
+      screen.getByText('Open Documents from a project to add project documents.')
+    ).toBeVisible();
   });
 });
