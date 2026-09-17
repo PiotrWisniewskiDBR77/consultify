@@ -10,7 +10,7 @@ vi.mock('react-i18next', () => ({
 import { InitiativeGantt } from '../gantt/InitiativeGantt';
 
 describe('InitiativeGantt portfolio plan horizon', () => {
-  it('uses the canonical dependency path rendering and freezes in-execution bars in dark navy', () => {
+  it('uses the canonical dependency path rendering and freezes in-execution bars in inverted tokens', () => {
     const { container } = render(
       <InitiativeGantt
         items={[
@@ -27,7 +27,7 @@ describe('InitiativeGantt portfolio plan horizon', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Month' })).toHaveAttribute('aria-pressed', 'true');
-    expect(container.querySelector('[title*="Foundation"]')).toHaveClass('bg-navy-900');
-    expect(container.querySelector('svg path')).toHaveAttribute('stroke', 'var(--c-danger)');
+    expect(container.querySelector('[title*="Foundation"]')).toHaveClass('bg-c-text');
+    expect(container.querySelector('svg path')).toHaveAttribute('stroke', 'var(--c-chart-2)');
   });
 });

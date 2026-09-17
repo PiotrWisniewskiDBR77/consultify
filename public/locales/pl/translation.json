@@ -16201,7 +16201,15 @@
     "gantt": {
       "noDates": "Brak dat",
       "outsideHorizon": "Poza horyzontem",
-      "clippedToHorizon": "przycięte do horyzontu"
+      "clippedToHorizon": "przycięte do horyzontu",
+      "nameColumnHeader": "Inicjatywa",
+      "outsideStarts": "Start {{date}} — poza tym horyzontem",
+      "legend": {
+        "frozen": "W realizacji — zamrożone",
+        "planned": "Planowane",
+        "dependency": "Zależność",
+        "today": "Dziś"
+      }
     }
   },
   "execution": {

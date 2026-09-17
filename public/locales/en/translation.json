@@ -16979,7 +16979,15 @@
     "gantt": {
       "noDates": "No dates",
       "outsideHorizon": "Outside horizon",
-      "clippedToHorizon": "clipped to horizon"
+      "clippedToHorizon": "clipped to horizon",
+      "nameColumnHeader": "Initiative",
+      "outsideStarts": "Starts {{date}} — outside this horizon",
+      "legend": {
+        "frozen": "In execution — frozen",
+        "planned": "Planned",
+        "dependency": "Dependency",
+        "today": "Today"
+      }
     }
   },
   "execution": {

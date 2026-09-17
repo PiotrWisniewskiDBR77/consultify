@@ -26,6 +26,20 @@ export interface GanttDependency {
   toId: string;
 }
 
+/**
+ * DEC-615: one row of the fixed name column (mockup `.lrow`). The name lives
+ * HERE, never inside the bar — a short window used to swallow it.
+ */
+export interface GanttRowLabel {
+  /** ScheduleItem.id this label belongs to. */
+  id: string;
+  name: string;
+  /** Second line, e.g. "Planned · Quality lead". */
+  meta?: string | null;
+  /** In-execution rows carry the frozen dot colour. */
+  frozen?: boolean;
+}
+
 export interface InitiativeGanttProps {
   items: ScheduleItem[];
   loading?: boolean;
@@ -47,6 +61,19 @@ export interface InitiativeGanttProps {
   rangeStart?: string;
   rangeEnd?: string;
   initialZoom?: GanttZoom;
+  /**
+   * DEC-615: presence of the name column switches the axis into plan-timeline
+   * mode (208px labels, week/month grid, TODAY badge, one-line legend). Absent
+   * = the legacy task-level layout of an initiative artifact.
+   */
+  rowLabels?: GanttRowLabel[];
+  /**
+   * DEC-608: plan lifecycle. Anything but DRAFT freezes every bar and shows the
+   * read-only notice. Absent = no plan gate (legacy consumer).
+   */
+  planStatus?: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+  /** Action inside the read-only notice of a published plan. */
+  onNewDraftVersion?: () => void;
 }
 
 type GanttZoom = 'day' | 'week' | 'month';
@@ -55,19 +82,47 @@ type GanttZoom = 'day' | 'week' | 'month';
 // stabilny indeks wg kolejności). NIGDY crimson jako dana (task miał wcześniej tailwind-brand leak, zmapowany na crimson).
 // c-tag-* to zmienne var() (bez <alpha-value>) → fill solidny, bez modyfikatorów /NN. ≤5 serii.
 const TYPE_BAR: Record<ScheduleItemType, string> = {
-  task: 'bg-c-tag-1 hover:opacity-90 cursor-grab active:cursor-grabbing',
-  milestone: 'bg-c-tag-2 hover:opacity-90',
+  task: 'bg-c-tag-1 text-c-tag-foreground hover:opacity-90 cursor-grab active:cursor-grabbing',
+  milestone: 'bg-c-tag-2 text-c-tag-foreground hover:opacity-90',
   // F13: faza to JEDYNY typ w osi czasu planu portfela, wiec jej kolor jest tym,
   // ktory widac na ekranie planu. `c-tag-3` (violet #9d5bd2) czytal sie jak kolor
   // AI/marki i dawal bialemu tekstowi tylko ~3:1. Pasek Gantta to WYPELNIENIE
   // slupka wykresu, wiec kanonicznym zrodlem jest paleta `c-chart-*` (§15.1,
   // blue-first, nigdy alarm): `c-chart-1` #2f6f95 = 5.48:1 pod bialy tekst i
-  // czytelnie odrozniony od granatu pozycji zamrozonych.
-  phase: 'bg-c-chart-1 hover:opacity-90',
+  // czytelnie odrozniony od granatu pozycji zamrozonych. Tekst `text-c-surface`,
+  // nie `text-c-tag-foreground`: w ciemnym motywie `c-chart-1` jasnieje do
+  // #5aa3d4 i biel daje tam 2.75:1 (zmierzone pikselowo), a `c-surface` =
+  // #0f172a daje 6.46:1; w jasnym `c-surface` = biel, czyli te same 5.48:1.
+  phase: 'bg-c-chart-1 text-c-surface hover:opacity-90',
 };
+
+/**
+ * DEC-615 §3.3: pozycja W REALIZACJI = odwrocenie tokenow (`bg-c-text
+ * text-c-surface`, 21:1 jasny / ~16:1 ciemny), NIE surowy Tailwind `navy-900`
+ * i NIE nowy token `--c-exec` z makiety — SSOT kolorow zostaje `src/index.css`.
+ */
+const EXEC_BAR = 'bg-c-text text-c-surface cursor-not-allowed';
+
+/**
+ * Sciezka krytyczna to DANA kategoryczna, wiec nie moze byc crimsonem
+ * (`ring-c-danger` = pulapka nr 1). `c-chart-2` #2f8f6b (3.99:1, AA-Large dla
+ * grafiki) jest odroznialny od niebieskich paskow, od bursztynowej obwodki
+ * konfliktu i od niebieskiego pierscienia fokusu.
+ */
+const CRITICAL_RING = 'ring-2 ring-c-chart-2 ring-offset-1 ring-offset-c-surface';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ROW_H = 32; // px — must match the h-8 grid row below.
+/** DEC-615: plan rows are taller so the name column fits name + role. */
+const PLAN_ROW_H = 40;
+/** Mockup `.bar` height (22px) and name-column width (208px). */
+const PLAN_BAR_H = 22;
+
+/** One axis row, shared by the name column and the track so they cannot drift. */
+type GanttRow =
+  | { kind: 'bar'; item: ScheduleItem; s: number; e: number }
+  | { kind: 'outside'; item: ScheduleItem; s: number; e: number }
+  | { kind: 'noWindow'; item: ScheduleItem };
 
 /** px-per-day per zoom level → drives the visual width of the time axis. */
 const PX_PER_DAY: Record<GanttZoom, number> = { day: 26, week: 9, month: 3.2 };
@@ -81,6 +136,20 @@ function startOfWeekMonday(ms: number): number {
   const d = new Date(ms);
   const day = (d.getDay() + 6) % 7;
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() - day).getTime();
+}
+/**
+ * Północ DNIA KALENDARZOWEGO (lokalnego) jako znacznik UTC. Oś liczy dni, nie
+ * milisekundy — inaczej przełączenie czasu letniego w środku horyzontu dodaje
+ * godzinę i przesuwa zarówno liczbę kolumn, jak i każdy pasek po tej dacie.
+ */
+function calendarDayStart(ms: number): number {
+  const d = new Date(ms);
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function addDays(ms: number, days: number): number {
+  const d = new Date(ms);
+  d.setDate(d.getDate() + days);
+  return d.getTime();
 }
 function startOfMonth(ms: number): number {
   const d = new Date(ms);
@@ -100,9 +169,21 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   rangeStart,
   rangeEnd,
   initialZoom = 'week',
+  rowLabels,
+  planStatus,
+  onNewDraftVersion,
 }) => {
   const { t } = useTranslation();
   const gridRef = useRef<HTMLDivElement>(null);
+
+  const planMode = Boolean(rowLabels);
+  /** DEC-608: an unpublished (DRAFT) plan is the only editable one. */
+  const planEditable = planStatus == null || planStatus === 'DRAFT';
+  const rowH = planMode ? PLAN_ROW_H : ROW_H;
+  const labelById = useMemo(
+    () => new Map((rowLabels ?? []).map((label) => [label.id, label] as const)),
+    [rowLabels]
+  );
 
   const [zoom, setZoom] = useState<GanttZoom>(initialZoom);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -162,9 +243,19 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     if (dated.length === 0 && (explicitStart === null || explicitEnd === null)) return null;
     const min = startOfWeekMonday(explicitStart ?? Math.min(...dated.map((d) => d.s)));
     const max = explicitEnd ?? Math.max(...dated.map((d) => d.e));
-    const weeks = Math.max(1, Math.ceil((max - min) / (7 * DAY_MS)) + 2);
+    // Legacy task axis pads two weeks so a sparse schedule is not wall-to-wall.
+    // The plan axis (DEC-615) ends EXACTLY at the horizon: the accepted mockup
+    // draws 12 week columns for a 12-week window and puts TODAY at 3.57%.
+    const pad = planMode ? 0 : 2;
+    // Dni kalendarzowe, nie milisekundy: horyzont 2026-09-14 → 2026-12-07 ma
+    // 84 dni, ale w strefie z przełączeniem czasu (America/Chicago) różnica
+    // clocków to 84 dni + 1 h, więc `ceil` dawał 13 kolumn zamiast 12.
+    const weeks = Math.max(
+      1,
+      Math.ceil((calendarDayStart(max) - calendarDayStart(min)) / (7 * DAY_MS)) + pad
+    );
     return { min, weeks };
-  }, [dated, rangeEnd, rangeStart]);
+  }, [dated, planMode, rangeEnd, rangeStart]);
 
   const persist = useCallback(
     async (item: ScheduleItem, newS: number, newE: number) => {
@@ -303,18 +394,25 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     );
   }
 
-  const totalMs = range.weeks * 7 * DAY_MS;
-  const rangeEndMs = range.min + totalMs;
-  const totalDays = totalMs / DAY_MS;
+  const totalDays = range.weeks * 7;
+  const axisStartDay = calendarDayStart(range.min);
+  const rangeEndMs = addDays(range.min, totalDays);
   const gridMinWidth = Math.max(480, Math.round(totalDays * PX_PER_DAY[zoom]));
-  const pctNum = (ms: number) => Math.max(0, ((ms - range.min) / totalMs) * 100);
+  /**
+   * Pozycja na osi w DNIACH kalendarzowych, nie w milisekundach: pasek z datą
+   * 2026-09-28 ma stać na 16.667% osi 12-tygodniowej (makieta PL3) niezależnie
+   * od strefy czasowej i od tego, czy w horyzoncie wypada przełączenie czasu.
+   */
+  const dayOf = (ms: number) => (calendarDayStart(ms) - axisStartDay) / DAY_MS;
+  const pctNum = (ms: number) => Math.max(0, (dayOf(ms) * 100) / totalDays);
   const pct = (ms: number) => `${pctNum(ms)}%`;
 
   // Column ticks per zoom unit.
   const cols: Array<{ ms: number; label: string }> = [];
   const endMs = rangeEndMs;
   if (zoom === 'day') {
-    for (let ms = range.min; ms < endMs; ms += DAY_MS) {
+    for (let i = 0; i < totalDays; i += 1) {
+      const ms = addDays(range.min, i);
       cols.push({ ms, label: new Date(ms).toLocaleDateString(undefined, { day: '2-digit' }) });
     }
   } else if (zoom === 'month') {
@@ -324,26 +422,60 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         ms,
         label: new Date(ms).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
       });
-      ms = startOfMonth(ms + 32 * DAY_MS);
+      ms = startOfMonth(addDays(ms, 32));
     }
   } else {
     for (let i = 0; i < range.weeks; i += 1) {
-      const ms = range.min + i * 7 * DAY_MS;
+      const ms = addDays(range.min, i * 7);
       cols.push({
         ms,
-        label: new Date(ms).toLocaleDateString(undefined, { day: '2-digit', month: 'short' }),
+        label: new Date(ms).toLocaleDateString(
+          undefined,
+          // DEC-615: the mockup header reads "Sep 14"; the legacy axis read "14 Sep".
+          planMode ? { month: 'short', day: '2-digit' } : { day: '2-digit', month: 'short' }
+        ),
       });
     }
   }
 
   const todayMs = Date.now();
-  const todayInRange = todayMs >= range.min && todayMs <= range.min + totalMs;
+  const todayInRange = todayMs >= range.min && todayMs <= rangeEndMs;
+
+  /** Clip a window to the horizon and decide bar vs „outside this horizon". */
+  const toRow = (item: ScheduleItem, s: number, e: number): GanttRow => {
+    const ov = overrides.get(item.id);
+    const effS = ov?.s ?? s;
+    const effE = ov?.e ?? e;
+    const visS = Math.max(effS, range.min);
+    const visE = Math.min(Math.max(effE, effS + DAY_MS), rangeEndMs);
+    // Wspólna część w DNIACH — spójnie z `dayOf`, którym rysowana jest oś.
+    return dayOf(visE) - dayOf(visS) < 1
+      ? { kind: 'outside', item, s: effS, e: effE }
+      : { kind: 'bar', item, s: effS, e: effE };
+  };
+
+  /**
+   * DEC-615: JEDEN model wierszy dla kolumny nazw i dla toru — inaczej dwie
+   * listy (`dated` + chipy) rozjezdzalyby sie z etykietami. W trybie planu
+   * kazda filtrowana pozycja MA wiersz (bezdatowa = jawny „brak okna"), bo
+   * znikniecie inicjatywy do chipow pod wykresem czyta sie jak brak w planie.
+   */
+  const rows: GanttRow[] = planMode
+    ? filtered.map((item) => {
+        const s = parse(item.start);
+        if (s == null) return { kind: 'noWindow', item };
+        return toRow(item, s, Math.max(parse(item.end) ?? s, s));
+      })
+    : [
+        ...dated.map(({ item, s, e }) => toRow(item, s, e)),
+        ...frozenUndated.map((item): GanttRow => ({ kind: 'noWindow', item })),
+      ];
 
   // Geometry for dependency connectors: itemId → { rowIndex, sx, ex } (x in %).
   const rowGeom = new Map<string, { row: number; sx: number; ex: number }>();
-  dated.forEach(({ item, s, e }, idx) => {
-    const ov = overrides.get(item.id);
-    rowGeom.set(item.id, { row: idx, sx: pctNum(ov?.s ?? s), ex: pctNum(ov?.e ?? e) });
+  rows.forEach((row, idx) => {
+    if (row.kind === 'noWindow') return;
+    rowGeom.set(row.item.id, { row: idx, sx: pctNum(row.s), ex: pctNum(row.e) });
   });
   const depEdges = (dependencies || [])
     .map((d) => {
@@ -359,162 +491,283 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     critical: boolean;
   }>;
 
+  const fmtDay = (ms: number) =>
+    new Date(ms).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+  const barTop = (height: number) => (rowH - height) / 2;
+
+  const renderRow = (row: GanttRow) => {
+    const item = row.item;
+    const frozen = frozenSet.has(item.id);
+    if (row.kind === 'noWindow') {
+      return (
+        <div
+          key={item.id}
+          className="relative border-b border-slate-200/50 dark:border-white/[0.03]"
+          style={{ height: rowH }}
+        >
+          <div
+            className="absolute left-0 inline-flex h-5 items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
+            style={{ top: barTop(20) }}
+            title={`${item.title} • ${t('initiatives.gantt.noDates', 'No dates')}`}
+          >
+            <span className="truncate text-[10px] text-c-text-secondary">
+              {planMode
+                ? t('initiatives.gantt.noDates', 'No dates')
+                : `${item.title} · ${t('initiatives.gantt.noDates', 'No dates')}`}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (row.kind === 'outside') {
+      /**
+       * DEC-615 §4.5: plakietka przy PRAWEJ krawedzi („Starts Sep 28 — outside
+       * this horizon →"), nie pasek po lewej — tamten czytal sie jak okno
+       * zaczynajace sie dzisiaj. Nazwa zostaje w kolumnie, wiec wiersz nie jest
+       * pusty. Prog „czesc wspolna < 1 dzien" (F13) bez zmian.
+       */
+      const label = t('initiatives.gantt.outsideStarts', {
+        date: fmtDay(row.s),
+        defaultValue: 'Starts {{date}} — outside this horizon',
+      });
+      return (
+        <div
+          key={item.id}
+          className="relative border-b border-slate-200/50 dark:border-white/[0.03]"
+          style={{ height: rowH }}
+        >
+          {planMode ? (
+            <div
+              className="absolute right-1 inline-flex h-[22px] items-center gap-1.5 rounded-[5px] border border-dashed border-c-border-strong px-2 text-[10px] text-c-text-muted"
+              style={{ top: barTop(22) }}
+              title={`${item.title} • ${label}`}
+            >
+              <span className="truncate">{label}</span>
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[11px] w-[11px] shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 12h13m-5-6 6 6-6 6" />
+              </svg>
+            </div>
+          ) : (
+            <div
+              className="absolute left-0 inline-flex h-5 items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
+              style={{ top: barTop(20) }}
+              title={`${item.title} • ${t('initiatives.gantt.outsideHorizon', 'Outside horizon')}`}
+            >
+              <span className="truncate text-[10px] text-c-text-secondary">
+                {item.title} · {t('initiatives.gantt.outsideHorizon', 'Outside horizon')}
+              </span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const saving = overrides.get(item.id)?.saving;
+    /**
+     * SPEC §4.1: bramka PRZECIAGANIA = plan SZKIC + zapisywalny + pozycja
+     * niezamrozona. Stary warunek `sourceKind === 'task'` blokowal oś planu
+     * (PlanCard podaje `'phase'`) i nie mial nic wspolnego z zamrozeniem.
+     */
+    const canDrag = planEditable && Boolean(onReschedule) && !frozen;
+    const isCritical = criticalSet.has(item.id);
+    const startsBefore = row.s < range.min;
+    const endsAfter = row.e > rangeEndMs;
+    const visS = Math.max(row.s, range.min);
+    const visE = Math.min(Math.max(row.e, row.s + DAY_MS), rangeEndMs);
+    const barHeight = planMode ? PLAN_BAR_H : 20;
+    return (
+      <div
+        key={item.id}
+        className="relative border-b border-slate-200/50 dark:border-white/[0.03]"
+        style={{ height: rowH }}
+      >
+        <div
+          className={`absolute flex items-center px-1.5 transition-opacity ${
+            planMode ? 'rounded-[5px]' : 'rounded'
+          } ${frozen ? EXEC_BAR : TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${
+            isCritical ? CRITICAL_RING : ''
+          }`}
+          style={{
+            left: pct(visS),
+            width: `${Math.max(0, ((dayOf(visE) - dayOf(visS)) * 100) / totalDays)}%`,
+            minWidth: '8px',
+            height: barHeight,
+            top: barTop(barHeight),
+          }}
+          title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${startsBefore || endsAfter ? ` • ${t('initiatives.gantt.clippedToHorizon', 'clipped to horizon')}` : ''}${!planEditable ? ` • ${t('initiatives.planCard.publishedReadOnly', { defaultValue: 'This plan is published — create a new version (draft) to change it.' })}` : ''}${saving ? ' (saving…)' : ''}`}
+          onPointerDown={canDrag ? (ev) => handlePointerDown(ev, item, row.s, row.e) : undefined}
+        >
+          {planMode ? (
+            <span className="pointer-events-none mx-auto truncate text-[10.5px] font-semibold">
+              {fmtDay(row.s)} → {fmtDay(row.e)}
+            </span>
+          ) : (
+            <span className="pointer-events-none truncate text-[10px]">{item.title}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface select-none">
-      {toolbar}
-      <div className="overflow-x-auto">
-        {/* Time header */}
-        <div
-          className="relative flex border-b border-slate-200/50 dark:border-white/[0.03]"
-          style={{ minWidth: gridMinWidth }}
-        >
-          {cols.map((c) => (
-            <div
-              key={c.ms}
-              className="flex-1 px-2 py-1.5 text-[10px] text-c-text-muted border-r border-slate-200/50 dark:border-white/[0.03] whitespace-nowrap"
+      {!planEditable && (
+        <div className="border-b border-c-border-subtle px-3 py-2 text-sm">
+          <p className="text-c-text-secondary">
+            {t('initiatives.planCard.publishedReadOnly', {
+              defaultValue: 'This plan is published — create a new version (draft) to change it.',
+            })}
+          </p>
+          {onNewDraftVersion && (
+            <button
+              type="button"
+              onClick={onNewDraftVersion}
+              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              {c.label}
-            </div>
-          ))}
-        </div>
-
-        {/* Grid rows */}
-        <div ref={gridRef} className="relative" style={{ minWidth: gridMinWidth }}>
-          {todayInRange && (
-            <div
-              className="absolute top-0 bottom-0 w-px bg-c-text z-10 pointer-events-none"
-              style={{ left: pct(todayMs) }}
-              aria-hidden
-            />
-          )}
-
-          {/* Dependency connectors overlay (x in %, y in row units). */}
-          {depEdges.length > 0 && (
-            <svg
-              className="absolute inset-0 z-[5] pointer-events-none"
-              width="100%"
-              height={dated.length * ROW_H}
-              viewBox={`0 0 100 ${dated.length}`}
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              {depEdges.map((edge, i) => {
-                const y1 = edge.from.row + 0.5;
-                const y2 = edge.to.row + 0.5;
-                const x1 = edge.from.ex;
-                const x2 = edge.to.sx;
-                const midX = Math.max(x1 + 1, Math.min(x2 - 1, (x1 + x2) / 2));
-                const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
-                return (
-                  <path
-                    key={i}
-                    d={d}
-                    fill="none"
-                    stroke={edge.critical ? 'var(--c-danger)' : 'var(--c-border-strong)'}
-                    strokeWidth={edge.critical ? 0.06 : 0.04}
-                    vectorEffect="non-scaling-stroke"
-                    strokeDasharray={edge.critical ? undefined : '0.4 0.3'}
-                  />
-                );
+              {t('initiatives.planCard.newDraftVersion', {
+                defaultValue: 'Create a new version (draft)',
               })}
-            </svg>
+            </button>
           )}
-
-          {dated.map(({ item, s, e }) => {
-            const ov = overrides.get(item.id);
-            const effS = ov?.s ?? s;
-            const effE = ov?.e ?? e;
-            const saving = ov?.saving;
-            const frozen = frozenSet.has(item.id);
-            const canDrag = item.sourceKind === 'task' && Boolean(onReschedule) && !frozen;
-            const isCritical = criticalSet.has(item.id);
-            /**
-             * F13 — PRZYCIECIE DO HORYZONTU. Wczesniej `left` bylo zaciskane do 0
-             * (pctNum), ale `width` liczylo sie z PELNEJ dlugosci okna. Okno
-             * zaczynajace sie przed poczatkiem horyzontu (np. inicjatywa w
-             * realizacji od lutego) dostawalo wiec pasek od 0% o szerokosci
-             * calego okna — na ekranie „ciagnie sie przez cala os", jakby nie
-             * mialo dat. Rysujemy wylacznie CZESC WSPOLNA okna i horyzontu.
-             */
-            const startsBefore = effS < range.min;
-            const endsAfter = effE > rangeEndMs;
-            const visS = Math.max(effS, range.min);
-            const visE = Math.min(Math.max(effE, effS + DAY_MS), rangeEndMs);
-            /**
-             * „Poza horyzontem" = czesc wspolna KROTSZA NIZ DZIEN, nie zwykle
-             * porownanie koncow. Os siega ~2 tygodnie za `rangeEnd`, wiec okno
-             * zaczynajace sie tuz przed jej koncem dawalo left≈100% i pasek
-             * kilkugodzinny — na ekranie PUSTY wiersz, czytany jak brak danych
-             * (tak wygladal horyzont 3m dla „Scrap Reduction Programme":
-             * start 2027-01-04T00:00Z przy osi konczacej sie 2027-01-04T05:00Z).
-             * Kamien milowy (start == koniec) ma z definicji DAY_MS, wiec
-             * prog „< 1 dzien" go nie zjada.
-             */
-            const outside = visE - visS < DAY_MS;
-            const left = pct(visS);
-            const width = `${Math.max(0, ((visE - visS) / totalMs) * 100)}%`;
-            if (outside) {
+        </div>
+      )}
+      {toolbar}
+      <div className={planMode ? 'flex' : undefined}>
+        {/* DEC-615: fixed name column — the name never lives inside the bar. */}
+        {planMode && (
+          <div className="w-[208px] shrink-0 border-r border-c-border-subtle">
+            <div className="flex h-8 items-center border-b border-c-border-subtle px-3 text-[9.5px] font-bold uppercase tracking-[0.09em] text-c-text-muted">
+              {t('initiatives.gantt.nameColumnHeader', 'Initiative')}
+            </div>
+            {rows.map((row) => {
+              const label = labelById.get(row.item.id);
+              const frozen = frozenSet.has(row.item.id) || Boolean(label?.frozen);
+              const dot =
+                row.kind === 'outside'
+                  ? 'bg-c-border-strong'
+                  : frozen
+                    ? 'bg-c-text'
+                    : 'bg-c-chart-1';
               return (
                 <div
-                  key={item.id}
-                  className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
+                  key={`label-${row.item.id}`}
+                  className="flex items-center gap-2 border-b border-c-border-subtle py-1 pl-3 pr-2.5"
+                  style={{ height: rowH }}
                 >
-                  <div
-                    className="absolute top-1.5 left-0 h-5 inline-flex items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
-                    title={`${item.title} • ${t('initiatives.gantt.outsideHorizon', 'Outside horizon')}`}
-                  >
-                    <span className="text-[10px] text-c-text-secondary truncate">
-                      {item.title} · {t('initiatives.gantt.outsideHorizon', 'Outside horizon')}
+                  <span className={`h-[7px] w-[7px] shrink-0 rounded-[2px] ${dot}`} aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[11.6px] font-semibold leading-[1.22] text-c-text">
+                      {label?.name ?? row.item.title}
                     </span>
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <div
-                key={item.id}
-                className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
-              >
-                <div
-                  className={`absolute top-1.5 h-5 rounded flex items-center px-1.5 transition-opacity ${
-                    frozen ? 'bg-navy-900 dark:bg-navy-950 cursor-not-allowed' : TYPE_BAR[item.type]
-                  } ${saving ? 'opacity-60' : ''} ${
-                    isCritical ? 'ring-2 ring-c-danger ring-offset-1 ring-offset-c-surface' : ''
-                  }`}
-                  style={{ left, width, minWidth: '8px' }}
-                  title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${startsBefore || endsAfter ? ` • ${t('initiatives.gantt.clippedToHorizon', 'clipped to horizon')}` : ''}${saving ? ' (saving…)' : ''}`}
-                  onPointerDown={
-                    canDrag ? (ev) => handlePointerDown(ev, item, effS, effE) : undefined
-                  }
-                >
-                  <span className="text-[10px] text-white truncate pointer-events-none">
-                    {item.title}
+                    {label?.meta ? (
+                      <span className="mt-px block truncate text-[9.8px] text-c-text-muted">
+                        {label.meta}
+                      </span>
+                    ) : null}
                   </span>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
 
-          {/* F13: zamrozone bez dat — jawny znacznik w wierszu, nigdy pelny pasek. */}
-          {frozenUndated.map((item) => (
-            <div
-              key={item.id}
-              className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
-            >
+        <div className={planMode ? 'min-w-0 flex-1 overflow-x-auto' : 'overflow-x-auto'}>
+          {/* Time header */}
+          <div
+            className={`relative flex border-b ${
+              planMode
+                ? 'h-8 items-stretch border-c-border-subtle'
+                : 'border-slate-200/50 dark:border-white/[0.03]'
+            }`}
+            style={{ minWidth: gridMinWidth }}
+          >
+            {cols.map((c) => (
               <div
-                className="absolute top-1.5 left-0 h-5 inline-flex items-center gap-1 rounded border border-dashed border-c-border-strong bg-c-surface-raised px-1.5"
-                title={`${item.title} • ${t('initiatives.gantt.noDates', 'No dates')}`}
+                key={c.ms}
+                className={
+                  planMode
+                    ? 'flex flex-1 items-center justify-center border-r border-c-border-subtle text-[9.8px] font-medium text-c-text-muted last:border-r-0 whitespace-nowrap'
+                    : 'flex-1 px-2 py-1.5 text-[10px] text-c-text-muted border-r border-slate-200/50 dark:border-white/[0.03] whitespace-nowrap'
+                }
               >
-                <span className="text-[10px] text-c-text-secondary truncate">
-                  {item.title} · {t('initiatives.gantt.noDates', 'No dates')}
-                </span>
+                {c.label}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Grid rows */}
+          <div ref={gridRef} className="relative" style={{ minWidth: gridMinWidth }}>
+            {planMode && (
+              <div className="absolute inset-0 z-0 flex pointer-events-none" aria-hidden>
+                {cols.map((c) => (
+                  <div
+                    key={`v-${c.ms}`}
+                    className="flex-1 border-r border-c-border-subtle last:border-r-0"
+                  />
+                ))}
+              </div>
+            )}
+            {todayInRange && (
+              <div
+                className="absolute top-0 bottom-0 z-10 bg-c-text pointer-events-none"
+                style={{ left: pct(todayMs), width: planMode ? 1.5 : 1 }}
+                aria-hidden
+              >
+                {planMode && (
+                  <span className="absolute left-1 top-[3px] inline-flex h-4 items-center rounded-[3px] bg-c-text px-1.5 text-[8.5px] font-bold uppercase tracking-[0.06em] text-c-surface whitespace-nowrap">
+                    {t('initiatives.gantt.legend.today', 'Today')}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Dependency connectors overlay (x in %, y in row units). */}
+            {depEdges.length > 0 && (
+              <svg
+                className="absolute inset-0 z-[5] pointer-events-none"
+                width="100%"
+                height={rows.length * rowH}
+                viewBox={`0 0 100 ${rows.length}`}
+                preserveAspectRatio="none"
+                aria-hidden
+              >
+                {depEdges.map((edge, i) => {
+                  const y1 = edge.from.row + 0.5;
+                  const y2 = edge.to.row + 0.5;
+                  const x1 = edge.from.ex;
+                  const x2 = edge.to.sx;
+                  const midX = Math.max(x1 + 1, Math.min(x2 - 1, (x1 + x2) / 2));
+                  const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                  return (
+                    <path
+                      key={i}
+                      d={d}
+                      fill="none"
+                      stroke={edge.critical ? 'var(--c-chart-2)' : 'var(--c-border-strong)'}
+                      strokeWidth={edge.critical ? 0.06 : 0.04}
+                      vectorEffect="non-scaling-stroke"
+                      strokeDasharray={edge.critical ? undefined : '0.4 0.3'}
+                    />
+                  );
+                })}
+              </svg>
+            )}
+
+            {rows.map(renderRow)}
+          </div>
         </div>
       </div>
 
-      {undatedChips.length > 0 && (
+      {!planMode && undatedChips.length > 0 && (
         <div className="px-3 py-2 border-t border-c-border">
           <div className="text-[11px] font-medium text-c-text-muted mb-1">
             {t('initiatives.calendarView.undated')} ({undatedChips.length})
@@ -530,6 +783,38 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* DEC-615: legenda w JEDNEJ linii pod wykresem (zamiast `<p>` frozenLegend). */}
+      {planMode && (
+        <div className="flex flex-wrap items-center gap-x-[15px] gap-y-1 border-t border-c-border-subtle px-3 py-2 text-[10.6px] text-c-text-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-[9px] w-[15px] shrink-0 rounded-[2px] bg-c-text" aria-hidden />
+            {t('initiatives.gantt.legend.frozen', 'In execution — frozen')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-[9px] w-[15px] shrink-0 rounded-[2px] bg-c-chart-1" aria-hidden />
+            {t('initiatives.gantt.legend.planned', 'Planned')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-[11px] w-[15px] shrink-0 rounded-[2px] border border-dashed border-c-border-strong"
+              aria-hidden
+            />
+            {t('initiatives.gantt.outsideHorizon', 'Outside horizon')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-0 w-[17px] shrink-0 border-t-[1.4px] border-c-border-strong"
+              aria-hidden
+            />
+            {t('initiatives.gantt.legend.dependency', 'Dependency')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-0 shrink-0 border-l-[1.5px] border-c-text" aria-hidden />
+            {t('initiatives.gantt.legend.today', 'Today')}
+          </span>
         </div>
       )}
     </div>

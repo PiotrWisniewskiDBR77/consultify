@@ -19,45 +19,101 @@ try {
 
 const query = new URLSearchParams(window.location.search);
 const empty = query.get('state') === 'empty';
+/**
+ * DEC-608/DEC-615 (PL3 etap 1): `&plan=draft|published` — cztery zrzuty
+ * dowodowe to light/dark × DRAFT/PUBLISHED. Domyślnie DRAFT, czyli stan
+ * sprzed tej zmiany (żaden istniejący zrzut nie zmienia znaczenia).
+ */
+const published = query.get('plan') === 'published';
 const ORG_ID = 'org-dbr77-demo';
+
+/**
+ * Fikstura = 8 inicjatyw Northwind z zaakceptowanej makiety PL3
+ * (`~/Developer/cto-codex/makieta-pl3-20260917/makieta.html`, wiersze `.lrow`
+ * i `.bar`). Cztery w realizacji (zamrożone), trzy planowane w horyzoncie,
+ * jedna planowana poza horyzontem (Scrap Reduction, start 2027-01-12).
+ */
+const NORTHWIND: Array<{
+  id: string;
+  name: string;
+  start: string;
+  end: string;
+  exec: boolean;
+  dependsOn: string[];
+  priority: 'HIGH' | 'MEDIUM';
+}> = [
+  { id: 'energy', name: 'Energy Monitoring and ISO 50001', start: '2026-09-28', end: '2026-10-26', exec: false, dependsOn: [], priority: 'HIGH' },
+  { id: 'supplier', name: 'Supplier Quality Gate', start: '2026-11-02', end: '2026-11-30', exec: false, dependsOn: ['energy'], priority: 'HIGH' },
+  { id: 'scrap', name: 'Scrap Reduction Programme', start: '2027-01-12', end: '2027-06-30', exec: false, dependsOn: [], priority: 'MEDIUM' },
+  { id: 'shift', name: 'Shift Handover Digitisation', start: '2026-11-09', end: '2026-12-07', exec: false, dependsOn: ['cnc'], priority: 'MEDIUM' },
+  { id: 'cnc', name: 'Predictive Maintenance for CNC Line', start: '2026-06-02', end: '2026-11-02', exec: true, dependsOn: [], priority: 'HIGH' },
+  { id: 'mes', name: 'MES Rollout Line 3', start: '2026-04-07', end: '2027-03-01', exec: true, dependsOn: [], priority: 'HIGH' },
+  { id: 'warehouse', name: 'Warehouse Automation Pilot', start: '2026-07-21', end: '2026-10-26', exec: true, dependsOn: [], priority: 'MEDIUM' },
+  { id: 'skills', name: 'Skills Matrix and Upskilling', start: '2026-09-21', end: '2026-11-30', exec: true, dependsOn: [], priority: 'MEDIUM' },
+];
+
 const initiatives = empty
   ? []
-  : [
-      { id: 'foundation', organizationId: ORG_ID, name: 'Data foundation', title: 'Data foundation', summary: 'Create the governed operating dataset.', status: 'IN_EXECUTION', lifecycle: 'IN_EXECUTION', archived: false, onHold: false, priority: 'HIGH', createdAt: '2026-08-01T09:00:00.000Z', updatedAt: '2026-09-14T09:00:00.000Z' },
-      { id: 'rollout', organizationId: ORG_ID, name: 'Operating rollout', title: 'Operating rollout', summary: 'Deploy the new operating process.', status: 'APPROVED', lifecycle: 'APPROVED', archived: false, onHold: false, priority: 'HIGH', createdAt: '2026-08-05T09:00:00.000Z', updatedAt: '2026-09-14T09:10:00.000Z' },
-      { id: 'training', organizationId: ORG_ID, name: 'Team training', title: 'Team training', summary: 'Prepare the production cohort.', status: 'APPROVED', lifecycle: 'APPROVED', archived: false, onHold: false, priority: 'MEDIUM', createdAt: '2026-08-06T09:00:00.000Z', updatedAt: '2026-09-14T09:20:00.000Z' },
-    ];
+  : NORTHWIND.map((row) => ({
+      id: row.id,
+      organizationId: ORG_ID,
+      name: row.name,
+      title: row.name,
+      summary: `${row.name} — Northwind 2027 portfolio plan.`,
+      status: row.exec ? 'IN_EXECUTION' : 'APPROVED',
+      lifecycle: row.exec ? 'IN_EXECUTION' : 'APPROVED',
+      archived: false,
+      onHold: false,
+      priority: row.priority,
+      createdAt: '2026-08-01T09:00:00.000Z',
+      updatedAt: '2026-09-14T09:00:00.000Z',
+    }));
 const periods = Array.from({ length: 12 }, (_, index) => ({
   periodId: `W${index + 1}`,
   start: new Date(Date.UTC(2026, 8, 14 + index * 7)).toISOString(),
   end: new Date(Date.UTC(2026, 8, 21 + index * 7)).toISOString(),
 }));
-const windows = initiatives.map((initiative, index) => ({
-  initiativeId: initiative.id,
+const windows = NORTHWIND.map((row) => ({
+  initiativeId: row.id,
   initiativeVersion: 1,
-  earliest: periods[Math.min(index * 2, 10)]?.start ?? periods[0].start,
-  target: periods[Math.min(index * 2, 10)]?.start ?? periods[0].start,
-  latest: periods[Math.min(index * 2 + 2, 11)]?.end ?? periods.at(-1)!.end,
-  confidence: index === 2 ? 'MEDIUM' : 'HIGH',
+  // Północ CZASU LOKALNEGO (bez `Z`): na maszynie pomiarowej (America/Chicago)
+  // `T00:00:00.000Z` to 19:00 POPRZEDNIEGO dnia i każdy pasek siada dzień w
+  // lewo od makiety. Bez sufiksu geometria jest identyczna w każdym TZ.
+  earliest: `${row.start}T00:00:00`,
+  target: `${row.start}T00:00:00`,
+  latest: `${row.end}T00:00:00`,
+  confidence: row.exec ? 'HIGH' : 'MEDIUM',
   rationale: 'PLAN_REASON:{"code":"DEPENDENCIES_PRECEDE"}',
-  dependencySnapshot: index === 0 ? [] : [initiatives[index - 1].id],
+  dependencySnapshot: row.dependsOn,
   constraintSnapshot: [],
 }));
 const scenario = {
-  scenarioId: 'plan-us-launch', name: 'US launch transformation plan', scenarioVersion: 4, status: 'DRAFT',
-  portfolioScenarioId: 'portfolio-us', portfolioScenarioVersion: 3, windowUnit: 'WEEK', timezone: 'America/Chicago', periods, windows,
-  assumptions: [], createdBy: 'Piotr Wisniewski', updatedBy: 'Piotr Wisniewski', publishedBy: null, publishedAt: null,
+  scenarioId: 'plan-us-launch',
+  name: 'Northwind 2027 portfolio plan',
+  scenarioVersion: 4,
+  status: published ? 'PUBLISHED' : 'DRAFT',
+  portfolioScenarioId: 'portfolio-us',
+  portfolioScenarioVersion: 3,
+  windowUnit: 'WEEK',
+  timezone: 'Europe/Warsaw',
+  periods,
+  windows,
+  assumptions: [],
+  createdBy: 'Piotr Wisniewski',
+  updatedBy: 'Piotr Wisniewski',
+  publishedBy: published ? 'Piotr Wisniewski' : null,
+  publishedAt: published ? '2026-09-16T14:00:00.000Z' : null,
 };
 const proposal = {
   proposalId: 'proposal-us-launch', inputAggregateVersion: 4, inputScenarioVersion: 4, status: 'PENDING_REVIEW',
   assumptions: [], rationale: 'AI dependency analysis', conflicts: [], changes: [], analysisSource: 'AI', analysisModel: 'consultify-plan-premium',
   dependencyObservations: empty ? [] : [
-    { observationId: 'obs-1', predecessorId: 'foundation', successorId: 'rollout', kind: 'ABSOLUTE', condition: null, rationale: 'The rollout consumes the governed dataset produced by Data foundation.', evidenceRefs: ['deliverables', 'scopeIn'], confidence: 'HIGH' },
-    { observationId: 'obs-2', predecessorId: 'rollout', successorId: 'training', kind: 'CONDITIONAL', condition: 'When training uses the production cohort.', rationale: 'The production cohort depends on a stable rollout; sandbox training may start earlier.', evidenceRefs: ['summary', 'plannedStartDate'], confidence: 'MEDIUM' },
+    { observationId: 'obs-1', predecessorId: 'energy', successorId: 'supplier', kind: 'ABSOLUTE', condition: null, rationale: 'The supplier gate audits the metering baseline produced by Energy Monitoring.', evidenceRefs: ['deliverables', 'scopeIn'], confidence: 'HIGH' },
+    { observationId: 'obs-2', predecessorId: 'cnc', successorId: 'shift', kind: 'CONDITIONAL', condition: 'When the handover runs on the CNC line data.', rationale: 'Shift handover digitisation reuses the CNC condition signal; a sandbox pilot may start earlier.', evidenceRefs: ['summary', 'plannedStartDate'], confidence: 'MEDIUM' },
   ],
   criticalPaths: empty ? [] : [
-    { pathId: 'absolute', kind: 'ABSOLUTE', initiativeIds: ['foundation', 'rollout'], condition: null, rationale: 'Hard delivery gate.' },
-    { pathId: 'conditional', kind: 'CONDITIONAL', initiativeIds: ['rollout', 'training'], condition: 'When training uses the production cohort.', rationale: 'Conditional adoption path.' },
+    { pathId: 'absolute', kind: 'ABSOLUTE', initiativeIds: ['energy', 'supplier'], condition: null, rationale: 'Hard delivery gate.' },
+    { pathId: 'conditional', kind: 'CONDITIONAL', initiativeIds: ['cnc', 'shift'], condition: 'When the handover runs on the CNC line data.', rationale: 'Conditional adoption path.' },
   ],
 };
 

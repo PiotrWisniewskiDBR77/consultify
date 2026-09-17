@@ -19,18 +19,26 @@ vi.mock('react-i18next', () => ({
 import { InitiativeGantt } from '../gantt/InitiativeGantt';
 import type { ScheduleItem } from '@/types/initiativeSchedule';
 
+/**
+ * Data BEZ `Z` = polnoc CZASU LOKALNEGO. `new Date('2026-09-21')` (ISO
+ * date-only) to polnoc UTC, czyli w America/Chicago 20.09 19:00 — oś liczy dni
+ * kalendarzowe lokalne, wiec bez tego przesuniecia testy zalezalyby od strefy
+ * pomiarowej (a prog „poza horyzontem" od godziny przełaczenia czasu letniego).
+ */
+const local = (iso: string | null): string | null => (iso == null ? null : `${iso}T00:00:00`);
+
 const phase = (id: string, title: string, start: string | null, end: string | null): ScheduleItem => ({
   id,
   type: 'phase',
   title,
-  start,
-  end,
+  start: local(start),
+  end: local(end),
   status: 'IN_EXECUTION',
   sourceId: id,
   sourceKind: 'phase',
 });
 
-const HORIZON = { rangeStart: '2026-09-14', rangeEnd: '2026-12-14' } as const;
+const HORIZON = { rangeStart: local('2026-09-14')!, rangeEnd: local('2026-12-14')! } as const;
 
 function widthPct(el: Element | null): number {
   return Number.parseFloat(((el as HTMLElement).style.width || '0').replace('%', ''));
@@ -47,7 +55,8 @@ describe('InitiativeGantt — okna zamrozonych pozycji i kolory kanonu (F13)', (
       />
     );
     const bar = container.querySelector('[title*="Predictive Maintenance"]');
-    expect(bar).toHaveClass('bg-navy-900');
+    expect(bar).toHaveClass('bg-c-text');
+    expect(bar).toHaveClass('text-c-surface');
     // 28 dni z ~14 tygodni osi (98 dni) ≈ 29% — na pewno nie pelna os.
     const w = widthPct(bar);
     expect(w).toBeGreaterThan(15);
@@ -81,7 +90,7 @@ describe('InitiativeGantt — okna zamrozonych pozycji i kolory kanonu (F13)', (
       />
     );
     expect(screen.getByText(/Skills Matrix and Upskilling · No dates/)).toBeTruthy();
-    expect(container.querySelector('[title*="Skills Matrix"].bg-navy-900')).toBeNull();
+    expect(container.querySelector('[title*="Skills Matrix"].bg-c-text')).toBeNull();
   });
 
   it('pozycja calkowicie poza horyzontem daje znacznik "Outside horizon", nie pusty wiersz', () => {
@@ -101,8 +110,8 @@ describe('InitiativeGantt — okna zamrozonych pozycji i kolory kanonu (F13)', (
     render(
       <InitiativeGantt
         items={[phase('a', 'Boundary case', '2026-12-28', '2027-06-30')]}
-        rangeStart="2026-09-14"
-        rangeEnd="2026-12-14"
+        rangeStart={local('2026-09-14')!}
+        rangeEnd={local('2026-12-14')!}
         initialZoom="week"
       />
     );

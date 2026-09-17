@@ -11,6 +11,8 @@ import type { ScheduleItem } from '@/types/initiativeSchedule';
 
 import { formatPlanSolverReason } from '../planSolverReason';
 import { InitiativeGantt } from '../gantt';
+import type { GanttRowLabel } from '../gantt';
+import { isPlanTimelineV2Enabled } from '@/utils/planTimelineV2Flag';
 import {
   PlanDependencyAnalysisPanel,
   type DependencyCriticalPath,
@@ -346,6 +348,37 @@ export function PlanCard({
         )
         .map((window) => window.initiativeId),
     [scenario.windows, initiatives]
+  );
+  /** DEC-608/DEC-615: oś czasu jako jedyne centrum — za flagą, domyślnie OFF. */
+  const planTimelineV2 = isPlanTimelineV2Enabled();
+  /**
+   * DEC-615: kolumna nazw (208 px). Nazwa stoi ZAWSZE w tym samym miejscu, bo
+   * wpisana w pasek znikała razem z krótkim oknem — to był główny defekt starej
+   * osi. Druga linia = stan + pierwsza rola z popytu okna.
+   */
+  const ganttRowLabels = useMemo<GanttRowLabel[]>(
+    () =>
+      scenario.windows.map((window) => {
+        const id = window.initiativeId;
+        const frozen = frozenIds.includes(id);
+        const role = (window.roleDemand ?? [])
+          .map((line) => line.roleLabel)
+          .find((label) => label.trim());
+        return {
+          id,
+          name: nameOf(id),
+          meta: [
+            frozen
+              ? t('initiatives.status.IN_EXECUTION')
+              : t('initiatives.timelineSection.planned'),
+            role,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+          frozen,
+        };
+      }),
+    [frozenIds, scenario.windows, initiatives, t]
   );
 
   const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
@@ -695,19 +728,27 @@ export function PlanCard({
           {t('initiatives.planCard.noConflicts', { defaultValue: 'Brak konfliktów.' })}
         </p>
       )}
-      <ul className="mt-3 space-y-1 text-sm">
-        {scenario.windows.map((window) => (
-          <li key={window.initiativeId}>
-            {nameOf(window.initiativeId)} —{' '}
-            {window.dependencySnapshot.length
-              ? t('initiatives.planCard.afterList', {
-                  defaultValue: 'po: {{list}}',
-                  list: window.dependencySnapshot.map(nameOf).join(', '),
-                })
-              : t('initiatives.planCard.noDependencies', { defaultValue: 'bez zależności' })}
-          </li>
-        ))}
-      </ul>
+      {/*
+        DEC-608 (cytat właściciela: „nie wiem, po co są te linie powyżej linii
+        czasu") — pod flagą lista tekstowa ZNIKA z centrum; zależności czyta się
+        z pasków. Klucze `afterList`/`noDependencies` zostają: użyje ich prawy
+        panel „Relations" w etapie 3.
+      */}
+      {!planTimelineV2 && (
+        <ul className="mt-3 space-y-1 text-sm">
+          {scenario.windows.map((window) => (
+            <li key={window.initiativeId}>
+              {nameOf(window.initiativeId)} —{' '}
+              {window.dependencySnapshot.length
+                ? t('initiatives.planCard.afterList', {
+                    defaultValue: 'po: {{list}}',
+                    list: window.dependencySnapshot.map(nameOf).join(', '),
+                  })
+                : t('initiatives.planCard.noDependencies', { defaultValue: 'bez zależności' })}
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="mt-5 border-t border-c-border-subtle pt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -742,10 +783,15 @@ export function PlanCard({
           rangeStart={ganttRange.start}
           rangeEnd={ganttRange.end}
           initialZoom={horizonMonths <= 3 ? 'week' : 'month'}
+          rowLabels={planTimelineV2 ? ganttRowLabels : undefined}
+          planStatus={planTimelineV2 ? scenario.status : undefined}
+          onNewDraftVersion={planTimelineV2 ? onNewDraftVersion : undefined}
         />
-        <p className="mt-2 text-xs text-c-text-muted">
-          {t('initiatives.planAnalysis.frozenLegend')}
-        </p>
+        {!planTimelineV2 && (
+          <p className="mt-2 text-xs text-c-text-muted">
+            {t('initiatives.planAnalysis.frozenLegend')}
+          </p>
+        )}
       </div>
     </div>
   );
