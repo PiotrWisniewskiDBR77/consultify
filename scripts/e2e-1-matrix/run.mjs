@@ -15,6 +15,7 @@ import {
 } from './contract.mjs';
 import { validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
 import { isDomainMutationRequest } from './network.mjs';
+import { onboardingDoneKey } from './onboarding.mjs';
 import { settle as settleAndWait } from './settle.mjs';
 
 const args = process.argv.slice(2);
@@ -187,7 +188,7 @@ async function setPresentationState(page, userId) {
     // BEFORE any server call, so setting it here dismisses onboarding for the
     // service account without touching the server-side preference.
     if (userId) {
-      localStorage.setItem(`consultify_onboarding_done:${userId}`, 'true');
+      localStorage.setItem(onboardingDoneKey(userId), 'true');
     }
     const raw = localStorage.getItem('consultify-storage');
     let parsed = {};
@@ -200,10 +201,17 @@ async function setPresentationState(page, userId) {
   }, { locale: variant.locale, theme: variant.theme, userId });
 }
 
-async function settle(page, route) {
+async function settle(page, route, sink) {
   // DEC-590 (Wpis 39): spinner-aware wait lives in settle.mjs. This wrapper only
   // binds BASE and the console logger so the 7 call sites stay (page, route).
-  return settleAndWait(page, route, { base: BASE, log: (message) => console.log(message) });
+  // DEC-590 (Wpis 47): the outcome is no longer discarded — it is pushed into the
+  // per-module sink so spinnerGone/elapsedMs reach the variant artifact.
+  const outcome = await settleAndWait(page, route, {
+    base: BASE,
+    log: (message) => console.log(message),
+  });
+  if (Array.isArray(sink)) sink.push(outcome);
+  return outcome;
 }
 
 async function screenshot(page, moduleId, kind, control) {
@@ -276,6 +284,7 @@ async function matchingButtons(page, pattern, excludePattern) {
 
 async function runModule(page, module, allMutations) {
   const buffers = { console: [], http: [], mutations: [] };
+  const settleStats = [];
   const onConsole = (message) => {
     if (message.type() === 'error' && !/cloudflareinsights|beacon\.min\.js/i.test(message.text())) {
       buffers.console.push(message.text().slice(0, 300));
@@ -305,7 +314,7 @@ async function runModule(page, module, allMutations) {
   page.on('request', onRequest);
 
   const cells = [];
-  await settle(page, module.route);
+  await settle(page, module.route, settleStats);
   const landingMutations = buffers.mutations.splice(0);
   const routeAfter = page.url().replace(BASE, '');
   const landingReached = routeMatchesModule(routeAfter, module);
@@ -331,7 +340,7 @@ async function runModule(page, module, allMutations) {
       'main button[aria-pressed]:visible, main [data-testid*="menu-3"] button:visible, main [data-testid*="command-row"] button:visible',
   };
   for (const kind of ['menu2', 'menu3']) {
-    await settle(page, module.route);
+    await settle(page, module.route, settleStats);
     const locator = page.locator(selectors[kind]);
     const count = await locator.count();
     if (count === 0) {
@@ -348,14 +357,14 @@ async function runModule(page, module, allMutations) {
       continue;
     }
     for (let index = 0; index < count; index += 1) {
-      await settle(page, module.route);
+      await settle(page, module.route, settleStats);
       const fresh = page.locator(selectors[kind]);
       if ((await fresh.count()) <= index) break;
       cells.push(await exerciseLocator({ page, locator: fresh, index, module, kind, buffers }));
     }
   }
 
-  await settle(page, module.route);
+  await settle(page, module.route, settleStats);
   const buttons = page.locator('main button:visible, main [role="button"]:visible');
   const buttonCount = await buttons.count();
   const kebabIndexes = [];
@@ -382,7 +391,7 @@ async function runModule(page, module, allMutations) {
   } else {
     const beforeCells = cells.length;
     for (const index of kebabIndexes) {
-      await settle(page, module.route);
+      await settle(page, module.route, settleStats);
       const fresh = page.locator('main button:visible, main [role="button"]:visible');
       if ((await fresh.count()) > index)
         cells.push(
@@ -404,7 +413,7 @@ async function runModule(page, module, allMutations) {
     }
   }
 
-  await settle(page, module.route);
+  await settle(page, module.route, settleStats);
   const firstRow = page.locator('main table tbody tr:visible').first();
   if ((await firstRow.count()) === 0) {
     cells.push({
@@ -439,7 +448,7 @@ async function runModule(page, module, allMutations) {
     ['create', createPattern],
     ['ai', aiPattern],
   ]) {
-    await settle(page, module.route);
+    await settle(page, module.route, settleStats);
     const candidates = await matchingButtons(
       page,
       pattern,
@@ -476,7 +485,7 @@ async function runModule(page, module, allMutations) {
   page.off('console', onConsole);
   page.off('response', onResponse);
   page.off('request', onRequest);
-  return { id: module.id, route: module.route, cells };
+  return { id: module.id, route: module.route, cells, settle: settleStats };
 }
 
 async function main() {
@@ -531,7 +540,7 @@ async function main() {
       role: principal.role,
     },
     flags,
-    modules: modules.map(({ id, route }) => ({ id, route })),
+    modules: modules.map(({ id, route, settle }) => ({ id, route, settle })),
     cells: modules.flatMap((module) => module.cells),
     cleanup: {
       mode: 'entry-surfaces-mutations-blocked-before-network',

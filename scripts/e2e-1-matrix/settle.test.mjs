@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { SETTLE_TIMEOUT_MS, SPINNER_SELECTOR, settle } from './settle.mjs';
+import {
+  NETWORKIDLE_CAP_MS,
+  SETTLE_TIMEOUT_MS,
+  SPINNER_SELECTOR,
+  settle,
+} from './settle.mjs';
 
 // A minimal stand-in for the Playwright page. waitForSelector honours an
 // injectable outcome so both branches (spinner gone / spinner stuck) are proven
@@ -79,4 +84,25 @@ test('settle does not throw when the spinner is stuck; it logs an error and flag
   );
   // The frame budget / networkidle cap still run so the shot is captured.
   assert.equal(page.calls.waitForTimeout.length, 1);
+});
+
+test('a stuck spinner can never collapse the networkidle budget to 0 (P1 hang)', async () => {
+  const page = makePage({ spinnerStuck: true });
+  // Inject a short spinner timeout so the stuck branch is proven without a 15 s
+  // wait; the spinner consumes the ENTIRE budget, the exact P1 precondition.
+  await settle(page, '/admin/people', {
+    base: 'https://staging.consultify.ai',
+    timeoutMs: 120,
+    log: () => {},
+  });
+
+  const loadState = page.calls.waitForLoadState[0];
+  assert.equal(loadState.state, 'networkidle');
+  // Playwright reads timeout:0 as "no limit": the old derived form
+  // Math.min(remaining, cap) returned 0 here and hung the route forever.
+  assert.ok(
+    loadState.options.timeout > 0,
+    `networkidle timeout must be >0, got ${loadState.options.timeout}`
+  );
+  assert.equal(loadState.options.timeout, NETWORKIDLE_CAP_MS);
 });

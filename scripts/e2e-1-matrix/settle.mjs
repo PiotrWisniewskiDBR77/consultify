@@ -19,7 +19,12 @@ export const SETTLE_TIMEOUT_MS = 15_000;
 
 // After the spinner is gone, give the network a short capped window and React one
 // frame budget so lazy data that lands just after paint is present in the shot.
-const NETWORKIDLE_CAP_MS = 4_000;
+// DEC-590 (Wpis 47, P1): this is the networkidle wait's OWN budget, deliberately
+// decoupled from the spinner budget. Deriving it from the spinner's leftover time
+// collapsed it to 0 once a stuck route consumed the whole 15 s (the exact
+// /admin/people case from run 1), and Playwright reads timeout:0 as "no limit",
+// so the route then hung forever. A constant cap is always > 0.
+export const NETWORKIDLE_CAP_MS = 4_000;
 const FRAME_BUDGET_MS = 300;
 
 export async function settle(page, route, options = {}) {
@@ -48,10 +53,7 @@ export async function settle(page, route, options = {}) {
     );
   }
 
-  const remaining = Math.max(0, timeoutMs - (Date.now() - startedAt));
-  await page
-    .waitForLoadState('networkidle', { timeout: Math.min(remaining, NETWORKIDLE_CAP_MS) })
-    .catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: NETWORKIDLE_CAP_MS }).catch(() => {});
   await page.waitForTimeout(FRAME_BUDGET_MS);
 
   const elapsedMs = Date.now() - startedAt;
