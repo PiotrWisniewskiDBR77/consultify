@@ -608,7 +608,7 @@ interface CurrentPptxExportDependencies {
 }
 
 export function isExportPptxV2Enabled(
-  env: { VITE_EXPORT_PPTX_V2?: string } = process.env
+  env: NodeJS.ProcessEnv = process.env
 ): boolean {
   return env.VITE_EXPORT_PPTX_V2 === 'true';
 }
