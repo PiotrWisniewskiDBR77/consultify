@@ -68,6 +68,26 @@ export function attachChatImagesToLastUserMessage(
   return output;
 }
 
+/**
+ * Recover the user's text from either a plain chat message or the multimodal
+ * AI SDK content assembled for a message with an image. Object coercion would
+ * turn the latter into "[object Object]" and silently disable intent routing.
+ */
+export function textFromChatMessageContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .filter(
+      (part): part is { type: 'text'; text: string } =>
+        !!part &&
+        typeof part === 'object' &&
+        (part as { type?: unknown }).type === 'text' &&
+        typeof (part as { text?: unknown }).text === 'string'
+    )
+    .map((part) => part.text)
+    .join('\n');
+}
+
 export function assertVisionCapableModel(modelId: string): void {
   const providerNativeModelId = String(modelId || '').includes('/')
     ? String(modelId).split('/').pop() || String(modelId)
@@ -443,7 +463,7 @@ export class AIPipeline {
               const { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS } =
                 await import('./chatCreationIntent.js');
               const lastUser = [...nonSystemMsgs].reverse().find((m) => m.role === 'user')?.content;
-              const intent = classifyChatCreationIntent(String(lastUser || ''));
+              const intent = classifyChatCreationIntent(textFromChatMessageContent(lastUser));
               if (intent) {
                 const forcedTool = INTENT_TO_TOOL[intent];
                 const hasForced = defs.some((d: { name: string }) => d.name === forcedTool);
