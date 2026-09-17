@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { V8AssessmentApi } from '@/services/api/v8/assessment';
 
 import { ReportTemplatePickerModal } from './ReportTemplatePickerModal';
 
@@ -78,8 +79,10 @@ export function NewAssessmentReportModal(props: {
 
   // U-25 (DEC-572): `sourceId` dla `/report-builder` to id legacy bliźniaka
   // `assessments`, NIE `method_sessions.id`. `reportSourceId === null` = sesja
-  // Method Core bez bliźniaka → brak źródła (modal pokaże „freeze it first");
-  // `undefined` = lista legacy, gdzie `id` już jest `assessments.id`.
+  // Method Core bez bliźniaka; od v2 (Wpis 72) modal MATERIALIZUJE bliźniaka
+  // przy „Create draft" (idempotentnie), więc brak źródła nie blokuje już
+  // zamrożonej sesji. `undefined` = lista legacy, gdzie `id` już jest
+  // `assessments.id`.
   const selectedSourceId = useMemo(() => {
     if (!selectedAssessment) return null;
     if (selectedAssessment.reportSourceId === null) return null;
@@ -92,7 +95,17 @@ export function NewAssessmentReportModal(props: {
     [assessments]
   );
 
-  const canCreate = Boolean(assessmentId && template?.id && selectedSourceId && !busy);
+  // v2 (DEC-572): zamrożona sesja mapuje się na APPROVED; dla niej bliźniak
+  // zostaje utworzony w locie, więc brak `selectedSourceId` NIE blokuje przycisku.
+  const selectedAssessmentIsApproved =
+    selectedAssessment?.status?.toUpperCase() === 'APPROVED';
+
+  const canCreate = Boolean(
+    assessmentId &&
+      template?.id &&
+      !busy &&
+      (selectedSourceId || selectedAssessmentIsApproved)
+  );
 
   if (!isOpen) return null;
 
@@ -163,12 +176,12 @@ export function NewAssessmentReportModal(props: {
             )}
             {selectedAssessment && !selectedSourceId && (
               <p
-                data-testid="new-assessment-report-no-source"
-                className="mt-2 text-xs text-amber-600 dark:text-amber-400"
+                data-testid="new-assessment-report-source-note"
+                className="mt-2 text-xs text-slate-500 dark:text-slate-400"
               >
                 {t(
-                  `${NS}.noReportSource`,
-                  'This session has no report source yet — freeze it first'
+                  `${NS}.reportSourceWillBeCreated`,
+                  'No report source yet — one will be created from this frozen session when you continue.'
                 )}
               </p>
             )}
@@ -223,21 +236,20 @@ export function NewAssessmentReportModal(props: {
               disabled={!canCreate}
               onClick={async () => {
                 if (!assessmentId || !template?.id) return;
-                if (!selectedSourceId) {
-                  // U-25 (DEC-572): sesja Method Core bez legacy bliźniaka nie ma
-                  // źródła raportu. Czytelny komunikat zamiast backendowego
-                  // „Assessment not found" (które myliło, bo sesja ISTNIEJE).
-                  toast.error(
-                    t(
-                      `${NS}.noReportSource`,
-                      'This session has no report source yet — freeze it first'
-                    )
-                  );
-                  return;
-                }
                 setBusy(true);
                 const toastId = toast.loading(t(`${NS}.toast.creatingReport`, 'Creating report…'));
                 try {
+                  // U-25 v2 (DEC-572, Wpis 72): zamrożona sesja Method Core bez
+                  // legacy bliźniaka nie ma źródła raportu. Zamiast blokować
+                  // (fałszywa rada „freeze it first" — sesja JUŻ jest zamrożona),
+                  // materializujemy bliźniaka idempotentnie i generujemy jak dziś.
+                  let sourceId = selectedSourceId;
+                  if (!sourceId) {
+                    const twin = await V8AssessmentApi.createLegacyTwin(assessmentId);
+                    sourceId = twin?.assessmentId || null;
+                    if (!sourceId) throw new Error('Missing report source id');
+                  }
+
                   const title = selectedAssessment?.name
                     ? t(`${NS}.reportTitleWithName`, 'Report - {{name}}', {
                         name: selectedAssessment.name,
@@ -245,7 +257,7 @@ export function NewAssessmentReportModal(props: {
                     : t(`${NS}.reportTitleFallback`, 'Report');
                   const created: any = await Api.post('/report-builder', {
                     sourceType: 'ASSESSMENT',
-                    sourceId: selectedSourceId,
+                    sourceId,
                     title,
                     description: '',
                     templateId: template.id,
@@ -277,8 +289,15 @@ export function NewAssessmentReportModal(props: {
                   onCreated(reportId);
                   onClose();
                 } catch (e: any) {
+                  // 409 SESSION_NOT_FROZEN = sesja jednak niezamrożona (np. wyścig)
+                  // → prawdziwa rada. Reszta = komunikat błędu.
+                  const notFrozen = e?.data?.code === 'SESSION_NOT_FROZEN' || e?.status === 409;
                   toast.error(
-                    e?.error || e?.message || t(`${NS}.toast.createFailed`, 'Failed to create report'),
+                    notFrozen
+                      ? t(`${NS}.noReportSource`, 'Freeze the session to generate a report')
+                      : e?.error ||
+                          e?.message ||
+                          t(`${NS}.toast.createFailed`, 'Failed to create report'),
                     { id: toastId }
                   );
                 } finally {

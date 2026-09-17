@@ -341,6 +341,18 @@ export const V8AssessmentApi = {
     return v8Post<{ id: string; assessment: V8AssessmentDetail }>('/assessment', payload);
   },
 
+  /**
+   * U-25 v2 (DEC-572, Wpis 72): materializuje legacy bliźniaka `assessments`
+   * dla ZAMROŻONEJ sesji Method Core bez bliźniaka i zwraca jego id jako
+   * `sourceId` dla `/report-builder`. Idempotentne — drugi klik zwraca ten sam
+   * wiersz (`created=false`). 409 `SESSION_NOT_FROZEN` = sesja niezamrożona.
+   */
+  createLegacyTwin(sessionId: string) {
+    return v8Post<{ assessmentId: string; created: boolean }>(
+      `/assessment/legacy-twin/${encodeURIComponent(sessionId)}`
+    );
+  },
+
   updateAssessment(assessmentId: string, payload: V8AssessmentUpdatePayload) {
     // ASM-001A: `completionPercent` is optional/forward-compatible — the DRD
     // lane will start receiving a server-derived value here (instead of the

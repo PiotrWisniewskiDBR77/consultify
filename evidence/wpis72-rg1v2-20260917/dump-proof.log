@@ -1,0 +1,70 @@
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+=== SESSION 63aa51e1-8270-42f0-8f57-12742a66566e ===
+  org=468b234c-66c4-54e1-b626-5e0fb3a92f6a owner=75f25357-2f33-48b8-9638-ad67ff65bcef state=frozen project_id=northwind-drd-2027-q
+  BEFORE: assessments twins (by PK or project) = 0
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_dump","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6611/consultify_dump host=127.0.0.1 port=6611 database=consultify_dump source=app:pool-config
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-09-17 13:19:30:1930 [37mdebug[39m: [37m[Postgres] Client connected[39m
+(node:32839) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-09-17T18:19:30.520Z"}
+2026-09-17 13:19:30:1930 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-17 13:19:30:1930 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+2026-09-17 13:19:31:1931 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+  NEGATIVE CONTROL: createReport(sessionId) threw: "Assessment not found" (oczekiwane: Assessment not found)
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[legacyTwinService] session=63aa51e1-8270-42f0-8f57-12742a66566e org=468b234c-66c4-54e1-b626-5e0fb3a92f6a sessionProject=northwind-drd-2027-q twinProject=<null> twin=63aa51e1-8270-42f0-8f57-12742a66566e--assessment--drd-twin created=YES state=frozen[39m
+  ensureLegacyAssessmentTwinForSession -> assessmentId=63aa51e1-8270-42f0-8f57-12742a66566e--assessment--drd-twin created=true
+  AFTER: twin row status=APPROVED assessment_type=DRD project_id=null name="Northwind 2027 — Digital Readiness Diagnosis · Q3 re-assessment"
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[ReportBuilder] Brak referencji zrodlowych dla raportu[39m {"reportId":"75b899dc-6e41-4b3c-9945-f1de15e28d28","sourceType":"ASSESSMENT","hint":"contextPack bedzie lightweight — raport bez danych z systemu"}
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:75b899dc-6e41-4b3c-9945-f1de15e28d28 as artifact 1f73ace6-8273-4d00-a175-bb4c57c92c0f[39m
+2026-09-17 13:19:31:1931 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"468b234c-66c4-54e1-b626-5e0fb3a92f6a","module":"outputs"}
+  POSITIVE: createReport(twinId) OK -> report.id=75b899dc-6e41-4b3c-9945-f1de15e28d28 title="Report - DRD proof 63aa51e1" sections=14
+
+=== SESSION a9c8f477-8d8f-4d31-804d-a39700de4b0a ===
+  org=468b234c-66c4-54e1-b626-5e0fb3a92f6a owner=75f25357-2f33-48b8-9638-ad67ff65bcef state=frozen project_id=northwind-drd-2027-v2
+  BEFORE: assessments twins (by PK or project) = 0
+  NEGATIVE CONTROL: createReport(sessionId) threw: "Assessment not found" (oczekiwane: Assessment not found)
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[legacyTwinService] session=a9c8f477-8d8f-4d31-804d-a39700de4b0a org=468b234c-66c4-54e1-b626-5e0fb3a92f6a sessionProject=northwind-drd-2027-v2 twinProject=<null> twin=a9c8f477-8d8f-4d31-804d-a39700de4b0a--assessment--drd-twin created=YES state=frozen[39m
+  ensureLegacyAssessmentTwinForSession -> assessmentId=a9c8f477-8d8f-4d31-804d-a39700de4b0a--assessment--drd-twin created=true
+  AFTER: twin row status=APPROVED assessment_type=DRD project_id=null name="Northwind 2027 — Digital Readiness Diagnosis"
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[ReportBuilder] Brak referencji zrodlowych dla raportu[39m {"reportId":"cc2b4d57-204c-4932-9445-56955e0b8e8c","sourceType":"ASSESSMENT","hint":"contextPack bedzie lightweight — raport bez danych z systemu"}
+2026-09-17 13:19:31:1931 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:cc2b4d57-204c-4932-9445-56955e0b8e8c as artifact b5076c89-3456-48cd-a9d5-d5d92bf0524d[39m
+2026-09-17 13:19:31:1931 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"468b234c-66c4-54e1-b626-5e0fb3a92f6a","module":"outputs"}
+  POSITIVE: createReport(twinId) OK -> report.id=cc2b4d57-204c-4932-9445-56955e0b8e8c title="Report - DRD proof a9c8f477" sections=14
+
+=== CLEANUP ===
+  deleted reports=2 left=0
+  deleted twins=2 left=0
+
+DONE
+
+=== CLEANUP VERIFICATION (post-run, dump przywrócony) ===
+  report_builder_reports (proof titles) = 0
+  assessments twins (%--assessment--drd-twin) = 0
+  v8_output_artifacts (registered by createReport) = 0   [usunięte ręcznie: rejestr artefaktów nie kaskaduje z report_builder_reports]
+  metoda: negative control createReport(sourceId=sessionId) -> "Assessment not found" (bug odtworzony)
+          positive     createReport(sourceId=twinId)       -> report.id + title + 14 sekcji (bramka ASSESSMENT przeszła)
+  NOTE: createReport rejestruje artefakt w v8_output_artifacts bez FK-kaskady do raportu —
+        scratch-runner kasował reports+twins, 2 sieroce artefakty dokasowane ręcznie (artifact_id 1f73ace6…, b5076c89…).

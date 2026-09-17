@@ -36,6 +36,10 @@ import {
   QualityReviewError,
   reviewAssessment,
 } from '../../services/assessment/drdQualityReview.js';
+import {
+  ensureLegacyAssessmentTwinForSession,
+  LegacyTwinError,
+} from '../../services/assessment/legacyTwinService.js';
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -655,6 +659,64 @@ router.post(
       },
       meta: assessmentMutationMeta(),
     });
+  })
+);
+
+/**
+ * U-25 v2 / DEC-572 (Wpis 72) — materializuje legacy bliźniaka `assessments`
+ * dla ZAMROŻONEJ sesji Method Core, która go nie ma, i zwraca jego id jako
+ * `sourceId` dla `/report-builder`. Idempotentne (klucz project_id + deterministyczne
+ * PK): drugi klik zwraca ten sam wiersz, `created=false`. Bramka capability ta sama
+ * co `POST /` (fail-closed). `SESSION_NOT_FOUND -> 404`, `SESSION_NOT_FROZEN -> 409`
+ * (modal rysuje wtedy prawdziwą radę „zamroź sesję").
+ */
+router.post(
+  '/legacy-twin/:sessionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+
+    if (!canCreateOrEditAssessment(userRole)) {
+      return res.status(403).json(buildCapabilityDenied(userRole));
+    }
+
+    const sessionId = String(req.params?.sessionId || '').trim();
+    if (!sessionId) {
+      return res.status(400).json({
+        error: 'session_id_required',
+        code: 'SESSION_ID_REQUIRED',
+      });
+    }
+
+    await ensureAssessmentSchema();
+
+    try {
+      const result = await ensureLegacyAssessmentTwinForSession({
+        organizationId,
+        sessionId,
+        actorUserId: userId,
+      });
+
+      assessmentAuditLogger
+        .logCreation(req, result.assessmentId, 'DRD')
+        .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
+
+      return res.status(result.created ? 201 : 200).json({
+        data: result,
+        meta: assessmentMutationMeta(),
+      });
+    } catch (err) {
+      if (err instanceof LegacyTwinError) {
+        if (err.code === 'SESSION_NOT_FOUND') {
+          return res.status(404).json({ error: err.message, code: err.code });
+        }
+        return res.status(409).json({
+          error: err.message,
+          code: err.code,
+          whatNext: ['Freeze the session to generate a report.'],
+        });
+      }
+      throw err;
+    }
   })
 );
 

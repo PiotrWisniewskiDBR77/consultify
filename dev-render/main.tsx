@@ -75,6 +75,8 @@ const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
 const Rg1ReportSourceModalScreen = React.lazy(() => import('./screens/rg1-report-source-modal'));
+const Rg1OpenedReportScreen = React.lazy(() => import('./screens/rg1-opened-report'));
+const Rg1AuditsGenerateOwnerScreen = React.lazy(() => import('./screens/rg1-audits-generate-owner'));
 // GRAFIKA (2026-09-01, zadanie 3 — audyt rodziny): plik ekranu istniał i miał
 // ocenę w docs/program/grafika/status.json (materials-registry, ocena B, z
 // realną listą "naprawione"), ale main.tsx nigdy go nie importował ani nie
@@ -1224,6 +1226,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RG-1 / U-25 (DEC-572) — REALNY NewAssessmentReportModal po naprawie reportSourceId: sesja Z bliźniakiem (Create draft aktywny) vs BEZ bliźniaka (komunikat „freeze it first", przycisk zablokowany). ?variant=twin|nosource',
     render: () => <Rg1ReportSourceModalScreen />,
+  },
+  'rg1-opened-report': {
+    label:
+      'RG-1 v2 / U-25 (DEC-572, Wpis 72) — RAPORT OTWARTY (ReportEditor) po „Create draft" dla zamrożonej sesji Method Core BEZ bliźniaka: bliźniak materializowany w locie, raport DRD z 14 sekcjami (blueprint tpl-drd-full-diagnostic-v2). ?reportId=&theme=light|dark',
+    render: () => <Rg1OpenedReportScreen />,
+  },
+  'rg1-audits-generate-owner': {
+    label:
+      'RG-1 v2 / U-31 (DEC-572, Wpis 72) — SAM MOMENT „New report → Generate" w module Audyty z rolą OWNER (capability report.draft): modal otwarty, wybrany wynik audytu, przycisk Generate AKTYWNY. ?theme=light|dark',
+    render: () => <Rg1AuditsGenerateOwnerScreen />,
   },
   'materials-registry': {
     label:
