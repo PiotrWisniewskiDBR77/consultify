@@ -1267,10 +1267,7 @@ router.post(
             custom,
             rawParams && typeof rawParams === 'object' ? rawParams : {}
           );
-          buffer = await buildCanonicalSchemaForOrganization(
-            customSchema,
-            user.organizationId
-          );
+          buffer = await buildCanonicalSchemaForOrganization(customSchema, user.organizationId);
         } catch (err) {
           if (!(err instanceof CustomWorkbookTemplateInvalidError)) throw err;
           logger.error('[WorkbookRoutes] Custom template build failed:', err);
