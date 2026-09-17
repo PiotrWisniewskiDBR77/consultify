@@ -30,7 +30,7 @@ const headers = [
 ];
 
 describe('CanonicalXlsxExportService', () => {
-  it('renders consultify-supplier-scorecard with accepted structural parity and live Summary formulas', async () => {
+  it('renders consultify-supplier-scorecard with accepted structural parity and field map', async () => {
     const accepted = new ExcelJS.Workbook();
     await accepted.xlsx.load(await readFile(acceptedPath));
     const acceptedData = accepted.worksheets[0];
@@ -66,7 +66,7 @@ describe('CanonicalXlsxExportService', () => {
 
     expect(generated.worksheets.map((sheet) => sheet.name)).toEqual([
       'Supplier scorecard',
-      'Summary',
+      'Template fields',
     ]);
     const data = generated.getWorksheet('Supplier scorecard')!;
     expect(Array.from({ length: 11 }, (_, index) => data.getCell(6, index + 1).value)).toEqual(
@@ -91,11 +91,18 @@ describe('CanonicalXlsxExportService', () => {
     expect(stylesXml).toContain('<bgColor rgb="FFFCE8E6"/>');
     expect(stylesXml).toContain('<bgColor rgb="FFE3F5E9"/>');
     expect(stylesXml).not.toContain('<fgColor rgb="FFFCE8E6"/>');
+    const archive = await JSZip.loadAsync(bytes);
+    const scorecardXml = await archive.file('xl/worksheets/sheet1.xml')!.async('string');
+    expect(scorecardXml).toContain(
+      '<cfRule type="expression" dxfId="2" priority="1"><formula>NOT(ISERROR(SEARCH(&quot;Worsening&quot;,J7)))</formula></cfRule>'
+    );
+    expect(scorecardXml).toContain(
+      '<cfRule type="expression" dxfId="3" priority="2"><formula>NOT(ISERROR(SEARCH(&quot;Improving&quot;,J7)))</formula></cfRule>'
+    );
 
-    const summary = generated.getWorksheet('Summary')!;
-    for (let row = 4; row <= 9; row += 1) {
-      expect(summary.getCell(row, 2).type).toBe(ExcelJS.ValueType.Formula);
-    }
+    const fieldMap = generated.getWorksheet('Template fields')!;
+    expect(fieldMap.getCell('A1').value).toBe('Cell / range');
+    expect(fieldMap.getCell('D9').value).toContain('trend colours');
     const styles = JSON.stringify(generated.model).toUpperCase();
     expect(styles).not.toContain('A50034');
   });
@@ -130,7 +137,9 @@ describe('CanonicalXlsxExportService', () => {
 
   it('only enables the scorecard profile explicitly and preserves supplied values otherwise', async () => {
     const columns = headers.map((header, index) => ({ key: `c${index}`, header, type: 'text' }));
-    const row = Object.fromEntries(columns.map((column) => [column.key, { value: 'source value' }]));
+    const row = Object.fromEntries(
+      columns.map((column) => [column.key, { value: 'source value' }])
+    );
     const bytes = await buildCanonicalXlsxBuffer({
       title: 'User table',
       organizationName: 'Northwind & Sons',

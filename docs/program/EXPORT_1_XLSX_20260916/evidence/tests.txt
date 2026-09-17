@@ -1,29 +1,113 @@
 
- RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-xlsx-fix-w170-20260916
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-xlsx-v2-w173-20260917
 
-··································stdout | tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > returns the full sheets (rows + cells + formulas) for an org-scoped workbook
-2026-09-16 22:27:49:2749 [32minfo[39m: [32m[Env] Loaded from:[39m
-2026-09-16 22:27:49:2749 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
-2026-09-16 22:27:49:2749 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
-2026-09-16 22:27:49:2749 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
-2026-09-16 22:27:49:2749 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
 
-············(node:15286) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/b-xlsx-v2-w173-20260917
+
+ ✓ server/src/services/tablePlatform/__tests__/TemplateService.exportProvenance.test.ts > TemplateService export provenance > persists canonical template id and family when creating a base 347ms
+ ✓ server/src/services/tablePlatform/__tests__/TemplateService.exportProvenance.test.ts (1 test) 350ms
+     ✓ persists canonical template id and family when creating a base  347ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > returns empty string for null 122ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > returns empty string for undefined 2ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > returns plain string when no special chars 1ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > wraps value containing comma in quotes 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > wraps value containing double-quote and escapes inner quotes 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > wraps value containing newline in quotes 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > wraps value containing carriage return in quotes 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > handles numeric values 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > neutralizes a leading = formula (=HYPERLINK) 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > prefixes leading + / @ / - formula triggers with apostrophe 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > neutralizes leading tab injection (tab is not an RFC quote trigger) 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > escapeCsvValue > leaves genuine numbers (including negatives) intact 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > neutralizeFormula > prefixes formula-trigger cells 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > neutralizeFormula > does not touch plain text or numbers 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > returns empty string for null 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > returns empty string for undefined 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats checkbox true as "true" 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats checkbox "true" string as "true" 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats checkbox 1 as "true" 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats checkbox false as "false" 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats multiSelect array as comma-separated string 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats multiSelect non-array as string 8ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats multi_select (snake_case) array 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats date value as string 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats date with dateFormat option 1ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats linkedRecord array with displayName 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > formats attachment array with filename 1ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > formatFieldValue > returns string for default type 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > getTableName > returns table name from DB 1ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > getTableName > returns "export" when table not found 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > resolveXlsxProfile > selects scorecard only from canonical SHEET-BASE provenance 2ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > resolveXlsxProfile > does not infer a profile from table headers or unrelated metadata 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > streamCsvExport > writes header + data rows 1ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > streamCsvExport > falls back to field names for legacy name-keyed record data 0ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > streamCsvExport > calls end immediately when no fields 0ms
+stdout | tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > returns the full sheets (rows + cells + formulas) for an org-scoped workbook
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > returns the full sheets (rows + cells + formulas) for an org-scoped workbook
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 06:34:53:3453 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > buildXlsxBuffer > uses the canonical engine with Data and formula-driven Summary sheets 358ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts > ExportService > buildXlsxBuffer > turns a profile-selected Table Studio scorecard into formulas while generic data stays literal 159ms
+ ✓ server/src/services/tablePlatform/__tests__/ExportService.test.ts (37 tests) 664ms
+       ✓ uses the canonical engine with Data and formula-driven Summary sheets  358ms
+ ✓ tests/unit/backend/services/CanonicalXlsxExportService.test.ts > CanonicalXlsxExportService > renders consultify-supplier-scorecard with accepted structural parity and field map 536ms
+ ✓ tests/unit/backend/services/CanonicalXlsxExportService.test.ts > CanonicalXlsxExportService > keeps every generic source sheet and appends a formula-driven Summary 98ms
+ ✓ tests/unit/backend/services/CanonicalXlsxExportService.test.ts > CanonicalXlsxExportService > only enables the scorecard profile explicitly and preserves supplied values otherwise 63ms
+ ✓ tests/unit/backend/services/CanonicalXlsxExportService.test.ts > CanonicalXlsxExportService > keeps full WorkbookSchema features on the canonical Materials path 42ms
+ ✓ tests/unit/backend/services/CanonicalXlsxExportService.test.ts (4 tests) 741ms
+     ✓ renders consultify-supplier-scorecard with accepted structural parity and field map  536ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > returns the full sheets (rows + cells + formulas) for an org-scoped workbook 2715ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > returns 404 when the workbook is not found for this organization 4ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > does not expose a cached workbook schema to another organization 127ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > does not expose cached XLSX bytes to another organization 117ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > persists native source-pack and evidence references for a blank workbook 34ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > marks the backward-compatible workbook download as a draft export 183ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > fails closed when a final export lacks current approval 3ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts > GET /api/workbook/:id/schema > fails closed when a final export has a critical QA finding 2ms
+ ✓ tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts (8 tests) 3187ms
+     ✓ returns the full sheets (rows + cells + formulas) for an org-scoped workbook  2715ms
+(node:12479) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-····
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > POST /tables/:tableId/register-sheet-artifact registers governed sheet in canonical registry 98ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > GET export/xlsx?registerArtifact=1 sets X-Artifact-Id and returns workbook bytes 239ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > export with registerArtifact reuses same artifact id on second request (idempotent registration) 8ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > auto-selects the supplier scorecard profile for a SHEET-BASE table 4ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > accepts the explicit supplier scorecard profile without provenance lookup 4ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > rejects an unknown XLSX profile with HTTP 400 before export 4ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > keeps a generic table on the generic export profile 4ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts > table-platform sheet artifact routes (SQLite registry + stubbed tp_tables) > register-sheet-artifact returns 400 when table is not governed 4ms
+ ✓ tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts (8 tests) 371ms
 
- Test Files  4 passed (4)
-      Tests  50 passed (50)
-   Start at  22:27:46
-   Duration  5.52s (transform 4.21s, setup 1.88s, import 5.79s, tests 2.38s, environment 4.86s)
+ Test Files  5 passed (5)
+      Tests  58 passed (58)
+   Start at  06:34:49
+   Duration  8.18s (transform 8.26s, setup 2.18s, import 10.12s, tests 5.31s, environment 6.99s)
 
-✔ matrix keeps the full 8-variant and 128-module-run denominator (0.884334ms)
-✔ only declared exact variants parse (0.41775ms)
-✔ workflow variants and service-account secrets exactly match the contract (2.152333ms)
-✔ module landing accepts only the declared route or its canonical route (0.30625ms)
-✔ validation cannot silently shrink a module or surface denominator (0.73575ms)
-✔ delta reports PASS to failure as regression and failure to PASS as fix (0.230542ms)
-✔ mutation gate counts only same-origin domain writes (0.214833ms)
+
+ Test Files  5 passed (5)
+      Tests  58 passed (58)
+   Start at  06:34:49
+   Duration  8.19s (transform 8.26s, setup 2.18s, import 10.12s, tests 5.31s, environment 6.99s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/b-xlsx-v2-w173-20260917/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/b-xlsx-v2-w173-20260917/junit.xml
+✔ matrix keeps the full 8-variant and 128-module-run denominator (1.091625ms)
+✔ only declared exact variants parse (0.419208ms)
+✔ workflow variants and service-account secrets exactly match the contract (1.687833ms)
+✔ module landing accepts only the declared route or its canonical route (0.324916ms)
+✔ validation cannot silently shrink a module or surface denominator (0.707666ms)
+✔ delta reports PASS to failure as regression and failure to PASS as fix (0.231791ms)
+✔ mutation gate counts only same-origin domain writes (0.21875ms)
 ℹ tests 7
 ℹ suites 0
 ℹ pass 7
@@ -31,4 +115,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 87.761875
+ℹ duration_ms 73.831416

@@ -9,6 +9,7 @@ import multer from 'multer';
 
 import { featureFlags } from '../config/FeatureFlags.js';
 import { getDatabase } from '../database/Database.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
@@ -32,7 +33,6 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
-import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { normalizePlatformRole } from '../utils/platformRoles.js';
 import { validateUUID } from '../utils/validation.js';
 
@@ -2226,9 +2226,21 @@ router.get(
         : undefined;
     const wantRegister =
       req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
+    const rawProfile = req.query.profile;
+    const requestedProfile = typeof rawProfile === 'string' ? rawProfile : undefined;
     let exportArtifactId: string | null = null;
     try {
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+
+      const { CONSULTIFY_SUPPLIER_SCORECARD_PROFILE } = await import(
+        '../services/export/XlsxExportProfile.js'
+      );
+      if (rawProfile !== undefined && requestedProfile !== CONSULTIFY_SUPPLIER_SCORECARD_PROFILE) {
+        return res.status(400).json({
+          error: 'XLSX_EXPORT_PROFILE_INVALID',
+          code: 'XLSX_EXPORT_PROFILE_INVALID',
+        });
+      }
 
       let registeredArtifactId: string | null = null;
       if (wantRegister) {
@@ -2259,6 +2271,10 @@ router.get(
       }
 
       const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
+      const profile =
+        requestedProfile === CONSULTIFY_SUPPLIER_SCORECARD_PROFILE
+          ? CONSULTIFY_SUPPLIER_SCORECARD_PROFILE
+          : await ExportService.resolveXlsxProfile(tableId);
       const tableName = await ExportService.getTableName(tableId);
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
       let organizationName = 'Organization';
@@ -2277,6 +2293,7 @@ router.get(
         viewId,
         fieldIds,
         organizationName,
+        profile,
       });
       exportArtifactId = registeredArtifactId;
       if (!exportArtifactId && authReq.organizationId && authReq.userId) {

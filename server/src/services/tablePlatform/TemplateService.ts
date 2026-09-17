@@ -40,6 +40,22 @@ const templateService = {
 
     const base = await metadataService.createBase(workspaceId, organizationId, baseName, userId);
 
+    const templateFamilyRef =
+      (tpl as any).schema_snapshot?.family ?? (tpl as any).governance_rules?.family ?? null;
+    await db.query(
+      `UPDATE tp_bases
+          SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+              updated_at = NOW()
+        WHERE id = $1`,
+      [
+        base.id,
+        JSON.stringify({
+          originTemplateId: templateId,
+          ...(templateFamilyRef ? { template_family_ref: templateFamilyRef } : {}),
+        }),
+      ]
+    );
+
     for (const tableDef of snapshot.tables || []) {
       const table = await metadataService.createTable(
         base.id,
