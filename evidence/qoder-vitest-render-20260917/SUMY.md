@@ -1,5 +1,12 @@
 # sha256 dowodów — [A] Wpis 15 zadanie 2 (2026-09-17)
 
+Do repo wchodzą stąd wyłącznie pliki `.md`: katalogi `logs` wyklucza główny `.gitignore` (linia 2),
+a `*.txt`/`*.json` wyklucza `evidence/.gitignore`. Logi runnerów, raporty crasha macOS (`.ips`) i źródła
+sond (`*.txt`) zostają więc NA DYSKU, w worktree
+`/Users/piotrwisniewski/Developer/qoder-wt/consultify-vitest-render/evidence/qoder-vitest-render-20260917/`
+(ścieżki poniżej są względem tego katalogu) — ich sha256 i rozmiar są utrwalone tutaj, zgodnie z regułą
+dowodów (Wpis 9 pkt 1 / Wpis 12 pkt 4).
+
 ```
 9aadf1dd25ce7336e23641da8f88511bf76750f9508afa545dd677315dd66767  12K  DIAGNOZA.md
 de62fbfbbf6c253c9b66b34adfdd9dc5428285912b1ebfa22f2db80aeb5b97fd  64K  logs/crash-sigsegv-node-2026-09-16-234700.ips
