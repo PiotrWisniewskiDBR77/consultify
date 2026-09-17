@@ -11,14 +11,14 @@
     "portableFont": true,
     "coBranding": true,
     "noLegacyCrimson": true,
-    "conditionalFormatting": true,
-    "validTrendRules": true,
+    "conditionalFormatting": false,
+    "validTrendRules": false,
     "libreOfficeDxf": true,
-    "libreOfficeTrendRedPixels": true,
-    "libreOfficeTrendGreenPixels": true
+    "libreOfficeTrendRedPixels": false,
+    "libreOfficeTrendGreenPixels": false
   },
   "render": {
-    "redPixels": 6798,
-    "greenPixels": 6756
+    "redPixels": 112,
+    "greenPixels": 102
   }
 }
