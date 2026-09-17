@@ -4412,7 +4412,23 @@ export const DEMO_DATASET_DELETE_QUERIES: readonly DemoDatasetDeleteStep[] = [
   ['organization_context_items', 'organization_id'],
   ['organization_context_snapshots', 'organization_id'],
   ['presentation_decks', 'organization_id'],
-  ['results_writer_observations', 'organization_id'],
+  // NOT LISTED ON PURPOSE: results_writer_observations (B4 / DEC-576, OPCJA C).
+  // Its migration 20261014_results_writer_observability_ledger.sql installs a
+  // BEFORE DELETE trigger that RAISEs restrict_violation, so a purge DELETE here
+  // would throw inside deleteDemoDatasetForOrganization (fallback:false) and
+  // abort this children-first loop BEFORE it reaches `organizations` — the clone
+  // org would survive, which is the exact defect this list must not reintroduce.
+  // The ledger is append-only and has NO foreign keys on purpose: its
+  // organization_id / actor_user_id are plain TEXT so "a cascading FK into an
+  // append-only ledger would make the parent row undeletable, turning an
+  // observability side-channel into a constraint on real business data"
+  // (20261014 l.56-59). A leftover observation row is therefore a harmless
+  // dangling pointer, never an orphan that blocks business-data cleanup.
+  // Purging/retention of the ledger is an OWNER_DECISION (owner-governed purge
+  // must explicitly disable trg_results_writer_observation_no_delete), not a
+  // demo-session concern. Guards: demoSeedService.purgeList.test.ts asserts no
+  // *_no_delete-trigger table may appear here; demoSeedService.purgeLedger.pg.test.ts
+  // proves the clone org is still deleted while the ledger row survives.
   ['my_idea_maps', 'organization_id'],
   ['my_idea_edges', 'organization_id'],
   ['my_ideas', 'organization_id'],
