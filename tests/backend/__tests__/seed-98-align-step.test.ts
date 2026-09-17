@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 /**
  * D-19 v2 (Wpis 69 · wariant (c) · DEC-539) — the seed's FINAL step must, after
  * seeding the northwind org, call the SAME planner/apply that the ops script
- * `align-initiative-aggregate-state.ts` uses (function import, NOT child_process)
- * for the seed's own org id. Without this the demo seed leaves the canonical
+ * `align-initiative-aggregate-state.ts` uses — imported from the shared service
+ * `alignInitiativeAggregateService` (function import, NOT child_process) — for
+ * the seed's own org id. Without this the demo seed leaves the canonical
  * aggregate at REGISTERED_DRAFT while the column says IN_EXECUTION, and the
  * STAGE-1 backfill (migration 20262260) would show executing initiatives as
  * "Draft registered".
@@ -13,11 +14,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * lives in the Wpis 69 report; this test pins the WIRING so removing the call
  * turns red.
  */
-vi.mock('../../../server/scripts/align-initiative-aggregate-state.js', () => ({
+vi.mock('../../../server/src/services/initiatives/alignInitiativeAggregateService.js', () => ({
   processOrg: vi.fn(),
 }));
 
-import { processOrg } from '../../../server/scripts/align-initiative-aggregate-state.js';
+import { processOrg } from '../../../server/src/services/initiatives/alignInitiativeAggregateService.js';
 import { uruchomAlignKrok } from '../../../server/scripts/seed/demo-en/98-align.js';
 import { ORG_ID, ORG_SLUG, det, TAG } from '../../../server/scripts/seed/demo-en/00-wspolne.js';
 
