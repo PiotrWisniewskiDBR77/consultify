@@ -607,10 +607,8 @@ interface CurrentPptxExportDependencies {
   }) => Promise<void>;
 }
 
-export function isExportPptxV2Enabled(
-  env: NodeJS.ProcessEnv = process.env
-): boolean {
-  return env.VITE_EXPORT_PPTX_V2 === 'true';
+export function isExportPptxV2Enabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.ENABLE_EXPORT_PPTX_V2 === 'true' || env.VITE_EXPORT_PPTX_V2 === 'true';
 }
 
 /** Ensure the downloadable bytes represent the current persisted deck version. */
@@ -2873,7 +2871,6 @@ router.get(
           organizationId: orgId,
           deckId: String(req.params.id || ''),
           format: 'pptx',
-          allowOverride: canOverrideQualityGate(req),
         });
     setQualityWarningHeaders(res, quality);
 
@@ -3128,7 +3125,6 @@ router.get(
           organizationId: orgId,
           deckId: String(deckId || ''),
           format: 'pdf',
-          allowOverride: canOverrideQualityGate(req),
         });
     setQualityWarningHeaders(res, quality);
 
@@ -3898,7 +3894,6 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'html',
-      allowOverride: canOverrideQualityGate(req),
     });
     setQualityWarningHeaders(res, quality);
 
@@ -7916,7 +7911,6 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'png',
-      allowOverride: canOverrideQualityGate(req),
     });
     setQualityWarningHeaders(res, quality);
 

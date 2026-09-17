@@ -30443,6 +30443,7 @@
       "export": {
         "pdf": "PDF",
         "pptx": "Export PPTX",
+        "pptxFormat": "PPTX",
         "png": "PNG (per slide)",
         "html": "Interactive HTML5",
         "allCards": "All cards",

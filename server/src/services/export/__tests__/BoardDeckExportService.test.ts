@@ -55,14 +55,32 @@ describe('BoardDeckExportService production callers', () => {
               ],
               source_refs: [{ artifact_name: 'Operations review' }],
             },
+            {
+              intent: 'analysis',
+              title: 'Supplier comparison',
+              blocks: [
+                {
+                  type: 'table',
+                  content: {
+                    headers: ['Supplier', 'Score'],
+                    rows: [
+                      ['Alpha', 91],
+                      ['Beta', 84],
+                    ],
+                  },
+                },
+              ],
+            },
           ],
         },
       })
     );
 
     expect(result.names.filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))).toHaveLength(
-      2
+      3
     );
+    expect(result.xml).toContain('<a:tbl>');
+    expect(result.xml).toContain('Supplier comparison');
     expect(result.xml).toContain('Q3 Steering Deck');
     expect(result.xml).toContain('Cycle time fell by 18%.');
     expect(result.xml.match(/Quality held/g)).toHaveLength(1);

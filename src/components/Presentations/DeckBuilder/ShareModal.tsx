@@ -451,7 +451,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 },
                 {
                   format: 'pptx' as const,
-                  label: t('presentations.builder.export.pptx', 'Export PPTX'),
+                  label: t('presentations.builder.export.pptxFormat', 'PPTX'),
                   icon: FileText,
                   desc: 'Native formatting, editable charts',
                 },

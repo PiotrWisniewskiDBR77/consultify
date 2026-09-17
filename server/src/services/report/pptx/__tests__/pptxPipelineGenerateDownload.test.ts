@@ -92,6 +92,8 @@ describe('Generate -> PPTX download happy path', () => {
     expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'false' })).toBe(false);
     expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'TRUE' })).toBe(false);
     expect(isExportPptxV2Enabled({ VITE_EXPORT_PPTX_V2: 'true' })).toBe(true);
+    expect(isExportPptxV2Enabled({ ENABLE_EXPORT_PPTX_V2: 'true' })).toBe(true);
+    expect(isExportPptxV2Enabled({ ENABLE_EXPORT_PPTX_V2: 'TRUE' })).toBe(false);
   });
 
   it('cuts over to V2 with the resolved organization name while preserving legacy validation', async () => {
@@ -454,6 +456,45 @@ describe('Generate -> PPTX download happy path', () => {
     );
     expect(persist).not.toHaveBeenCalled();
     expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
+  });
+
+  it('fails closed on a real renderer warning without injecting generate', async () => {
+    const safe = buildUnifiedReport();
+    const malformed = buildUnifiedReport();
+    (malformed.slides[1].content as any).key_findings = null;
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'real-render-failure',
+      organizationId: 'org-1',
+      title: 'Real renderer failure',
+      unifiedJson: safe,
+    });
+    deckDocument.cards[1].blocks = deckDocument.cards[1].blocks.filter(
+      (block) => block.type !== 'bullet_list'
+    );
+    const exportPath = path.join(os.tmpdir(), `real-render-failure-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+    const oldBytes = Buffer.from('previous-good-pptx');
+    fs.writeFileSync(exportPath, oldBytes);
+    const persist = vi.fn(async () => undefined);
+
+    await expect(
+      ensureCurrentPptxExport(
+        {
+          id: 'real-render-failure',
+          organization_id: 'org-1',
+          export_path: exportPath,
+          version: 2,
+          exported_version: 1,
+          updated_at: new Date().toISOString(),
+          deck_json: JSON.stringify(deckDocument),
+          unified_json: JSON.stringify(malformed),
+        },
+        { persist }
+      )
+    ).rejects.toBeInstanceOf(CurrentPptxExportError);
+
+    expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
+    expect(persist).not.toHaveBeenCalled();
   });
 
   it('rerenders a previous-deployment export even when the deck version is unchanged', async () => {
