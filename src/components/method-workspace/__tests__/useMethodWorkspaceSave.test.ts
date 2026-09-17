@@ -6,6 +6,7 @@
  * SAVE_FAILED blocks a silent leave.
  */
 import { act, renderHook } from '@testing-library/react';
+import { useCallback, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMethodWorkspaceSave } from '../useMethodWorkspaceSave';
@@ -103,5 +104,84 @@ describe('useMethodWorkspaceSave', () => {
     });
     expect(result.current.state).toBe('SAVED');
     expect(result.current.attemptLeave()).toBe(true);
+  });
+
+  it('a single markDirty persists the newest payload committed by the following render', async () => {
+    const persisted: string[] = [];
+    const { result } = renderHook(() => {
+      const [payload, setPayload] = useState('old');
+      const save = useCallback(async () => {
+        persisted.push(payload);
+        return { ok: true as const };
+      }, [payload]);
+      const workspaceSave = useMethodWorkspaceSave({ save, debounceMs: 100 });
+      return {
+        ...workspaceSave,
+        edit(next: string) {
+          setPayload(next);
+          workspaceSave.markDirty();
+        },
+      };
+    });
+
+    act(() => result.current.edit('newest answer'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+
+    expect(persisted).toEqual(['newest answer']);
+    expect(result.current.state).toBe('SAVED');
+  });
+
+  it('queues a second save for an edit made while the first payload is in flight', async () => {
+    let resolveFirst: (value: { ok: true }) => void = () => {};
+    let resolveSecond: (value: { ok: true }) => void = () => {};
+    const calls: string[] = [];
+
+    const { result } = renderHook(() => {
+      const [payload, setPayload] = useState('A');
+      const save = useCallback(() => {
+        calls.push(payload);
+        return new Promise<{ ok: true }>((resolve) => {
+          if (calls.length === 1) resolveFirst = resolve;
+          else resolveSecond = resolve;
+        });
+      }, [payload]);
+      const workspaceSave = useMethodWorkspaceSave({ save, debounceMs: 100 });
+      return {
+        ...workspaceSave,
+        edit(next: string) {
+          setPayload(next);
+          workspaceSave.markDirty();
+        },
+      };
+    });
+
+    act(() => result.current.edit('A'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(calls).toEqual(['A']);
+    expect(result.current.state).toBe('SAVING');
+
+    act(() => result.current.edit('B'));
+    expect(result.current.state).toBe('DIRTY');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+
+    await act(async () => {
+      resolveFirst({ ok: true });
+      await Promise.resolve();
+    });
+    expect(calls).toEqual(['A', 'B']);
+    expect(result.current.state).toBe('SAVING');
+    expect(result.current.state).not.toBe('SAVED');
+
+    await act(async () => {
+      resolveSecond({ ok: true });
+      await Promise.resolve();
+    });
+    expect(result.current.state).toBe('SAVED');
   });
 });

@@ -21,7 +21,7 @@
  * Harness (mocki `methodCoreApi` + `useOpenChatWithContext`) — ten sam, co w
  * `DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx`.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -152,7 +152,7 @@ beforeEach(() => {
 });
 
 describe('P-P04 — autozapis szkicu nie cofa wybranego stanu odpowiedzi', () => {
-  it('po wpisaniu tekstu i wyborze „Potwierdzone" szkic dopisuje CONFIRMED, nie „partial"', async () => {
+  it('po wpisaniu tekstu i wyborze „Potwierdzone" anuluje oczekujący szkic', async () => {
     const { events } = await renderAtInterviewFocus();
 
     const karta = screen
@@ -168,10 +168,6 @@ describe('P-P04 — autozapis szkicu nie cofa wybranego stanu odpowiedzi', () =>
       screen.getByTestId('interview-focus-panel').querySelector('textarea')! as HTMLTextAreaElement;
     fireEvent.change(pole(), { target: { value: 'Budżet kontrolujemy' } });
     fireEvent.change(pole(), { target: { value: 'Budżet kontrolujemy w systemie na bieżąco.' } });
-    // eslint-disable-next-line no-console
-    console.log('SAVE-STATE PO ZMIANIE', document.querySelector('[data-testid="assessment-save-state-indicator"]')?.getAttribute('data-save-state'));
-    // eslint-disable-next-line no-console
-    console.log('PO SAMYM PISANIU', JSON.stringify(events.map((e) => e.type)));
     // 2. i ZARAZ wybiera stan — zanim debounce zdąży wystrzelić
     fireEvent.click(screen.getByRole('radio', { name: /Confirmed|Potwierdzone/ }));
 
@@ -181,16 +177,14 @@ describe('P-P04 — autozapis szkicu nie cofa wybranego stanu odpowiedzi', () =>
       ).toBe(true)
     );
 
-    // 3. debounce dochodzi PO wyborze — kiedyś dopisywał tu „partial"
-    await waitFor(
-      () =>
-        expect(
-          odpowiedziPytania(events, questionId).some((e) => e.type === 'ANSWER_DRAFTED')
-        ).toBe(true),
-      { timeout: 4000 }
-    );
+    // 3. manualna decyzja utrwala ten sam tekst, więc pending debounce jest
+    // anulowany i nie dopisuje drugiego zdarzenia po 800 ms.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    });
 
     const ostatnia = odpowiedziPytania(events, questionId).at(-1)!;
+    expect(odpowiedziPytania(events, questionId).some((e) => e.type === 'ANSWER_DRAFTED')).toBe(false);
     expect(ostatnia.payload.answerState).toBe('confirmed');
 
     // ...i pigułka na ekranie zostaje na „Potwierdzone"
@@ -200,6 +194,60 @@ describe('P-P04 — autozapis szkicu nie cofa wybranego stanu odpowiedzi', () =>
         'confirmed'
       )
     );
+  }, 15000);
+
+  it('serializuje Confirmed za szkicem, który już był w locie', async () => {
+    const { events } = await renderAtInterviewFocus();
+    const pending: Array<{
+      event: Record<string, any>;
+      resolve: (value: unknown) => void;
+    }> = [];
+    hoisted.appendEvent.mockImplementation((_sessionId: string, event: Record<string, any>) =>
+      new Promise((resolve) => pending.push({ event, resolve }))
+    );
+
+    const card = screen
+      .getByTestId('interview-focus-panel')
+      .querySelector('[data-testid^="question-card-"]')!;
+    const questionId = card.getAttribute('data-testid')!.replace('question-card-', '');
+    const textarea = screen
+      .getByTestId('interview-focus-panel')
+      .querySelector('textarea') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Evidence before debounce' } });
+    fireEvent.change(textarea, { target: { value: 'Evidence before in-flight draft' } });
+
+    await waitFor(
+      () => expect(pending.some(({ event }) => event.type === 'ANSWER_DRAFTED')).toBe(true),
+      { timeout: 4000 }
+    );
+    fireEvent.click(screen.getByRole('radio', { name: /Confirmed|Potwierdzone/ }));
+
+    const complete = async (type: string) => {
+      const item = pending.find(({ event }) => event.type === type)!;
+      const stored = {
+        id: `evt-race-${events.length + 1}`,
+        organizationId: 'org-1',
+        sessionId: 'sess-http-1',
+        actorKind: 'human',
+        actorUserId: 'user-1',
+        methodPackVersion: DRD_METHOD_PACK_VERSION,
+        occurredAt: '2026-09-17T00:00:00.000Z',
+        ...item.event,
+      };
+      events.push(stored);
+      item.resolve(stored);
+    };
+
+    await complete('ANSWER_DRAFTED');
+    await waitFor(() =>
+      expect(pending.some(({ event }) => event.type === 'ANSWER_CONFIRMED')).toBe(true)
+    );
+    await complete('ANSWER_CONFIRMED');
+
+    await waitFor(() => {
+      const answers = odpowiedziPytania(events, questionId);
+      expect(answers.at(-1)?.payload.answerState).toBe('confirmed');
+    });
   }, 15000);
 });
 

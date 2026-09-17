@@ -20,6 +20,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MethodSession } from '@/method-core/contracts';
+import { questionAnswerState } from '@/components/assessment/drd/drdWorkspaceViewModel';
 
 const hoisted = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -306,5 +307,77 @@ describe('409 conflict — never silently overwritten', () => {
     await runtime.refresh();
     expect(runtime.getState().status).toBe('ready');
     expect(runtime.getState().session?.version).toBe(7);
+  });
+});
+
+describe('K-02 RED — concurrent answer writes', () => {
+  it('rejects a stale draft from a second tab and recovers the confirmed answer', async () => {
+    const persistedEvents: any[] = [];
+    let sequence = 0;
+    let serverVersion = 1;
+    hoisted.getSession.mockImplementation(async () => ({
+      session: makeSession({ version: serverVersion }),
+      roles: ['owner'],
+    }));
+    hoisted.listEvents.mockImplementation(async () => [...persistedEvents]);
+    hoisted.appendEvent.mockImplementation(async (sessionId, input, idempotencyKey) => {
+      if (input.expectedVersion !== serverVersion) {
+        throw new MethodCoreApiError('version_conflict', 409, {
+          error: 'version_conflict',
+          currentVersion: serverVersion,
+        });
+      }
+      const event = {
+        id: `event-${++sequence}`,
+        organizationId: 'org-1',
+        sessionId,
+        actorUserId: 'user-1',
+        methodPackVersion: '2.0.0-methodpack.1',
+        occurredAt: `2026-09-17T00:00:0${sequence}.000Z`,
+        idempotencyKey,
+        ...input,
+      };
+      persistedEvents.push(event);
+      serverVersion += 1;
+      return event;
+    });
+
+    const firstTab = new DrdHttpSessionRuntime('sess-1', makeMemoryStorage());
+    const staleSecondTab = new DrdHttpSessionRuntime('sess-1', makeMemoryStorage());
+    await Promise.all([firstTab.refresh(), staleSecondTab.refresh()]);
+
+    await firstTab.recordAnswer({
+      unitId: '1A',
+      level: 1,
+      questionId: '1A-L1-Q1',
+      answerState: 'confirmed',
+      text: 'Confirmed answer',
+    });
+
+    let staleWriteRejected = false;
+    try {
+      await staleSecondTab.recordAnswer({
+        unitId: '1A',
+        level: 1,
+        questionId: '1A-L1-Q1',
+        answerState: 'partial',
+        text: 'Stale draft',
+        draft: true,
+      });
+    } catch {
+      staleWriteRejected = true;
+    }
+    await staleSecondTab.refresh();
+
+    expect({
+      staleWriteRejected,
+      recoveredAnswer: questionAnswerState(
+        staleSecondTab.getState().events,
+        '1A-L1-Q1'
+      ),
+    }).toEqual({
+      staleWriteRejected: true,
+      recoveredAnswer: { state: 'confirmed', text: 'Confirmed answer' },
+    });
   });
 });

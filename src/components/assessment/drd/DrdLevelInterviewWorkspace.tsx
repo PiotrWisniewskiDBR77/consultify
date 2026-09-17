@@ -9,6 +9,8 @@ import { nazwaWJezyku } from './drdNazwa';
 
 export type DrdLevelDecision = 'yes' | 'no' | 'help';
 
+export class DrdLevelDecisionSaveError extends Error {}
+
 const HELP_MARKER = '[DRD_NEED_HELP]';
 
 export function drdLevelDecisions(events: readonly MethodEvent[], unitId: string): Map<number, DrdLevelDecision> {
@@ -82,6 +84,7 @@ export function DrdLevelInterviewWorkspace({
   const isPolish = (i18n.language || 'en').toLowerCase().startsWith('pl');
   const [decision, setDecision] = useState<DrdLevelDecision | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const decisions = useMemo(() => drdLevelDecisions(events, area.id), [events, area.id]);
   const level = levels.find((item) => item.level === selectedLevel) ?? levels[0];
@@ -97,9 +100,16 @@ export function DrdLevelInterviewWorkspace({
   const save = async () => {
     if (!decision || !canWrite) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await onSaveDecision(decision, answerText);
       setDecision(null);
+    } catch (error) {
+      setSaveError(
+        error instanceof DrdLevelDecisionSaveError
+          ? error.message
+          : t('common.saveError')
+      );
     } finally {
       setSaving(false);
     }
@@ -187,6 +197,7 @@ export function DrdLevelInterviewWorkspace({
             </div></div>
             <button type="button" disabled={!decision || saving || !canWrite} onClick={() => void save()} className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>{saving ? t('assessment.drd.levelInterview.saving', 'Saving…') : t('assessment.drd.levelInterview.saveNext', 'Save & next level')}</button>
           </div>
+          {saveError && <p role="alert" className="mt-2 text-xs text-c-danger">{saveError}</p>}
         </div>
       </div>
     </div>

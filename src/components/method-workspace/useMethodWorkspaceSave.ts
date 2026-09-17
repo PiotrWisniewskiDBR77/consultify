@@ -37,6 +37,8 @@ export interface UseMethodWorkspaceSaveReturn {
   markDirty: () => void;
   /** `Zapisz teraz` — bypasses the debounce and saves immediately. */
   saveNow: () => Promise<void>;
+  /** Cancel an armed autosave when another action persists the same draft. */
+  cancelPending: () => void;
   /** After SAVE_FAILED: try the same save again. */
   retry: () => Promise<void>;
   /** "Zostań" — after SAVE_FAILED, stay and let autosave retry quietly (see impl). */
@@ -61,8 +63,15 @@ export function useMethodWorkspaceSave(
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
+  const activeSaveRef = useRef<Promise<void> | null>(null);
+  const queuedReasonRef = useRef<'autosave' | 'manual' | null>(null);
+  const dirtyRevisionRef = useRef(0);
+  const saveRef = useRef(save);
+  const isOnlineRef = useRef(isOnline);
   const stateRef = useRef<MethodSaveState>('CLEAN');
   stateRef.current = state;
+  saveRef.current = save;
+  isOnlineRef.current = isOnline;
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -73,38 +82,88 @@ export function useMethodWorkspaceSave(
 
   const runSave = useCallback(
     async (reason: 'autosave' | 'manual') => {
-      if (savingRef.current) return;
-      if (!isOnline) {
+      if (savingRef.current) {
+        // Never drop an edit/save request that arrives while an older payload
+        // is in flight. Manual intent wins over an already queued autosave.
+        queuedReasonRef.current =
+          reason === 'manual' ? 'manual' : (queuedReasonRef.current ?? 'autosave');
+        await activeSaveRef.current;
+        return;
+      }
+      if (!isOnlineRef.current) {
         setState('OFFLINE_PENDING');
         return;
       }
-      savingRef.current = true;
-      setState('SAVING');
-      setErrorMessage(null);
-      try {
-        const result = await save(reason);
-        if (result.ok) {
-          setState('SAVED');
-          setLastSavedAt(new Date().toISOString());
-        } else {
-          setState('SAVE_FAILED');
-          setErrorMessage(result.error);
+
+      const drain = (async () => {
+        savingRef.current = true;
+        let nextReason: 'autosave' | 'manual' | null = reason;
+        try {
+          while (nextReason) {
+            const currentReason = nextReason;
+            nextReason = null;
+            queuedReasonRef.current = null;
+            const revisionAtStart = dirtyRevisionRef.current;
+
+            setState('SAVING');
+            setErrorMessage(null);
+
+            let result: { ok: true } | { ok: false; error: string };
+            try {
+              // Read through a ref so a timer armed by the previous render
+              // persists the newest payload after React commits the edit.
+              result = await saveRef.current(currentReason);
+            } catch (err) {
+              result = {
+                ok: false,
+                error: err instanceof Error ? err.message : 'Nieznany błąd zapisu',
+              };
+            }
+
+            const queuedReason = queuedReasonRef.current;
+            if (queuedReason) {
+              nextReason = queuedReason;
+              continue;
+            }
+
+            // A newer edit exists but its debounce has not fired yet. Do not
+            // let the older response paint a false SAVED state; the armed
+            // timer will perform the follow-up write.
+            if (dirtyRevisionRef.current > revisionAtStart) {
+              setState('DIRTY');
+              continue;
+            }
+
+            if (result.ok) {
+              setState('SAVED');
+              setLastSavedAt(new Date().toISOString());
+            } else {
+              setState('SAVE_FAILED');
+              setErrorMessage(result.error);
+            }
+          }
+        } finally {
+          savingRef.current = false;
         }
-      } catch (err) {
-        setState('SAVE_FAILED');
-        setErrorMessage(err instanceof Error ? err.message : 'Nieznany błąd zapisu');
+      })();
+
+      activeSaveRef.current = drain;
+      try {
+        await drain;
       } finally {
-        savingRef.current = false;
+        if (activeSaveRef.current === drain) activeSaveRef.current = null;
       }
     },
-    [save, isOnline]
+    []
   );
 
   const markDirty = useCallback(() => {
-    setState((prev) => (prev === 'SAVING' ? prev : 'DIRTY'));
+    dirtyRevisionRef.current += 1;
+    setState('DIRTY');
     setErrorMessage(null);
     clearTimer();
     timerRef.current = setTimeout(() => {
+      timerRef.current = null;
       void runSave('autosave');
     }, debounceMs);
   }, [clearTimer, debounceMs, runSave]);
@@ -161,7 +220,17 @@ export function useMethodWorkspaceSave(
     };
   }, [clearTimer]);
 
-  return { state, lastSavedAt, errorMessage, markDirty, saveNow, retry, acknowledgeFailure, attemptLeave };
+  return {
+    state,
+    lastSavedAt,
+    errorMessage,
+    markDirty,
+    saveNow,
+    cancelPending: clearTimer,
+    retry,
+    acknowledgeFailure,
+    attemptLeave,
+  };
 }
 
 export default useMethodWorkspaceSave;
