@@ -33,7 +33,7 @@ router.get(
     assertActor(actor);
     const proposal = await proposalService.getProposal(actor.organizationId, req.params.id);
     if (!proposal) {
-      res.status(404).json({ success: false, error: 'Propozycja nie została znaleziona', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     res.json({ success: true, data: proposal });
@@ -59,7 +59,7 @@ router.post(
     if (!body.programId || !Array.isArray(body.findingIds) || body.findingIds.length === 0) {
       res.status(400).json({
         success: false,
-        error: 'programId i findingIds (niepusta lista) są wymagane',
+        error: 'AUDIT_PROPOSAL_INPUT_INVALID',
         code: 'AUDIT_PROPOSAL_INPUT_INVALID',
       });
       return;
@@ -96,7 +96,7 @@ router.post(
     const programId =
       typeof req.query.programId === 'string' ? req.query.programId : String((req.body || {}).programId || '');
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+      res.status(400).json({ success: false, error: 'AUDIT_PROGRAM_ID_REQUIRED', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
       return;
     }
     const suggestions = await proposalService.suggestSystemicProposals(actor.organizationId, programId);

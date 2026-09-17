@@ -35,7 +35,7 @@ const router = Router();
 
 function requireAdmin(actor: AuditActor): void {
   if (!isPlatformAdmin(actor)) {
-    throw new AuditPermissionError('Zarządzanie biblioteką pakietów audytowych wymaga uprawnień administratora platformy');
+    throw new AuditPermissionError('AUDIT_FORBIDDEN');
   }
 }
 
@@ -73,7 +73,7 @@ router.get(
     if (!Number.isFinite(versionA) || !Number.isFinite(versionB)) {
       res.status(400).json({
         success: false,
-        error: 'Wymagane parametry liczbowe ?a=<wersja>&b=<wersja>',
+        error: 'AUDIT_COMPARE_PARAMS_INVALID',
         code: 'AUDIT_COMPARE_PARAMS_INVALID',
       });
       return;
@@ -162,7 +162,7 @@ router.put(
     if (!Array.isArray(criteria)) {
       res.status(400).json({
         success: false,
-        error: 'Oczekiwano tablicy kryteriów (body albo body.criteria)',
+        error: 'AUDIT_CRITERIA_PAYLOAD_INVALID',
         code: 'AUDIT_CRITERIA_PAYLOAD_INVALID',
       });
       return;

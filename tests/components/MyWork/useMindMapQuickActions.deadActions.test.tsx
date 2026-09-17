@@ -25,6 +25,7 @@ import {
   type MindMapQuickActionHandlers,
   type MindMapQuickActionSetters,
 } from '@/components/MyWork/mindmap/useMindMapQuickActions';
+import { findIdeaTemplate } from '@/components/MyWork/IdeaTemplateGallery';
 
 function makeHandlers(): MindMapQuickActionHandlers {
   return {
@@ -176,12 +177,16 @@ describe('useMindMapQuickActions — dead chat actions (mm_create / mm_expand_br
 
     dispatchQuickAction('mm_apply_framework', 'apply the McKinsey 7S framework here');
 
-    expect(nodesRef.current.length).toBe(8); // root + 7 McKinsey 7S branches
+    const template = findIdeaTemplate('mm-mckinsey7s')!;
+    expect(template).toBeTruthy();
+    // Handler splices every non-root template node onto the existing root, so
+    // the canvas ends up with the full template node/edge set.
+    expect(nodesRef.current.length).toBe(template.nodes.length);
     const labels = nodesRef.current.map((n) => n.data.label).sort();
     expect(labels).toEqual(
       ['Central Idea', 'Strategy', 'Structure', 'Systems', 'Shared Values', 'Skills', 'Style', 'Staff'].sort()
     );
-    expect(edgesRef.current.length).toBe(7);
+    expect(edgesRef.current.length).toBe(template.edges.length);
     edgesRef.current.forEach((e) => expect(e.source).toBe('root'));
   });
 
@@ -194,8 +199,10 @@ describe('useMindMapQuickActions — dead chat actions (mm_create / mm_expand_br
 
     dispatchQuickAction('mm_apply_framework', 'apply the PEST framework here');
 
-    expect(nodesRef.current.length).toBe(7); // root + 6 PESTEL branches
-    expect(edgesRef.current.length).toBe(6);
+    const template = findIdeaTemplate('cx-pestel')!;
+    expect(template).toBeTruthy();
+    expect(nodesRef.current.length).toBe(template.nodes.length);
+    expect(edgesRef.current.length).toBe(template.edges.length);
     edgesRef.current.forEach((e) => expect(e.source).toBe('root'));
   });
 

@@ -33,7 +33,7 @@ router.get(
     if (!programId) {
       res
         .status(400)
-        .json({ success: false, error: 'Parametr programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+        .json({ success: false, error: 'AUDIT_PROGRAM_ID_REQUIRED', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
       return;
     }
     const tree = await criterionService.listCriteria(actor.organizationId, programId, {
@@ -54,7 +54,7 @@ router.get(
     if (!detail) {
       res
         .status(404)
-        .json({ success: false, error: 'Kryterium audytu nie zostało znalezione', code: 'AUDIT_NOT_FOUND' });
+        .json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     res.json({ success: true, data: detail });

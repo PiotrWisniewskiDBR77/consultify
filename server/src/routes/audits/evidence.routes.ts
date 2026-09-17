@@ -90,7 +90,7 @@ router.get(
     if (!programId) {
       res
         .status(400)
-        .json({ success: false, error: 'Parametr programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+        .json({ success: false, error: 'AUDIT_PROGRAM_ID_REQUIRED', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
       return;
     }
     const gaps = await evidenceService.getEvidenceGaps(actor.organizationId, programId);

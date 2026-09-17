@@ -129,9 +129,10 @@ describe('idea deep-link tool routing (residual race)', () => {
       data: { isNew: true, initialTool: 'process_flow' as const },
     };
 
-    it('OGNIWO 1: strażnik „bez zmian" NIE zakłada wpisu dla świeżej Idei', () => {
-      // To jest przyczyna, nie usterka: łatka z ekranu tworzenia jest co do joty
-      // równa stanowi domyślnemu, więc mapa stanów zostaje PUSTA.
+    it('OGNIWO 1: pierwszy zapis materializuje wybór narzędzia świeżej Idei', () => {
+      // Nawet gdy łatka jest równa stanowi domyślnemu, pierwszy zapis musi
+      // utworzyć wpis. Inaczej po materializacji rekordu serwera ginie
+      // `initialTool` i Process Flow wraca do domyślnej Mapy myśli (IDE-027).
       const puste: Record<string, never> = {};
       const po = patchIdeaWorkspaceState(puste, DOK_ROBOCZY, {
         activeTool: 'process_flow',
@@ -139,8 +140,8 @@ describe('idea deep-link tool routing (residual race)', () => {
         selection: EMPTY_SELECTION,
         locked: true,
       });
-      expect(po).toBe(puste);
-      expect(po['new-idea-1700000000000']).toBeUndefined();
+      expect(po).not.toBe(puste);
+      expect(po['new-idea-1700000000000']?.activeTool).toBe('process_flow');
     });
 
     it('OGNIWO 2: przeniesienie na prawdziwy identyfikator działa MIMO braku wpisu', () => {

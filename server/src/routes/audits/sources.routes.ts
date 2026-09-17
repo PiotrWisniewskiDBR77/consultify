@@ -29,9 +29,7 @@ const router = Router();
 
 function requireAdmin(actor: AuditActor): void {
   if (!isPlatformAdmin(actor)) {
-    throw new AuditPermissionError(
-      'Zarządzanie rejestrem źródeł normatywnych wymaga uprawnień administratora platformy',
-    );
+    throw new AuditPermissionError('AUDIT_FORBIDDEN');
   }
 }
 

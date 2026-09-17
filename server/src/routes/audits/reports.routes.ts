@@ -68,7 +68,7 @@ function requireReportPayloadShape(payload: unknown): AuditReportDocument {
     !Array.isArray((payload as { sections?: unknown }).sections)
   ) {
     throw new AuditDomainError(
-      'Raport ma niepoprawny lub niekompletny zapis treści (brak sekcji) — eksport nie jest możliwy.',
+      'AUDIT_REPORT_INVALID_PAYLOAD',
       422,
       'AUDIT_REPORT_INVALID_PAYLOAD'
     );
@@ -95,7 +95,7 @@ router.get(
     assertActor(actor);
     const report = await reportService.getReport(actor.organizationId, req.params.id);
     if (!report) {
-      res.status(404).json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     const document = requireReportPayloadShape(report.payload);
@@ -133,7 +133,7 @@ router.get(
     assertActor(actor);
     const report = await reportService.getReport(actor.organizationId, req.params.id);
     if (!report) {
-      res.status(404).json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     const document = requireReportPayloadShape(report.payload);
@@ -171,7 +171,7 @@ router.get(
     assertActor(actor);
     const report = await reportService.getReport(actor.organizationId, req.params.id);
     if (!report) {
-      res.status(404).json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     res.json({ success: true, data: report });
@@ -197,7 +197,7 @@ router.post(
     if (!body.programId || !body.outputId || !body.reportKind) {
       res.status(400).json({
         success: false,
-        error: 'programId, outputId i reportKind są wymagane',
+        error: 'AUDIT_REPORT_INPUT_INVALID',
         code: 'AUDIT_REPORT_INPUT_INVALID',
       });
       return;
@@ -242,7 +242,7 @@ router.post(
     if (!report) {
       res
         .status(404)
-        .json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+        .json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
     await requireCapability(actor, report.programId, 'report.draft');
@@ -263,8 +263,7 @@ router.post(
     if (!candidate) {
       res.status(422).json({
         success: false,
-        error:
-          'Ten raport nie ma wniosku ogólnego ani streszczenia zarządczego — nie ma z czego zbudować wniosku.',
+        error: 'AUDIT_CONCLUSION_NO_SUMMARY',
         code: 'AUDIT_CONCLUSION_NO_SUMMARY',
       });
       return;
@@ -279,7 +278,7 @@ router.post(
     if (!persisted) {
       res.status(500).json({
         success: false,
-        error: 'Nie udało się zapisać wniosku',
+        error: 'AUDIT_CONCLUSION_PERSIST_FAILED',
         code: 'AUDIT_CONCLUSION_PERSIST_FAILED',
       });
       return;
@@ -298,7 +297,7 @@ router.post(
     if (!row?.id) {
       res.status(500).json({
         success: false,
-        error: 'Wniosek zapisany bez rodowodu do raportu audytu — przerwane',
+        error: 'AUDIT_CONCLUSION_LINEAGE_MISSING',
         code: 'AUDIT_CONCLUSION_LINEAGE_MISSING',
       });
       return;
@@ -343,7 +342,7 @@ router.post(
     assertActor(actor);
     const { materialId } = req.body || {};
     if (!materialId || typeof materialId !== 'string') {
-      res.status(400).json({ success: false, error: 'materialId jest wymagany', code: 'AUDIT_MATERIAL_ID_REQUIRED' });
+      res.status(400).json({ success: false, error: 'AUDIT_MATERIAL_ID_REQUIRED', code: 'AUDIT_MATERIAL_ID_REQUIRED' });
       return;
     }
     const report = await reportService.linkMaterial(actor.organizationId, actor, req.params.id, materialId);

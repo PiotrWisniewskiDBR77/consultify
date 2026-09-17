@@ -52,7 +52,7 @@ router.get(
         .status(404)
         .json({
           success: false,
-          error: 'Program audytowy nie został znaleziony',
+          error: 'AUDIT_NOT_FOUND',
           code: 'AUDIT_NOT_FOUND',
         });
       return;
@@ -117,7 +117,7 @@ router.get(
         .status(404)
         .json({
           success: false,
-          error: 'Program audytowy nie został znaleziony',
+          error: 'AUDIT_NOT_FOUND',
           code: 'AUDIT_NOT_FOUND',
         });
       return;
