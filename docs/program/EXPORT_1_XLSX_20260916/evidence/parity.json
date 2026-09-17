@@ -7,7 +7,9 @@
   "totalFormulas": true,
   "summaryFormulas": true,
   "freeze": true,
-  "aptos": true,
+  "portableFont": true,
   "coBranding": true,
-  "zeroCrimson": true
+  "noLegacyCrimson": true,
+  "conditionalFormatting": true,
+  "libreOfficeDxf": true
 }

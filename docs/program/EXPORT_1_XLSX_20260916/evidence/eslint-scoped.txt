@@ -1,2 +1,1 @@
-PASS: ESLint --quiet on canonical engine, table export service, and changed tests.
-Routes retain pre-existing repository-wide prettier/import-sort findings outside W150 lines.
+PASS: scoped ESLint completed with 0 errors; warnings are pre-existing or test-file ignore notices.
