@@ -505,6 +505,30 @@ export const getDemoOrganization = async (
 };
 
 /**
+ * Preflight existence check for the curated base demo org (`DEMO_ORG_ID`).
+ *
+ * WHY (B4 / DEC-576 pkt 4): on staging `DEMO_ORG_ID=ateliertoys-demo` pointed at
+ * an organization deleted in the 09.09 cleanup. Every demo-mode request then ran
+ * `resolveOrCreateDemoSession`, whose `demo_sessions` INSERT carries a FK to the
+ * base org — the FK failed, the handler caught it and answered a blanket 503 on
+ * every status poll. A missing base org is a CONFIGURATION conflict an operator
+ * can act on, not a transient outage, so the demo routes answer 409
+ * DEMO_BASE_ORG_MISSING (with one log line naming the org) instead of 503.
+ *
+ * Storage errors are deliberately NOT swallowed into "missing": `dbGet` runs with
+ * `{ fallback: false }`, so a real outage still throws and the caller's existing
+ * 503 path handles it. Only a successful query that returns no row means absent.
+ */
+export async function demoBaseOrgExists(organizationId: string = DEMO_ORG_ID): Promise<boolean> {
+  const row = await dbGet<{ id: string }>(
+    `SELECT id FROM organizations WHERE id = ?`,
+    [organizationId],
+    { fallback: false }
+  );
+  return Boolean(row?.id);
+}
+
+/**
  * Get demo statistics
  */
 export const getDemoStats = async (organizationId: string = DEMO_ORG_ID): Promise<DemoStats> => {

@@ -12,6 +12,7 @@ import {
   checkUserDemoPreference,
   DEMO_ORG_ID,
   DEMO_ORG_NAME,
+  demoBaseOrgExists,
   getDemoOrganization,
   getDemoStats,
   setUserDemoPreference,
@@ -40,6 +41,31 @@ const router = Router();
 function isUnavailableError(error: unknown): boolean {
   const message = (error as any)?.message;
   return typeof message === 'string' && message.toLowerCase().includes('unavailable');
+}
+
+/**
+ * B4 / DEC-576 pkt 4 — preflight answer when the curated base demo org
+ * (`DEMO_ORG_ID`) does not exist. A missing base org is a configuration conflict
+ * an operator can act on, so it is a 409 with an actionable code, NOT the
+ * blanket 503 every demo poll used to fall through to. One log line names the
+ * missing org; no other response code is changed.
+ *
+ * The response carries the machine `code` (DEMO_BASE_ORG_MISSING) and a kebab
+ * `error` token; the client renders the human sentence from its i18n catalog.
+ * No English sentence literal is emitted server-side, so the language ratchet
+ * (pomiar-jezyka K5en) does not grow — the operator-facing detail (which org id
+ * is missing) lives in the log line, not in the HTTP body.
+ */
+function respondDemoBaseOrgMissing(res: Response): Response {
+  logger.warn(
+    `[DemoMode] Base demo organization '${DEMO_ORG_ID}' is missing — answering 409 DEMO_BASE_ORG_MISSING`
+  );
+  return res.status(409).json({
+    success: false,
+    error: 'demo-base-org-missing',
+    code: 'DEMO_BASE_ORG_MISSING',
+    missingOrganizationId: DEMO_ORG_ID,
+  });
 }
 
 function preferredLanguage(raw: string | undefined): string | null {
@@ -111,6 +137,10 @@ router.post(
       }
 
       if (isDemoEnabled) {
+        // B4 / DEC-576 pkt 4 preflight: enabling demo against a missing base org
+        // fails the same demo_sessions FK insert as the status poll — answer the
+        // actionable 409 before attempting it.
+        if (!(await demoBaseOrgExists())) return respondDemoBaseOrgMissing(res);
         let demoOrganization: any;
         let stats: any;
         let session: Awaited<ReturnType<typeof resolveOrCreateDemoSession>> | null = null;
@@ -235,6 +265,10 @@ router.get(
       const requestedLocale = getRequestedDemoLocale(req);
 
       if (isDemoEnabled) {
+        // B4 / DEC-576 pkt 4 preflight: a missing base org is a 409 config
+        // conflict, answered before resolveOrCreateDemoSession can fail its
+        // demo_sessions FK insert and collapse into a blanket 503.
+        if (!(await demoBaseOrgExists())) return respondDemoBaseOrgMissing(res);
         let demoOrganization: any;
         let stats: any;
         let session: Awaited<ReturnType<typeof resolveOrCreateDemoSession>> | null = null;
