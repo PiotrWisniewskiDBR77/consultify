@@ -1,0 +1,4 @@
+light | CTA="Get started" | tlo=rgb(15, 23, 42) | oczekiwane=rgb(15, 23, 42)
+dark | CTA="Get started" | tlo=rgb(244, 247, 251) | oczekiwane=rgb(244, 247, 251)
+bledyKonsoli=0
+nieudane=0

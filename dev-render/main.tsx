@@ -795,8 +795,14 @@ const Pmo1KolejkiScreen = React.lazy(() => import('./screens/pmo1-kolejki'));
 const Pmo1PrzejscieEtapuScreen = React.lazy(
   () => import('./screens/pmo1-przejscie-etapu')
 );
+const D01OnboardingCtaScreen = React.lazy(() => import('./screens/d01-onboarding-cta'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'd01-onboarding-cta': {
+    label:
+      'D-01 (DLUG-PO-MVP, P2/S) — REALNY <FirstRunOnboarding> (modal powitalny, krok 1): CTA „Get started" ma być neutralny navy (variant primary), NIE crimson #85182F (variant brand). &lang=en|pl &theme=light|dark',
+    render: () => <D01OnboardingCtaScreen />,
+  },
   'k29-attachments-drop': {
     label:
       'K-29 (QB2) — REALNY <AttachmentsSection> (TaskDetailView): drag&drop na CAŁĄ kartę (także zwiniętą), plik >25 MB odrzucony z komunikatem. &lang=en|pl &theme=light|dark',

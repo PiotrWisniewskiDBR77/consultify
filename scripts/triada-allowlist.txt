@@ -26,3 +26,9 @@ src/components/settings/__tests__/UstawieniaPstryczki.k20.test.ts
 # wzorzec co wyjątki wyżej).
 */src/components/documents/__tests__/DocumentSidePanel.spinnerToken.test.tsx
 src/components/documents/__tests__/DocumentSidePanel.spinnerToken.test.tsx
+# D-01 (DLUG-PO-MVP, DEC-607): ratchet NEGATYWNY pilnujący, że CTA „Get started"
+# w modalu powitalnym onboardingu to neutralny navy `primary`, NIE crimson
+# `bg-crimson-600` (#85182F) — musi nazwać zakazany token, żeby go pilnować
+# (ten sam wzorzec co wyjątki wyżej).
+*/src/components/Onboarding/__tests__/FirstRunOnboarding.test.tsx
+src/components/Onboarding/__tests__/FirstRunOnboarding.test.tsx

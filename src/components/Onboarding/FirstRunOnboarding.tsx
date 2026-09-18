@@ -223,7 +223,7 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
       </ul>
 
       <div className="mt-8 flex flex-col items-center gap-3">
-        <Button variant="brand" size="lg" iconRight={<ArrowRight size={18} />} onClick={onStart}>
+        <Button variant="primary" size="lg" iconRight={<ArrowRight size={18} />} onClick={onStart}>
           {t('firstRun.welcome.cta', 'Get started')}
         </Button>
         <button

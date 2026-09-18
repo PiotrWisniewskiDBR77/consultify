@@ -85,6 +85,19 @@ describe('FirstRunOnboarding', () => {
     expect(getFirstRunState).toHaveBeenCalled();
   });
 
+  // D-01 (DLUG): crimson (`variant="brand"`) is reserved for brand moments
+  // (Talk to Teresa) — Button.tsx canon §5.1 / red budget §2.3. A regular
+  // onboarding main action is the neutral navy `primary`. Frozen on the REAL
+  // rendered <button> class output (not a mirror): reverting the CTA to
+  // `variant="brand"` puts `bg-crimson-600` (#85182F) back and fails this.
+  it('renders the "Get started" CTA as neutral navy primary, never crimson brand', async () => {
+    render(<FirstRunOnboarding />);
+    const cta = await screen.findByRole('button', { name: 'Get started' });
+    expect(cta.className).toContain('bg-navy-900');
+    expect(cta.className).not.toContain('bg-crimson-600');
+    expect(cta.className).not.toContain('crimson');
+  });
+
   it('does NOT show for a user who already completed onboarding', async () => {
     getFirstRunState.mockResolvedValue({ completed: true, role: 'chat' });
     render(<FirstRunOnboarding />);
