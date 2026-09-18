@@ -80,4 +80,14 @@ describe('InitiativeGatesWorkflowTable (H1, plan row 31)', () => {
     const statusHead = heads.find((h) => (h.textContent || '').trim() === 'Status');
     expect(statusHead?.className).toContain('w-[13%]');
   });
+
+  it('keeps the Readiness column at its rebalanced w-[11%] width (D-30)', () => {
+    const { container } = render(<InitiativeGatesWorkflowTable />);
+    const heads = [...container.querySelectorAll('thead th')];
+    const readinessHead = heads.find(
+      (h) => (h.textContent || '').trim() === 'initiatives.initiativeGatesWorkflowTable.readiness'
+    );
+    expect(readinessHead, 'Readiness header not found').not.toBeUndefined();
+    expect(readinessHead?.className).toContain('w-[11%]');
+  });
 });
