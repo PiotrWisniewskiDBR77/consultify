@@ -1119,9 +1119,9 @@ async function etapSprawozdania(c: PoolClient, lic: Licznik): Promise<{ paczka: 
           `INSERT INTO financial_statement_values
              (id, statement_id, canonical_line_id, original_label, value, confidence,
               mapping_status, is_non_financial, value_origin, mapping_confidence,
-              period_granularity, period_label, presentation_view, dimension_key)
-           VALUES ($1,$2,$3,$4,$5,1,'manual',FALSE,'source',1,'quarterly',$6,'by_function','')`,
-          [valId, stmtId, linia.id, linia.etykieta, s.wartosci[i]!, s.periodLabel]
+              period_granularity)
+           VALUES ($1,$2,$3,$4,$5,1,'manual',FALSE,'source',1,'quarterly')`,
+          [valId, stmtId, linia.id, linia.etykieta, s.wartosci[i]!]
         );
         wynik.wartosci++;
         lic.utworz();

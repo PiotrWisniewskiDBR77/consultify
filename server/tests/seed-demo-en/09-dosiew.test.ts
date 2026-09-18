@@ -12,6 +12,7 @@ import {
   POCHODNE_INICJATYW,
   POLA_KOMPLETNOSCI,
   POZYCJE_KARTY_KPI,
+  PROPOZYCJA_DEC612,
   PRZYDZIALY,
   poniedzialek,
   policzKompletnosc,
@@ -278,5 +279,64 @@ describe('09-dosiew — poniedzialek() zgodny z getMonday serwisu zasobow', () =
   it('poniedzialek zeruje godzine (porownania dat licza dni, nie milisekundy)', () => {
     const p = poniedzialek(new Date(2026, 8, 9, 17, 34, 12));
     expect([p.getHours(), p.getMinutes(), p.getSeconds()]).toEqual([0, 0, 0]);
+  });
+});
+
+describe('09-dosiew — DEC-612: skrzynka „For approval" ma pokazac DOKLADNIE jeden wiersz', () => {
+  /**
+   * Skrzynka (TransitionInboxSurface) czyta
+   * `listEarlyInitiativeTransitionProposals`
+   * (transformationInitiativeTransitionAdapterService.ts:599-673), ktora
+   * FILTRUJE: `proposal_id LIKE 't01-lifecycle:%'`, status IN
+   * ('pending_review','partially_approved') i widz = autor ALBO klucz w
+   * `reviewer_authority_json`. Seed musi trafic we WSZYSTKIE te warunki,
+   * inaczej wiersz znika ze skrzynki mimo poprawnego INSERT-u.
+   */
+  const seed = czytaj('server/scripts/seed/demo-en/09-dosiew-po-tescie.ts');
+  const adapter = czytaj(
+    'server/src/services/v8/transformationInitiativeTransitionAdapterService.ts'
+  );
+
+  it('DEC-612: propozycje sklada INNA osoba niz zatwierdzajacy', () => {
+    expect(PROPOZYCJA_DEC612.autor).not.toBe(PROPOZYCJA_DEC612.recenzent);
+  });
+
+  it('proposalId zaczyna sie od rodziny, ktora filtruje adapter (t01-lifecycle:)', () => {
+    expect(adapter).toContain("proposal_id LIKE 't01-lifecycle:%'");
+    expect(PROPOZYCJA_DEC612.proposalId.startsWith('t01-lifecycle:')).toBe(true);
+  });
+
+  it('INSERT uzywa statusu, ktory przepuszcza filtr skrzynki (pending_review)', () => {
+    expect(adapter).toContain(
+      "PENDING_PROPOSAL_STATUSES = ['pending_review', 'partially_approved']"
+    );
+    const insert = seed.match(/INSERT INTO v8_agent_proposal_versions[\s\S]*?\)\s*;/)?.[0] ?? '';
+    expect(insert).toContain("'pending_review'");
+  });
+
+  it('recenzent siedzi w reviewer_authority_json pod zakresem domeny — inaczej widz nie jest recenzentem', () => {
+    expect(seed).toContain('reviewer_authority_json');
+    expect(seed).toContain('[scopeDec612]: [uid(PROPOZYCJA_DEC612.recenzent)]');
+  });
+
+  it('para (cel → domena) zgadza sie z mapa APPROVED_DOMAIN_BY_TARGET adaptera', () => {
+    const domena = adapter.match(
+      new RegExp(`${PROPOZYCJA_DEC612.do}: '([A-Z_]+)'`)
+    )?.[1];
+    expect(domena).toBe(PROPOZYCJA_DEC612.domena);
+  });
+
+  it('para (cel → status oczekiwany przed przejściem) zgadza sie z APPROVED_EXPECTED_BY_TARGET', () => {
+    const blok = adapter.match(/APPROVED_EXPECTED_BY_TARGET[^}]*\}/)?.[0] ?? '';
+    const oczekiwany = blok.match(new RegExp(`${PROPOZYCJA_DEC612.do}: '([A-Z_]+)'`))?.[1];
+    expect(oczekiwany).toBe(PROPOZYCJA_DEC612.z);
+  });
+
+  it('blok jest idempotentny: sprawdza istnienie PRZED INSERT-em (drugi przebieg = 0 duplikatow)', () => {
+    const idxSelect = seed.indexOf('SELECT 1 FROM v8_agent_proposal_versions');
+    const idxInsert = seed.indexOf('INSERT INTO v8_agent_proposal_versions');
+    expect(idxSelect).toBeGreaterThan(-1);
+    expect(idxInsert).toBeGreaterThan(-1);
+    expect(idxSelect).toBeLessThan(idxInsert);
   });
 });

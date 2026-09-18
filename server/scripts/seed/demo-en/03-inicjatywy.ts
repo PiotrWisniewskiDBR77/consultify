@@ -465,7 +465,6 @@ async function zapiszInicjatywe(c: PoolClient, i: Inicjatywa, lic: Licznik): Pro
       success_criteria: json(i.kryteriaSukcesu),
       deliverables: json(i.produkty),
       key_risks: json(i.ryzyka),
-      tags: json(i.tagi),
       business_value: i.wartoscBiznesowa,
       expected_roi: i.oczekiwanyZwrot,
       impact: i.wplyw,

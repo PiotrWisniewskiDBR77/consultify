@@ -166,6 +166,7 @@ import {
   sprawdzCel,
   wymaganyUrl,
 } from './00-wspolne';
+import { ZADANIA as ZADANIA_D4 } from './04-dane-realizacji';
 
 // ============================================================================
 // Tozsamosci — liczone tak samo jak w D1-D6
@@ -174,6 +175,25 @@ const email = (slug: string) => `${slug}@${DOMENA}`;
 const uid = (slug: string) => det('user', email(slug));
 
 const WLASCICIEL = 'james.whitfield';
+
+// DEC-612 (wiersz planu 37): JEDNA propozycja przejścia etapu złożona przez
+// INNĄ osobę niż zatwierdzający, żeby skrzynka „For approval" pokazała wiersz.
+// Kształt wiersza = kontrakt `listEarlyInitiativeTransitionProposals`
+// (transformationInitiativeTransitionAdapterService.ts:599-673).
+export const PROPOZYCJA_DEC612 = {
+  proposalVersionId: 'pv-seed-dec612-nw-001',
+  proposalId: 't01-lifecycle:dec612-nw:CLOSURE:pv-seed-dec612-nw-001',
+  runId: 'run-seed-dec612-nw',
+  contextDigest: 'dec612-nw-closure-context',
+  inicjatywa: 'mes-rollout-line-3',
+  autor: 'laura.novak',
+  recenzent: WLASCICIEL,
+  z: 'EXECUTING',
+  do: 'DONE',
+  domena: 'CLOSURE',
+  powod:
+    'Line 3 MES rollout passed its last quality gate; closure review moves benefit tracking to finance ownership.',
+} as const;
 
 // ============================================================================
 // BRAK 1 — PROFIL ORGANIZACJI
@@ -607,6 +627,17 @@ export function poniedzialek(data: Date): Date {
 
 const iso = (d: Date): string => d.toISOString();
 
+/**
+ * Kotwica czasu paczki D4 (`04-dane-realizacji.ts:9-13`): „dzis" = 2026-09-08,
+ * czyli poniedzialek biezacego tygodnia = 2026-09-07. Wzgledem niej liczone sa
+ * wszystkie stale terminy zadan, a serwis Zasobow liczy okno wzgledem
+ * PRAWDZIWEGO poniedzialku — roznica to przesuniecie planu popytu (BRAK 4a-0).
+ */
+const KOTWICA_D4 = new Date(2026, 8, 7);
+
+/** Pierwotne (stale) terminy zadan D4 wg tytulu — baza do przeliczenia planu. */
+const TERMINY_D4 = new Map(ZADANIA_D4.map((z) => [z.tytul, z.termin]));
+
 // ============================================================================
 // ETAP SQL — BRAK 2 (czlonkowie + statusy), BRAK 4, BRAK 5
 // ============================================================================
@@ -614,18 +645,52 @@ async function etapSql(c: PoolClient, lic: Licznik): Promise<void> {
   const teraz = new Date();
   const poniedzialekTegoTygodnia = poniedzialek(teraz);
 
-  // --- BRAK 4a: popyt --------------------------------------------------
+  // --- BRAK 4a-0: przywrocenie planu popytu do okna ---------------------
+  // Terminy zadan popytu sa ZAKOTWICZONE na stale daty (`04-dane-realizacji.ts:9-13`,
+  // „dzis" = 2026-09-08), a okno popytu serwis liczy od PRAWDZIWEGO biezacego
+  // poniedzialku (`workloadCapacityService.ts:964`). Z kazdym tygodniem po
+  // odbiorze najwczesniejsza grupa wypada wiec z okna i zamienia sie w
+  // zaleglosc — pomiar 17.09 na swiezej bazie z linii: popyt 589 h zamiast
+  // 1208 h z `PLAN_POPYTU`, wykorzystanie 22 % zamiast >= 41 %.
+  // Przesuwamy CALY plan o tyle tygodni, o ile „dzis" odplynelo od kotwicy,
+  // liczac cel z PIERWOTNEGO terminu z paczki D4 — odstepy miedzy grupami
+  // tygodniowymi zostaja (minimalne rolowanie per zadanie zbijalo wszystkie
+  // grupy do jednego tygodnia: 560 h w tygodniu 09-14). Cel jest czysta funkcja
+  // stalej z paczki i biezacego poniedzialku, wiec zapis jest idempotentny.
+  // `PLAN_ZALEGLOSCI` NIE przesuwamy: zaleglosc ma zostac po terminie, a
+  // `04-realizacja.ts:1037-1045` liczy zadania po terminie wzgledem stalej daty.
+  const tygodniePrzesuniecia = Math.round(
+    (poniedzialekTegoTygodnia.getTime() - KOTWICA_D4.getTime()) / (7 * DZIEN_MS)
+  );
+  for (const z of PLAN_POPYTU) {
+    const pierwotny = TERMINY_D4.get(z.tytul);
+    if (!pierwotny) throw new Error(`BRAK 4a-0: „${z.tytul}" nie ma terminu w 04-dane-realizacji.ts`);
+    const [rok, miesiac, dzien] = pierwotny.split('-').map(Number) as [number, number, number];
+    const cel = new Date(rok, miesiac - 1, dzien + tygodniePrzesuniecia * 7);
+    const celTekst = `${cel.getFullYear()}-${String(cel.getMonth() + 1).padStart(2, '0')}-${String(
+      cel.getDate()
+    ).padStart(2, '0')}T17:00:00`;
+    await c.query(
+      `UPDATE tasks
+          SET due_date = $3::timestamp, updated_at = now()
+        WHERE organization_id = $1 AND title = $2 AND due_date IS DISTINCT FROM $3::timestamp`,
+      [ORG_ID, z.tytul, celTekst]
+    );
+  }
+
+  // --- BRAK 4a: popyt (pracochlonnosc + rozlozenie pracy) ---------------
   for (const z of PLAN_POPYTU) {
     const r = await c.query(
       `UPDATE tasks
           SET estimated_hours = $3,
               effort_estimate_hours = $3,
               created_at = due_date - ($4 || ' days')::interval,
-              -- UWAGA: tasks.started_at jest kolumna TEKSTOWA (pomiar
-              -- information_schema 09.09), nie timestamp — stad rzutowanie
-              -- na text zamiast bezposredniego przypisania.
+              -- tasks.started_at jest na schemacie linii kolumna TIMESTAMPTZ
+              -- (pomiar information_schema na swiezej bazie z migratora,
+              -- 17.09) — wczesniejsze rzutowanie na text padalo
+              -- „column started_at is of type timestamp with time zone".
               started_at = CASE WHEN started_at IS NULL THEN NULL
-                                ELSE (due_date - ($4 || ' days')::interval)::text END,
+                                ELSE due_date - ($4 || ' days')::interval END,
               updated_at = now()
         WHERE organization_id = $1 AND title = $2
           AND (estimated_hours IS DISTINCT FROM $3
@@ -793,7 +858,52 @@ async function etapSql(c: PoolClient, lic: Licznik): Promise<void> {
     }
   }
 
-  void poniedzialekTegoTygodnia;
+  // --- DEC-612: propozycja przejścia w skrzynce „For approval" -----------
+  // Skrzynka pokazuje wiersz tylko przy `proposal_id LIKE 't01-lifecycle:%'`,
+  // statusie pending i widzu będącym autorem ALBO recenzentem z
+  // `reviewer_authority_json` (adapter v8:624-628) — recenzent = właściciel,
+  // autor = lead inicjatywy (DEC-612: różne osoby).
+  const scopeDec612 = `initiative_lifecycle:${PROPOZYCJA_DEC612.domena.toLowerCase()}`;
+  const idInicjatywyDec612 = det('initiative', PROPOZYCJA_DEC612.inicjatywa);
+  const juzJest = await c.query(
+    'SELECT 1 FROM v8_agent_proposal_versions WHERE proposal_version_id = $1',
+    [PROPOZYCJA_DEC612.proposalVersionId]
+  );
+  if (juzJest.rows.length > 0) {
+    lic.pomin();
+  } else {
+    await c.query(
+      `INSERT INTO v8_agent_proposal_versions
+         (proposal_version_id, proposal_id, organization_id, canonical_run_id,
+          proposal_version, plan_version, context_digest, before_json, after_json,
+          approval_scopes_json, reviewer_authority_json, expires_at, status,
+          change_reason, created_by_user_id, created_at)
+       VALUES ($1, $2, $3, $4, 1, 1, $5, $6, $7, $8, $9,
+               now() + interval '365 days', 'pending_review', $10, $11, now())`,
+      [
+        PROPOZYCJA_DEC612.proposalVersionId,
+        PROPOZYCJA_DEC612.proposalId,
+        ORG_ID,
+        PROPOZYCJA_DEC612.runId,
+        PROPOZYCJA_DEC612.contextDigest,
+        JSON.stringify({ status: PROPOZYCJA_DEC612.z }),
+        JSON.stringify({
+          transformationCaseId: 'dec612-nw-case',
+          initiativeId: idInicjatywyDec612,
+          expectedStatus: PROPOZYCJA_DEC612.z,
+          targetStatus: PROPOZYCJA_DEC612.do,
+          pmoDomain: PROPOZYCJA_DEC612.domena,
+          sourceCaseVersion: 1,
+          baselineRefs: [`initiative:${idInicjatywyDec612}:${PROPOZYCJA_DEC612.z}`],
+        }),
+        JSON.stringify([scopeDec612]),
+        JSON.stringify({ [scopeDec612]: [uid(PROPOZYCJA_DEC612.recenzent)] }),
+        PROPOZYCJA_DEC612.powod,
+        uid(PROPOZYCJA_DEC612.autor),
+      ]
+    );
+    lic.utworz();
+  }
 }
 
 async function idPrzydzialuZBazy(c: PoolClient, processRef: string): Promise<string | null> {
@@ -1177,6 +1287,19 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
             AND due_date < date_trunc('week', now())
           GROUP BY assignee_id
          HAVING SUM(GREATEST(COALESCE(estimated_hours,0) - COALESCE(actual_hours,0), 0)) > 0) z`,
+      [ORG_ID]
+    )
+  );
+
+  // KONTROLA 6 — DEC-612: skrzynka „For approval" ma dokładnie jeden wiersz.
+  dodaj(
+    'BRAK 6 — DEC-612: pending propozycja przejścia etapu',
+    '1',
+    1,
+    await licz(
+      `SELECT COUNT(*)::text AS n FROM v8_agent_proposal_versions
+        WHERE organization_id = $1 AND proposal_id LIKE 't01-lifecycle:%'
+          AND status IN ('pending_review','partially_approved')`,
       [ORG_ID]
     )
   );

@@ -68,7 +68,7 @@ export interface Zadanie {
   kryterium: string;
 }
 
-export const ZADANIA: readonly Zadanie[] = [
+const ZADANIA_BAZOWE: readonly Zadanie[] = [
   // --- MES Rollout Line 3 (10) -------------------------------------------------
   {
     slug: 'mes-terminals',
@@ -617,6 +617,193 @@ export const ZADANIA: readonly Zadanie[] = [
     kryterium: 'Pack tabled at the September operations review.',
   },
 ] as const;
+
+// ============================================================================
+// ZAPLANOWANE OBCIĄŻENIE ZASOBÓW — 9 osób × 8 tygodni (DEC-604)
+//
+// Zakładka Zasoby (`InitiativeWorkloadSurface.tsx`) liczy popyt z otwartych
+// zadań rozłożonych między `created_at` a `due_date`
+// (`workloadCapacityService.ts:1115-1128`), a podaż z etatu osoby. Zadania D4
+// są zakotwiczone na STAŁYCH datach, więc w kilka tygodni po odbiorze część z
+// nich wypada z okna i ekran pokazuje „No scheduled workload matches this
+// scope.". Ten blok dokłada jedną rezerwację mocy na osobę na połowę okna
+// (2 zadania × 4 tygodnie), liczoną od PRAWDZIWEGO bieżącego poniedziałku —
+// siatka 8 tygodni × 9 osób jest wypełniona w każdy dzień odbioru, a kształt
+// danych pokazowych pozostaje ten sam.
+//
+// Serwis rozkłada godziny równo po dniach roboczych między startem a terminem,
+// więc blok `start = poniedziałek tygodnia 1, termin = piątek tygodnia 4`
+// (20 dni roboczych) daje dokładnie `godziny / 4` na tydzień.
+//
+// Progi legendy (`workloadBand`, `InitiativeWorkloadSurface.tsx:57-61`):
+// <85 % zielony, 85-100 % bursztynowy, >100 % czerwony. Godziny tygodniowe są
+// dobrane tak, żeby WSZYSTKIE trzy kolory były widoczne:
+//   laura.novak    44 h przy etacie 36 h = 122 %  -> czerwony (w każdym tygodniu)
+//   daniel.osei    44 h przy etacie 40 h = 110 %  -> czerwony (w każdym tygodniu)
+//   emily.carter   33 h przy etacie 37 h =  89 %  -> bursztynowy
+//   sarah.mitchell 15 h przy etacie 40 h =  38 %  -> zielony, poniżej 50 %
+// Reszta trzyma 30-79 %, żeby cała organizacja nie była czerwona.
+// ============================================================================
+export type BlokObciazenia = {
+  osoba: SlugOsoby;
+  inicjatywa: SlugInicjatywy;
+  /** Co blok pokrywa — wchodzi do tytułu i opisu zadania. */
+  praca: string;
+  opis: string;
+  kryterium: string;
+  typ: Zadanie['typ'];
+  priorytet: Zadanie['priorytet'];
+  /** Zaplanowane godziny na tydzień — z tego liczy się pracochłonność bloku. */
+  godzinyTydzien: number;
+};
+
+export const OBCIAZENIE: readonly BlokObciazenia[] = [
+  {
+    osoba: 'laura.novak',
+    inicjatywa: 'mes-rollout-line-3',
+    praca: 'Line 3 MES commissioning and controls support',
+    opis:
+      'Controls engineering capacity reserved for Line 3 commissioning: interface tests, alarm tuning and shift hand-over support.',
+    kryterium: 'Every planned commissioning slot is staffed and each slip is recorded against the initiative.',
+    typ: 'execution',
+    priorytet: 'high',
+    godzinyTydzien: 44,
+  },
+  {
+    osoba: 'daniel.osei',
+    inicjatywa: 'predictive-maintenance-cnc',
+    praca: 'Predictive maintenance model tuning for the CNC cells',
+    opis:
+      'Automation capacity reserved for feature engineering, threshold tuning and the false-positive review with the shift leads.',
+    kryterium: 'Thresholds are re-tuned on the latest failure history and the false-positive rate is reported weekly.',
+    typ: 'analysis',
+    priorytet: 'high',
+    godzinyTydzien: 44,
+  },
+  {
+    osoba: 'emily.carter',
+    inicjatywa: 'warehouse-automation-pilot',
+    praca: 'Warehouse pilot re-slotting and production scheduling',
+    opis: 'Planning capacity reserved for re-slotting the pilot aisle and re-issuing the weekly production schedule.',
+    kryterium: 'The pilot aisle schedule is re-issued every Monday and the pick-rate delta is logged.',
+    typ: 'execution',
+    priorytet: 'medium',
+    godzinyTydzien: 33,
+  },
+  {
+    osoba: 'robert.chen',
+    inicjatywa: 'mes-rollout-line-3',
+    praca: 'Quality gate reviews and first-article approvals',
+    opis: 'Quality capacity reserved for gate reviews, first-article approvals and the corrective-action follow-up.',
+    kryterium: 'No gate passes without a recorded quality decision, and every open corrective action has an owner and a date.',
+    typ: 'decision',
+    priorytet: 'high',
+    godzinyTydzien: 30,
+  },
+  {
+    osoba: 'michael.grant',
+    inicjatywa: 'predictive-maintenance-cnc',
+    praca: 'OEE and downtime analytics for the CNC line',
+    opis: 'Analysis capacity reserved for the OEE model, the downtime Pareto and the monthly benefit measurement.',
+    kryterium: 'The OEE model reconciles with the historian within two percentage points each month.',
+    typ: 'analysis',
+    priorytet: 'medium',
+    godzinyTydzien: 18,
+  },
+  {
+    osoba: 'priya.sharma',
+    inicjatywa: 'skills-matrix-upskilling',
+    praca: 'Skills matrix assessments and training logistics',
+    opis: 'HR capacity reserved for assessing the matrix gaps, booking vendors and tracking completion.',
+    kryterium: 'Every matrix gap has a booked course and a completion date before the quarter closes.',
+    typ: 'execution',
+    priorytet: 'medium',
+    godzinyTydzien: 16,
+  },
+  {
+    osoba: 'sarah.mitchell',
+    inicjatywa: 'warehouse-automation-pilot',
+    praca: 'Plant management review and escalation cover',
+    opis: 'Plant management time reserved for the weekly pilot review, escalation cover and the works council follow-up.',
+    kryterium: 'Escalations are answered within two working days and each pilot review ends with a recorded decision.',
+    typ: 'decision',
+    priorytet: 'medium',
+    godzinyTydzien: 15,
+  },
+  {
+    osoba: 'james.whitfield',
+    inicjatywa: 'mes-rollout-line-3',
+    praca: 'Programme governance and steering pack preparation',
+    opis: 'Operations director time reserved for gate decisions, the steering pack and sponsor escalations.',
+    kryterium: 'Each steering pack is issued two working days before the gate decision it supports.',
+    typ: 'decision',
+    priorytet: 'medium',
+    godzinyTydzien: 14,
+  },
+  {
+    osoba: 'thomas.baker',
+    inicjatywa: 'skills-matrix-upskilling',
+    praca: 'Benefit tracking and capex review for the upskilling programme',
+    opis: 'Finance capacity reserved for benefit tracking, the capex review and the 2027 funding submission.',
+    kryterium: 'Benefit numbers in the report match the ledger for the same period.',
+    typ: 'analysis',
+    priorytet: 'low',
+    godzinyTydzien: 12,
+  },
+] as const;
+
+/** Poniedziałek bieżącego tygodnia liczony tak samo jak `getMonday` w serwisie. */
+function biezacyPoniedzialek(): Date {
+  const teraz = new Date();
+  const d = new Date(teraz.getFullYear(), teraz.getMonth(), teraz.getDate());
+  const dzien = d.getDay();
+  d.setDate(d.getDate() - (dzien === 0 ? 6 : dzien - 1));
+  return d;
+}
+
+const dzienISO = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** `n` dni od bieżącego poniedziałku, jako `YYYY-MM-DD`. */
+function dzienOdPoniedzialku(poniedzialek: Date, n: number): string {
+  const d = new Date(poniedzialek);
+  d.setDate(d.getDate() + n);
+  return dzienISO(d);
+}
+
+function zbudujObciazenie(): readonly Zadanie[] {
+  const poniedzialek = biezacyPoniedzialek();
+  // Blok A: poniedziałek tygodnia 1 (+0) do piątku tygodnia 4 (+25), 20 dni roboczych.
+  // Blok B: poniedziałek tygodnia 5 (+28) do piątku tygodnia 8 (+53), 20 dni roboczych.
+  const bloki = [
+    { sufiks: 'a', tygodnie: 'weeks one to four', start: 0, termin: 25, status: 'in_progress' as const },
+    { sufiks: 'b', tygodnie: 'weeks five to eight', start: 28, termin: 53, status: 'todo' as const },
+  ];
+  return OBCIAZENIE.flatMap((b) =>
+    bloki.map((blok): Zadanie => {
+      const slug = `obc-${b.osoba}-${blok.sufiks}`;
+      return {
+        slug,
+        inicjatywa: b.inicjatywa,
+        tytul: `${b.praca}, ${blok.tygodnie}`,
+        opis: b.opis,
+        osoba: b.osoba,
+        status: blok.status,
+        priorytet: b.priorytet,
+        typ: b.typ,
+        start: dzienOdPoniedzialku(poniedzialek, blok.start),
+        termin: dzienOdPoniedzialku(poniedzialek, blok.termin),
+        godziny: b.godzinyTydzien * 4,
+        godzinyFaktyczne: 0,
+        kryterium: b.kryterium,
+      };
+    })
+  );
+}
+
+export const ZADANIA_OBCIAZENIA: readonly Zadanie[] = zbudujObciazenie();
+
+export const ZADANIA: readonly Zadanie[] = [...ZADANIA_BAZOWE, ...ZADANIA_OBCIAZENIA];
 
 // ============================================================================
 // RAID — 7 pozycji

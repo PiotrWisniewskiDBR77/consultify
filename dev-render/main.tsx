@@ -765,6 +765,8 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
+const W51Dec604ObciazenieScreen = React.lazy(() => import('./screens/w51-dec604-obciazenie'));
+const W51Dec612SkrzynkaScreen = React.lazy(() => import('./screens/w51-dec612-skrzynka'));
 const Z27InicjatywySkrzynkaScreen = React.lazy(() => import('./screens/z27-inicjatywy-skrzynka'));
 const Z30InicjatywyObciazenieScreen = React.lazy(
   () => import('./screens/z30-inicjatywy-obciazenie')
@@ -811,6 +813,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'H1b — Inicjatywy → „Do akceptacji" (REALNY <TransitionInboxSurface>: StandardTable + StandardPreview): skrzynka recenzenta przejść cyklu życia. &case=empty|off &lang=pl|en &theme=light|dark',
     render: () => <H1bSkrzynkaPrzejscScreen />,
+  },
+  'w51-dec604-obciazenie': {
+    label:
+      'W51 DEC-604 — REALNY <InitiativesHub> zakładka „Obciążenie" (heatmapa, InitiativeWorkloadSurface) na danych z seeda demo-en Northwind: 9 osób × 8 tygodni. Wymaga VITE_INITIATIVES_WORKLOAD=true VITE_INITIATIVES_FOUR_BUTTONS=true. Atrapa /api/execution-control/capacity/initiative-workload = POMIAR z bazy consultify_kopia_d3 (3 osoby >100%, 2 <50%). &tab=capacity &lang=en &theme=light|dark',
+    render: () => <W51Dec604ObciazenieScreen />,
+  },
+  'w51-dec612-skrzynka': {
+    label:
+      'W51 DEC-612 — REALNY <TransitionInboxSurface> „For approval" z DOKŁADNIE jednym wierszem z seeda demo-en (propozycja EXECUTING→DONE, autor Laura Novak ≠ recenzent James Whitfield). Wymaga VITE_TRANSITION_INBOX=true. &lang=en &theme=light|dark',
+    render: () => <W51Dec612SkrzynkaScreen />,
   },
   'execution-risk-signal-e0': {
     label:

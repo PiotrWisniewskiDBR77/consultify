@@ -771,7 +771,7 @@ async function apply(c: PoolClient, databaseUrl: string) {
        id, assessment_id, organization_id, project_id, name, status,
        axis_data, executive_summary, detailed_analysis, recommendations,
        generated_by, created_by, updated_by, approved_by, approved_at, created_at, updated_at
-     ) VALUES ($1,$2,$3,$4,$5,'APPROVED',$6,$7,$8,$9,$10,$10,$10,$10,$11,$12,$11)
+     ) VALUES ($1,$2,$3,$4,$5,'APPROVED',$6,$7,$8,$9,$10,$10,$10,$10,$11,$12,$13)
      ON CONFLICT (id) DO NOTHING`,
     [
       reportId,
@@ -786,6 +786,7 @@ async function apply(c: PoolClient, databaseUrl: string) {
       JAMES,
       new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     ]
   );
   rIns.rowCount ? lic.utworz() : lic.pomin();
@@ -932,11 +933,19 @@ async function utworzZamrożonąSesjęDrd(c: PoolClient, databaseUrl: string): P
       'evidence',
       unitId
     );
+    // Zapisy odpowiedzi DRD są wersjonowane optymistycznie: trasa żąda
+    // `expectedVersion` (`method-core.routes.ts:1391-1401`), a każde zdarzenie
+    // podnosi wersję sesji, więc czytamy ją świeżo przed każdym potwierdzeniem.
+    const wersja = await c.query<{ version: number }>(
+      `SELECT version FROM method_sessions WHERE id = $1 AND organization_id = $2`,
+      [sessionId, ORG_ID]
+    );
     await postEventWithRetry(
       {
         type: 'ANSWER_CONFIRMED',
         unitId,
         level: DRD_ANSWER_LEVEL,
+        expectedVersion: Number(wersja.rows[0]?.version ?? 0),
         payload: { questionId: `q-${unitId}`, answerState: 'confirmed' },
       },
       'answer',

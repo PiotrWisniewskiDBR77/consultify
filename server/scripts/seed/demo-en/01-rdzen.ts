@@ -123,6 +123,14 @@ type Projekt = {
   status: string;
 };
 
+/**
+ * Schemat linii (`000_z_core_baseline.sql:153-174`) NIE ma kolumny `projects.goal`
+ * — ma ją wyłącznie nieużywany przez migrator `000_initdb_core_tables.sql:87`.
+ * Cel projektu wchodzi więc do `description`, jedynej kolumny tekstowej projektu,
+ * którą czytają trasy (`ProjectController.ts:185,207,322`).
+ */
+const opisProjektu = (p: Projekt): string => `${p.opis} Goal: ${p.cel}`;
+
 const PROJEKTY: Projekt[] = [
   {
     slug: 'operational-excellence-programme',
@@ -412,7 +420,7 @@ async function zbudujPlan(c: PoolClient, resetujHasla: boolean): Promise<Plan> {
       const r = istnieje.rows[0]!;
       plan.projekty.push({
         slug: p.slug,
-        akcja: r.name === p.nazwa && r.description === p.opis && r.owner_id === ownerId ? 'bez zmian' : 'zaktualizuje',
+        akcja: r.name === p.nazwa && r.description === opisProjektu(p) && r.owner_id === ownerId ? 'bez zmian' : 'zaktualizuje',
       });
     }
   }
@@ -635,12 +643,12 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
       }
       await c.query(
         `INSERT INTO projects (
-           id, organization_id, name, description, goal, status, owner_id, lead_id,
+           id, organization_id, name, description, status, owner_id, lead_id,
            start_date, target_end_date, budget_amount, budget_currency, currency, priority, phase,
            is_system, rag_enabled
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$7,$8,$9,$10,$11,$11,$12,$13,false,1)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$6,$7,$8,$9,$10,$10,$11,$12,false,1)
          ON CONFLICT (id) DO UPDATE SET
-           name = EXCLUDED.name, description = EXCLUDED.description, goal = EXCLUDED.goal,
+           name = EXCLUDED.name, description = EXCLUDED.description,
            owner_id = EXCLUDED.owner_id, lead_id = EXCLUDED.lead_id, start_date = EXCLUDED.start_date,
            target_end_date = EXCLUDED.target_end_date, budget_amount = EXCLUDED.budget_amount,
            budget_currency = EXCLUDED.budget_currency, currency = EXCLUDED.currency,
@@ -649,8 +657,7 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
           projectId,
           ORG_ID,
           p.nazwa,
-          p.opis,
-          p.cel,
+          opisProjektu(p),
           p.status,
           ownerId,
           p.startDate,

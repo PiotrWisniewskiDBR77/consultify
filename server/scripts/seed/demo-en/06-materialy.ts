@@ -1029,7 +1029,8 @@ async function wykonaj(c: PoolClient, commit: boolean): Promise<Licznik> {
              id, conversation_id, role, content, message_type, author_user_id, seq, created_at
            ) VALUES ($1,$2,$3,$4,'text',$5,$6,$7)
            ON CONFLICT (id) DO NOTHING`,
-          [messageId, conversationId, msg.role, msg.content, msg.role === 'user' ? ownerId : null, seq, createdAt]
+          // CHECK `conversation_messages_role_check` dopuszcza WYŁĄCZNIE 'user' | 'ai'.
+          [messageId, conversationId, msg.role === 'user' ? 'user' : 'ai', msg.content, msg.role === 'user' ? ownerId : null, seq, createdAt]
         );
         if ((rm.rowCount ?? 0) > 0) lic.utworz();
         else lic.pomin();

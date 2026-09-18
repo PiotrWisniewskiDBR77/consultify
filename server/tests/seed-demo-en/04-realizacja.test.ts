@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DECYZJE,
+  OBCIAZENIE,
   OSOBY,
   PRZESUNIECIA_KAMIENI,
   RAID,
   RAPORTY_STATUSU,
   SLUGI_REALIZOWANE,
   ZADANIA,
+  ZADANIA_OBCIAZENIA,
 } from '../../scripts/seed/demo-en/04-dane-realizacji';
 import { det } from '../../scripts/seed/demo-en/00-wspolne';
 
@@ -45,11 +47,45 @@ const ekspozycja = (p: string, w: string): number | null => {
 
 const poTerminie = (termin: string, granica: string): boolean => termin < granica;
 
+/**
+ * Etaty z D1 (`01-rdzen.ts`) — powtórzone, żeby test nie zależał od bazy ani od
+ * importu serwisu. Klucz = slug osoby, wartość = `weekly_capacity_hours`.
+ */
+const ETATY: Record<string, number> = {
+  'james.whitfield': 40,
+  'sarah.mitchell': 40,
+  'robert.chen': 38,
+  'emily.carter': 37,
+  'daniel.osei': 40,
+  'laura.novak': 36,
+  'michael.grant': 35,
+  'priya.sharma': 32,
+  'thomas.baker': 40,
+};
+
+/** Poniedziałek bieżącego tygodnia liczony tak samo jak `getMonday` w serwisie. */
+function poniedzialekBiezacy(): Date {
+  const teraz = new Date();
+  const d = new Date(teraz.getFullYear(), teraz.getMonth(), teraz.getDate());
+  const dzien = d.getDay();
+  d.setDate(d.getDate() - (dzien === 0 ? 6 : dzien - 1));
+  return d;
+}
+
+/**
+ * Progi legendy zakładki Zasoby — niezależna kopia `workloadBand`
+ * (`src/components/Initiatives/InitiativeWorkloadSurface.tsx:57-61`).
+ */
+const bandaObciazenia = (procent: number): 'zielony' | 'bursztynowy' | 'czerwony' =>
+  procent < 85 ? 'zielony' : procent <= 100 ? 'bursztynowy' : 'czerwony';
+
 const POLSKIE_ZNAKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 
 describe('04-dane-realizacji — liczności wymagane zleceniem D4', () => {
-  it('36 zadań, ani jedno na inicjatywie spoza czterech realizowanych', () => {
-    expect(ZADANIA).toHaveLength(36);
+  it('54 zadania = 36 z D4 + 18 zaplanowanego obciążenia DEC-604, żadne poza czterema realizowanymi inicjatywami', () => {
+    expect(ZADANIA).toHaveLength(54);
+    expect(ZADANIA_OBCIAZENIA).toHaveLength(18);
+    expect(ZADANIA.length - ZADANIA_OBCIAZENIA.length).toBe(36);
     for (const z of ZADANIA) expect(SLUGI_REALIZOWANE).toContain(z.inicjatywa);
   });
 
@@ -82,24 +118,12 @@ describe('04-dane-realizacji — liczności wymagane zleceniem D4', () => {
   });
 
   it('co najmniej jedna osoba jest PRZECIĄŻONA w pierwszym tygodniu okna (popyt > etat)', () => {
-    // Etaty z D1 (`01-rdzen.ts`) — powtórzone, żeby test nie zależał od bazy.
-    const etat: Record<string, number> = {
-      'james.whitfield': 40,
-      'sarah.mitchell': 40,
-      'robert.chen': 38,
-      'emily.carter': 37,
-      'daniel.osei': 40,
-      'laura.novak': 36,
-      'michael.grant': 35,
-      'priya.sharma': 32,
-      'thomas.baker': 40,
-    };
     const wPierwszymTygodniu = ZADANIA.filter(
       (z) => z.status !== 'done' && z.start >= PONIEDZIALEK && z.termin < '2026-09-14'
     );
     const suma = new Map<string, number>();
     for (const z of wPierwszymTygodniu) suma.set(z.osoba, (suma.get(z.osoba) ?? 0) + z.godziny);
-    const przeciazeni = [...suma.entries()].filter(([osoba, h]) => h > etat[osoba]! * 1.05);
+    const przeciazeni = [...suma.entries()].filter(([osoba, h]) => h > ETATY[osoba]! * 1.05);
     expect(przeciazeni.length).toBeGreaterThanOrEqual(1);
     expect(suma.get('laura.novak')).toBe(48); // 2 x 24 h przy etacie 36 h => 133 %
   });
@@ -109,6 +133,81 @@ describe('04-dane-realizacji — liczności wymagane zleceniem D4', () => {
     expect(new Set(slugi).size).toBe(slugi.length);
     const idy = slugi.map((s) => det('task', s));
     expect(new Set(idy).size).toBe(idy.length);
+  });
+});
+
+describe('04-dane-realizacji — zaplanowane obciążenie DEC-604 (siatka 8 tygodni × 9 osób)', () => {
+  const poniedzialek = poniedzialekBiezacy();
+  const dzienISO = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  /** `n` dni od bieżącego poniedziałku — niezależna kopia reguły z paczki. */
+  const dzien = (n: number): string => {
+    const d = new Date(poniedzialek);
+    d.setDate(d.getDate() + n);
+    return dzienISO(d);
+  };
+  const tygodniowe = new Map(OBCIAZENIE.map((b) => [b.osoba as string, b.godzinyTydzien]));
+
+  it('9 osób ze słownika D1, każda z DOKŁADNIE dwoma blokami: tygodnie 1-4 i tygodnie 5-8', () => {
+    expect(OBCIAZENIE).toHaveLength(9);
+    expect([...tygodniowe.keys()].sort()).toEqual([...OSOBY].sort());
+    for (const o of OSOBY) {
+      const bloki = ZADANIA_OBCIAZENIA.filter((z) => z.osoba === o);
+      expect(bloki, `osoba ${o}`).toHaveLength(2);
+      const a = bloki.find((z) => z.tytul.endsWith('weeks one to four'));
+      const b = bloki.find((z) => z.tytul.endsWith('weeks five to eight'));
+      expect(a, `osoba ${o}: brak bloku tygodnie 1-4`).toBeTruthy();
+      expect(b, `osoba ${o}: brak bloku tygodnie 5-8`).toBeTruthy();
+    }
+  });
+
+  it('blok A startuje w bieżący poniedziałek i kończy się w piątek tygodnia 4 (+0/+25), blok B pokrywa tygodnie 5-8 (+28/+53)', () => {
+    for (const z of ZADANIA_OBCIAZENIA) {
+      if (z.status === 'in_progress') {
+        expect(z.start, `zadanie ${z.slug}`).toBe(dzien(0));
+        expect(z.termin, `zadanie ${z.slug}`).toBe(dzien(25));
+      } else {
+        expect(z.status, `zadanie ${z.slug}`).toBe('todo');
+        expect(z.start, `zadanie ${z.slug}`).toBe(dzien(28));
+        expect(z.termin, `zadanie ${z.slug}`).toBe(dzien(53));
+      }
+    }
+  });
+
+  it('pracochłonność bloku = godziny tygodniowe x 4 tygodnie, tygodniówki dodatnie i znane etatowi', () => {
+    for (const b of OBCIAZENIE) {
+      expect(b.godzinyTydzien, `osoba ${b.osoba}`).toBeGreaterThan(0);
+      expect(ETATY, `osoba ${b.osoba} nie ma etatu w D1`).toHaveProperty(b.osoba);
+      const bloki = ZADANIA_OBCIAZENIA.filter((z) => z.osoba === b.osoba);
+      for (const z of bloki) expect(z.godziny, `zadanie ${z.slug}`).toBe(b.godzinyTydzien * 4);
+    }
+  });
+
+  it('legenda pokazuje wszystkie trzy kolory: co najmniej 2 osoby >100 %, jedna <50 %, jedna 85-100 %', () => {
+    const procent = (o: string): number => Math.round((tygodniowe.get(o)! / ETATY[o]!) * 100);
+    const bandy = OSOBY.map((o) => bandaObciazenia(procent(o)));
+    expect(bandy.filter((b) => b === 'czerwony').length).toBeGreaterThanOrEqual(2);
+    expect(bandy).toContain('bursztynowy');
+    expect(OSOBY.filter((o) => procent(o) < 50).length).toBeGreaterThanOrEqual(1);
+    // Wartości projektowe (etyaty 100 % dostępności w D1): 122/110/89/38.
+    expect(procent('laura.novak')).toBe(122);
+    expect(procent('daniel.osei')).toBe(110);
+    expect(procent('emily.carter')).toBe(89);
+    expect(procent('sarah.mitchell')).toBe(38);
+  });
+
+  it('MUTACJA — kotwica musi być PRAWDZIWYM poniedziałkiem: stała data paczki D4 wypada przed oknem serwisu', () => {
+    const kotwicaD4 = '2026-09-07'; // MUTANT: stały poniedziałek z D4 zamiast bieżącego
+    expect(kotwicaD4 < dzienISO(poniedzialek)).toBe(true);
+    for (const z of ZADANIA_OBCIAZENIA.filter((x) => x.status === 'in_progress'))
+      expect(z.start >= dzienISO(poniedzialek), `zadanie ${z.slug} startuje przed bieżącym oknem`).toBe(true);
+  });
+
+  it('MUTACJA — gdyby próg bursztynu zaczynał się od 100 %, emily.carter wyszłaby zielona i legenda straciłaby trzeci kolor', () => {
+    const mutant = (p: number) => (p < 100 ? 'zielony' : p <= 100 ? 'bursztynowy' : 'czerwony'); // MUTANT: próg 100 zamiast 85
+    expect(bandaObciazenia(89)).toBe('bursztynowy');
+    expect(mutant(89)).toBe('zielony');
+    expect(OSOBY.filter((o) => mutant(Math.round((tygodniowe.get(o)! / ETATY[o]!) * 100)) === 'bursztynowy')).toHaveLength(0);
   });
 });
 
