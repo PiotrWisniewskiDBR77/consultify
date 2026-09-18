@@ -11109,7 +11109,10 @@
         "saveNext": "Zapisz i przejdź dalej",
         "helpTaskTitle": "Potrzebny dowód: {{area}}, poziom {{level}}",
         "helpTaskDescription": "Rozwiąż otwarte pytanie o dowód dla sesji DRD {{sessionId}}, obszaru {{area}}, poziomu {{level}}.",
-        "helpBlocker": "Otwarte prośby o pomoc z dowodem: {{count}}"
+        "helpBlocker": "Otwarte prośby o pomoc z dowodem: {{count}}",
+        "helpStatusLabel": "Status prośby o dowód",
+        "helpStatusTitle": "Prośba o dowód jest otwarta",
+        "helpStatusBody": "Ten poziom jest zapisany jako „Potrzebuję pomocy”. Zadanie dla właściciela dowodu jest otwarte, a zamrożenie pozostaje zablokowane do rozstrzygnięcia pytania."
       }
     },
     "glossary": {

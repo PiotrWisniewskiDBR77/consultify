@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from 'react';
 
-import { DrdLevelInterviewWorkspace, type DrdLevelDecision } from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
+import {
+  DRD_HELP_JUSTIFICATION_MARKER,
+  DrdLevelInterviewWorkspace,
+  type DrdLevelDecision,
+} from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
 import { buildNavigatorNodes, confirmedLevelsFor, targetLevelFor } from '@/components/assessment/drd/drdWorkspaceViewModel';
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { PracujZAI } from '@/components/standard/PracujZAI';
@@ -14,8 +18,8 @@ const AREA_ID = '1A';
 const session = { id: SESSION_ID, name: 'Northwind digital maturity — September wave', organizationId: 'org-northwind', projectId: null, module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', state: 'in_progress', domainStage: 'interview', mode: 'guided_manual', ownerUserId: 'user-northwind-owner', createdAt: '2026-09-15T08:00:00.000Z', updatedAt: '2026-09-16T07:20:00.000Z', version: 4, frozenSnapshotId: null } as MethodSession;
 const readiness: MethodReadiness = { answeredUnits: 1, totalUnits: 39, unitsMissingEvidence: 38, openDiscrepancies: 0, pendingProposals: 0, freezeBlockers: [] };
 
-function answerEvent(level: number, state: string, text = ''): MethodEvent {
-  return { id: `event-${level}-${state}`, type: 'ANSWER_CONFIRMED', organizationId: 'org-northwind', sessionId: SESSION_ID, unitId: AREA_ID, level, actorKind: 'human', actorUserId: 'user-northwind-owner', methodPackVersion: session.methodPackVersion, occurredAt: '2026-09-16T07:20:00.000Z', payload: { questionId: `${AREA_ID}-L${level}-Q1`, answerState: state, text } } as MethodEvent;
+function answerEvent(level: number, state: string, text = '', justification?: string): MethodEvent {
+  return { id: `event-${level}-${state}`, type: 'ANSWER_CONFIRMED', organizationId: 'org-northwind', sessionId: SESSION_ID, unitId: AREA_ID, level, actorKind: 'human', actorUserId: 'user-northwind-owner', methodPackVersion: session.methodPackVersion, occurredAt: '2026-09-16T07:20:00.000Z', payload: { questionId: `${AREA_ID}-L${level}-Q1`, answerState: state, text, justification } } as MethodEvent;
 }
 
 export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
@@ -26,10 +30,13 @@ export default function U19DrdTrzyKolumnyScreen(): React.ReactElement {
   const questions = pack.questions.filter((item) => item.unitId === AREA_ID);
   const [selectedLevel, setSelectedLevel] = useState(2);
   const [answer, setAnswer] = useState('Weekly dashboard is generated automatically in the CRM every Monday 06:00; conversion and pipeline are live, average deal size is still tallied by hand in Excel.');
-  const [events, setEvents] = useState<MethodEvent[]>([
+  const initialCase = new URLSearchParams(window.location.search).get('case');
+  const [events, setEvents] = useState<MethodEvent[]>(() => [
     answerEvent(1, 'confirmed'),
     { ...answerEvent(5, 'confirmed'), type: 'DECISION_APPROVED', payload: { subject: 'target_level' } } as MethodEvent,
-    { ...answerEvent(2, 'partial', answer), type: 'ANSWER_DRAFTED' } as MethodEvent,
+    initialCase === 'help'
+      ? answerEvent(2, 'dont_know', answer, `${DRD_HELP_JUSTIFICATION_MARKER} owner task`)
+      : ({ ...answerEvent(2, 'partial', answer), type: 'ANSWER_DRAFTED' } as MethodEvent),
   ]);
   const progression = drdAdapter.resolveOpenLevels({ unitId: AREA_ID, confirmedLevels: confirmedLevelsFor(events, AREA_ID), evidenceByLevel: {} });
   const primaryQuestion = questions.find((item) => item.level === selectedLevel);

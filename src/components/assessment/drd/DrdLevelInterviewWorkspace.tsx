@@ -113,6 +113,7 @@ export function DrdLevelInterviewWorkspace({
   const evidenceCount = events.filter(
     (event) => event.type === 'EVIDENCE_ATTACHED' && event.unitId === area.id && event.level === level?.level
   ).length;
+  const levelDecision = decisions.get(level?.level ?? -1) ?? null;
   const firstNo = [...decisions.entries()].find(([, state]) => state === 'no')?.[0] ?? null;
   const areaName = nazwaWJezyku(area.namePL, area.name, isPolish);
   const axisName = nazwaWJezyku(axis.namePL, axis.name, isPolish);
@@ -188,6 +189,23 @@ export function DrdLevelInterviewWorkspace({
               <h2 className="mt-0.5 text-sm font-semibold text-c-text">{t('assessment.drd.levelInterview.levelTitle', 'Level {{level}} — {{name}}', { level: level.level, name: level.title })}</h2>
               <p className="mt-1 line-clamp-2 text-xs text-c-text-secondary">{level.canonicalDefinition}</p>
             </header>
+            {levelDecision === 'help' && (
+              <div
+                role="status"
+                aria-label={t('assessment.drd.levelInterview.helpStatusLabel', 'Evidence request status')}
+                className="border-b border-c-warning/30 bg-c-warning/10 px-4 py-3 text-xs text-c-text-secondary"
+              >
+                <p className="font-semibold text-c-text">
+                  {t('assessment.drd.levelInterview.helpStatusTitle', 'Evidence request is open')}
+                </p>
+                <p className="mt-1 leading-relaxed">
+                  {t(
+                    'assessment.drd.levelInterview.helpStatusBody',
+                    'This level is saved as “I need help”. The evidence-owner task is open, and freezing stays blocked until the question is resolved.'
+                  )}
+                </p>
+              </div>
+            )}
             <details className="border-b border-c-border-subtle px-4 py-2">
               <summary className="cursor-pointer text-xs font-medium text-c-text-secondary hover:text-c-text">{t('assessment.drd.levelInterview.why', 'Why do we ask')}</summary>
               <p className="mt-2 text-xs leading-relaxed text-c-text-muted">{primaryQuestion?.whyItMatters ?? ''}</p>

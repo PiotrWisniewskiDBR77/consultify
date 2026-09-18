@@ -11875,7 +11875,10 @@
         "saveNext": "Save & next level",
         "helpTaskTitle": "Evidence needed: {{area}}, level {{level}}",
         "helpTaskDescription": "Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.",
-        "helpBlocker": "{{count}} open evidence help request(s)"
+        "helpBlocker": "{{count}} open evidence help request(s)",
+        "helpStatusLabel": "Evidence request status",
+        "helpStatusTitle": "Evidence request is open",
+        "helpStatusBody": "This level is saved as “I need help”. The evidence-owner task is open, and freezing stays blocked until the question is resolved."
       }
     },
     "glossary": {

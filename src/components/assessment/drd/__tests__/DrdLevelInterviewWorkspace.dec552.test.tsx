@@ -71,6 +71,22 @@ describe('DRD-2 DEC-552 level interview', () => {
     expect(no.className).not.toContain('danger');
   });
 
+  it('renders an explicit Help status panel when the current level awaits evidence', () => {
+    render(
+      <DrdLevelInterviewWorkspace
+        {...baseProps}
+        events={[event(2, 'dont_know', `${DRD_HELP_JUSTIFICATION_MARKER} owner task`)]}
+      />
+    );
+
+    expect(screen.getByRole('status', { name: 'Evidence request status' })).toHaveTextContent(
+      'Evidence request is open'
+    );
+    expect(screen.getByRole('status', { name: 'Evidence request status' })).toHaveTextContent(
+      'freezing stays blocked'
+    );
+  });
+
   it('saves the selected decision and disables levels above a No', async () => {
     const onSaveDecision = vi.fn(async () => {});
     const { rerender } = render(<DrdLevelInterviewWorkspace {...baseProps} onSaveDecision={onSaveDecision} />);
