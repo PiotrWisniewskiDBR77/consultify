@@ -122,6 +122,8 @@ import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isSt2CandidateCardEnabled } from '@/utils/st2CandidateCardFlag';
+import { isInterviewAiScoreEnabled } from '@/utils/interviewAiScoreFlag';
+import { fromInterviewAiReview, type AiReviewSummary } from '@/services/aiReview/aiReviewSummary';
 import { formatListDate, formatListDateTime, localeListy } from '@/utils/listDateFormat';
 import { InterviewCandidateInbox } from './InterviewCandidateInbox';
 import {
@@ -6816,27 +6818,56 @@ Return ONLY the answer text (no markdown fences).`;
             {
               id: 'aiScore',
               label: t('interview.hub.aiScore'),
-              width: '120px',
+              width: isInterviewAiScoreEnabled() ? '160px' : '120px',
               align: 'right',
               render: (row: InterviewAssignment) => {
                 const score = row.aiReview?.overallScore;
                 if (typeof score !== 'number') {
                   return <span className="text-xs text-c-text-muted">—</span>;
                 }
-                // #48a — overallScore is on the rubric's 1-5 scale (1 = worst, 5 =
-                // best), not already a 0-100 percentage. Map linearly (1 -> 0%,
-                // 5 -> 100%) so the tone thresholds below are meaningful.
-                const pct = Math.round(Math.max(0, Math.min(1, (score - 1) / 4)) * 100);
+                if (!isInterviewAiScoreEnabled()) {
+                  // #48a — overallScore is on the rubric's 1-5 scale (1 = worst, 5 =
+                  // best), not already a 0-100 percentage. Map linearly (1 -> 0%,
+                  // 5 -> 100%) so the tone thresholds below are meaningful.
+                  const pct = Math.round(Math.max(0, Math.min(1, (score - 1) / 4)) * 100);
+                  const tone =
+                    pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
+                  const title = t('interview.hub.aiQualityScoreTitle', { score: score.toFixed(1) });
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
+                      title={title}
+                    >
+                      <Gauge size={12} />
+                      {pct}
+                    </span>
+                  );
+                }
+                const summary = fromInterviewAiReview(row.aiReview, row.aiReviewedAt, row.id);
+                const pct = summary.score0to100;
+                if (pct === null) {
+                  return <span className="text-xs text-c-text-muted">—</span>;
+                }
                 const tone =
-                  pct >= 75 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
-                const title = t('interview.hub.aiQualityScoreTitle', { score: score.toFixed(1) });
+                  pct >= 80 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
+                const verdictLabel = t(`interview.hub.aiVerdict.${summary.verdict}`);
+                const pillClass =
+                  summary.verdict === 'blocked'
+                    ? 'border-c-danger/30 bg-c-danger/10 text-c-danger'
+                    : summary.verdict === 'needs_attention'
+                      ? 'border-c-warning/30 bg-c-warning/10 text-c-warning'
+                      : 'border-c-success/30 bg-c-success/10 text-c-success';
                 return (
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
-                    title={title}
-                  >
-                    <Gauge size={12} />
-                    {pct}
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+                    <span className={`inline-flex items-center gap-1 ${tone}`}>
+                      <Gauge size={12} />
+                      {pct}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none ${pillClass}`}
+                    >
+                      {verdictLabel}
+                    </span>
                   </span>
                 );
               },
@@ -7132,6 +7163,16 @@ Return ONLY the answer text (no markdown fences).`;
                     )
                   }
                   onCopyId={() => copyToClipboard(s.id)}
+                  aiReviewSummary={
+                    isInterviewAiScoreEnabled()
+                      ? (() => {
+                          const linked = getManagedAssignmentForSession(s);
+                          return linked?.aiReview
+                            ? fromInterviewAiReview(linked.aiReview, linked.aiReviewedAt, linked.id)
+                            : null;
+                        })()
+                      : null
+                  }
                 />
               );
             }}

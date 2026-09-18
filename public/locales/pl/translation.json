@@ -8263,6 +8263,13 @@
       "archivedCountParen": "Zarchiwizowano ({{count}})",
       "restoredCountParen": "Przywrócono ({{count}})",
       "aiQualityScoreTitle": "Ocena jakości AI wg rubryki (konkretność/dowody/głębia/mierzalność/spójność): {{score}}/5",
+      "aiVerdict": {
+        "good": "Dobra",
+        "needs_attention": "Wymaga uwagi",
+        "blocked": "Zablokowana",
+        "empty": "Brak oceny",
+        "timeout": "Przekroczono czas"
+      },
       "createdRelative": "Utworzono {{relative}}",
       "confirmSendReminderTo": "Czy na pewno chcesz wysłać przypomnienie do {{name}}?",
       "theUserFallback": "użytkownika",
@@ -9847,7 +9854,9 @@
       "propertiesLabel": "Przebieg",
       "property": "Właściwość",
       "value": "Wartość",
-      "moreActions": "Więcej akcji"
+      "moreActions": "Więcej akcji",
+      "aiReview": "Ocena AI",
+      "aiReviewedAt": "Oceniono"
     },
     "assignmentPreview": {
       "progress": "Postęp",

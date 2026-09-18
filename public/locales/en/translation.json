@@ -9079,6 +9079,13 @@
       "archivedCountParen": "Archived ({{count}})",
       "restoredCountParen": "Restored ({{count}})",
       "aiQualityScoreTitle": "AI quality score per rubric (concreteness/evidence/depth/measurability/coherence): {{score}}/5",
+      "aiVerdict": {
+        "good": "Good",
+        "needs_attention": "Needs attention",
+        "blocked": "Blocked",
+        "empty": "No review",
+        "timeout": "Timeout"
+      },
       "createdRelative": "Created {{relative}}",
       "confirmSendReminderTo": "Are you sure you want to send a reminder to {{name}}?",
       "theUserFallback": "the user",
@@ -10653,7 +10660,9 @@
       "propertiesLabel": "Progress",
       "property": "Property",
       "value": "Value",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "aiReview": "AI Review",
+      "aiReviewedAt": "Reviewed"
     },
     "assignmentPreview": {
       "progress": "Progress",
