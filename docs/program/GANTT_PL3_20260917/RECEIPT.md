@@ -231,3 +231,93 @@ Wszystkie ≥4.5:1 w obu motywach.
 | `npm run check:jezyk:ci` | OK (nic nie wzrosło; spadki K4obj −4, K5en −1, K8sen −3) |
 | `npm run check:flagi:dockerfile` | `analyzedFlags=198 brakujace=0` |
 | `NODE_OPTIONS=--max-old-space-size=8192 npm run build` | exit 0 |
+
+# ETAP 2 (Wpis 90) — przeciąganie pasków z zapisem (DEC-627, SPEC §4 + §8 row „2")
+
+Zakres: uchwyty na paskach, drag ze snapem dziennym, podpowiedź „Drag to move · N weeks",
+zapis przez `onWindowChange` → `writePlanScenario` (JEDEN zapis na `pointerup`, nigdy na
+`pointermove`; zapis CAŁEGO scenariusza z `expectedVersion` — SPEC §2.3), optimistic UI,
+obsługa 409 (pasek wraca + komunikat), undo jednego poziomu, minimalny zestaw klawiaturowy
+§13.3c. Drag TYLKO na szkicu (DRAFT) i tylko paski nie-zamrożone.
+
+## Pomiar wstępny (KROK 0)
+
+- `onReschedule` NIE istniał w `InitiativeGantt` (grep = 0 trafień przed zmianą) — przeciąganie
+  nie miało drogi zapisu; `commit` w osi był czysto lokalny.
+- `writePlanScenario` (`runtimeApi.ts:1070`) już istnieje i rzuca `RuntimeApiError(status, code,
+  rule)` przy `!response.ok` — 409 CAS jest osiągalny, brakowało tylko mostka UI→zapis.
+- `PlanScenarioSurface` zapisuje CAŁY scenariusz z `expectedVersion` (`persistScenario`,
+  `:933`), więc adapter w karcie musiał zwracać `boolean`, by oś wiedziała, czy cofnąć pasek.
+- Fikstura harnessu (`z3x-inicjatywy-plan.tsx`) NIE miała gałęzi POST — zapis wpadałby w GET
+  (ta sama ścieżka) i 409 nigdy by się nie odtworzyło; dodano stub POST + `?conflict=1`.
+
+## §7.1 Testy (`src/components/Initiatives/__tests__/InitiativeGantt.planDrag.test.tsx`, 16/16)
+
+| Test | Czego dowodzi |
+|---|---|
+| drag planowanego paska w DRAFT zapisuje RAZ z oknem +14 dni | `pointerdown→pointermove(×N)→pointerup` = JEDEN `onReschedule`, snap dzienny (+14 d, nie +13/+15) |
+| drag z wieloma `pointermove` nadal zapisuje RAZ | zapis NIGDY na `pointermove` (preview tylko lokalny) |
+| błąd zapisu (409) → pasek WRACA | `onReschedule` reject → optimistic UI cofnięty |
+| klawiatura: ←/→ = ±7 dni, Shift = ±1 dzień, Enter zapisuje, Esc cofa | §13.3c zestaw minimalny |
+| Ctrl/Cmd+Z po zapisie cofa okno | undo jednego poziomu |
+| pasek zamrożony: aria-disabled, strzałki NIC nie robią | drag/klawiatura tylko nie-zamrożone |
+| PUBLISHED: aria-disabled, drag i strzałki bez zapisu | drag TYLKO na szkicu |
+| PlanCard: drag → `onWindowChange` RAZ z całym `{earliest,target,latest}` +14 d | most oś→zapis przesuwa wszystkie trzy daty o to samo Δ |
+| PlanCard: `onWindowChange=false` (409 z CAS) → pasek WRACA | brak cichej utraty zmiany |
+| PlanCard: 409 → komunikat konfliktu widoczny PRZY osi czasu | `role=alert` w sekcji zależności (nie tylko w „Decyzje") |
+
+Bieg: `npx vitest run …planDrag.test.tsx --retry=0` → `16 passed (16)`.
+Sąsiedzi: `npx vitest run src/components/Initiatives --retry=0` → 5 plików czerwonych,
+WSZYSTKIE zmierzone na bazie (worktree `HEAD`) = te same 5 → ZASTANA, zero NOWYCH
+(`a19-jedna-tabela-render`, `capacityAnalysis.brakPresji`, `registerPreviewKanon.k5` po 5
+testów łącznie + 2× `*.pg./realpg` wymagające żywego kontenera PG, nieuruchomionego).
+
+## §7.3 Mutacje — PRZED i PO
+
+| Mutacja (cofnij zabezpieczenie) | PRZED (czerwony) | PO (przywrócone) |
+|---|---|---|
+| A: `onMove` commituje na każdym `pointermove` | `6 failed \| 9 passed` | 16/16 |
+| B: `planEditable = true` (drag na PUBLISHED) | `1 failed \| 14 passed` | 16/16 |
+| C: `canDrag` bez `!frozen` (drag zamrożonych) | `2 failed \| 13 passed` | 16/16 |
+| B+D: gate PUBLISHED w karcie bez `&& editable` | `2 failed \| 13 passed` | 16/16 |
+| E: blok `errorLabel` w sekcji zależności usunięty | `1 failed \| 15 skipped` (test komunikatu) | 16/16 |
+
+Każda mutacja przywrócona dokładnie; po przywróceniu pełny plik zielony.
+
+## §7.4 Zrzuty 1440×900 EN (realny Hub, `dev-render`) + kontrast
+
+Pliki w `evidence/qoder-gantt-pl3-etap2-20260918/` (harness `?screen=z3x-inicjatywy-plan`,
+`VITE_PLAN_TIMELINE_V2=true`, motyw przez store aplikacji, `uwagi=0`, ścieżka 409 `conflict=1`):
+
+| Zrzut | Co widać | bledyKonsoli |
+|---|---|---|
+| `pl3-light-drag-hint.png` | środek przeciągania: pasek „Oct 12 → Nov 09", uchwyty, ring fokusa, chip „Drag to move · 4 weeks", TODAY | 0 |
+| `pl3-dark-drag-hint.png` | to samo w ciemnym motywie | 0 |
+| `pl3-light-409.png` | PO odrzuceniu: pasek WRÓCIŁ do „Sep 28 → Oct 26" + czerwony komunikat „Plan changed or its Portfolio basis is stale. Reopen before retrying." | 0 |
+| `pl3-dark-409.png` | to samo w ciemnym motywie | 0 |
+
+Przeciąganie = PRAWDZIWA mysz Playwright (trusted pointery), `dx = pół szerokości paska`
+→ +14 dni dla 28-dniowego okna Energy; pomiar `style.left` PRZED/PO = `14.2857%` → revert.
+
+Kontrast podpowiedzi (chip `bg-c-text` / `text-c-surface`), `scripts/contrast-ratio.mjs`:
+jasny **17.85:1**, ciemny **16.61:1** — oba ≥4.5:1.
+
+Uwaga naprawcza etapu 2: komunikat 409 renderował się dotąd TYLKO w zwiniętej gałęzi
+powierzchni (`PlanScenarioSurface:1824`) i w sekcji „Decyzje", więc przy zapisie z osi czasu
+pasek wracał bez słowa. Dodano `errorLabel` (`role=alert`) w sekcji zależności tuż nad osią
+(`PlanCard.tsx`) — stąd mutacja E i zrzuty „po 409" z widocznym komunikatem.
+
+## §7.5 Bramki etapu 2
+
+| Bramka | Wynik |
+|---|---|
+| `cd server && npx tsc --noEmit -p tsconfig.json` | exit 0 (0 błędów) |
+| front `tsc --noEmit` (8 GB, pierwszy plan) | 156 = baza 156 (delta 0); 0 błędów w dotkniętych plikach |
+| mutacja przyrządu tsc (`const tscProbe: number = "s"`) | 156 → 157 (+1) → cofnięte |
+| `bash scripts/check-list-canon.sh` | 345 / baseline 346 (dług nie rośnie) |
+| `bash scripts/check-artefakt.sh` | 8 / baseline 8 |
+| `npm run check:jezyk:ci` | OK (nic nie wzrosło; spadki K4en −1, K4obj −4, K5pl −26, K5en −19, K8sen −3) |
+| `npm run check:flagi:dockerfile` | `analyzedFlags=200 brakujace=0` |
+| `node scripts/check-dev-render-parytet.mjs --ekran=z3x-inicjatywy-plan` | CZYSTO (R1/R2/R3/PODPIS = 0 nowych) |
+| `NODE_OPTIONS=--max-old-space-size=8192 npm run build` | exit 0 |
+

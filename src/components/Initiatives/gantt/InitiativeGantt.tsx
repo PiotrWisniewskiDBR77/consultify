@@ -160,9 +160,6 @@ function startOfMonth(ms: number): number {
   const d = new Date(ms);
   return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
 }
-function snapToDay(ms: number): number {
-  return Math.round(ms / DAY_MS) * DAY_MS;
-}
 
 export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   items,
@@ -197,6 +194,16 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   const [overrides, setOverrides] = useState<
     Map<string, { s: number; e: number; saving?: boolean }>
   >(new Map());
+
+  // SPEC §4.6 / §8 row 2 (etap 2) interaction state:
+  //  - focusedId: bar holding the focus ring + drag hint (keyboard target);
+  //  - draggingId: bar under an active pointer drag (shows the hint);
+  //  - editBase: committed window of the bar being keyboard-edited → Esc reverts to it;
+  //  - lastMove: single-level undo — the window the last successful move came FROM.
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [editBase, setEditBase] = useState<{ id: string; s: number; e: number } | null>(null);
+  const [lastMove, setLastMove] = useState<{ id: string; s: number; e: number } | null>(null);
 
   const criticalSet = useMemo(() => new Set(criticalPathIds || []), [criticalPathIds]);
   const frozenSet = useMemo(() => new Set(frozenItemIds || []), [frozenItemIds]);
@@ -262,8 +269,22 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     return { min, weeks };
   }, [dated, planMode, rangeEnd, rangeStart]);
 
-  const persist = useCallback(
-    async (item: ScheduleItem, newS: number, newE: number) => {
+  /**
+   * SPEC §4.2: ONE save per gesture, on `pointerup`/`Enter` — never on
+   * `pointermove` (a naive per-move save of the WHOLE scenario would 409 and
+   * lose someone else's change). Optimistic override is already in place; on
+   * success we keep it and remember the window we moved FROM (single-level
+   * undo); on failure/409 we drop the override so the bar snaps back.
+   */
+  const commit = useCallback(
+    async (
+      item: ScheduleItem,
+      newS: number,
+      newE: number,
+      undoS: number,
+      undoE: number,
+      recordUndo = true
+    ) => {
       if (!onReschedule) return;
       const startIso = toIsoDate(new Date(newS).toISOString())!;
       const endIso = toIsoDate(new Date(newE).toISOString())!;
@@ -274,6 +295,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
           next.set(item.id, { s: newS, e: newE });
           return next;
         });
+        setLastMove(recordUndo ? { id: item.id, s: undoS, e: undoE } : null);
       } catch {
         setOverrides((prev) => {
           const next = new Map(prev);
@@ -285,38 +307,64 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     [onReschedule]
   );
 
+  /** SPEC §4.2 undo: re-save the previous window through the same path (button or Ctrl/Cmd+Z). */
+  const undoLastMove = useCallback(() => {
+    if (!lastMove || !onReschedule) return;
+    const item = items.find((i) => i.id === lastMove.id);
+    if (!item) return;
+    const { id, s, e } = lastMove;
+    setLastMove(null);
+    setOverrides((prev) => new Map(prev).set(id, { s, e, saving: true }));
+    void commit(item, s, e, s, e, false);
+  }, [lastMove, onReschedule, items, commit]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>, item: ScheduleItem, sMs: number, eMs: number) => {
       if (!range || !onReschedule) return;
       e.preventDefault();
       const el = e.currentTarget;
       el.setPointerCapture(e.pointerId);
+      setDraggingId(item.id);
+      setFocusedId(item.id);
 
       const totalMs = range.weeks * 7 * DAY_MS;
       const gridEl = gridRef.current;
-      if (!gridEl) return;
+      if (!gridEl) {
+        setDraggingId(null);
+        return;
+      }
       const gridRect = gridEl.getBoundingClientRect();
 
       const dragStartX = e.clientX;
       const origS = sMs;
       const origE = eMs;
-      const durMs = origE - origS;
+      /**
+       * SPEC §8 row 2 „snap dzienny": whole calendar days via local-safe
+       * `addDays`. The old `snapToDay` rounded to UTC midnight, which is a
+       * different calendar day for local-midnight windows west of Greenwich.
+       */
+      const dayDeltaAt = (clientX: number) =>
+        Math.round(((clientX - dragStartX) / gridRect.width) * totalMs / DAY_MS);
 
       const onMove = (ev: PointerEvent) => {
-        const dx = ev.clientX - dragStartX;
-        const dMs = (dx / gridRect.width) * totalMs;
-        const newS = snapToDay(origS + dMs);
-        const newE = newS + durMs;
-        setOverrides((prev) => new Map(prev).set(item.id, { s: newS, e: newE }));
+        const dayDelta = dayDeltaAt(ev.clientX);
+        setOverrides((prev) => {
+          const next = new Map(prev);
+          if (dayDelta === 0) next.delete(item.id);
+          else next.set(item.id, { s: addDays(origS, dayDelta), e: addDays(origE, dayDelta) });
+          return next;
+        });
       };
       const onUp = (ev: PointerEvent) => {
-        el.releasePointerCapture(ev.pointerId);
-        el.removeEventListener('pointermove', onMove);
-        el.removeEventListener('pointerup', onUp);
-        el.removeEventListener('pointercancel', onUp);
-        const dx = ev.clientX - dragStartX;
-        const dMs = (dx / gridRect.width) * totalMs;
-        if (Math.abs(dMs) < DAY_MS / 2) {
+        try {
+          el.releasePointerCapture(ev.pointerId);
+        } catch {
+          /* capture already released */
+        }
+        removeListeners();
+        setDraggingId(null);
+        const dayDelta = dayDeltaAt(ev.clientX);
+        if (dayDelta === 0) {
           setOverrides((prev) => {
             const next = new Map(prev);
             next.delete(item.id);
@@ -324,16 +372,106 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
           });
           return;
         }
-        const newS = snapToDay(origS + dMs);
-        const newE = newS + durMs;
+        const newS = addDays(origS, dayDelta);
+        const newE = addDays(origE, dayDelta);
         setOverrides((prev) => new Map(prev).set(item.id, { s: newS, e: newE, saving: true }));
-        void persist(item, newS, newE);
+        void commit(item, newS, newE, origS, origE);
+      };
+      // SPEC §4.6: Esc also interrupts a mouse drag and reverts the preview.
+      const onKey = (ev: KeyboardEvent) => {
+        if (ev.key !== 'Escape') return;
+        ev.preventDefault();
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch {
+          /* capture already released */
+        }
+        removeListeners();
+        setDraggingId(null);
+        setOverrides((prev) => {
+          const next = new Map(prev);
+          next.delete(item.id);
+          return next;
+        });
+      };
+      const removeListeners = () => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointercancel', onUp);
+        window.removeEventListener('keydown', onKey);
       };
       el.addEventListener('pointermove', onMove);
       el.addEventListener('pointerup', onUp);
       el.addEventListener('pointercancel', onUp);
+      window.addEventListener('keydown', onKey);
     },
-    [range, persist, onReschedule]
+    [range, commit, onReschedule]
+  );
+
+  /**
+   * SPEC §4.6 (§13.3c archetype A „Canvas"): minimal keyboard set for a focused
+   * plan bar. ←/→ move by a week, Shift+←/→ by a day (preview only); Enter saves
+   * once; Esc reverts to the pre-edit window; Ctrl/Cmd+Z undoes the last move.
+   * Frozen/published bars swallow the arrows (aria-disabled + reason in title).
+   */
+  const handleKeyDown = useCallback(
+    (
+      ev: React.KeyboardEvent<HTMLDivElement>,
+      item: ScheduleItem,
+      s: number,
+      e: number,
+      canDrag: boolean
+    ) => {
+      if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'z') {
+        ev.preventDefault();
+        undoLastMove();
+        return;
+      }
+      if (!canDrag) {
+        if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter') {
+          ev.preventDefault();
+        }
+        return;
+      }
+      if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+        ev.preventDefault();
+        const step = ev.shiftKey ? 1 : 7;
+        const days = ev.key === 'ArrowRight' ? step : -step;
+        if (!editBase || editBase.id !== item.id) setEditBase({ id: item.id, s, e });
+        setOverrides((prev) =>
+          new Map(prev).set(item.id, { s: addDays(s, days), e: addDays(e, days) })
+        );
+        return;
+      }
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (!editBase || editBase.id !== item.id) return; // nothing pending to save
+        const ov = overrides.get(item.id);
+        const newS = ov?.s ?? s;
+        const newE = ov?.e ?? e;
+        const base = editBase;
+        setEditBase(null);
+        if (newS === base.s && newE === base.e) return;
+        setOverrides((prev) => new Map(prev).set(item.id, { s: newS, e: newE, saving: true }));
+        void commit(item, newS, newE, base.s, base.e);
+        return;
+      }
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        if (editBase && editBase.id === item.id) {
+          setOverrides((prev) => new Map(prev).set(item.id, { s: editBase.s, e: editBase.e }));
+        } else {
+          setOverrides((prev) => {
+            const next = new Map(prev);
+            next.delete(item.id);
+            return next;
+          });
+        }
+        setEditBase(null);
+        setDraggingId(null);
+      }
+    },
+    [editBase, overrides, undoLastMove, commit]
   );
 
   // Toolbar (zoom + status filter) — rendered above the grid in all states.
@@ -355,6 +493,30 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         </select>
       )}
       <div className="flex-1" />
+      {planMode && planEditable && onReschedule && (
+        <button
+          type="button"
+          onClick={undoLastMove}
+          disabled={!lastMove}
+          aria-label={t('initiatives.gantt.undoAria', 'Undo the last window move')}
+          className="mr-2 inline-flex items-center gap-1 rounded border border-c-border px-2 py-0.5 text-[11px] text-c-text-secondary enabled:hover:bg-c-surface-raised disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3 w-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M3 7v6h6" />
+            <path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
+          </svg>
+          {t('initiatives.gantt.undo', 'Undo move')}
+        </button>
+      )}
       <div className="inline-flex rounded border border-c-border overflow-hidden">
         {(['day', 'week', 'month'] as GanttZoom[]).map((z) => (
           <button
@@ -599,6 +761,19 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
     const visS = Math.max(row.s, range.min);
     const visE = Math.min(Math.max(row.e, row.s + DAY_MS), rangeEndMs);
     const barHeight = planMode ? PLAN_BAR_H : 20;
+    // SPEC §4.6: focused/dragged bar carries the c-focus ring (makieta `.bar.focus`
+    // = box-shadow 0 0 0 3px c-focus). The focus ring REPLACES the critical ring
+    // so two Tailwind ring widths never collide on one element.
+    const isFocused = focusedId === item.id || draggingId === item.id;
+    const ringClass = isFocused ? 'ring-[3px] ring-c-focus' : isCritical ? CRITICAL_RING : '';
+    const grabClass = planMode && canDrag ? 'cursor-grab active:cursor-grabbing' : '';
+    // „Drag to move · N weeks" — N = window duration in whole weeks (makieta: 28d = 4).
+    const durDays = Math.max(
+      1,
+      Math.round((calendarDayStart(row.e) - calendarDayStart(row.s)) / DAY_MS)
+    );
+    const hintWeeks = Math.max(1, Math.round(durDays / 7));
+    const showHint = planMode && canDrag && isFocused;
     return (
       <div
         key={item.id}
@@ -607,10 +782,8 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
       >
         <div
           className={`absolute flex items-center px-1.5 transition-opacity ${
-            planMode ? 'rounded-[5px]' : 'rounded'
-          } ${frozen ? EXEC_BAR : TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${
-            isCritical ? CRITICAL_RING : ''
-          }`}
+            planMode ? 'rounded-[5px] focus:outline-none' : 'rounded'
+          } ${frozen ? EXEC_BAR : TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${ringClass} ${grabClass}`}
           style={{
             left: pct(visS),
             width: `${Math.max(0, ((dayOf(visE) - dayOf(visS)) * 100) / totalDays)}%`,
@@ -619,14 +792,70 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             top: barTop(barHeight),
           }}
           title={`${item.title}${isCritical ? ' • critical path' : ''}${frozen ? ' • frozen in execution' : ''}${startsBefore || endsAfter ? ` • ${t('initiatives.gantt.clippedToHorizon', 'clipped to horizon')}` : ''}${!planEditable ? ` • ${t('initiatives.planCard.publishedReadOnly', { defaultValue: 'This plan is published — create a new version (draft) to change it.' })}` : ''}${saving ? ' (saving…)' : ''}`}
+          tabIndex={planMode ? 0 : undefined}
+          aria-disabled={planMode ? !canDrag : undefined}
+          aria-label={planMode ? item.title : undefined}
           onPointerDown={canDrag ? (ev) => handlePointerDown(ev, item, row.s, row.e) : undefined}
+          onKeyDown={
+            planMode ? (ev) => handleKeyDown(ev, item, row.s, row.e, canDrag) : undefined
+          }
+          onFocus={planMode ? () => setFocusedId(item.id) : undefined}
+          onBlur={
+            planMode
+              ? () => {
+                  setFocusedId(null);
+                  // Focus left with an uncommitted keyboard preview → revert it (like Esc).
+                  if (editBase && editBase.id === item.id) {
+                    setOverrides((prev) =>
+                      new Map(prev).set(item.id, { s: editBase.s, e: editBase.e })
+                    );
+                    setEditBase(null);
+                  }
+                }
+              : undefined
+          }
         >
+          {planMode && canDrag && (
+            <>
+              <span
+                className="pointer-events-none absolute left-[3px] top-[5px] bottom-[5px] flex flex-col justify-between opacity-70"
+                aria-hidden
+              >
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+              </span>
+              <span
+                className="pointer-events-none absolute right-[3px] top-[5px] bottom-[5px] flex flex-col justify-between opacity-70"
+                aria-hidden
+              >
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+                <i className="block h-[2px] w-[2px] rounded-full bg-current" />
+              </span>
+            </>
+          )}
           {planMode ? (
             <span className="pointer-events-none mx-auto truncate text-[10.5px] font-semibold">
               {fmtDay(row.s)} → {fmtDay(row.e)}
             </span>
           ) : (
             <span className="pointer-events-none truncate text-[10px]">{item.title}</span>
+          )}
+          {showHint && (
+            <span
+              className="pointer-events-none absolute left-0.5 z-20 inline-flex items-center whitespace-nowrap rounded-[5px] bg-c-text px-[7px] text-[9.8px] font-semibold leading-none text-c-surface"
+              style={{ top: 'calc(100% + 6px)', height: 19 }}
+            >
+              <span
+                className="absolute -top-[3px] left-3 h-[7px] w-[7px] rotate-45 bg-inherit"
+                aria-hidden
+              />
+              {t('initiatives.gantt.dragHint', {
+                count: hintWeeks,
+                defaultValue: 'Drag to move · {{count}} weeks',
+              })}
+            </span>
           )}
         </div>
       </div>

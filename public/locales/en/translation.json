@@ -16990,6 +16990,10 @@
       "clippedToHorizon": "clipped to horizon",
       "nameColumnHeader": "Initiative",
       "outsideStarts": "Starts {{date}} — outside this horizon",
+      "dragHint_one": "Drag to move · {{count}} week",
+      "dragHint_other": "Drag to move · {{count}} weeks",
+      "undo": "Undo move",
+      "undoAria": "Undo the last window move",
       "legend": {
         "frozen": "In execution — frozen",
         "planned": "Planned",

@@ -1268,9 +1268,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const changePlanWindowDates = async (
     initiativeId: string,
     patch: { earliest?: string | null; target?: string | null; latest?: string | null }
-  ) => {
-    if (!draft || draft.status !== 'DRAFT') return;
-    await persistScenario(
+  ): Promise<boolean> => {
+    if (!draft || draft.status !== 'DRAFT') return false;
+    return persistScenario(
       {
         ...draft,
         windows: draft.windows.map((window) =>
@@ -1583,7 +1583,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           onAddInitiative={(initiativeId) => void addInitiativeToPlan(initiativeId)}
           onRemoveInitiative={(initiativeId) => void removeInitiativeFromPlan(initiativeId)}
           onWindowChange={(initiativeId, patch) =>
-            void changePlanWindowDates(initiativeId, patch)
+            changePlanWindowDates(initiativeId, patch)
           }
           onDependenciesChange={(initiativeId, dependsOn) =>
             void changeWindowDependencies(initiativeId, dependsOn)

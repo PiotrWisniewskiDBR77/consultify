@@ -16212,6 +16212,10 @@
       "clippedToHorizon": "przycięte do horyzontu",
       "nameColumnHeader": "Inicjatywa",
       "outsideStarts": "Start {{date}} — poza tym horyzontem",
+      "dragHint_one": "Przeciągnij, aby przesunąć · {{count}} tydzień",
+      "dragHint_other": "Przeciągnij, aby przesunąć · {{count}} tygodni",
+      "undo": "Cofnij przesunięcie",
+      "undoAria": "Cofnij ostatnie przesunięcie okna",
       "legend": {
         "frozen": "W realizacji — zamrożone",
         "planned": "Planowane",

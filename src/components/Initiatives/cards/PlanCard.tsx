@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
@@ -7,7 +7,7 @@ import { StandardArtifactShell } from '@/components/standard/StandardArtifactShe
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
 import { PLAN_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
-import type { ScheduleItem } from '@/types/initiativeSchedule';
+import type { ScheduleItem, ScheduleItemType } from '@/types/initiativeSchedule';
 
 import { formatPlanSolverReason } from '../planSolverReason';
 import { InitiativeGantt } from '../gantt';
@@ -121,6 +121,21 @@ const windowUnitLabel = (value: string, locale: string) =>
 /** ISO → wartość `<input type="date">`; pusty napis dla braku daty. */
 const toDateInput = (value: string | null) => (value ? value.slice(0, 10) : '');
 const toDateIso = (value: string) => (value ? `${value}T00:00:00.000Z` : null);
+/**
+ * Przesunięcie daty `YYYY-MM-DD` o całe dni W UTC — niezależne od strefy
+ * uruchomienia (lokalne `setDate` na `new Date('2026-09-28')` parsed jako UTC
+ * północ dałoby off-by-one na zachód od Greenwich).
+ */
+const shiftDateOnly = (dateOnly: string, days: number): string => {
+  const d = new Date(`${dateOnly}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+/** Całkowita liczba dni kalendarzowych między dwiema datami `YYYY-MM-DD` (to − from). */
+const utcDayDiff = (fromDateOnly: string, toDateOnly: string): number =>
+  Math.round(
+    (Date.parse(`${toDateOnly}T00:00:00Z`) - Date.parse(`${fromDateOnly}T00:00:00Z`)) / 86400000
+  );
 
 /**
  * WALIDACJA OKNA (P15-K3, DEC-421): dokładnie ta sama reguła, co
@@ -198,7 +213,15 @@ export function PlanCard({
   onPublish: () => void;
   onAddInitiative?: (initiativeId: string) => void;
   onRemoveInitiative?: (initiativeId: string) => void;
-  onWindowChange?: (initiativeId: string, patch: PlanCardWindowPatch) => void;
+  /**
+   * SPEC §4.2: zapis okna idzie przez CAS całego scenariusza. Zwrot `false`
+   * (lub Promise<boolean> = false) oznacza odrzucenie zapisu (np. 409) — oś
+   * czasu cofa wtedy optimistic pasek. `void`/`undefined` = success (wstecznie).
+   */
+  onWindowChange?: (
+    initiativeId: string,
+    patch: PlanCardWindowPatch
+  ) => void | Promise<boolean | void>;
   onDependenciesChange?: (initiativeId: string, dependsOn: string[]) => void;
   /** P15-K5 po scaleniu: zapis popytu per rola idzie tą samą drogą CAS, co reszta karty. */
   onRoleDemandChange?: (initiativeId: string, roleDemand: RoleDemandLine[]) => Promise<boolean>;
@@ -409,9 +432,12 @@ export function PlanCard({
     </div>
   );
 
-  const changeWindow = (initiativeId: string, patch: PlanCardWindowPatch) => {
+  const changeWindow = async (
+    initiativeId: string,
+    patch: PlanCardWindowPatch
+  ): Promise<boolean> => {
     const current = scenario.windows.find((window) => window.initiativeId === initiativeId);
-    if (!current || !onWindowChange) return;
+    if (!current || !onWindowChange) return false;
     const problem = validatePlanWindowDates(
       {
         earliest: patch.earliest !== undefined ? patch.earliest : current.earliest,
@@ -426,9 +452,43 @@ export function PlanCard({
       else delete next[initiativeId];
       return next;
     });
-    if (problem) return;
-    onWindowChange(initiativeId, patch);
+    if (problem) return false;
+    const result = await onWindowChange(initiativeId, patch);
+    return result !== false;
   };
+
+  /**
+   * SPEC §4.2/§8 row 2 (etap 2): most między `onReschedule` osi czasu (itemId +
+   * nowe okno) a zapisem CAŁEGO scenariusza. Drag o Δ dni → patch
+   * `{earliest, target, latest}` przesunięty o to samo Δ (długość okna bez zmian).
+   * Zwraca/throw tak, by `commit` w Gantcie cofnął pasek przy 409.
+   */
+  const handleGanttReschedule = useCallback(
+    async (
+      itemId: string,
+      _sourceKind: ScheduleItemType,
+      _sourceId: string,
+      start: string
+    ): Promise<void> => {
+      const current = scenario.windows.find((window) => window.initiativeId === itemId);
+      if (!current || !onWindowChange) return;
+      const oldStart = current.earliest ?? current.target;
+      if (!oldStart) return;
+      const deltaDays = utcDayDiff(toDateInput(oldStart), toDateInput(start));
+      if (deltaDays === 0) return;
+      const shift = (value: string | null) =>
+        value == null ? null : toDateIso(shiftDateOnly(toDateInput(value), deltaDays));
+      const ok = await changeWindow(itemId, {
+        earliest: shift(current.earliest),
+        target: shift(current.target),
+        latest: shift(current.latest),
+      });
+      if (ok === false) throw new Error('plan-window-write-rejected');
+    },
+    // changeWindow is a stable closure over scenario/onWindowChange/horizon.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.windows, onWindowChange, horizon]
+  );
 
   const scopeSection = (
     <div className={box}>
@@ -749,6 +809,21 @@ export function PlanCard({
           ))}
         </ul>
       )}
+      {/*
+        SPEC §8 row 2 (DEC-627): komunikat zapisu musi być widoczny TAM, gdzie
+        człowiek przeciąga pasek. `errorLabel` (409 → CONFLICT) renderował się
+        dotąd tylko w sekcji „Decyzje" i w edytorze ról, więc po nieudanym
+        zapisie okna w tej sekcji pasek wracał bez słowa wyjaśnienia.
+      */}
+      {errorLabel && (
+        <p
+          className="mt-3 text-sm text-c-danger"
+          role="alert"
+          data-testid="plan-window-conflict"
+        >
+          {errorLabel}
+        </p>
+      )}
       <div className="mt-5 border-t border-c-border-subtle pt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -786,6 +861,7 @@ export function PlanCard({
           rowLabels={planTimelineV2 ? ganttRowLabels : undefined}
           planStatus={planTimelineV2 ? scenario.status : undefined}
           onNewDraftVersion={planTimelineV2 ? onNewDraftVersion : undefined}
+          onReschedule={planTimelineV2 && editable ? handleGanttReschedule : undefined}
         />
         {!planTimelineV2 && (
           <p className="mt-2 text-xs text-c-text-muted">

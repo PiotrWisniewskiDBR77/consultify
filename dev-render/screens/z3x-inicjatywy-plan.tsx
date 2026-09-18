@@ -125,6 +125,23 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const originalFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = String(input);
+  const method = (init?.method ?? 'GET').toUpperCase();
+  /**
+   * PL3 etap 2 (DEC-627): zapis okna przez przeciąganie. `writePlanScenario`
+   * POST-uje na `…/plan-scenarios/plan-us-launch`; bez tej gałęzi POST wpadłby
+   * w niżej dopasowany GET (ta sama ścieżka) i zwrócił 200, więc ścieżka 409
+   * (CAS) nigdy by się nie odtworzyła w dowodzie. `?conflict=1` → 409 →
+   * `persistScenario` stawia `writeState='CONFLICT'`, a pasek wraca.
+   */
+  if (
+    (method === 'POST' || method === 'PUT' || method === 'PATCH') &&
+    url.includes('/api/initiatives/runtime-v1/plan-scenarios/plan-us-launch')
+  ) {
+    if (query.get('conflict') === '1') {
+      return json({ error: { code: 'CONFLICT', rule: 'PLAN_SCENARIO_VERSION_CONFLICT' } }, 409);
+    }
+    return json({ aggregateVersion: 5, response: { ...scenario, scenarioVersion: 5 } });
+  }
   if (url.includes('/api/organizations/') && url.includes('/members')) return json({ members: [] });
   if (url.includes('/api/v8/planning/pending-decisions')) return json([]);
   if (url.includes('/api/users')) return json([]);
