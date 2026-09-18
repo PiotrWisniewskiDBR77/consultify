@@ -48,7 +48,12 @@ import { Callout } from '../shared/NModeBlocks';
 import type { RowAction } from '../shared/RowActionsMenu';
 import CutoverRunbookPanel from './CutoverRunbookPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
-import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
+import type {
+  DelaySignalItem,
+  RiskSignalItem,
+  WorkRiskBoundarySummary,
+} from './ExecutionTimelineView';
+import { WorkRiskBoundaryBadge } from './workRiskBoundarySurface';
 import RolloutBaselinePanel from './RolloutBaselinePanel';
 import { type RolloutEditTarget, RolloutRegisterEditModal } from './RolloutRegisterEditModal';
 import RolloutStagesPanel from './RolloutStagesPanel';
@@ -157,6 +162,7 @@ interface DerivedKpi extends RolloutKpi {
 }
 interface DerivedRisk extends RolloutRisk {
   derived: true;
+  workRiskBoundary?: WorkRiskBoundarySummary;
 }
 interface DerivedClosure extends RolloutClosure {
   derived: true;
@@ -268,6 +274,7 @@ function deriveRisks(
         mitigation: r.suggestedAction || null,
         status: 'OPEN',
         derived: true,
+        workRiskBoundary: r.sourceData?.workRiskBoundary,
       });
     }
     for (const d of delaySignals) {
@@ -314,7 +321,10 @@ function deriveRisks(
     });
 }
 
-function deriveClosures(initiatives: FullInitiative[], t: ReturnType<typeof useTranslation>['t']): DerivedClosure[] {
+function deriveClosures(
+  initiatives: FullInitiative[],
+  t: ReturnType<typeof useTranslation>['t']
+): DerivedClosure[] {
   const completed = initiatives.filter((i) =>
     COMPLETED_STATUSES.has(String(i.status || '').toUpperCase())
   );
@@ -955,7 +965,10 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
         width: '160px',
         filterable: true,
         filterOptions: [
-          { value: 'Handover', label: t('execution.rollout.closure.category.handover', 'Handover') },
+          {
+            value: 'Handover',
+            label: t('execution.rollout.closure.category.handover', 'Handover'),
+          },
           { value: 'Sign-off', label: t('execution.rollout.closure.category.signOff', 'Sign-off') },
           { value: 'Closure', label: t('execution.rollout.closure.category.closure', 'Closure') },
         ],
@@ -1328,7 +1341,10 @@ const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 
 // Eksportowany WYŁĄCZNIE po to, by test mógł sprawdzić stan pusty i wykres
 // bez montowania całej zakładki Rollout (RolloutTab.kpiTrend.test.tsx).
-export const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, target }) => {
+export const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({
+  points,
+  target,
+}) => {
   const { t } = useTranslation();
   if (points.length < 2) {
     /*
@@ -1454,7 +1470,10 @@ const DerivedRiskTable: React.FC<{
   >
     {risks.map((r) => (
       <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-        <td className="p-3 font-medium text-slate-700 dark:text-slate-200">{r.title}</td>
+        <td className="p-3 font-medium text-slate-700 dark:text-slate-200">
+          <div>{r.title}</div>
+          {r.workRiskBoundary && <WorkRiskBoundaryBadge boundary={r.workRiskBoundary} t={t} />}
+        </td>
         <td className="p-3">
           <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
             <SignalDot tone={levelTone(r.probability)} />

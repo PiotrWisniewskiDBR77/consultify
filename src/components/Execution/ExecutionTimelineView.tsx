@@ -76,6 +76,15 @@ export interface CriticalPathInfo {
   slackDays: number;
 }
 
+export interface WorkRiskBoundarySummary {
+  sourceType: 'task' | 'initiative' | 'milestone' | 'report' | 'manager_action' | 'delay_signal';
+  sourceId: string;
+  riskState: 'none' | 'watch' | 'amber' | 'red' | 'UNKNOWN';
+  decisionLevel: 1 | 2 | 3 | null;
+  missingEvidence: string[];
+  requiresHumanReview: boolean;
+}
+
 export interface RiskSignalItem {
   id: string;
   initiativeId: string;
@@ -85,6 +94,10 @@ export interface RiskSignalItem {
   title: string;
   description: string;
   suggestedAction: string;
+  sourceData?: {
+    workRiskBoundary?: WorkRiskBoundarySummary;
+    [key: string]: unknown;
+  };
 }
 
 interface TimelineFilters {
@@ -658,8 +671,7 @@ const WarningsStrip: React.FC<{
     medium: 'bg-amber-500',
     low: 'bg-slate-400',
   };
-  const chipShell =
-    'border-c-border-subtle bg-c-surface text-c-text-secondary';
+  const chipShell = 'border-c-border-subtle bg-c-surface text-c-text-secondary';
 
   return (
     <div className="shrink-0 px-4 py-2 border-b border-c-border-subtle bg-amber-50/50 dark:bg-amber-900/10">
