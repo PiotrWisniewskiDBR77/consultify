@@ -74,6 +74,7 @@ import { useTranslation } from 'react-i18next';
  * a każdy props-obiekt domeny zaciąga tu logikę, której ten plik nie ma prawa
  * mieć (ten sam idiom co `topBarState`/`rightRailState`).
  */
+
 export interface DeckBuilderArtifactPanelMeta {
   slideCount: number;
   /** 'public' | 'internal' | 'confidential' — etykieta rozwiązywana niżej. */
@@ -82,6 +83,12 @@ export interface DeckBuilderArtifactPanelMeta {
   status?: string;
   /** Numer wersji z serwera (CAS token). */
   version?: number | null;
+  /** Metadane ostatnio opublikowanej wersji artefaktu. */
+  publication?: {
+    fromVersion?: number | null;
+    publishedBy?: string | null;
+    publishedAt?: string | null;
+  } | null;
   /** Nazwa zestawu kolorów / motywu. */
   colorSetId?: string | null;
   /** Liczba zablokowanych (ręcznie edytowanych) slajdów — sygnał dla Teresy. */
@@ -104,6 +111,10 @@ export interface DeckBuilderMelsViewProps {
   topBarLabels?: DeckBuilderTopBarChipsLabels;
   /** Primary file handoff beside Present (U-49). */
   onExportPptx?: () => void;
+  /** Publishes the approved deck version as the immutable artifact version. */
+  onPublishDeck?: () => void;
+  /** Opens a new editable revision from a published artifact version. */
+  onStartRevision?: () => void;
 
   /** Right-rail tool state + per-tool panel content. */
   rightRailState?: DeckBuilderRightRailState;
@@ -263,6 +274,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   topBarState,
   topBarLabels,
   onExportPptx,
+  onPublishDeck,
+  onStartRevision,
   rightRailState,
   rightRailLabels,
   rightRailPanels = {},
@@ -285,8 +298,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   onOpenShortcutHelp,
   persistRailState = true,
 }) => {
-  const { t } = useTranslation();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const [artifactLeftMode, setArtifactLeftMode] = useState<
     'structure' | 'comments' | 'sources' | 'review'
@@ -320,19 +332,31 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
             return {
               ...descriptor,
               label: t('presentations.builder.deckBuilderMelsView.history', 'History'),
-              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
+              overflowSection: t(
+                'presentations.builder.deckBuilderMelsView.sectionHistory',
+                'History'
+              ),
             };
           case 'audit':
             return {
               ...descriptor,
               label: t('presentations.builder.deckBuilderMelsView.auditLog', 'Audit log'),
-              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
+              overflowSection: t(
+                'presentations.builder.deckBuilderMelsView.sectionHistory',
+                'History'
+              ),
             };
           case 'analytics':
             return {
               ...descriptor,
-              label: t('presentations.builder.deckBuilderMelsView.sharingAnalytics', 'Sharing analytics'),
-              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionSharing', 'Sharing'),
+              label: t(
+                'presentations.builder.deckBuilderMelsView.sharingAnalytics',
+                'Sharing analytics'
+              ),
+              overflowSection: t(
+                'presentations.builder.deckBuilderMelsView.sectionSharing',
+                'Sharing'
+              ),
             };
           default:
             return descriptor;
@@ -372,17 +396,16 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       <div
         className="flex shrink-0 items-center gap-1 border-b border-c-border-subtle p-2"
         role="tablist"
-        aria-label={t('presentations.builder.deckBuilderMelsView.presentationTools', 'Presentation tools')}
+        aria-label={t(
+          'presentations.builder.deckBuilderMelsView.presentationTools',
+          'Presentation tools'
+        )}
       >
         {(
           [
             ['structure', t('presentations.builder.deckBuilderMelsView.slides', 'Slides')],
-            ...(reviewPanel
-              ? [['review', t('presentations.review.title', 'Review')]]
-              : []),
-          ] as Array<
-            [typeof artifactLeftMode, string]
-          >
+            ...(reviewPanel ? [['review', t('presentations.review.title', 'Review')]] : []),
+          ] as Array<[typeof artifactLeftMode, string]>
         ).map(([mode, label]) => (
           <button
             key={mode}
@@ -451,7 +474,6 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   const artifactRightPanel = useMemo((): React.ReactNode => {
     if (!artifactStudioMode) return undefined;
 
-    const L = (pl: string, en: string): string => (isPolish ? pl : en);
     const commentsBadge =
       typeof rightRailState?.openCommentCount === 'number' && rightRailState.openCommentCount > 0
         ? rightRailState.openCommentCount
@@ -465,74 +487,142 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     const actions = [
       panelAction(
         'theme',
-        L('Motyw i kolorystyka', 'Theme and colours'),
+        t('presentations.builder.artifactPanel.theme', 'Theme'),
         Palette,
         topBarHandlers.onTheme
       ),
       panelAction(
         'history',
-        L('Historia wersji', 'Version history'),
+        t('presentations.builder.artifactPanel.versionHistory', 'Version history'),
         History,
         topBarHandlers.onHistory
       ),
-      panelAction('share', L('Udostępnij', 'Share'), Share2, topBarHandlers.onShare),
+
+      panelAction(
+        'share',
+        t('presentations.builder.topBar.share', 'Share'),
+        Share2,
+        topBarHandlers.onShare
+      ),
+      artifactPanelMeta?.status === 'published'
+        ? panelAction(
+            'start-revision',
+            t('presentations.builder.artifactPanel.editNextRevision', 'Edit next revision'),
+            History,
+            onStartRevision
+          )
+        : panelAction(
+            'publish',
+            t(
+              'presentations.builder.artifactPanel.publishApprovedVersion',
+              'Publish approved version'
+            ),
+            ShieldCheck,
+            onPublishDeck
+          ),
+
       // DEC-419 (06.09.2026): wpis „Zapytaj Teresę o tę prezentację" usunięty
       // z listy akcji — wejście do Teresy jest w Menu 1 (DEC-404).
     ].filter(Boolean);
 
     const propertyRows = artifactPanelMeta
-      ? [
-          { id: 'slides', label: L('Slajdy', 'Slides'), value: artifactPanelMeta.slideCount },
+      ? ([
+          {
+            id: 'slides',
+            label: t('presentations.builder.artifactPanel.slides', 'Slides'),
+            value: artifactPanelMeta.slideCount,
+          },
           artifactPanelMeta.confidentiality
-            ? { id: 'classification', label: L('Klasyfikacja', 'Classification'), value:
-                artifactPanelMeta.confidentiality === 'public'
-                  ? L('Publiczna', 'Public')
-                  : artifactPanelMeta.confidentiality === 'confidential'
-                    ? L('Poufna', 'Confidential')
-                    : L('Wewnętrzna', 'Internal')
+            ? {
+                id: 'classification',
+                label: t('presentations.builder.artifactPanel.classification', 'Classification'),
+                value:
+                  artifactPanelMeta.confidentiality === 'public'
+                    ? t('presentations.builder.artifactPanel.public', 'Public')
+                    : artifactPanelMeta.confidentiality === 'confidential'
+                      ? t('presentations.builder.artifactPanel.confidential', 'Confidential')
+                      : t('presentations.builder.artifactPanel.internal', 'Internal'),
               }
             : null,
           artifactPanelMeta.status
-            ? { id: 'status', label: L('Status', 'Status'), value:
-                artifactPanelMeta.status === 'in_review'
-                  ? L('Do przeglądu', 'In review')
-                  : artifactPanelMeta.status === 'approved'
-                    ? L('Zatwierdzona', 'Approved')
-                    : artifactPanelMeta.status === 'final'
-                      ? L('Finalna', 'Final')
-                      : artifactPanelMeta.status === 'ready'
-                        ? L('Gotowa', 'Ready')
-                        : L('Szkic', 'Draft')
+            ? {
+                id: 'status',
+                label: t('presentations.builder.artifactPanel.status', 'Status'),
+                value:
+                  artifactPanelMeta.status === 'in_review'
+                    ? t('presentations.builder.artifactPanel.statusInReview', 'In review')
+                    : artifactPanelMeta.status === 'approved'
+                      ? t('presentations.builder.artifactPanel.statusApproved', 'Approved')
+                      : artifactPanelMeta.status === 'final'
+                        ? t('presentations.builder.artifactPanel.statusFinal', 'Final')
+                        : artifactPanelMeta.status === 'published'
+                          ? t('presentations.builder.artifactPanel.published', 'Published')
+                          : artifactPanelMeta.status === 'ready'
+                            ? t('presentations.builder.artifactPanel.ready', 'Ready')
+                            : t('presentations.builder.artifactPanel.statusDraft', 'Draft'),
               }
             : null,
           artifactPanelMeta.colorSetId
-            ? { id: 'theme', label: L('Motyw', 'Theme'), value:
-                artifactPanelMeta.colorSetId === 'brand_kit'
-                  ? L('Identyfikacja marki', 'Brand kit')
-                  : (CURATED_COLOR_SETS.find((set) => set.id === artifactPanelMeta.colorSetId)
-                      ?.name ?? artifactPanelMeta.colorSetId.replace(/_/g, ' '))
+            ? {
+                id: 'theme',
+                label: t('presentations.builder.artifactPanel.theme', 'Theme'),
+                value:
+                  artifactPanelMeta.colorSetId === 'brand_kit'
+                    ? t('presentations.builder.artifactPanel.brandKit', 'Brand kit')
+                    : (CURATED_COLOR_SETS.find((set) => set.id === artifactPanelMeta.colorSetId)
+                        ?.name ?? artifactPanelMeta.colorSetId.replace(/_/g, ' ')),
               }
             : null,
           typeof artifactPanelMeta.version === 'number'
-            ? { id: 'version', label: L('Wersja', 'Version'), value: artifactPanelMeta.version }
+            ? {
+                id: 'version',
+                label: t('presentations.builder.artifactPanel.version', 'Version'),
+                value: `${artifactPanelMeta.version}.0`,
+              }
+            : null,
+          artifactPanelMeta.publication?.fromVersion
+            ? {
+                id: 'published-from',
+                label: t('presentations.builder.artifactPanel.publishedFrom', 'Published from'),
+                value: `${artifactPanelMeta.publication.fromVersion}.0`,
+              }
+            : null,
+          artifactPanelMeta.publication?.publishedBy
+            ? {
+                id: 'published-by',
+                label: t('presentations.builder.artifactPanel.publishedBy', 'Published by'),
+                value: artifactPanelMeta.publication.publishedBy,
+              }
+            : null,
+          artifactPanelMeta.publication?.publishedAt
+            ? {
+                id: 'published-at',
+                label: t('presentations.builder.artifactPanel.publishedAt', 'Published at'),
+                value: new Date(artifactPanelMeta.publication.publishedAt).toLocaleString(
+                  i18n.language || undefined
+                ),
+              }
             : null,
           typeof artifactPanelMeta.lockedSlideCount === 'number' &&
           artifactPanelMeta.lockedSlideCount > 0
-            ? { id: 'manual', label: L('Edytowane ręcznie', 'Hand-edited'), value:
-                L(
-                  `${artifactPanelMeta.lockedSlideCount} z ${artifactPanelMeta.slideCount}`,
-                  `${artifactPanelMeta.lockedSlideCount} of ${artifactPanelMeta.slideCount}`
-                )
+            ? {
+                id: 'manual',
+                label: t('presentations.builder.artifactPanel.handEdited', 'Hand-edited'),
+                value: t('presentations.builder.artifactPanel.handEditedCount', {
+                  defaultValue: '{{locked}} of {{total}}',
+                  locked: artifactPanelMeta.lockedSlideCount,
+                  total: artifactPanelMeta.slideCount,
+                }),
               }
             : null,
-        ].filter((row) => row !== null) as ArtifactPropertyRow[]
+        ].filter((row) => row !== null) as ArtifactPropertyRow[])
       : [];
 
     const byId: Partial<Record<string, ArtifactRightPanelSection>> = {};
     if (actions.length > 0) {
       byId.actions = {
         id: 'actions',
-        label: L('Akcje', 'Actions'),
+        label: t('presentations.builder.artifactPanel.actions', 'Actions'),
         icon: ShieldCheck,
         defaultOpen: true,
         children: <div className="space-y-2">{actions}</div>,
@@ -541,14 +631,14 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (propertyRows.length > 0) {
       byId.properties = {
         id: 'properties',
-        label: L('Właściwości', 'Properties'),
+        label: t('presentations.builder.artifactPanel.properties', 'Properties'),
         icon: SlidersHorizontal,
         defaultOpen: true,
         children: (
           <ArtifactPropertiesTable
             rows={propertyRows}
-            propertyLabel={L('Właściwość', 'Property')}
-            valueLabel={L('Wartość', 'Value')}
+            propertyLabel={t('presentations.builder.artifactPanel.property', 'Property')}
+            valueLabel={t('presentations.builder.artifactPanel.value', 'Value')}
           />
         ),
       };
@@ -556,7 +646,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (rightRailPanels.relations) {
       byId.relations = {
         id: 'relations',
-        label: L('Powiązania', 'Relations'),
+        label: t('presentations.builder.artifactPanel.relations', 'Relations'),
         icon: Link2,
         defaultOpen: false,
         children: rightRailPanels.relations,
@@ -565,7 +655,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (rightRailPanels.evidence) {
       byId.evidence = {
         id: 'evidence',
-        label: L('Źródła i założenia', 'Sources and assumptions'),
+        label: t('presentations.builder.artifactPanel.evidence', 'Sources and assumptions'),
         icon: FileSearch,
         defaultOpen: false,
         children: rightRailPanels.evidence,
@@ -574,7 +664,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (rightRailPanels.comments) {
       byId.comments = {
         id: 'comments',
-        label: L('Komentarze', 'Comments'),
+        label: t('presentations.builder.artifactPanel.comments', 'Comments'),
         icon: MessageSquare,
         defaultOpen: false,
         badge: commentsBadge,
@@ -584,7 +674,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (rightRailPanels.activity) {
       byId.history = {
         id: 'history',
-        label: L('Historia', 'History'),
+        label: t('presentations.builder.artifactPanel.history', 'History'),
         icon: Activity,
         defaultOpen: false,
         badge: activityBadge,
@@ -603,14 +693,14 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       <ArtifactRightPanel
         sections={sections}
         width="100%"
-        ariaLabel={L('Panel prezentacji', 'Presentation panel')}
+        ariaLabel={t('presentations.builder.artifactPanel.presentationPanel', 'Presentation panel')}
       />
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     artifactStudioMode,
     artifactPanelMeta,
-    isPolish,
+    t,
     rightRailPanels.relations,
     rightRailPanels.evidence,
     rightRailPanels.comments,

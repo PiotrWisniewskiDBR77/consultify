@@ -1,5 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createRealUseTranslation } from '@/test-utils/realTranslations';
+
+const locale = vi.hoisted(() => ({ value: 'en' as 'en' | 'pl' }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => createRealUseTranslation(locale.value)(),
+}));
 
 import { DeckBuilderMelsView } from '../DeckBuilderMelsView';
 
@@ -45,6 +53,11 @@ function renderView(artifactStudioMode: boolean) {
 }
 
 describe('DeckBuilderMelsView Artifact Studio adapter', () => {
+  beforeEach(() => {
+    locale.value = 'en';
+    vi.clearAllMocks();
+  });
+
   it('keeps the external bottom bar but does not restore the legacy Teresa chip when the rollout is off', () => {
     renderView(false);
 
@@ -136,6 +149,50 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
   it('★ prawy panel NIE pojawia się poza trybem warsztatu (zmiana addytywna)', () => {
     renderView(false);
     expect(screen.queryByTestId('artifact-studio-right-panel')).not.toBeInTheDocument();
+  });
+
+  it('uses shipped Polish i18n keys for the published deck artifact panel', () => {
+    locale.value = 'pl';
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1800,
+    });
+
+    render(
+      <DeckBuilderMelsView
+        artifactStudioMode
+        title="Investment decision"
+        topBarHandlers={handlers}
+        onExportPptx={onExportPptx}
+        onStartRevision={vi.fn()}
+        leftRail={<div>Slides structure</div>}
+        canvas={<div>Deck canvas</div>}
+        artifactPanelMeta={{
+          slideCount: 2,
+          confidentiality: 'internal',
+          status: 'published',
+          version: 1,
+          colorSetId: 'brand_kit',
+          lockedSlideCount: 1,
+          publication: {
+            fromVersion: 1,
+            publishedBy: 'Irina',
+            publishedAt: '2026-09-18T12:00:00Z',
+          },
+        }}
+        persistRailState={false}
+      />
+    );
+
+    const panel = screen.getByTestId('artifact-studio-right-panel');
+    expect(screen.getByRole('button', { name: 'Edytuj następną wersję' })).toBeInTheDocument();
+    expect(panel).toHaveTextContent('Właściwości');
+    expect(panel).toHaveTextContent('Opublikowana');
+    expect(panel).toHaveTextContent('Opublikowano z');
+    expect(panel).toHaveTextContent('Identyfikacja marki');
+    expect(panel).toHaveTextContent('1 z 2');
+    expect(panel).not.toHaveTextContent('Published from');
+    expect(panel).not.toHaveTextContent('Hand-edited');
   });
 
   it('uses one Present split button for audience and presenter modes', async () => {

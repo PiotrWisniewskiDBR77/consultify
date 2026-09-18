@@ -89,6 +89,12 @@ import {
 } from '../services/presentationDeckCollaboratorService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
+  publishDeckVersion,
+  readDeckArtifactLifecycle,
+  sendDeckLifecycleError,
+  startDeckDraftRevision,
+} from '../services/presentationDeckArtifactLifecycleService.js';
+import {
   buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
@@ -609,6 +615,10 @@ interface CurrentPptxExportDependencies {
 
 export function isExportPptxV2Enabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.ENABLE_EXPORT_PPTX_V2 === 'true' || env.VITE_EXPORT_PPTX_V2 === 'true';
+}
+
+export function isDeckArtifactV2Enabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.ENABLE_DECK_ARTIFACT_V2 === 'true' || env.VITE_DECK_ARTIFACT_V2 === 'true';
 }
 
 /** Ensure the downloadable bytes represent the current persisted deck version. */
@@ -2660,7 +2670,85 @@ router.get(
       [req.params.id, orgId]
     )) as any;
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
-    res.json({ success: true, data: normalizeDeckRow(row) });
+
+    const artifactLifecycle = isDeckArtifactV2Enabled()
+      ? await readDeckArtifactLifecycle({ deckId: String(req.params.id), organizationId: orgId })
+      : undefined;
+    res.json({
+      success: true,
+      data: {
+        ...normalizeDeckRow(row),
+        ...(artifactLifecycle ? { artifact_lifecycle: artifactLifecycle } : {}),
+      },
+    });
+  })
+);
+
+router.post(
+  '/decks/:id/publish',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!isDeckArtifactV2Enabled()) {
+      return res.status(404).json({
+        success: false,
+        error: 'DECK_ARTIFACT_V2_DISABLED',
+        code: 'DECK_ARTIFACT_V2_DISABLED',
+      });
+    }
+    if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
+    try {
+      const evidence = await publishDeckVersion({
+        deckId: String(req.params.id),
+        organizationId: getOrgId(req),
+        actorUserId: getUserId(req),
+      });
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'publish',
+        resourceType: 'presentation_deck',
+        resourceId: String(req.params.id),
+        after: evidence,
+      });
+      return res.status(200).json({ success: true, data: evidence });
+    } catch (error) {
+      const handled = sendDeckLifecycleError(res, error);
+      if (handled) return handled;
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/decks/:id/start-revision',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!isDeckArtifactV2Enabled()) {
+      return res.status(404).json({
+        success: false,
+        error: 'DECK_ARTIFACT_V2_DISABLED',
+        code: 'DECK_ARTIFACT_V2_DISABLED',
+      });
+    }
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    try {
+      const revision = await startDeckDraftRevision({
+        deckId: String(req.params.id),
+        organizationId: getOrgId(req),
+        actorUserId: getUserId(req),
+      });
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'start_revision',
+        resourceType: 'presentation_deck',
+        resourceId: String(req.params.id),
+        after: revision,
+      });
+      return res.status(201).json({ success: true, data: revision });
+    } catch (error) {
+      const handled = sendDeckLifecycleError(res, error);
+      if (handled) return handled;
+      throw error;
+    }
   })
 );
 
@@ -4089,11 +4177,24 @@ router.put(
       : null;
 
     const deck = (await dbGet(
-      'SELECT id, title, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      'SELECT id, title, version, deck_json, status, exported_version FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
     )) as any;
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    const isPublishedArtifact =
+      String(deck.status || '').toLowerCase() === 'published' ||
+      (['ready', 'exported'].includes(String(deck.status || '').toLowerCase()) &&
+        deck.exported_version !== null &&
+        deck.exported_version !== undefined);
+    if (isDeckArtifactV2Enabled() && isPublishedArtifact) {
+      return res.status(409).json({
+        success: false,
+        error: 'PUBLISHED_DECK_READ_ONLY',
+        code: 'PUBLISHED_DECK_READ_ONLY',
+      });
     }
 
     if (clientVersion !== null && clientVersion < deck.version) {

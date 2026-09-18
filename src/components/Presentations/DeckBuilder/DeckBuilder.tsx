@@ -1063,6 +1063,35 @@ const DeckBuilderForDeck: React.FC = () => {
     [deck, t]
   );
 
+
+  const handlePublishDeck = useCallback(async () => {
+    if (!deck) return;
+    try {
+      await Api.post(`/presentations/decks/${deck.deck_id}/publish`, {});
+      toast.success(t('presentations.builder.artifactPanel.publishSuccess', 'Published approved version'));
+      setDeckReloadKey((key) => key + 1);
+    } catch (err: any) {
+      toast.error(
+        err?.message ||
+          t('presentations.builder.artifactPanel.publishFailed', 'Could not publish this deck')
+      );
+    }
+  }, [deck, t]);
+
+  const handleStartRevision = useCallback(async () => {
+    if (!deck) return;
+    try {
+      await Api.post(`/presentations/decks/${deck.deck_id}/start-revision`, {});
+      toast.success(t('presentations.builder.artifactPanel.revisionStarted', 'Editable revision started'));
+      setDeckReloadKey((key) => key + 1);
+    } catch (err: any) {
+      toast.error(
+        err?.message ||
+          t('presentations.builder.artifactPanel.revisionFailed', 'Could not start a new revision')
+      );
+    }
+  }, [deck, t]);
+
   const handleExport = useCallback(
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
@@ -1590,6 +1619,8 @@ const DeckBuilderForDeck: React.FC = () => {
             exportPptx: t('presentations.builder.export.pptx', 'Export PPTX'),
           }}
           onExportPptx={() => void handleExport('pptx')}
+          onPublishDeck={() => void handlePublishDeck()}
+          onStartRevision={() => void handleStartRevision()}
           topBarHandlers={{
             onTheme: () => setThemeSwitcherOpen(true),
             onHistory: () => setVersionHistoryOpen((v) => !v),
