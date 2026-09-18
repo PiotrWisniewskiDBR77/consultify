@@ -103,6 +103,8 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 const AngielskieResztkiI18nScreen = React.lazy(() => import('./screens/angielskie-resztki-i18n'));
+// K-29 (Wpis 138 / QB2) — REAL <AttachmentsSection>, whole-card drag & drop.
+const K29AttachmentsDropScreen = React.lazy(() => import('./screens/k29-attachments-drop'));
 // (2026-08-13, T5) `./screens/tools-sesja-wyjscie.tsx` does not exist in this
 // worktree (dangling import — same class of defect as commit 8b379a0eb9
 // fixed elsewhere) and Vite's import-analysis plugin fails HARD on it at
@@ -790,6 +792,11 @@ const Pmo1PrzejscieEtapuScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'k29-attachments-drop': {
+    label:
+      'K-29 (QB2) — REALNY <AttachmentsSection> (TaskDetailView): drag&drop na CAŁĄ kartę (także zwiniętą), plik >25 MB odrzucony z komunikatem. &lang=en|pl &theme=light|dark',
+    render: () => <K29AttachmentsDropScreen />,
+  },
   'u43-deck-review': {
     label: 'Deck Builder · Review (U-43 / DEC-543)',
     render: () => <U43DeckReviewScreen />,

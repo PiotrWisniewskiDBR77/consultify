@@ -143,9 +143,15 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragOver(false);
+      if (readOnly) return;
+      // K-29: the drop target is the whole card, which stays visible even when the
+      // section is collapsed — expand it so the user sees the uploaded result (or
+      // the empty zone plus the too-large toast) instead of the browser opening
+      // the file.
+      if (!expanded) onToggleExpand?.();
       handleFileSelect(e.dataTransfer.files);
     },
-    [handleFileSelect]
+    [handleFileSelect, readOnly, expanded, onToggleExpand]
   );
 
   const handleDeleteClick = async (attachment: Attachment) => {
@@ -177,8 +183,19 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
   return (
     <motion.div
+      data-testid="attachments-card"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!readOnly) setDragOver(true);
+      }}
+      onDragLeave={(e) => {
+        // Only clear the highlight when the pointer actually leaves the card;
+        // dragLeave also fires (bubbled) when moving between child elements.
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+      }}
+      onDrop={handleDrop}
       className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Collapsible Header */}
@@ -227,14 +244,8 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
             className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
           >
             <div className="p-4">
-              {/* Drop Zone / Attachments Grid */}
+              {/* Drop Zone / Attachments Grid (drop handled by the outer card) */}
               <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (!readOnly) setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
                 className={`
           min-h-[80px] rounded-lg border-2 border-dashed transition-all
           ${

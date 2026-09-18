@@ -1,0 +1,9 @@
+[light] BEFORE {"gridItems":0,"hasThumb":false,"expanded":false,"toasts":[],"tooLargeMsg":false,"uploadedMsg":false}
+        SMALL  {"gridItems":1,"hasThumb":true,"expanded":true,"toasts":["Uploaded 1 file"],"tooLargeMsg":false,"uploadedMsg":true}
+        LARGE  {"gridItems":0,"hasThumb":false,"expanded":false,"toasts":["File movie-26mb.mp4 is too large (max 25MB)"],"tooLargeMsg":true,"uploadedMsg":false}
+        ERRORS none
+[dark] BEFORE {"gridItems":0,"hasThumb":false,"expanded":false,"toasts":[],"tooLargeMsg":false,"uploadedMsg":false}
+        SMALL  {"gridItems":1,"hasThumb":true,"expanded":true,"toasts":["Uploaded 1 file"],"tooLargeMsg":false,"uploadedMsg":true}
+        LARGE  {"gridItems":0,"hasThumb":false,"expanded":false,"toasts":["File movie-26mb.mp4 is too large (max 25MB)"],"tooLargeMsg":true,"uploadedMsg":false}
+        ERRORS none
+DONE. bledyKonsoli(lacznie): 0 -> evidence/qoder-k29-attachments-20260918
