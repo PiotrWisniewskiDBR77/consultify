@@ -1,0 +1,12 @@
+{
+  "baseline": 156,
+  "initial": 157,
+  "candidate": 156,
+  "added": [],
+  "removed": [],
+  "instrumentBefore": 157,
+  "instrumentAfter": 158,
+  "instrumentAdded": [
+    "src/components/MyWork/ProjectDetailScreen.tsx(316,7): error TS2322: Type 'string' is not assignable to type 'number'."
+  ]
+}

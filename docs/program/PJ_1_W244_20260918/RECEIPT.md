@@ -1,0 +1,15 @@
+# PJ-1 — current-line candidate, W244/W247
+
+Original requested candidate7bf6939fe99b924b69d57f394d177cbf3775c8da rebased cleanly onto ls-remote34bc633ff987fa6f362082d610aad6e04e0f7ed2. range-diff confirms unchanged original patch. Two defects found in the required own proof were then fixed inside ProjectDetailScreen only:
+- columns used key instead of required id; this introduced one TS2322 and prevented correct row rendering;
+- GET project detail contains no tasks; the screen silently claimed zero. Existing Api.getTasks({projectId}) now loads the real project-filtered task list, no new backend endpoint/model.
+
+Actual Gateway/JWT/PG HTTP on an owned fresh pgvector17 copy of dump28, restoreRC0: three existing Northwind projects GET200, team6/1/4, initiatives9/1/7, documents3/0/0. Separate existing GET /tasks?projectId=... ->200, tasks27/0/10; every returned task's project identity matches its request. Exact responses in http-records.json. No staging/demo writes; runtime password parsed from authorized access file, never stored. Properly shaped manual create without project ->400 INITIATIVE_PROJECT_REQUIRED, no write. The first malformed probe lacked title and hit schema validation; it is not counted as project-policy proof. The valid negative response is project-required.json.
+
+Actual production AppRoutes (real Router, actual lazy ProjectDetailScreen, real StandardTable/ArtifactRightPanel) mounts all3 deep links and displays each project's name/initiatives/tasks from captured HTTP. MainLayout and auth wrappers mocked at boundary; this is not a full auth/layout/browser acceptance. FlagOFF redirects to My Work and does not fetch project or task data. Mutation /projects/:projectId -> /projects/broken/:projectId makes actual route test RED1 (other3deselected), restored4PASS. Delta and direct function/component importer suites5files18PASS retry0.
+
+Own foreground tsc baseline156 (this session, exact34bc SHA), initial candidate157: sole new TS2322 at ProjectDetailScreen128:9. Instrument inject `const __s: number = "x"` ->158; sole extra TS2322 sentinel, removed. Final corrected candidate measurement in tsc-final.log and tsc-diff.json. No killed/background/timeout zero claimed.
+
+Callers: AppRoutes.tsx project deep-link mounts ProjectDetailScreen; MyProjects.tsx open action navigates to it. ProjectDetailScreen.tsx114/115 calls existing project detail and project-filtered tasks endpoints. REQUIRE_INITIATIVE_PROJECT is real, defaultON: initiativeProjectPolicyService.ts + InitiativeController.ts749; existing user-facing project selector/validation in InitiativesHub.tsx3615. Those product policy files remain untouched.
+
+Boundaries: this iteration preserves the requested PJ-1 route package, no new project write/governance/access model, no migration. Team is currently counted and owner displayed; no new team management screen is claimed. Screenshots owned by CTO per W236. Local HTTP database and API removed after proof. Final SHA/private backup in OD_CODEXA.

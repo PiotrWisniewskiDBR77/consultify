@@ -13,8 +13,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
-import { StandardModuleBar, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
+import {
+  StandardModuleBar,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import { Api } from '@/services/api';
 import { ROUTES } from '@/routes/routeConfig';
 import { formatListDate } from '@/utils/listDateFormat';
@@ -74,7 +82,9 @@ const valueOrDash = (value: unknown): string => {
 const personName = (member: ProjectMemberRow): string => {
   const first = member.firstName ?? member.first_name ?? '';
   const last = member.lastName ?? member.last_name ?? '';
-  return `${first} ${last}`.trim() || member.email || member.userId || member.user_id || member.id || '—';
+  return (
+    `${first} ${last}`.trim() || member.email || member.userId || member.user_id || member.id || '—'
+  );
 };
 
 const normalizeRows = (rows: ProjectLinkedRow[] | undefined): TableRow[] =>
@@ -100,8 +110,11 @@ export function ProjectDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const data = await Api.getProjectDetails(projectId);
-      setProject(data as ProjectDetails);
+      const [data, tasks] = await Promise.all([
+        Api.getProjectDetails(projectId),
+        Api.getTasks({ projectId }),
+      ]);
+      setProject({ ...data, tasks } as ProjectDetails);
     } catch (err: any) {
       setError(err?.message || t('myWork.projects.detail.loadFailed', 'Failed to load project.'));
     } finally {
@@ -127,14 +140,27 @@ export function ProjectDetailScreen() {
 
   const columns: TableColumn[] = useMemo(
     () => [
-      { key: 'displayName', label: t('myWork.projects.detail.columns.name', 'Name'), sortable: true },
-      { key: 'statusLabel', label: t('myWork.projects.detail.columns.status', 'Status'), width: '140px' },
-      { key: 'dateLabel', label: t('myWork.projects.detail.columns.updated', 'Updated'), width: '150px' },
+      {
+        id: 'displayName',
+        label: t('myWork.projects.detail.columns.name', 'Name'),
+        sortable: true,
+      },
+      {
+        id: 'statusLabel',
+        label: t('myWork.projects.detail.columns.status', 'Status'),
+        width: '140px',
+      },
+      {
+        id: 'dateLabel',
+        label: t('myWork.projects.detail.columns.updated', 'Updated'),
+        width: '150px',
+      },
     ],
     [t]
   );
 
-  const currentRows = activeTab === 'initiatives' ? initiatives : activeTab === 'tasks' ? tasks : documents;
+  const currentRows =
+    activeTab === 'initiatives' ? initiatives : activeTab === 'tasks' ? tasks : documents;
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
@@ -152,7 +178,12 @@ export function ProjectDetailScreen() {
             <ArrowLeft size={14} />
             {t('myWork.projects.detail.backToList', 'Back to projects')}
           </button>
-          <p>{t('myWork.projects.detail.actionsHint', 'Project edits and governance actions stay in the existing project panels until PMO-1b is accepted.')}</p>
+          <p>
+            {t(
+              'myWork.projects.detail.actionsHint',
+              'Project edits and governance actions stay in the existing project panels until PMO-1b is accepted.'
+            )}
+          </p>
         </div>
       ),
     },
@@ -163,10 +194,26 @@ export function ProjectDetailScreen() {
       defaultOpen: true,
       children: (
         <dl className="space-y-2 text-xs">
-          <div className="flex justify-between gap-3"><dt className="text-c-text-muted">{t('common.status', 'Status')}</dt><dd className="font-semibold text-c-text">{valueOrDash(project?.status)}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-c-text-muted">{t('myWork.projects.phase', 'Phase')}</dt><dd className="font-semibold text-c-text">{valueOrDash(project?.currentPhase ?? project?.current_phase)}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-c-text-muted">{t('myWork.projects.owner', 'Owner')}</dt><dd className="font-semibold text-c-text">{owner}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-c-text-muted">{t('myWork.projects.created', 'Created')}</dt><dd className="font-semibold text-c-text">{formatListDate(project?.created_at || undefined, '—')}</dd></div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-c-text-muted">{t('common.status', 'Status')}</dt>
+            <dd className="font-semibold text-c-text">{valueOrDash(project?.status)}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-c-text-muted">{t('myWork.projects.phase', 'Phase')}</dt>
+            <dd className="font-semibold text-c-text">
+              {valueOrDash(project?.currentPhase ?? project?.current_phase)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-c-text-muted">{t('myWork.projects.owner', 'Owner')}</dt>
+            <dd className="font-semibold text-c-text">{owner}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-c-text-muted">{t('myWork.projects.created', 'Created')}</dt>
+            <dd className="font-semibold text-c-text">
+              {formatListDate(project?.created_at || undefined, '—')}
+            </dd>
+          </div>
         </dl>
       ),
     },
@@ -177,9 +224,19 @@ export function ProjectDetailScreen() {
       badge: initiatives.length + tasks.length + documents.length,
       children: (
         <div className="space-y-1 text-xs text-c-text-secondary">
-          <p>{t('myWork.projects.detail.relationsInitiatives', '{{count}} initiatives', { count: initiatives.length })}</p>
-          <p>{t('myWork.projects.detail.relationsTasks', '{{count}} tasks', { count: tasks.length })}</p>
-          <p>{t('myWork.projects.detail.relationsDocuments', '{{count}} documents', { count: documents.length })}</p>
+          <p>
+            {t('myWork.projects.detail.relationsInitiatives', '{{count}} initiatives', {
+              count: initiatives.length,
+            })}
+          </p>
+          <p>
+            {t('myWork.projects.detail.relationsTasks', '{{count}} tasks', { count: tasks.length })}
+          </p>
+          <p>
+            {t('myWork.projects.detail.relationsDocuments', '{{count}} documents', {
+              count: documents.length,
+            })}
+          </p>
         </div>
       ),
     },
@@ -187,7 +244,14 @@ export function ProjectDetailScreen() {
       id: 'evidence',
       label: t('common.sourcesAndAssumptions', 'Sources and assumptions'),
       icon: FileText,
-      children: <p className="text-xs text-c-text-secondary">{t('myWork.projects.detail.evidenceHint', 'This screen reads the existing project, team, initiative, task and document records. It does not create a new project data model.')}</p>,
+      children: (
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'myWork.projects.detail.evidenceHint',
+            'This screen reads the existing project, team, initiative, task and document records. It does not create a new project data model.'
+          )}
+        </p>
+      ),
     },
     {
       id: 'comments',
@@ -201,23 +265,38 @@ export function ProjectDetailScreen() {
       id: 'history',
       label: t('common.history', 'History'),
       icon: CalendarDays,
-      children: <p className="text-xs text-c-text-secondary">{t('myWork.projects.detail.historyHint', 'History will use the accepted PMO and DOC-0 audit streams when those packages are on the line.')}</p>,
+      children: (
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'myWork.projects.detail.historyHint',
+            'History will use the accepted PMO and DOC-0 audit streams when those packages are on the line.'
+          )}
+        </p>
+      ),
     },
   ];
 
   if (!projectId) {
-    return <div className="p-6 text-sm text-c-text-secondary">{t('myWork.projects.detail.missingId', 'Project id is missing.')}</div>;
+    return (
+      <div className="p-6 text-sm text-c-text-secondary">
+        {t('myWork.projects.detail.missingId', 'Project id is missing.')}
+      </div>
+    );
   }
 
   if (loading) {
-    return <div className="p-6 text-sm text-c-text-secondary">{t('common.loading', 'Loading…')}</div>;
+    return (
+      <div className="p-6 text-sm text-c-text-secondary">{t('common.loading', 'Loading…')}</div>
+    );
   }
 
   if (error || !project) {
     return (
       <div className="p-6">
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-          <p className="text-sm font-semibold text-c-text">{error || t('myWork.projects.detail.notFound', 'Project was not found.')}</p>
+          <p className="text-sm font-semibold text-c-text">
+            {error || t('myWork.projects.detail.notFound', 'Project was not found.')}
+          </p>
           <button
             type="button"
             onClick={() => navigate(ROUTES.PROJECTS)}
@@ -244,9 +323,17 @@ export function ProjectDetailScreen() {
             </button>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wide text-c-text-muted">{t('myWork.projects.project', 'Project')}</p>
-                <h1 className="truncate text-2xl font-bold text-c-text">{valueOrDash(project.name)}</h1>
-                {project.description ? <p className="mt-2 max-w-3xl text-sm text-c-text-secondary">{project.description}</p> : null}
+                <p className="text-xs font-bold uppercase tracking-wide text-c-text-muted">
+                  {t('myWork.projects.project', 'Project')}
+                </p>
+                <h1 className="truncate text-2xl font-bold text-c-text">
+                  {valueOrDash(project.name)}
+                </h1>
+                {project.description ? (
+                  <p className="mt-2 max-w-3xl text-sm text-c-text-secondary">
+                    {project.description}
+                  </p>
+                ) : null}
               </div>
               <span className="rounded-full border border-c-border-subtle px-3 py-1 text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
                 {valueOrDash(project.status)}
@@ -261,7 +348,10 @@ export function ProjectDetailScreen() {
               [t('myWork.projects.team', 'Team'), team.length, Users],
               [t('myWork.projects.documents', 'Documents'), documents.length, FileText],
             ].map(([label, value, Icon]) => (
-              <div key={String(label)} className="rounded-xl border border-c-border-subtle bg-c-surface-subtle p-3">
+              <div
+                key={String(label)}
+                className="rounded-xl border border-c-border-subtle bg-c-surface-subtle p-3"
+              >
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {React.createElement(Icon as any, { size: 14 })}
                   <span>{String(label)}</span>
@@ -286,9 +376,17 @@ export function ProjectDetailScreen() {
               onTabChange={(id) => setActiveTab(id as 'initiatives' | 'tasks' | 'documents')}
               forceCommandRow
               chips={[
-                { id: 'initiatives', label: t('myWork.projects.initiatives', 'Initiatives'), count: initiatives.length },
+                {
+                  id: 'initiatives',
+                  label: t('myWork.projects.initiatives', 'Initiatives'),
+                  count: initiatives.length,
+                },
                 { id: 'tasks', label: t('myWork.projects.tasks', 'Tasks'), count: tasks.length },
-                { id: 'documents', label: t('myWork.projects.documents', 'Documents'), count: documents.length },
+                {
+                  id: 'documents',
+                  label: t('myWork.projects.documents', 'Documents'),
+                  count: documents.length,
+                },
               ]}
               activeChip={activeTab}
               onChipChange={(id) => setActiveTab(id as 'initiatives' | 'tasks' | 'documents')}
@@ -297,7 +395,10 @@ export function ProjectDetailScreen() {
                 columns={columns}
                 data={currentRows}
                 loading={false}
-                emptyMessage={t('myWork.projects.detail.emptyTable', 'No records in this project section yet.')}
+                emptyMessage={t(
+                  'myWork.projects.detail.emptyTable',
+                  'No records in this project section yet.'
+                )}
                 persistKey={`project-detail-${activeTab}`}
               />
             </StandardModuleBar>

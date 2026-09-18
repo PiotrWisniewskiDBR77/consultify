@@ -1,0 +1,7 @@
+{
+  "status": 400,
+  "body": {
+    "error": "projectId is required — every initiative must belong to a project",
+    "code": "INITIATIVE_PROJECT_REQUIRED"
+  }
+}
