@@ -120,6 +120,7 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
         'owner_id',
         'updated_at',
         'completed_at',
+        'blocked_reason',
       ])
     );
 
@@ -130,7 +131,12 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
     const app = createApp();
     const res = await request(app)
       .put(`/api/my-work/personal-tasks/${TASK_ID}`)
-      .send({ title: 'New Title A', assigneeId: '', ownerId: '', expectedVersionToken: VERSION_TOKEN });
+      .send({
+        title: 'New Title A',
+        assigneeId: '',
+        ownerId: '',
+        expectedVersionToken: VERSION_TOKEN,
+      });
 
     expect(res.status).toBe(200);
     expect(mockQueryRun).toHaveBeenCalledTimes(1);
@@ -143,14 +149,12 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
 
   it('jawne null = ODPIĘCIE: assignee_id/owner_id trafiają do SET z wartością NULL', async () => {
     const app = createApp();
-    const res = await request(app)
-      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
-      .send({
-        title: 'New Title B',
-        assigneeId: null,
-        ownerId: null,
-        expectedVersionToken: VERSION_TOKEN,
-      });
+    const res = await request(app).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      title: 'New Title B',
+      assigneeId: null,
+      ownerId: null,
+      expectedVersionToken: VERSION_TOKEN,
+    });
 
     expect(res.status).toBe(200);
     const [sql, params] = mockQueryRun.mock.calls[0];
@@ -165,14 +169,12 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
 
   it('niepusty ciąg = PRZYPISANIE: assignee_id/owner_id trafiają do SET z podaną wartością', async () => {
     const app = createApp();
-    const res = await request(app)
-      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
-      .send({
-        title: 'New Title C',
-        assigneeId: 'user-99',
-        ownerId: 'user-77',
-        expectedVersionToken: VERSION_TOKEN,
-      });
+    const res = await request(app).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      title: 'New Title C',
+      assigneeId: 'user-99',
+      ownerId: 'user-77',
+      expectedVersionToken: VERSION_TOKEN,
+    });
 
     expect(res.status).toBe(200);
     const [sql, params] = mockQueryRun.mock.calls[0];
@@ -181,6 +183,70 @@ describe('PUT /api/my-work/personal-tasks/:id — assigneeId/ownerId (hotfix 202
     expect(setClause).toMatch(/owner_id = \?/);
     expect(params[1]).toBe('user-99');
     expect(params[2]).toBe('user-77');
+  });
+
+  it('odrzuca skrót TODO → DONE zanim UPDATE dotknie bazy', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'done', expectedVersionToken: VERSION_TOKEN });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('TASK_STATUS_TRANSITION_BLOCKED');
+    expect(res.body.rule).toBe('INVALID_TRANSITION');
+    expect(res.body.currentStatus).toBe('todo');
+    expect(res.body.requestedStatus).toBe('done');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('odrzuca DONE → TODO i zablokowanie bez powodu jako regułę cyklu', async () => {
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ id: TASK_ID, status: 'done', versionToken: VERSION_TOKEN });
+
+    const app = createApp();
+    const doneToTodo = await request(app)
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'todo', expectedVersionToken: VERSION_TOKEN });
+
+    expect(doneToTodo.status).toBe(409);
+    expect(doneToTodo.body.rule).toBe('INVALID_TRANSITION');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+
+    mockQueryOne.mockReset();
+    mockQueryOne
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ email: null })
+      .mockResolvedValueOnce({ id: TASK_ID, status: 'todo', versionToken: VERSION_TOKEN });
+
+    const blockedWithoutReason = await request(app)
+      .put(`/api/my-work/personal-tasks/${TASK_ID}`)
+      .send({ status: 'blocked', expectedVersionToken: VERSION_TOKEN });
+
+    expect(blockedWithoutReason.status).toBe(409);
+    expect(blockedWithoutReason.body.rule).toBe('BLOCKED_REASON_REQUIRED');
+    expect(blockedWithoutReason.body.error).toBe('TASK_BLOCKED_REASON_REQUIRED');
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
+  it('pozwala wejść w BLOCKED z powodem i zapisuje blocked_reason', async () => {
+    const app = createApp();
+    const res = await request(app).put(`/api/my-work/personal-tasks/${TASK_ID}`).send({
+      status: 'blocked',
+      blockedReason: 'Waiting for customer data',
+      expectedVersionToken: VERSION_TOKEN,
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockQueryRun).toHaveBeenCalledTimes(1);
+    const [sql, params] = mockQueryRun.mock.calls[0];
+    const setClause = extractSetClause(sql as string);
+    expect(setClause).toMatch(/status = \?/);
+    expect(setClause).toMatch(/blocked_reason = \?/);
+    expect(params).toContain('blocked');
+    expect(params).toContain('Waiting for customer data');
   });
 
   it('GET /personal-tasks/:id zwraca assigneeId/ownerId (naprawiony SELECT)', async () => {

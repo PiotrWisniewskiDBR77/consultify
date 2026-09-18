@@ -57,6 +57,7 @@ import { createNativeDeck } from '../services/presentationGeneratorService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
 import {
+  getAllowedTaskTransitions,
   normalizeTaskStatus as normalizeWorkflowTaskStatus,
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
@@ -1612,9 +1613,32 @@ router.put(
     }
 
     let nextStatus: string | null = null;
+    const blockedReasonInput =
+      req.body?.blockedReason !== undefined ? req.body.blockedReason : req.body?.blocked_reason;
+    const blockedReason =
+      blockedReasonInput === undefined || blockedReasonInput === null
+        ? ''
+        : String(blockedReasonInput).trim();
     if (typeof req.body?.status === 'string') {
-      nextStatus = String(req.body.status).trim();
+      nextStatus = normalizeWorkflowTaskStatus(String(req.body.status).trim());
+      const transition = validateTaskStatusTransition(existing.status, nextStatus, { blockedReason });
+      if (!transition.allowed) {
+        res.status(409).json({
+          error: transition.message,
+          message: transition.message,
+          code: 'TASK_STATUS_TRANSITION_BLOCKED',
+          rule: transition.rule,
+          currentStatus: normalizeWorkflowTaskStatus(existing.status),
+          requestedStatus: nextStatus,
+          allowedTransitions: getAllowedTaskTransitions(existing.status),
+        });
+        return;
+      }
       setIf('status', nextStatus);
+      if (nextStatus === 'blocked') setIf('blocked_reason', blockedReason);
+      else if (blockedReasonInput !== undefined || normalizeWorkflowTaskStatus(existing.status) === 'blocked') {
+        setIf('blocked_reason', null);
+      }
     }
 
     // completed_at bookkeeping

@@ -20,14 +20,18 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 /** V4-TASK-03: Allowed status transitions. Guard blocks invalid transitions. */
 const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   backlog: ['todo', 'in_progress', 'cancelled'],
-  todo: ['backlog', 'in_progress', 'review', 'blocked', 'cancelled'],
-  in_progress: ['backlog', 'todo', 'review', 'blocked', 'on_hold', 'done', 'cancelled'],
-  review: ['todo', 'in_progress', 'blocked', 'on_hold', 'done', 'cancelled'],
-  blocked: ['todo', 'in_progress', 'review', 'on_hold', 'cancelled'],
-  on_hold: ['todo', 'in_progress', 'review', 'blocked', 'cancelled'],
-  done: ['todo', 'in_progress'], // reopen
+  todo: ['backlog', 'in_progress', 'blocked', 'cancelled'],
+  in_progress: ['todo', 'review', 'blocked', 'on_hold', 'done', 'cancelled'],
+  review: ['in_progress', 'blocked', 'on_hold', 'done', 'cancelled'],
+  blocked: ['todo', 'in_progress', 'on_hold', 'cancelled'],
+  on_hold: ['todo', 'in_progress', 'blocked', 'cancelled'],
+  done: ['in_progress'], // reopen
   cancelled: ['backlog', 'todo'], // reopen
 };
+
+function hasText(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
 
 export function normalizeTaskStatus(s: string | null | undefined): TaskStatus {
   const v = String(s || 'todo')
@@ -51,18 +55,28 @@ export function getAllowedTaskTransitions(from: string | null | undefined): Task
  */
 export function validateTaskStatusTransition(
   from: string | null | undefined,
-  to: string | null | undefined
+  to: string | null | undefined,
+  context: { blockedReason?: string | null } = {}
 ): { allowed: true } | { allowed: false; rule: string; message: string } {
   const fromNorm = normalizeTaskStatus(from);
   const toNorm = normalizeTaskStatus(to);
   if (fromNorm === toNorm) return { allowed: true };
   const allowed = ALLOWED_TRANSITIONS[fromNorm];
-  if (allowed.includes(toNorm)) return { allowed: true };
-  return {
-    allowed: false,
-    rule: 'INVALID_TRANSITION',
-    message: `Cannot transition from ${fromNorm} to ${toNorm}. Allowed: ${allowed.join(', ')}`,
-  };
+  if (!allowed.includes(toNorm)) {
+    return {
+      allowed: false,
+      rule: 'INVALID_TRANSITION',
+      message: `TASK_INVALID_TRANSITION:${fromNorm}->${toNorm};allowed=${allowed.join('|')}`,
+    };
+  }
+  if (toNorm === 'blocked' && !hasText(context.blockedReason)) {
+    return {
+      allowed: false,
+      rule: 'BLOCKED_REASON_REQUIRED',
+      message: 'TASK_BLOCKED_REASON_REQUIRED',
+    };
+  }
+  return { allowed: true };
 }
 
 export { TASK_STATUSES };

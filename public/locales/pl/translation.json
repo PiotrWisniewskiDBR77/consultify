@@ -3679,7 +3679,10 @@
       },
       "emptyTitle": "Nie ma jeszcze zadań",
       "emptyHint": "Utwórz pierwsze zadanie, żeby zacząć",
-      "createTask": "Utwórz zadanie"
+      "createTask": "Utwórz zadanie",
+      "statusFailedTransitionRule": "Nie zapisano „{{title}}\" → {{column}}: {{reason}}",
+      "workflowRuleBlockedReasonRequired": "Dodaj powód blokady przed przeniesieniem zadania do Zablokowane.",
+      "workflowRuleInvalidTransition": "Ten ruch nie jest dozwolony przez reguły cyklu pracy."
     },
     "title": "Moja Praca",
     "home": {

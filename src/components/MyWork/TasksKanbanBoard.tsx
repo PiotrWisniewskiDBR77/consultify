@@ -746,7 +746,10 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           // PILNE-3: „Failed to update status" nic nie mówiło — ani co się stało,
           // ani co zrobić. Komunikat rozróżnia teraz realne przypadki i zawsze
           // podaje tytuł zadania + kolumnę docelową + krok naprawczy.
-          const httpStatus = Number((error as { status?: number } | undefined)?.status) || 0;
+          const apiError = error as
+            | { status?: number; errorCode?: string; data?: { rule?: unknown } }
+            | undefined;
+          const httpStatus = Number(apiError?.status) || 0;
           const shortTitle =
             (task.title || '').length > 40
               ? `${(task.title || '').slice(0, 40)}…`
@@ -768,6 +771,19 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
               'Not saved: you do not have permission to change the status of "{{title}}". Ask the task owner to change it.',
               ctx
             );
+          } else if (
+            httpStatus === 409 &&
+            apiError?.errorCode === 'TASK_STATUS_TRANSITION_BLOCKED'
+          ) {
+            const transitionRule = String(apiError?.data?.rule || '').toUpperCase();
+            const transitionReason =
+              transitionRule === 'BLOCKED_REASON_REQUIRED'
+                ? t('myWork.kanban.workflowRuleBlockedReasonRequired')
+                : t('myWork.kanban.workflowRuleInvalidTransition');
+            message = t('myWork.kanban.statusFailedTransitionRule', {
+              ...ctx,
+              reason: transitionReason,
+            });
           } else if (httpStatus >= 500) {
             message = t(
               'myWork.kanban.statusFailedServer',

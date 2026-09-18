@@ -4503,7 +4503,10 @@
       },
       "emptyTitle": "No tasks yet",
       "emptyHint": "Create your first task to get started",
-      "createTask": "Create task"
+      "createTask": "Create task",
+      "statusFailedTransitionRule": "Not saved \"{{title}}\" → {{column}}: {{reason}}",
+      "workflowRuleBlockedReasonRequired": "Add a blocker reason before moving this task to Blocked.",
+      "workflowRuleInvalidTransition": "This move is not allowed by the workflow rules."
     },
     "title": "My Work",
     "home": {
