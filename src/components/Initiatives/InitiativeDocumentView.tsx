@@ -120,6 +120,7 @@ import {
   getLocalizedStatusLabel,
   getModuleForStatus,
   getStatusMeta,
+  phaseLabelKeyForStatus,
   StatusAction,
   willChangeModule,
 } from '@/services/initiativeLifecycle';
@@ -1572,7 +1573,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const moduleConfig = MODULE_CONFIG[currentModule];
   const phaseDisplayLabel = definitionApprovalV2 && ['REGISTERED_DRAFT', 'DEFINED', 'ANALYZING'].includes(initiative?.lifecycle)
     ? (isPolish ? 'Przygotowanie' : 'Preparation')
-    : (isPolish ? moduleConfig.labelPl : moduleConfig.label);
+    : t(phaseLabelKeyForStatus(status));
   const canonicalNextGate = definitionApprovalV2 ? initiative?.gateName : null;
 
   const topBarCaps = gateReadiness?.capabilities?.topBar;

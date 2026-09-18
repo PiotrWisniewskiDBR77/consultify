@@ -1,0 +1,13 @@
+{
+  "bledyKonsoli": 0,
+  "braki": [],
+  "zadania404": 0,
+  "raport": [
+    "light | phaseValue=\"Discovery\" | hasPhaseLabel=true | rowPairs=true | phasePillSaysTools=false | toolsPills=0 | row=\"PhaseDiscovery\"",
+    "dark | phaseValue=\"Discovery\" | hasPhaseLabel=true | rowPairs=true | phasePillSaysTools=false | toolsPills=0 | row=\"PhaseDiscovery\"",
+    "bledyKonsoli=0",
+    "braki=0",
+    "zadania404=0"
+  ],
+  "sieci404": []
+}

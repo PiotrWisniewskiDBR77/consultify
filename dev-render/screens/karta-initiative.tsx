@@ -129,6 +129,10 @@ const __danePelne = new URLSearchParams(window.location.search).get('dane') === 
 // Parametr wpływa wyłącznie na transport harnessu; montowany komponent pozostaje produkcyjny.
 const __szablonQuickWin = new URLSearchParams(window.location.search).get('szablon') === 'quick-win';
 
+// H1c (DEC-607) — dowód pillu „Faza": `?status=PROPOSED` renderuje kartę w innym
+// poprawnym stanie enuma (domyślnie 'EXECUTING', bez zmiany dla istniejących dowodów).
+const __statusOverride = new URLSearchParams(window.location.search).get('status') || 'EXECUTING';
+
 // ── INICJATYWA ────────────────────────────────────────────────────────────
 const INITIATIVE = {
   id: INITIATIVE_ID,
@@ -142,7 +146,7 @@ const INITIATIVE = {
   // dawał żadnego dopasowania → primaryLifecycleAction=null → PUSTY slot primary.
   // 'EXECUTING' to poprawny stan „w realizacji" (progress 42, kamienie w toku) i daje
   // realny forward-primary „Oznacz jako ukończone" (EXECUTING→DONE).
-  status: 'EXECUTING',
+  status: __statusOverride,
   priority: 'high',
   progress: 42,
   axis: 'operational',

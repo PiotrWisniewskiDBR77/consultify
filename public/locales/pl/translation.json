@@ -13456,6 +13456,14 @@
     "saveChanges": "Zapisz zmiany",
     "kpi": "KPI",
     "phase": "Faza",
+    "phaseLabel": {
+      "discovery": "Odkrywanie",
+      "approval": "Zatwierdzanie",
+      "planning": "Planowanie",
+      "execution": "Realizacja",
+      "benefits": "Korzyści",
+      "rejected": "Odrzucone"
+    },
     "baseline": "Baza",
     "tracking": "Śledzenie",
     "noKpisDefinedYetClickNew": "Brak KPI. Kliknij \"+ Nowy\", aby dodać pierwszy KPI.",

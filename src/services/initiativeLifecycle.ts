@@ -37,6 +37,29 @@ const FALLBACK: StatusMeta = { labelKey: 'initiatives.status.unknown', ...neutra
 export const getStatusMeta = (status: InitiativeStatusCode): StatusMeta => STATUS_METADATA[status] ?? FALLBACK;
 export const getLocalizedStatusLabel = (status: InitiativeStatusCode, t: (key: string) => string): string => t(getStatusMeta(status).labelKey);
 export const getLocalizedStatusDescription = (status: InitiativeStatusCode, t: (key: string) => string): string => t(getStatusMeta(status).descriptionKey);
+
+/**
+ * H1c (DEC-607, wiersz 53) — faza cyklu życia dla pillu „Faza" w karcie inicjatywy.
+ * Pill spadał wcześniej na NAZWĘ MODUŁU (`getModuleFromStatus` → `MODULE_CONFIG.label`,
+ * default TOOLS → „Tools") dla PROPOSED/DRAFT/PENDING_APPROVAL/REJECTED, więc 13 z 22
+ * inicjatyw Northwind pokazywało „Tools" zamiast fazy. Faza to osobne pojęcie:
+ * 7 statusów → 6 faz. Klucze i18n pod istniejącą gałęzią `initiatives.*`
+ * (konwencja jak `initiatives.status.*`); słownik `enums.initiativeLifecycle`
+ * NIE pasuje — trzyma etykiety ETAPÓW (Draft registered / In execution / …), nie faz.
+ */
+export type InitiativePhase = 'discovery' | 'approval' | 'planning' | 'execution' | 'benefits' | 'rejected';
+const PHASE_FOR_STATUS: Record<InitiativeStatusCode, InitiativePhase> = {
+  PROPOSED: 'discovery',
+  DRAFT: 'discovery',
+  PENDING_APPROVAL: 'approval',
+  APPROVED: 'planning',
+  IN_EXECUTION: 'execution',
+  CLOSED: 'benefits',
+  REJECTED: 'rejected',
+};
+export const phaseForStatus = (status: InitiativeStatusCode): InitiativePhase => PHASE_FOR_STATUS[status];
+export const phaseLabelKeyForStatus = (status: InitiativeStatusCode): string =>
+  `initiatives.phaseLabel.${PHASE_FOR_STATUS[status]}`;
 export const getInitiativeStatusChipTone = (_status: InitiativeStatusCode, flags?: { onHold?: boolean }): StatusTone => flags?.onHold ? 'warning' : 'neutral';
 export const getValidNextStatuses = (status: InitiativeStatusCode): InitiativeStatusCode[] => VALID_TRANSITIONS[status] ?? [];
 export const isValidTransition = (from: InitiativeStatusCode, to: InitiativeStatusCode): boolean => getValidNextStatuses(from).includes(to);
