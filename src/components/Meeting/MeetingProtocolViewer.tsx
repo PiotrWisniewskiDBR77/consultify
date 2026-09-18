@@ -26,9 +26,11 @@ import {
   CalendarDays,
   CheckSquare,
   ClipboardList,
+  Download,
   FileText,
   History,
   ListChecks,
+  Loader2,
   MapPin,
   MessageSquareText,
   Users,
@@ -46,6 +48,7 @@ import {
   approveMeetingProtocol,
   blockOf,
   createMeetingProtocolErrata,
+  exportMeetingProtocolDocx,
   fetchMeetingProtocolPreview,
   type ProtocolBlock,
   type ProtocolPreview,
@@ -138,6 +141,7 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [errataNote, setErrataNote] = useState('');
+  const [exporting, setExporting] = useState(false);
   const [densityMode, setDensityMode] = useState<PresentationMode>('n');
 
   const load = useCallback(async () => {
@@ -207,6 +211,18 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
       setBusy(false);
     }
   }, [meetingId, errataNote, load]);
+
+  const runExport = useCallback(async () => {
+    setExporting(true);
+    setActionError(null);
+    try {
+      await exportMeetingProtocolDocx(meetingId);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'MEETING_PROTOCOL_EXPORT_FAILED');
+    } finally {
+      setExporting(false);
+    }
+  }, [meetingId]);
 
   /** The continuous document — every present block, in generation order. */
   const document = useMemo<React.ReactNode>(() => {
@@ -475,32 +491,51 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
   const rightPanel = useMemo(
     () => ({
       actions:
-        isPublished && canManage
+        !loading && !errorCode && preview
           ? {
               label: tr('actionsPanel', 'Actions'),
-              actionIds: ['protocol-errata'],
+              actionIds: ['protocol-export', ...(isPublished && canManage ? ['protocol-errata'] : [])],
               children: (
-                <div className="space-y-2">
-                  <label className={LABEL} htmlFor="protocol-errata-note">
-                    {tr('errataNote', 'Errata note')}
-                  </label>
-                  <textarea
-                    id="protocol-errata-note"
-                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    rows={3}
-                    value={errataNote}
-                    placeholder={tr('errataPlaceholder', 'Describe the correction…')}
-                    onChange={(event) => setErrataNote(event.target.value)}
-                  />
+                <div className="space-y-3">
                   <button
                     type="button"
-                    id="protocol-errata"
-                    className="w-full rounded-lg border border-c-border px-3 py-2 text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
-                    onClick={() => void runErrata()}
-                    disabled={busy || !errataNote.trim()}
+                    id="protocol-export"
+                    data-testid="protocol-export"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                    onClick={() => void runExport()}
+                    disabled={exporting}
                   >
-                    {tr('createErrata', 'Create errata version')}
+                    {exporting ? (
+                      <Loader2 size={16} className="animate-spin text-c-text-muted" />
+                    ) : (
+                      <Download size={16} className="text-c-text-muted" />
+                    )}
+                    {tr('exportDocx', 'Export DOCX')}
                   </button>
+                  {isPublished && canManage ? (
+                    <div className="space-y-2">
+                      <label className={LABEL} htmlFor="protocol-errata-note">
+                        {tr('errataNote', 'Errata note')}
+                      </label>
+                      <textarea
+                        id="protocol-errata-note"
+                        className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        rows={3}
+                        value={errataNote}
+                        placeholder={tr('errataPlaceholder', 'Describe the correction…')}
+                        onChange={(event) => setErrataNote(event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        id="protocol-errata"
+                        className="w-full rounded-lg border border-c-border px-3 py-2 text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                        onClick={() => void runErrata()}
+                        disabled={busy || !errataNote.trim()}
+                      >
+                        {tr('createErrata', 'Create errata version')}
+                      </button>
+                    </div>
+                  ) : null}
                   {actionError ? <p className="text-xs text-c-text-secondary">{actionError}</p> : null}
                 </div>
               ),
@@ -508,9 +543,9 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
           : {
               pominieta: true as const,
               reason:
-                !isPublished
-                  ? 'MTG-2a: the only action on an unpublished protocol is Approve, which is the header primary (SPEC-N §2.6 anti-duplication).'
-                  : 'MTG-2a: read-only for a caller without manage rights — the approve/errata routes enforce the organizer guard.',
+                loading || !preview
+                  ? 'MTG-2c: no protocol is loaded yet — there is nothing to export.'
+                  : 'MTG-2c: the protocol failed to load (403/404 or transport) — export would fetch the same forbidden document, so the panel stays closed.',
             },
       properties: {
         label: tr('properties', 'Properties'),
@@ -604,6 +639,10 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
       statusLabel,
       isPolish,
       tr,
+      loading,
+      errorCode,
+      exporting,
+      runExport,
     ]
   );
 

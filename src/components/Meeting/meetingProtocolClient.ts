@@ -240,6 +240,34 @@ export async function createMeetingProtocolErrata(
   return payload.protocol;
 }
 
+/**
+ * MTG-2c (PLAN.md:272 „protokół z eksportem") — DOCX download of the live
+ * protocol preview. Same fetch→blob→anchor discipline as
+ * `executionReportsApi.downloadExecutionReportFile` (no `window.open`: the
+ * route rides the session cookie and sets its own Content-Disposition name).
+ */
+export async function exportMeetingProtocolDocx(meetingId: string): Promise<void> {
+  const response = await fetch(
+    `/api/meeting/${encodeURIComponent(meetingId)}/protocol/export.docx`,
+    { credentials: 'include' }
+  );
+  if (!response.ok) throw protocolError(response.status, await readErrorCode(response));
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const utf8Name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  const asciiName = /filename="?([^";]+)"?/i.exec(disposition)?.[1];
+  const filename = utf8Name
+    ? decodeURIComponent(utf8Name)
+    : asciiName || `meeting-protocol-${meetingId}.docx`;
+  const blobUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(blobUrl);
+}
+
 /** Narrow a block union by kind (keeps the viewer's switches type-safe). */
 export function blockOf<K extends ProtocolBlockKind>(
   blocks: ProtocolBlock[],

@@ -50,6 +50,8 @@ import {
   createErrataVersion,
   previewProtocol,
 } from '../services/meeting/meetingProtocolService.js';
+import { buildMeetingProtocolDocumentSchema } from '../services/meeting/meetingProtocolDocxSchemaService.js';
+import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
 import {
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
@@ -1763,6 +1765,52 @@ router.get(
       meetingId: meeting.id,
     });
     return res.json({ protocol });
+  })
+);
+
+// MTG-2c (PLAN.md:272 „protokół z eksportem") — DOCX z żywego podglądu
+// protokołu; ten sam poziom dostępu co GET /:id/protocol (odczyt).
+router.get(
+  '/:id/protocol/export.docx',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    try {
+      const protocol = await previewProtocol({
+        organizationId: orgId,
+        meetingId: meeting.id,
+      });
+      const schema = buildMeetingProtocolDocumentSchema({
+        meetingId: meeting.id,
+        version: protocol.version,
+        status: protocol.status,
+        content: protocol.content,
+      });
+      const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+      const safeTitle = String(meeting.title || '')
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80);
+      const filename = `Meeting_protocol_${safeTitle || meeting.id}_v${protocol.version}.docx`;
+      const asciiFilename = filename
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9._-]/g, '_');
+      return res
+        .status(200)
+        .set({
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': String(buffer.length),
+        })
+        .send(buffer);
+    } catch (error) {
+      return mapProtocolServiceError(res, error);
+    }
   })
 );
 

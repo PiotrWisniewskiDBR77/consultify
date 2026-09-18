@@ -48,13 +48,14 @@ vi.mock('react-i18next', () => {
   };
 });
 
-const { fetchMock, approveMock, errataMock } = vi.hoisted(() => ({
+const { fetchMock, approveMock, errataMock, exportMock } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   approveMock: vi.fn(),
   errataMock: vi.fn(),
+  exportMock: vi.fn(),
 }));
 
-// Keep the real `blockOf` + types; replace only the three network calls.
+// Keep the real `blockOf` + types; replace only the network calls.
 vi.mock('../meetingProtocolClient', async (importOriginal) => {
   const actual = await importOriginal<any>();
   return {
@@ -62,6 +63,7 @@ vi.mock('../meetingProtocolClient', async (importOriginal) => {
     fetchMeetingProtocolPreview: fetchMock,
     approveMeetingProtocol: approveMock,
     createMeetingProtocolErrata: errataMock,
+    exportMeetingProtocolDocx: exportMock,
   };
 });
 
@@ -105,8 +107,10 @@ describe('MeetingProtocolViewer — approve / errata wiring (W109b)', () => {
     fetchMock.mockReset();
     approveMock.mockReset();
     errataMock.mockReset();
+    exportMock.mockReset();
     approveMock.mockResolvedValue({ id: 'p1', version: '1.0', status: 'approved' });
     errataMock.mockResolvedValue({ id: 'p2', version: '1.1', status: 'approved' });
+    exportMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -226,5 +230,45 @@ describe('MeetingProtocolViewer — approve / errata wiring (W109b)', () => {
     );
     expect(screen.getByTestId('decisions-source').textContent).toBe('From approved note');
     expect(screen.getByTestId('actions-source').textContent).toBe('From follow-ups register');
+  });
+
+  // MTG-2c (PLAN.md:272 „protokół z eksportem"): the Actions panel exports the
+  // live protocol as DOCX. Assertions are on the CALL ARGUMENT of the client
+  // function (the meetingId that goes over the wire), not on decorative text.
+  // MUTATIONS that MUST turn these RED: remove the button's onClick (no call);
+  // call exportMeetingProtocolDocx() without/with a wrong meetingId (arg assert);
+  // remove the Export button from the actions slot (findByRole times out).
+  it('draft: clicking Export DOCX calls exportMeetingProtocolDocx with the meetingId', async () => {
+    fetchMock.mockResolvedValue(makePreview({ publishedVersion: null }));
+    render(<MeetingProtocolViewer meetingId={MEETING_ID} onClose={() => {}} />);
+
+    const exportButton = await screen.findByRole('button', { name: /Export DOCX/i });
+    fireEvent.click(exportButton);
+
+    await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
+    expect(exportMock).toHaveBeenCalledWith(MEETING_ID);
+    expect(approveMock).not.toHaveBeenCalled();
+  });
+
+  it('published without manage rights: Export DOCX is still wired (read-level action)', async () => {
+    fetchMock.mockResolvedValue(makePreview({ publishedVersion: '1.0', version: '1.1' }));
+    render(<MeetingProtocolViewer meetingId={MEETING_ID} canManage={false} onClose={() => {}} />);
+
+    const exportButton = await screen.findByRole('button', { name: /Export DOCX/i });
+    fireEvent.click(exportButton);
+
+    await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
+    expect(exportMock).toHaveBeenCalledWith(MEETING_ID);
+  });
+
+  it('load failure: no Export DOCX button (the panel stays closed)', async () => {
+    fetchMock.mockRejectedValue(Object.assign(new Error('HTTP_404'), { status: 404 }));
+    render(<MeetingProtocolViewer meetingId={MEETING_ID} onClose={() => {}} />);
+
+    await waitFor(() =>
+      expect(screen.queryByText(/No protocol is available/i)).toBeInTheDocument()
+    );
+    expect(screen.queryByRole('button', { name: /Export DOCX/i })).toBeNull();
+    expect(exportMock).not.toHaveBeenCalled();
   });
 });

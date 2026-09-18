@@ -1,0 +1,52 @@
+# MTG-2c live HTTP proof — GET /api/meeting/:id/protocol/export.docx
+# captured: 2026-09-18 18:01 UTC on 127.0.0.1:4432, DB consultify_kopia_d10 (kopia dumpu stagingu), user james.whitfield (organizer)
+
+## login
+POST /api/auth/login -> token len 448
+
+## export
+GET /api/meeting/2e124a9f-30cd-5ea8-bf77-49441a1861bf/protocol/export.docx
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 225d9a96-1738-4091-a68b-3046b26b9a2b
+x-request-id: d60e6e79-c171-4992-89e8-ce32dbbd7349
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Content-Disposition: attachment; filename="Meeting_protocol_Weekly_PMO_Review_v1.0.docx"; filename*=UTF-8''Meeting_protocol_Weekly_PMO_Review_v1.0.docx
+Content-Length: 12380
+ETag: W/"305c-bGxKYztYXQ78YEfhXm4+RuCsMTI"
+Date: Fri, 18 Sep 2026 18:00:54 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+## body
+first 4 bytes: 504b0304 (504b0304 = ZIP/DOCX magic)
+size_download: 12380
+
+## unzip -l (entries)
+        0  09-18-2026 18:00   word/
+        0  09-18-2026 18:00   word/_rels/
+     1313  09-18-2026 18:00   word/_rels/document.xml.rels
+    22858  09-18-2026 18:00   word/document.xml
+    10228  09-18-2026 18:00   word/styles.xml
+        0  09-18-2026 18:00   docProps/
+      794  09-18-2026 18:00   docProps/core.xml
+     3936  09-18-2026 18:00   word/numbering.xml
+        0  09-18-2026 18:00   _rels/
+
+## word/document.xml content probes
+hasTitle(Weekly PMO Review): True
+hasSourceLabel(Source: ... register/note): True
+hasDecisions(Decisions section): True
