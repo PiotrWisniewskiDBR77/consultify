@@ -30,27 +30,57 @@ const CRITERIA_DRAFT: Fixture[] = [
     parentId: null,
     ordinal: 1,
     refCode: 'QMS-4.4',
-    nodeKind: 'leaf',
+    nodeKind: 'domain',
     title: 'Quality management system processes are defined and documented',
+    requirementText:
+      'The organization determines the processes needed for the QMS, their sequence and interaction, and keeps documented information to support their operation.',
+    sourceReference: 'QMS Procedure Manual v3.2, section 4.4',
+    auditQuestion: 'Are the process owners and interactions documented for every site?',
+    expectedEvidence: [{ kind: 'document', description: 'Process map', mandatory: true }],
+    auditProcedure: 'Inspect the process map and interview two process owners.',
+    samplingGuidance: null,
+    applicabilityRule: { scope: 'all-sites' },
     mandatory: true,
+    weight: 3,
+    suggestedOwnerRole: 'lead_auditor',
   },
   {
     id: 'crit-d-2',
-    parentId: null,
+    parentId: 'crit-d-1',
     ordinal: 2,
     refCode: 'QMS-7.1.5',
-    nodeKind: 'leaf',
+    nodeKind: 'control',
     title: 'Monitoring and measuring resources are calibrated on schedule',
+    requirementText:
+      'Measuring equipment used for product verification is calibrated against traceable standards at planned intervals and identified by status.',
+    sourceReference: 'QMS Procedure Manual v3.2, section 7.1.5',
+    auditQuestion: null,
+    expectedEvidence: [{ kind: 'record', description: 'Calibration log', mandatory: true }],
+    auditProcedure: 'Sample five instruments from the calibration log.',
+    samplingGuidance: 'Risk-based: measuring devices used for final inspection first.',
+    applicabilityRule: { scope: 'production' },
     mandatory: true,
+    weight: 2,
+    suggestedOwnerRole: 'auditor',
   },
   {
     id: 'crit-d-3',
     parentId: null,
     ordinal: 3,
     refCode: 'QMS-8.4.1',
-    nodeKind: 'leaf',
+    nodeKind: 'criterion',
     title: 'Externally provided processes are controlled by documented criteria',
+    requirementText:
+      'Suppliers are evaluated and selected against documented criteria before being added to the approved supplier list.',
+    sourceReference: null,
+    auditQuestion: null,
+    expectedEvidence: [],
+    auditProcedure: null,
+    samplingGuidance: null,
+    applicabilityRule: {},
     mandatory: false,
+    weight: null,
+    suggestedOwnerRole: null,
   },
 ];
 
@@ -60,7 +90,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: null,
     ordinal: 1,
     refCode: 'ISO-9001-5.1',
-    nodeKind: 'branch',
+    nodeKind: 'domain',
     title: 'Leadership and commitment of top management',
     mandatory: true,
   },
@@ -69,7 +99,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: 'crit-p-1',
     ordinal: 2,
     refCode: 'ISO-9001-5.1.1',
-    nodeKind: 'leaf',
+    nodeKind: 'control',
     title: 'Accountability for the effectiveness of the QMS is demonstrated',
     mandatory: true,
   },
@@ -78,7 +108,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: 'crit-p-1',
     ordinal: 3,
     refCode: 'ISO-9001-5.1.2',
-    nodeKind: 'leaf',
+    nodeKind: 'control',
     title: 'Customer focus is evidenced in management review records',
     mandatory: true,
   },
@@ -87,7 +117,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: null,
     ordinal: 4,
     refCode: 'ISO-9001-9.2',
-    nodeKind: 'branch',
+    nodeKind: 'domain',
     title: 'Internal audit programme is planned and performed',
     mandatory: true,
   },
@@ -96,7 +126,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: 'crit-p-4',
     ordinal: 5,
     refCode: 'ISO-9001-9.2.2',
-    nodeKind: 'leaf',
+    nodeKind: 'control',
     title: 'Audit frequency reflects the risk and the results of prior audits',
     mandatory: true,
   },
@@ -105,7 +135,7 @@ const CRITERIA_PUBLISHED: Fixture[] = [
     parentId: null,
     ordinal: 6,
     refCode: 'ISO-9001-10.2',
-    nodeKind: 'leaf',
+    nodeKind: 'criterion',
     title: 'Nonconformities are reacted to and corrective actions are effective',
     mandatory: false,
   },
@@ -219,6 +249,31 @@ const USERS: Fixture[] = [
 
 let installed = false;
 
+/**
+ * Mirror of `packService.buildCriteriaTree` — the real `GET /audits/packs/:id`
+ * returns a TREE (`children` nested, sorted by ordinal), not a flat list. The
+ * harness has to be honest about that shape, because the OP-2b editor
+ * flattens it and the replace payload is the only carrier of the hierarchy.
+ */
+function buildCriteriaTree(flat: Fixture[]): Fixture[] {
+  const nodes = new Map<string, Fixture>();
+  for (const c of flat) nodes.set(c.id as string, { ...c, children: [] });
+  const roots: Fixture[] = [];
+  for (const c of flat) {
+    const node = nodes.get(c.id as string) as Fixture;
+    const parent = c.parentId ? nodes.get(c.parentId as string) : undefined;
+    if (parent) (parent.children as Fixture[]).push(node);
+    else roots.push(node);
+  }
+  const byOrdinal = (a: Fixture, b: Fixture) => Number(a.ordinal) - Number(b.ordinal);
+  const sortRec = (list: Fixture[]) => {
+    list.sort(byOrdinal);
+    for (const n of list) sortRec(n.children as Fixture[]);
+  };
+  sortRec(roots);
+  return roots;
+}
+
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -262,7 +317,65 @@ export function installOp2aFakeServer(): void {
       const id = decodeURIComponent(detailMatch[1]);
       const pack = PACKS.find((p) => p.id === id);
       if (!pack) return json(404, { success: false, error: { code: 'AUDIT_PACK_NOT_FOUND' } });
-      return envelope({ pack, criteria: CRITERIA[id] ?? [] });
+      return envelope({ pack, criteria: buildCriteriaTree(CRITERIA[id] ?? []) });
+    }
+
+    // ── OP-2b: replace the whole criteria list (PUT = replace, not patch) ─
+    // Mirrors `packs.routes.ts:155-173` + `packService.replaceCriteria:693`:
+    // bare array OR `{ criteria }`, 400 on anything else, 400 on an empty
+    // title, 409 for a published pack, fresh ids on save (the client's `id`
+    // is only a temp key for parent pairing).
+    const criteriaMatch = /^\/audits\/packs\/([^/]+)\/criteria$/.exec(path);
+    if (criteriaMatch && method === 'PUT') {
+      const id = decodeURIComponent(criteriaMatch[1]);
+      const pack = PACKS.find((p) => p.id === id);
+      if (!pack) return json(404, { success: false, error: { code: 'AUDIT_PACK_NOT_FOUND' } });
+      if (pack.publicationStatus === 'published') {
+        return json(409, { success: false, error: { code: 'AUDIT_INVALID_STATE' } });
+      }
+      const raw = init?.body ? String(init.body) : '';
+      let parsed: unknown = null;
+      try {
+        parsed = raw ? JSON.parse(raw) : null;
+      } catch {
+        return json(400, { success: false, error: { code: 'AUDIT_CRITERIA_PAYLOAD_INVALID' } });
+      }
+      const incoming = Array.isArray(parsed)
+        ? (parsed as Fixture[])
+        : ((parsed as { criteria?: Fixture[] } | null)?.criteria ?? null);
+      if (!Array.isArray(incoming)) {
+        return json(400, { success: false, error: { code: 'AUDIT_CRITERIA_PAYLOAD_INVALID' } });
+      }
+      if (incoming.some((c) => typeof c.title !== 'string' || !c.title.trim())) {
+        return json(400, { success: false, error: { code: 'AUDIT_CRITERION_TITLE_MISSING' } });
+      }
+      const idMap = new Map<string, string>();
+      const saved: Fixture[] = incoming.map((c, index) => {
+        const generated = `apc_${Math.random().toString(36).slice(2, 10)}`;
+        idMap.set(typeof c.id === 'string' ? c.id : `__idx_${index}`, generated);
+        return { ...c, __generated: generated };
+      });
+      CRITERIA[id] = saved.map((c) => ({
+        id: c.__generated,
+        parentId: c.parentId ? idMap.get(c.parentId as string) ?? null : null,
+        ordinal: typeof c.ordinal === 'number' ? c.ordinal : 0,
+        refCode: c.refCode ?? null,
+        nodeKind: c.nodeKind ?? 'criterion',
+        title: String(c.title).trim(),
+        requirementText: c.requirementText ?? null,
+        sourceReference: c.sourceReference ?? null,
+        auditQuestion: c.auditQuestion ?? null,
+        expectedEvidence: c.expectedEvidence ?? [],
+        auditProcedure: c.auditProcedure ?? null,
+        samplingGuidance: c.samplingGuidance ?? null,
+        applicabilityRule: c.applicabilityRule ?? {},
+        mandatory: c.mandatory ?? true,
+        weight: c.weight ?? null,
+        suggestedOwnerRole: c.suggestedOwnerRole ?? null,
+      }));
+      pack.criteriaCount = CRITERIA[id].length;
+      pack.updatedAt = new Date().toISOString();
+      return envelope(CRITERIA[id]);
     }
 
     // ── publish / approve-expert (same endpoints the list kebab calls) ───

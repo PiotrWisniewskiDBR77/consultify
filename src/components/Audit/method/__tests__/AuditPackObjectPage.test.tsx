@@ -37,6 +37,7 @@ vi.mock('../auditsMethodApi', async () => {
     listPrograms: vi.fn(),
     approvePackByExpert: vi.fn(),
     publishPack: vi.fn(),
+    replaceCriteria: vi.fn(),
   };
 });
 
@@ -75,7 +76,8 @@ import {
   getPack,
   listPrograms,
   publishPack,
-  type AuditPackCriterionSummary,
+  replaceCriteria,
+  type AuditPackCriterionNode,
   type AuditPackDetail,
 } from '../auditsMethodApi';
 
@@ -83,9 +85,10 @@ const mockedGetPack = vi.mocked(getPack);
 const mockedListPrograms = vi.mocked(listPrograms);
 const mockedApprove = vi.mocked(approvePackByExpert);
 const mockedPublish = vi.mocked(publishPack);
+const mockedReplaceCriteria = vi.mocked(replaceCriteria);
 const INITIAL_LANGUAGE = i18n.language;
 
-const criteria: AuditPackCriterionSummary[] = [
+const criteria: AuditPackCriterionNode[] = [
   {
     id: 'crit-raw-id-1',
     parentId: null,
@@ -173,6 +176,8 @@ describe('AuditPackObjectPage — OP-2 ekran obiektu pakietu', () => {
     mockedListPrograms.mockReset();
     mockedApprove.mockReset();
     mockedPublish.mockReset();
+    mockedReplaceCriteria.mockReset();
+    mockedReplaceCriteria.mockResolvedValue([]);
     mockedListPrograms.mockResolvedValue({ items: [], total: 0 });
     mockedApprove.mockResolvedValue(null);
     mockedPublish.mockResolvedValue(null);
@@ -356,5 +361,141 @@ describe('AuditPackObjectPage — OP-2 ekran obiektu pakietu', () => {
     await waitFor(() => expect(propertyValue('Criteria count')).toBe('2'));
 
     expect(screen.queryByText('Other pack program')).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * OP-2b (Wpis 99): edycja kryteriów na ekranie obiektu. Trzy reguły z dowodem
+ * mutacyjnym w meldunku:
+ *   1. BRAMKA STANU: edycja tylko dla `draft` i tylko dla administratora
+ *      platformy (`packService.replaceCriteria` odmawia pakietowi
+ *      `published`, a trasa jest za `requireAdmin`);
+ *   2. JEDEN ZAPIS = JEDEN `PUT` całej listy (replace, nie patch) przez
+ *      `replaceCriteria` z `auditsMethodApi` — nie własny fetch;
+ *   3. PO ZAPISIE odczyt `getPack` i render z odpowiedzi serwera, a przy
+ *      błędzie 4xx/5xx komunikat inline i ZACHOWANY stan lokalny.
+ * Przycisku „New version" NIE ma w żadnym stanie: `createNewVersion` nie ma
+ * wołacza we frontendzie (DEC-607 — jedno zdanie w meldunku, zero dopinania).
+ */
+describe('AuditPackObjectPage — OP-2b edycja kryteriów', () => {
+  beforeEach(async () => {
+    i18n.addResourceBundle('en', 'translation', enTranslation, true, true);
+    i18n.addResourceBundle('pl', 'translation', plTranslation, true, true);
+    await i18n.changeLanguage('en');
+    mockedGetPack.mockReset();
+    mockedListPrograms.mockReset();
+    mockedListPrograms.mockResolvedValue({ items: [], total: 0 });
+    mockedReplaceCriteria.mockReset();
+    mockedReplaceCriteria.mockResolvedValue([]);
+  });
+
+  async function openCriteriaSection() {
+    fireEvent.click(await screen.findByText('Criteria'));
+  }
+
+  it('draft + administrator: „Edit criteria" otwiera tryb edycji z polami', async () => {
+    setRole('ADMIN');
+    mockedGetPack.mockResolvedValue(makeDetail({ publicationStatus: 'draft' }));
+    renderPage();
+    await openCriteriaSection();
+
+    fireEvent.click(await screen.findByTestId('pack-criteria-edit'));
+
+    expect(await screen.findByTestId('pack-criteria-editor')).toBeInTheDocument();
+    expect(
+      (screen.getByTestId('pack-criteria-title-crit-raw-id-1') as HTMLInputElement).value
+    ).toBe('Supplier qualification');
+    expect(screen.getByTestId('pack-criteria-save')).toBeInTheDocument();
+    // Przycisku nowej wersji NIE ma — `createNewVersion` nie ma wołacza.
+    expect(screen.queryByRole('button', { name: /new version/i })).not.toBeInTheDocument();
+  });
+
+  it('published + administrator: lista read-only, BEZ wejścia w edycję i bez pól', async () => {
+    setRole('ADMIN');
+    mockedGetPack.mockResolvedValue(
+      makeDetail({ publicationStatus: 'published', expertApprovedBy: 'expert-1' })
+    );
+    const { container } = renderPage();
+    await openCriteriaSection();
+
+    expect(await screen.findByTestId('pack-criteria-readonly')).toBeInTheDocument();
+    expect(screen.queryByTestId('pack-criteria-edit')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new version/i })).not.toBeInTheDocument();
+    expect(container.querySelectorAll('input, textarea').length).toBe(0);
+  });
+
+  it('draft bez uprawnienia platformowego: edycji NIE ma (bramka roli, nie tylko statusu)', async () => {
+    setRole('USER');
+    mockedGetPack.mockResolvedValue(makeDetail({ publicationStatus: 'draft' }));
+    const { container } = renderPage();
+    await openCriteriaSection();
+
+    await screen.findByText('Supplier qualification');
+    expect(screen.queryByTestId('pack-criteria-edit')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('input, textarea').length).toBe(0);
+  });
+
+  it('„Save criteria" wysyła JEDEN `PUT` całej listy, a po zapisie ekran czyta pakiet ponownie', async () => {
+    setRole('ADMIN');
+    mockedGetPack.mockResolvedValue(makeDetail({ publicationStatus: 'draft' }));
+    renderPage();
+    await openCriteriaSection();
+    fireEvent.click(await screen.findByTestId('pack-criteria-edit'));
+
+    fireEvent.change(await screen.findByTestId('pack-criteria-title-crit-raw-id-1'), {
+      target: { value: 'Supplier qualification v2' },
+    });
+    fireEvent.click(screen.getByTestId('pack-criteria-remove-crit-raw-id-2'));
+    const callsBefore = mockedGetPack.mock.calls.length;
+    fireEvent.click(screen.getByTestId('pack-criteria-save'));
+
+    await waitFor(() => expect(mockedReplaceCriteria).toHaveBeenCalledTimes(1));
+    expect(mockedReplaceCriteria).toHaveBeenCalledWith('pack-1', [
+      {
+        id: 'crit-raw-id-1',
+        parentId: null,
+        ordinal: 0,
+        refCode: 'ZAK-8.4.1',
+        nodeKind: 'leaf',
+        title: 'Supplier qualification v2',
+        requirementText: null,
+        mandatory: true,
+        weight: null,
+        sourceReference: null,
+        auditQuestion: null,
+        expectedEvidence: [],
+        auditProcedure: null,
+        samplingGuidance: null,
+        applicabilityRule: {},
+        suggestedOwnerRole: null,
+      },
+    ]);
+    // Render PO zapisie jest z odpowiedzi serwera, nie z lokalnego stanu.
+    await waitFor(() => expect(mockedGetPack.mock.calls.length).toBeGreaterThan(callsBefore));
+    await waitFor(() =>
+      expect(screen.queryByTestId('pack-criteria-editor')).not.toBeInTheDocument()
+    );
+  });
+
+  it('błąd zapisu 4xx/5xx → komunikat inline, tryb edycji i stan lokalny ZACHOWANY', async () => {
+    setRole('ADMIN');
+    mockedGetPack.mockResolvedValue(makeDetail({ publicationStatus: 'draft' }));
+    mockedReplaceCriteria.mockRejectedValue(new Error('AUDIT_CRITERION_TITLE_MISSING'));
+    renderPage();
+    await openCriteriaSection();
+    fireEvent.click(await screen.findByTestId('pack-criteria-edit'));
+
+    fireEvent.change(await screen.findByTestId('pack-criteria-title-crit-raw-id-1'), {
+      target: { value: 'Kept locally' },
+    });
+    fireEvent.click(screen.getByTestId('pack-criteria-save'));
+
+    expect(await screen.findByTestId('pack-criteria-save-error')).toHaveTextContent(
+      /AUDIT_CRITERION_TITLE_MISSING/
+    );
+    expect(screen.getByTestId('pack-criteria-editor')).toBeInTheDocument();
+    expect(
+      (screen.getByTestId('pack-criteria-title-crit-raw-id-1') as HTMLInputElement).value
+    ).toBe('Kept locally');
   });
 });

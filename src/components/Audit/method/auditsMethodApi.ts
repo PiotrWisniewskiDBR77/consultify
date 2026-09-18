@@ -218,6 +218,27 @@ export interface AuditPackCriterionSummary {
   mandatory: boolean;
 }
 
+/**
+ * Pełny węzeł kryterium z `GET /audits/packs/:id` (zmierzone:
+ * `packService.getPack` → `buildCriteriaTree(getCriteriaFlat(...))`, więc
+ * `criteria` to DRZEWO z `children`, a nie lista płaska). Pola poza
+ * `AuditPackCriterionSummary` są opcjonalne, bo ekran listy ich nie czyta —
+ * ale edycja kryteriów (OP-2b) MUSI je nieść w payloadzie `PUT`, który jest
+ * replace'em całego drzewa: czego klient nie wyśle, tego serwis nie wstawi.
+ */
+export interface AuditPackCriterionNode extends AuditPackCriterionSummary {
+  requirementText?: string | null;
+  sourceReference?: string | null;
+  auditQuestion?: string | null;
+  expectedEvidence?: Array<Record<string, unknown>>;
+  auditProcedure?: string | null;
+  samplingGuidance?: string | null;
+  applicabilityRule?: Record<string, unknown>;
+  weight?: number | null;
+  suggestedOwnerRole?: string | null;
+  children?: AuditPackCriterionNode[];
+}
+
 export interface AuditPackDetail extends AuditPackSummary {
   purpose: string | null;
   scope: string | null;
@@ -227,7 +248,7 @@ export interface AuditPackDetail extends AuditPackSummary {
   findingTaxonomy: Array<{ key: string; label: string; nonConforming: boolean }>;
   rightsStatus: string | null;
   rightsNote: string | null;
-  criteria: AuditPackCriterionSummary[];
+  criteria: AuditPackCriterionNode[];
 }
 
 export interface ListPacksParams {
@@ -526,6 +547,61 @@ export async function publishPack(id: string): Promise<AuditPackSummary | null> 
   const res = await Api.post(`/audits/packs/${encodeURIComponent(id)}/publish`, {});
   const payload = unwrapEnvelope(res) as AuditPackSummary | undefined;
   return payload && payload.id ? payload : null;
+}
+
+/**
+ * OP-2b (Wpis 99, wiersz planu 65 / U-27): wejście edycji kryteriów pakietu.
+ *
+ * Kontrakt ZMIERZONY, nie zgadnięty (`server/src/routes/audits/packs.routes.ts`
+ * `PUT /:id/criteria` + `packService.replaceCriteria`):
+ *  - body: goła tablica ALBO `{ criteria: [...] }` (inaczej 400
+ *    `AUDIT_CRITERIA_PAYLOAD_INVALID`) — wysyłamy obiekt z kluczem `criteria`;
+ *  - pole per kryterium (`ReplaceCriterionInput`, packService.ts:665-683):
+ *    `id?` (klucz tymczasowy do sparowania parent/child w tym wywołaniu),
+ *    `parentId?`, `ordinal?` (brak = indeks), `refCode?`, `nodeKind?`
+ *    (domain|clause|control|criterion), `title` (WYMAGANE, niepuste — inaczej
+ *    400 `AUDIT_CRITERION_TITLE_MISSING`), `requirementText?`,
+ *    `sourceReference?`, `auditQuestion?`, `expectedEvidence?`,
+ *    `auditProcedure?`, `samplingGuidance?`, `applicabilityRule?`,
+ *    `mandatory?` (brak = true), `weight?`, `suggestedOwnerRole?`;
+ *  - to REPLACE, nie patch: serwis kasuje całe drzewo i wstawia payload w
+ *    JEDNEJ transakcji; pakiet `published` odmawia (`AuditStateError`);
+ *  - konsekwencja mierzalna: pola, których payload NIE niesie, wracają jako
+ *    `null`/domyślne (`INSERT` z `c.<pole> ?? null`), więc edytor przekazuje
+ *    pola spoza swojego formularza (`sourceReference`, `auditQuestion`,
+ *    `expectedEvidence`, `auditProcedure`, `samplingGuidance`,
+ *    `applicabilityRule`, `suggestedOwnerRole`) bez zmian — inaczej zapis
+ *    samej nazwy wyzerowałby resztę kryterium;
+ *  - odpowiedź: `data` = tablica zapisanych kryteriów.
+ */
+export interface ReplaceCriterionInput {
+  /** Klucz tymczasowy (stare id albo `new-N`) — tylko do sparowania rodzica. */
+  id?: string;
+  parentId?: string | null;
+  ordinal?: number;
+  refCode?: string | null;
+  nodeKind?: string;
+  title: string;
+  requirementText?: string | null;
+  sourceReference?: string | null;
+  auditQuestion?: string | null;
+  expectedEvidence?: Array<Record<string, unknown>>;
+  auditProcedure?: string | null;
+  samplingGuidance?: string | null;
+  applicabilityRule?: Record<string, unknown>;
+  mandatory?: boolean;
+  weight?: number | null;
+  suggestedOwnerRole?: string | null;
+}
+
+export async function replaceCriteria(
+  packId: string,
+  criteria: ReplaceCriterionInput[]
+): Promise<AuditPackCriterionSummary[]> {
+  const res = await Api.put(`/audits/packs/${encodeURIComponent(packId)}/criteria`, {
+    criteria,
+  });
+  return toArray<AuditPackCriterionSummary>(unwrapEnvelope(res), 'criteria');
 }
 
 // ---------------------------------------------------------------------------

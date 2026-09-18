@@ -37,6 +37,7 @@ import {
   ClipboardList,
   Library as LibraryIcon,
   ListChecks,
+  Pencil,
   PlayCircle,
   Send,
   ShieldCheck,
@@ -62,6 +63,7 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import { Button } from '@/components/ui/primitives/Button';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
 import { formatListDate } from '@/utils/listDateFormat';
@@ -94,6 +96,7 @@ import {
   evaluateStartGate,
   formatPackCriteriaCount,
 } from '../tabs/AuditLibraryTab';
+import { flattenCriteria, PackCriteriaEditor } from './PackCriteriaEditor';
 
 export interface AuditPackObjectPageProps {
   /** `:packId` z trasy `/audit-programs/packs/:packId`. */
@@ -145,6 +148,7 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
   const [transitioning, setTransitioning] = useState<'approve' | 'publish' | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('overview');
+  const [editingCriteria, setEditingCriteria] = useState(false);
 
   const load = useCallback(async () => {
     if (!packId) {
@@ -229,10 +233,37 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
     [pack, transitioning, load, t]
   );
 
+  /**
+   * OP-2b: edycja kryteriów tylko w `draft` i tylko dla administratora
+   * platformy. Oba warunki są zmierzone z backendu, nie wymyślone:
+   * `packService.replaceCriteria` rzuca `AuditStateError` dla pakietu
+   * `published`, a `PUT /packs/:id/criteria` jest za `requireAdmin(actor)`
+   * (`isPlatformAdmin`). Dla `published` lista zostaje read-only; przycisku
+   * „New version" NIE ma, bo `createNewVersion` nie ma w frontendzie żadnego
+   * wołacza (DEC-607: jedno zdanie w meldunku, zero dopinania).
+   */
+  const canEditCriteria = pack?.publicationStatus === 'draft' && canManagePackLibrary;
+
+  /**
+   * Po udanym zapisie ekran czyta pakiet PONOWNIE (`getPack` w `load`) i
+   * renderuje z odpowiedzi serwera: `replaceCriteria` nadaje kryteriom nowe id
+   * i `ordinal`, więc lokalny stan roboczy po zapisie nie jest już prawdą.
+   */
+  const handleCriteriaSaved = useCallback(async () => {
+    setEditingCriteria(false);
+    await load();
+  }, [load]);
+
+  /**
+   * `GET /audits/packs/:id` oddaje kryteria jako DRZEWO (`buildCriteriaTree`),
+   * więc tabela read-only musi je spłaszczyć tym samym helperem co edytor —
+   * inaczej pakiet z zagnieżdżonymi kryteriami pokazuje w podglądzie mniej
+   * wierszy, niż użytkownik widzi w trybie edycji.
+   */
   const criteriaRows = useMemo<TableRow[]>(
     () =>
-      (pack?.criteria ?? []).map((c: AuditPackCriterionSummary) => ({
-        id: c.id,
+      flattenCriteria(pack?.criteria).map((c) => ({
+        id: c.key,
         ordinal: c.ordinal,
         refCode: c.refCode,
         title: c.title,
@@ -611,22 +642,58 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
       label: { en: 'Criteria', pl: 'Kryteria' },
       badge: pack.criteria.length,
       alwaysShow: true,
-      component: (
-        <StandardTable
-          columns={criteriaColumns}
-          data={criteriaRows}
-          rowDescription={() => null}
-          minTableWidth="auto"
-          persistKey="audits.method.pack.criteria"
-          empty={{
-            icon: ListChecks,
-            title: t('audit.pack.viewer.noCriteria', 'No criteria in this pack'),
-            description: t(
-              'audit.pack.viewer.noCriteriaHint',
-              'The pack has no criteria recorded yet.'
-            ),
-          }}
+      component: editingCriteria && canEditCriteria ? (
+        <PackCriteriaEditor
+          packId={pack.id}
+          criteria={pack.criteria}
+          onSaved={handleCriteriaSaved}
+          onCancel={() => setEditingCriteria(false)}
         />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {canEditCriteria ? (
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-c-text-secondary">
+                {t(
+                  'audit.pack.viewer.criteria.editHint',
+                  'Saving replaces the whole criteria list in one request.'
+                )}
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Pencil size={14} />}
+                onClick={() => setEditingCriteria(true)}
+                data-testid="pack-criteria-edit"
+              >
+                {t('audit.pack.viewer.criteria.edit', 'Edit criteria')}
+              </Button>
+            </div>
+          ) : null}
+          {!canEditCriteria && canManagePackLibrary ? (
+            <p className="text-xs text-c-text-secondary" data-testid="pack-criteria-readonly">
+              {t(
+                'audit.pack.viewer.criteria.readOnly',
+                'Criteria of a published pack are read-only.'
+              )}
+            </p>
+          ) : null}
+          <StandardTable
+            columns={criteriaColumns}
+            data={criteriaRows}
+            rowDescription={() => null}
+            minTableWidth="auto"
+            persistKey="audits.method.pack.criteria"
+            empty={{
+              icon: ListChecks,
+              title: t('audit.pack.viewer.noCriteria', 'No criteria in this pack'),
+              description: t(
+                'audit.pack.viewer.noCriteriaHint',
+                'The pack has no criteria recorded yet.'
+              ),
+            }}
+          />
+        </div>
       ),
     },
     {
