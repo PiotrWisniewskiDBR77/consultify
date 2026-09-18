@@ -11,7 +11,9 @@
  * znalezionej `grep`em po `id: 'updatedAt'` (+ jednego bliźniaka,
  * `publishedAt` w AuditReportsTab.tsx, ujawnionego live screenshotem podczas
  * odbioru tej fali) w 13 plikach:
- *  - src/components/Discovery/DiscoveryToolsHub.tsx (4x)
+ *  - src/components/Discovery/DiscoveryToolsHub.tsx (5x — piąta kolumna
+ *    `updatedAt` doszła PO autorstwie tego testu w 48d7e479a2 / DEC-412
+ *    „Insighty to nie Raporty"; strażnik obejmuje teraz wszystkie pięć)
  *  - src/components/assessment/AssessmentHub.tsx (1x, `updatedCol`,
  *    reużywany w zakładkach "list" i "reports")
  *  - src/components/Economics/FinanceHub.tsx (1x, `baseUpdatedCol`)
@@ -83,7 +85,7 @@ function expectDataTypeDate(block: string, context: string): void {
 type Case = { file: string; columnId: string; count: number; minWidth: number };
 
 const CASES: Case[] = [
-  { file: 'src/components/Discovery/DiscoveryToolsHub.tsx', columnId: 'updatedAt', count: 4, minWidth: 180 },
+  { file: 'src/components/Discovery/DiscoveryToolsHub.tsx', columnId: 'updatedAt', count: 5, minWidth: 180 },
   { file: 'src/components/assessment/AssessmentHub.tsx', columnId: 'updatedAt', count: 1, minWidth: 180 },
   { file: 'src/components/Economics/FinanceHub.tsx', columnId: 'updatedAt', count: 1, minWidth: 180 },
   { file: 'src/components/ResultsVNext/roi/roiCaseFullToolPresenters.tsx', columnId: 'updatedAt', count: 2, minWidth: 180 },
