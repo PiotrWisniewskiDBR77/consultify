@@ -243,27 +243,40 @@ function getAllMigrations(dir: string): Migration[] {
 //                        last, sorted by filename.
 
 
-function isSqliteOnlyMigration(m: Migration): boolean {
+export function isSqliteOnlyMigration(m: Migration): boolean {
   const f = m.filename.toLowerCase();
   const versionNum = Number.parseInt(m.version, 10);
 
   // iCloud/duplicate artifacts (e.g. "515_xxx 2.sql")
   if (/\s+\d+\.sql$/.test(f)) return true;
 
-  // Exception to the seed exclusion below: this file carries GLOBAL v6 interview
-  // library templates (product reference data), not demo/seed content. The live
-  // boot autorun already registers it in tp_migration_history (staging row 372)
-  // and its 38 INSERTs are idempotent (ON CONFLICT (id) DO NOTHING), so the
-  // offline runner must not diverge by skipping it — without these v6_* rows the
-  // demo seed etap 09 `--api` gets `404 Template not found`
-  // (v6_t03_strategic_direction_discovery) and D9 is silently skipped.
-  if (f === '20260720_seed_v6_interview_library_templates.sql') return false;
+  // Substantive rule (replaces the former per-file exact-filename exception for
+  // the v6 interview-library seed, which regrew file by file). The live boot
+  // autorun applies EVERY canonical-flow migration — filename matching
+  // /^(7\d{2}|\d{8})_.*\.sql$/ — and registers it in tp_migration_history,
+  // regardless of a `seed`/`mock`/`demo` word in the name. Ten such files exist
+  // today (20260409 p25d help, 20260411 partner KB, 20260412 business templates,
+  // 20260608 megatrends, 20260628 finance readiness, 20260720 v6 interview
+  // templates, 20262105 origin-runtime repair, 771 cleanup, 784/785 DBR77
+  // templates); all are Postgres-native and idempotent, none carries a SQLite
+  // marker. If the offline runner skips them the two ledgers diverge and a fresh
+  // Postgres DB is missing global reference data — e.g. without the v6 templates
+  // the demo seed etap 09 `--api` gets `404 Template not found` and D9 is
+  // silently skipped. So the seed/mock/demo exclusion below fires ONLY for files
+  // OUTSIDE the canonical flow (the legacy 3-digit demo/mock seeds — 125_,
+  // 223_–252_, 420_–513_ — that the live autorun also skips). Verified: the flip
+  // set equals the tp_migration_history seed rows exactly.
+  const canonicalPgFlow = /^(?:7\d{2}|\d{8})_.*\.sql$/.test(f);
 
-  // Seed/demo data files should not be part of schema migration flow.
+  // Seed/demo data files are not part of the schema migration flow — unless they
+  // are canonical-flow files the live boot autorun already applies (see above).
   if (
-    f.includes('seed') ||
-    f.includes('mock') ||
-    f.includes('demo') ||
+    !canonicalPgFlow &&
+    (f.includes('seed') || f.includes('mock') || f.includes('demo'))
+  ) {
+    return true;
+  }
+  if (
     f.startsWith('add_') ||
     f === 'assessment-module.sql' ||
     f === 'fix_conversations_table.sql'
