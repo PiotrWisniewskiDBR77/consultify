@@ -1,0 +1,5 @@
+DUMP [data-testid="doc0-page-not-found"]:
+<div class="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-sm text-c-text-secondary" data-testid="doc0-page-not-found"><p>This document no longer exists. The link may be out of date.</p><button type="button" class="rounded-lg border border-c-border px-3 py-2 text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus mt-4">Back to documents</button></div>
+
+BEZ-CHROME: ukryto 0 elementow przyrzadu
+OK -> evidence/qoder-doc0-2a-d102-d103-20260918/doc0-d102-not-found-en-light-1440x900.png

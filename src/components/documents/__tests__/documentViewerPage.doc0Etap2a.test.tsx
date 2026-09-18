@@ -24,7 +24,10 @@
  * MUTACJE: (a) drop `.../action-target` from `loadDocumentMeta` → test 1 and the
  * server-openPath test RED; (b) `tr(\`statusLabel.${key}\`)` → `tr(\`status.${key}\`)`
  * → test 3 RED (unresolvable key); (c) `navigate(buildDocumentViewerListPath(...))`
- * → `navigate('/presentations')` → test 5 RED.
+ * → `navigate('/presentations')` → test 5 RED; (d) D-102: classify EVERY artifact
+ * failure as `{ kind: 'error' }` (drop the 404 branch) → the not-found test RED;
+ * (e) D-102: swallow the failure to `null`/settled (pre-fix behaviour) → both the
+ * transient-error and not-found tests RED (viewer stub renders instead).
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -180,14 +183,50 @@ describe('DocumentViewerPage — deep link fills the header from the registry', 
     expect(screen.getByTestId('doc0-viewer-stub').getAttribute('data-status-label')).toBe('');
   });
 
-  it('an unreachable registry still renders the viewer (honest empty header, no white screen)', async () => {
-    apiGet.mockRejectedValue(new Error('503'));
+  it('a registry that answers with an empty body still renders the viewer (settled, honest empty header)', async () => {
+    // D-102 only reclassifies FAILURES. A 200 with no fields is a settled read:
+    // the viewer renders with an empty header, never a white screen.
+    apiGet.mockImplementation(() => Promise.resolve({ data: {} }));
     await renderPage();
     const stub = screen.getByTestId('doc0-viewer-stub');
     expect(stub.getAttribute('data-title')).toBe('');
     expect(stub.getAttribute('data-status-label')).toBe('');
     // No openPath and no originRecordId → no Edit action at all.
     expect(viewerProps.current.onEdit).toBeUndefined();
+  });
+
+  it('a transient fault (5xx/network) shows a RETRYABLE error, not the viewer (D-102)', async () => {
+    // A bare network fault carries no HTTP status → transient, never "does not exist".
+    apiGet.mockRejectedValue(new Error('503'));
+    render(<DocumentViewerPage artifactId={ARTIFACT_ID} />);
+    await screen.findByTestId('doc0-page-error');
+    expect(screen.queryByTestId('doc0-viewer-stub')).toBeNull();
+    expect(screen.getByText('documents.viewer.pageLoadError')).toBeInTheDocument();
+
+    // Retry re-fires the load; a healthy answer then renders the viewer.
+    const callsBefore = apiGet.mock.calls.length;
+    apiGet.mockImplementation((url: string) =>
+      url.endsWith('/action-target')
+        ? Promise.resolve(actionTargetBody())
+        : Promise.resolve(registryBody())
+    );
+    fireEvent.click(screen.getByTestId('doc0-page-retry'));
+    await screen.findByTestId('doc0-viewer-stub');
+    expect(apiGet.mock.calls.length).toBeGreaterThan(callsBefore);
+  });
+
+  it('a 404 says the deep link is dead — Back to list, NO retry (D-102)', async () => {
+    apiGet.mockRejectedValue(Object.assign(new Error('gone'), { status: 404 }));
+    render(<DocumentViewerPage artifactId={ARTIFACT_ID} />);
+    await screen.findByTestId('doc0-page-not-found');
+    expect(screen.queryByTestId('doc0-viewer-stub')).toBeNull();
+    // A dead link is not retryable: hitting "Try again" would 404 again.
+    expect(screen.queryByTestId('doc0-page-retry')).toBeNull();
+    expect(screen.getByText('documents.viewer.pageNotFound')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('documents.viewer.backToList'));
+    expect(navigateSpy).toHaveBeenCalledWith(
+      `/presentations?tab=documents&artifactId=${ARTIFACT_ID}`
+    );
   });
 });
 

@@ -63,6 +63,15 @@ const ARTIFACT_ID = ARTIFACT.artifactId;
 const ORIGIN_RECORD_ID = ARTIFACT.originRecordId;
 const TITLE = ARTIFACT.resolvedTitle;
 
+/**
+ * D-102 (Wpis 134): force the registry EXISTENCE read into a failure state so the
+ * deep-link screen renders its honest cards instead of the viewer.
+ *   doc0_state=not-found → 404 → "link is dead" card (Back to list, no retry)
+ *   doc0_state=error     → 503 → retryable "could not be loaded" card (Try again)
+ * Absent/any other value → the captured 200 row (the settled viewer).
+ */
+const DOC0_STATE = new URLSearchParams(window.location.search).get('doc0_state');
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -78,7 +87,17 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   if (url.includes(`/api/artifacts/${ARTIFACT_ID}/action-target`)) {
     return jsonResponse(REGISTRY.actionTargetEnvelope);
   }
-  if (url.includes(`/api/artifacts/${ARTIFACT_ID}`)) return jsonResponse(REGISTRY.artifactEnvelope);
+  if (url.includes(`/api/artifacts/${ARTIFACT_ID}`)) {
+    // D-102: the existence read drives the page phase. Content/action-target are
+    // matched above, so this branch is the bare registry read only.
+    if (DOC0_STATE === 'not-found') {
+      return jsonResponse({ error: { code: 'ARTIFACT_NOT_FOUND' } }, 404);
+    }
+    if (DOC0_STATE === 'error') {
+      return jsonResponse({ error: 'upstream unavailable' }, 503);
+    }
+    return jsonResponse(REGISTRY.artifactEnvelope);
+  }
   // `useArtifactOutputsForOrigins` (NotebookContextPanel) reads ONE artifact per
   // origin: `/api/artifacts/origin/<runtime>/<id>` → `{ data: <item> }`.
   if (url.includes('/api/artifacts/origin/')) return jsonResponse({ data: ARTIFACT });

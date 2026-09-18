@@ -188,3 +188,46 @@ describe('DocumentViewer — honest non-ready states', () => {
     );
   });
 });
+
+/**
+ * D-103 (Wpis 134): the etap2a page test mocks `DocumentViewer` wholesale, so it
+ * never proves the viewer itself still stands on the shared SPEC-A shell. These
+ * assertions run the REAL component and check the three pillars DEC-593 requires
+ * of an archetype-B card — Menu 1 (left section nav), `ArtifactRightPanel`
+ * (Properties), and the header kebab — after the content fetch resolves.
+ */
+describe('DocumentViewer — shared SPEC-A shell pillars (D-103)', () => {
+  it('renders Menu 1, the right panel with Properties, and the header kebab', async () => {
+    // Heading-less body → exactly one left-nav section labelled "Document".
+    routes[ARTIFACT_URL] = {
+      status: 200,
+      body: envelope('Body text without any heading, so the nav has one entry.'),
+    };
+
+    render(
+      <DocumentViewer
+        artifactId="art-doc0-1"
+        title="Q3 operating plan"
+        statusLabel="Ready"
+        ownerName="Piotr"
+        onClose={() => {}}
+      />
+    );
+
+    // All three pillars appear only once the projected content resolves.
+    await waitFor(() =>
+      expect(screen.getByRole('complementary', { name: 'Document details' })).toBeTruthy()
+    );
+    // Pillar 1 — Menu 1 (NModeLeftNav section button).
+    expect(screen.getByRole('button', { name: 'Document' })).toBeTruthy();
+    // Pillar 2 — ArtifactRightPanel Properties rows.
+    expect(screen.getByText('Content registry')).toBeTruthy();
+    expect(screen.getByText('Status')).toBeTruthy();
+    expect(screen.getByText('Owner')).toBeTruthy();
+    expect(screen.getByText('Updated')).toBeTruthy();
+    // Pillar 3 — header kebab (HeaderOverflowMenu; the i18n mock returns the bare key).
+    expect(
+      screen.getByRole('button', { name: 'sharedComponents.nModeHeader.moreActions' })
+    ).toBeTruthy();
+  });
+});
