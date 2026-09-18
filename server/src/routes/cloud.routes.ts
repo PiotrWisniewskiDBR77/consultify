@@ -410,29 +410,41 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
  * List supported cloud storage providers
  */
 router.get('/providers', verifyToken, async (req: AuthRequest, res: Response) => {
-  // Real connection state: a provider is "connected" when the org has at least
-  // one configured cloud source for it. Previously this endpoint returned a
-  // STATIC list with underscore ids (`google_drive`) and no `connected` flag,
-  // so the in-chat cloud rows (which filter on hyphenated id + connected) never
-  // rendered even after the user linked a provider. (Composer audit A4.)
   const organizationId = req.organizationId;
-  const connected = new Set<string>();
+  const userId = req.userId;
+  const sourceConfigured = new Set<string>();
+  const oauthConnected = new Set<string>();
+
   try {
     if (organizationId) {
       const { listCloudSources } = await import('../services/cloudDataService.js');
       const sources = await listCloudSources(organizationId);
       for (const s of sources || []) {
-        const p = String((s as any)?.provider || '')
-          .toLowerCase()
-          .replace(/_/g, '-');
-        if (p) connected.add(p);
+        const provider = String((s as any)?.provider || '').toLowerCase();
+        if (provider) sourceConfigured.add(provider);
       }
     }
   } catch (err: any) {
-    // Non-fatal — fall back to "nothing connected" rather than 500.
-    logger.warn('[CloudRoutes] providers connection-state lookup failed:', err?.message);
+    logger.warn('[CloudRoutes] providers source-state lookup failed:', err?.message);
   }
-  const isConnected = (id: string) => connected.has(id) || connected.has(id.replace(/-/g, '_'));
+
+  try {
+    if (userId) {
+      for (const provider of OAUTH_CLOUD_PROVIDERS) {
+        if (await hasActiveCloudToken(userId, provider)) oauthConnected.add(provider);
+      }
+    }
+  } catch (err: any) {
+    // Fail closed: stale Cloud Source rows must not make the UI claim that a
+    // provider is connected when the live OAuth token cannot be read.
+    logger.warn('[CloudRoutes] providers oauth-state lookup failed:', err?.message);
+  }
+
+  const providerState = (provider: 'google_drive' | 'onedrive' | 'dropbox') => ({
+    connected: oauthConnected.has(provider),
+    sourceConfigured: sourceConfigured.has(provider),
+  });
+
   return res.json({
     providers: [
       {
@@ -440,21 +452,21 @@ router.get('/providers', verifyToken, async (req: AuthRequest, res: Response) =>
         name: 'Google Drive',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload', 'search'],
-        connected: isConnected('google-drive'),
+        ...providerState('google_drive'),
       },
       {
         id: 'onedrive',
         name: 'OneDrive / SharePoint',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload'],
-        connected: isConnected('onedrive'),
+        ...providerState('onedrive'),
       },
       {
         id: 'dropbox',
         name: 'Dropbox',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload'],
-        connected: isConnected('dropbox'),
+        ...providerState('dropbox'),
       },
     ],
   });

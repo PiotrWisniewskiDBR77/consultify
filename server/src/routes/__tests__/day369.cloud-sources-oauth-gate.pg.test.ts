@@ -121,6 +121,47 @@ describe('Day 369 — cloud sources require the real per-user OAuth token', () =
     expect(response.body.code).toBe('CLOUD_PROVIDER_NOT_CONNECTED');
   });
 
+
+  it('reports provider connected only from the live OAuth token, not a stale source row', async () => {
+    const sourceId = randomUUID();
+    await pool.query(
+      `INSERT INTO cloud_sources
+       (id,organization_id,user_id,provider,name,access_token,refresh_token,root_folder_id,settings)
+       VALUES ($1,$2,$3,'google_drive','Stale Drive source',NULL,NULL,NULL,'{}')`,
+      [sourceId, orgB, userB]
+    );
+
+    const staleResponse = await request(app)
+      .get('/api/cloud/providers')
+      .set('Authorization', `Bearer ${tokenB}`);
+    const staleGoogle = staleResponse.body.providers.find((p: any) => p.id === 'google-drive');
+    console.log('DAY369_PROVIDERS_STALE_SOURCE_HTTP', staleResponse.status, JSON.stringify(staleGoogle));
+    expect(staleResponse.status).toBe(200);
+    expect(staleGoogle.sourceConfigured).toBe(true);
+    expect(staleGoogle.connected).toBe(false);
+
+    await pool.query(
+      `INSERT INTO integration_oauth_tokens
+       (id,user_id,connector_id,access_token,refresh_token,status)
+       VALUES ($1,$2,'google_drive',$3,$4,'active')
+       ON CONFLICT (user_id,connector_id) DO UPDATE SET
+         access_token=EXCLUDED.access_token,
+         refresh_token=EXCLUDED.refresh_token,
+         status='active',
+         updated_at=CURRENT_TIMESTAMP`,
+      [randomUUID(), userB, encryptSecret('provider-state-token'), encryptSecret('provider-state-refresh')]
+    );
+
+    const connectedResponse = await request(app)
+      .get('/api/cloud/providers')
+      .set('Authorization', `Bearer ${tokenB}`);
+    const connectedGoogle = connectedResponse.body.providers.find((p: any) => p.id === 'google-drive');
+    console.log('DAY369_PROVIDERS_TOKEN_HTTP', connectedResponse.status, JSON.stringify(connectedGoogle));
+    expect(connectedResponse.status).toBe(200);
+    expect(connectedGoogle.sourceConfigured).toBe(true);
+    expect(connectedGoogle.connected).toBe(true);
+  });
+
   it('always rejects unsupported SharePoint with 400', async () => {
     const response = await request(app)
       .post('/api/cloud/sources')
