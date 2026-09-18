@@ -226,6 +226,72 @@ describe('resolveAlignCliOptions — CLI guard (P3)', () => {
   });
 });
 
+/**
+ * D-41 (b) — the org-scope of the aggregate UPDATE, pinned WITHOUT a database.
+ * The RealPG block below proves the scope end-to-end but is `skipIf(!RUN_SCOPE)`,
+ * so in a normal run the guard was protected only by code inspection (the D-41
+ * finding: "bronione tylko inspekcją kodu + pomiarem na kopii dumpu, nie testem
+ * regresji"). This drives the REAL `processOrg` through a fake `pg.Client` that
+ * captures the write statement, and asserts the UPDATE is scoped by
+ * `organization_id` bound to the org being processed — removing
+ * `organization_id = $n` from the WHERE clause turns it RED.
+ */
+describe('processOrg — aggregate UPDATE is scoped by organization_id (D-41 (b), no DB)', () => {
+  interface CapturedWrite {
+    sql: string;
+    params: unknown[];
+  }
+
+  function fakeClient(rows: Array<{ id: string; status: string; current_stage: string | null }>) {
+    const writes: CapturedWrite[] = [];
+    const client = {
+      async query(sql: string, params?: unknown[]) {
+        if (/UPDATE\s+ie_aggregate_state/i.test(sql)) {
+          writes.push({ sql, params: params ?? [] });
+          return { rowCount: 1, rows: [] };
+        }
+        if (/FROM\s+organizations\b/i.test(sql)) {
+          return { rowCount: 1, rows: [{ name: 'Atelier Toys' }] };
+        }
+        if (/FROM\s+initiatives\b/i.test(sql)) {
+          return { rowCount: rows.length, rows };
+        }
+        return { rowCount: 0, rows: [] };
+      },
+    };
+    return { client: client as unknown as pg.Client, writes };
+  }
+
+  it('binds organization_id in the UPDATE WHERE clause to the org being aligned', async () => {
+    const orgId = 'ateliertoys-demo-session-d41b';
+    const { client, writes } = fakeClient([
+      { id: 'init-1', status: 'IN_EXECUTION', current_stage: 'REGISTERED_DRAFT' },
+    ]);
+
+    const result = await processOrg(client, orgId, true);
+
+    expect(result.allowed).toBe(true);
+    expect(result.wrote).toBe(1);
+    expect(writes).toHaveLength(1);
+
+    const { sql, params } = writes[0];
+    const whereClause = sql.slice(sql.toUpperCase().indexOf('WHERE'));
+    const scopeMatch = /organization_id\s*=\s*\$(\d+)/i.exec(whereClause);
+    expect(scopeMatch, 'UPDATE WHERE must scope by organization_id').not.toBeNull();
+    const placeholder = Number(scopeMatch![1]);
+    expect(params[placeholder - 1]).toBe(orgId);
+  });
+
+  it('writes nothing in dry-run (apply=false) — the scope guard never runs unscoped', async () => {
+    const { client, writes } = fakeClient([
+      { id: 'init-1', status: 'IN_EXECUTION', current_stage: 'REGISTERED_DRAFT' },
+    ]);
+    const result = await processOrg(client, 'ateliertoys-demo-session-dry', false);
+    expect(result.wrote).toBe(0);
+    expect(writes).toHaveLength(0);
+  });
+});
+
 const RUN_SCOPE = process.env.RUN_DB_TESTS === '1' && process.env.DB_TYPE === 'postgres';
 
 describe.skipIf(!RUN_SCOPE)('processOrg — UPDATE scoped by organization_id (P3, RealPG)', () => {
