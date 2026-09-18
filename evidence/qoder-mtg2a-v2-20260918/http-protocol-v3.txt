@@ -1,0 +1,27 @@
+MTG-2 (Wpis 134 poz.2) — dowód HTTP na trasie protokołu, HEAD 6cb04f8692c7a2e58c068f7b22ae334ac15c0d35
+data: 2026-09-18 12:19:45 CDT  baza: consultify_kopia_d10 @ 127.0.0.1:6632 (lokalna kopia, NIE staging)
+API: NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false MOCK_REDIS=true PORT=4432 npx tsx src/index.ts ; /api/ready = ready (778 migracji, chain complete)
+login: POST /api/auth/login james.whitfield@northwind.example -> HTTP 200 (token_len=448)
+
+== KROK 1: GET /api/meeting/2e124a9f-30cd-5ea8-bf77-49441a1861bf/protocol (rejestry puste, notatka zatwierdzona) ==
+HTTP 200
+  protocol.status = draft  version = 1.0
+  blocks = 6
+    decisions => source = approved_note , items = 1
+    actions => source = approved_note , items = 2
+
+== KROK 2: INSERT 1 wiersza do meeting_decisions (rejestr NIEpusty) + GET protokołu ==
+HTTP 200
+  protocol.status = draft  version = 1.0
+  blocks = 6
+    decisions => source = register , items = 1
+    actions => source = approved_note , items = 2
+
+== KROK 3: DELETE wiersza (przywrócenie stanu) + GET protokołu ==
+HTTP 200
+  protocol.status = draft  version = 1.0
+  blocks = 6
+    decisions => source = approved_note , items = 1
+    actions => source = approved_note , items = 2
+
+stan końcowy bazy: SELECT count(*) FROM meeting_decisions WHERE id='mtg2-http-proof-dec-1' -> 0
