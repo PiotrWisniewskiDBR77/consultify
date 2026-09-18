@@ -31,7 +31,7 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { materializeProposal } from '../../artifactHandoff/handoffSpineService.js';
-import { createMeeting, ensureMeetingTables } from '../../meetingService.js';
+import { createMeeting, ensureMeetingTables, getMeeting } from '../../meetingService.js';
 import {
   decideMeetingNote,
   ensureMeetingBoundaryTables,
@@ -73,12 +73,17 @@ async function makeMeeting(organizationId = ORG_A) {
 
 async function countFixtureRows(): Promise<{
   notes: number;
+  materializations: number;
   meetings: number;
   proposals: number;
   receipts: number;
 }> {
   const notes = await pool.query(
     `SELECT COUNT(*)::int AS n FROM meeting_notes WHERE organization_id LIKE $1`,
+    [`${PREFIX}%`]
+  );
+  const materializations = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM meeting_note_materializations WHERE organization_id LIKE $1`,
     [`${PREFIX}%`]
   );
   const meetings = await pool.query(
@@ -95,6 +100,7 @@ async function countFixtureRows(): Promise<{
   );
   return {
     notes: notes.rows[0].n,
+    materializations: materializations.rows[0].n,
     meetings: meetings.rows[0].n,
     proposals: proposals.rows[0].n,
     receipts: receipts.rows[0].n,
@@ -107,14 +113,14 @@ beforeAll(async () => {
   const tables = await pool.query(
     `SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public'
-        AND table_name IN ('meeting_notes', 'artifact_handoff_proposals', 'artifact_handoff_receipts')`
+        AND table_name IN ('meeting_notes', 'meeting_note_materializations', 'artifact_handoff_proposals', 'artifact_handoff_receipts')`
   );
-  if (tables.rows.length !== 3) {
+  if (tables.rows.length !== 4) {
     throw new Error(
       `meetingBoundaryService.pg.test.ts requires both ` +
         `server/migrations/20260912_claude_c_meeting_boundary.sql and ` +
         `server/migrations/20260912_claude_c_handoff_spine.sql to be applied. ` +
-        `Found ${tables.rows.length}/3 tables.`
+        `Found ${tables.rows.length}/4 tables.`
     );
   }
 });
@@ -128,6 +134,9 @@ afterAll(async () => {
       `DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting'`,
       [`${PREFIX}%`]
     );
+    await pool.query(`DELETE FROM meeting_note_materializations WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(`DELETE FROM meeting_notes WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
     await pool.query(
       `DELETE FROM meeting_follow_ups WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id LIKE $1)`,
@@ -136,7 +145,7 @@ afterAll(async () => {
     await pool.query(`DELETE FROM meetings WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
 
     const remaining = await countFixtureRows();
-    expect(remaining).toEqual({ notes: 0, meetings: 0, proposals: 0, receipts: 0 });
+    expect(remaining).toEqual({ notes: 0, materializations: 0, meetings: 0, proposals: 0, receipts: 0 });
   } finally {
     await pool.end();
   }
@@ -191,6 +200,11 @@ describe('propose -> approve -> materialize happy path', () => {
     expect(reread?.decisions).toEqual([{ decision: 'Ship on Friday' }]);
     expect(reread?.materializationStatus).toBe('materialized');
     expect(reread?.materialArtifactId).toBe(decided!.receipt!.targetRecordId);
+
+    const reopenedMeeting = await getMeeting({ organizationId: ORG_A, meetingId });
+    expect(reopenedMeeting?.approvedMinutesNoteId).toBe(proposed.note.id);
+    expect(reopenedMeeting?.approvedMinutesArtifactId).toBe(decided!.receipt!.targetRecordId);
+    expect(reopenedMeeting?.approvedMinutesAt).toBeTruthy();
 
     const list = await listMeetingNotesForMeeting({ organizationId: ORG_A, meetingId });
     expect(list.some((n) => n.id === proposed.note.id && n.status === 'approved')).toBe(true);

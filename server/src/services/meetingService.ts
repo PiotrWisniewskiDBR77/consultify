@@ -85,6 +85,9 @@ export interface MeetingRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  approvedMinutesNoteId: string | null;
+  approvedMinutesArtifactId: string | null;
+  approvedMinutesAt: string | null;
 }
 
 type MeetingRow = {
@@ -115,6 +118,9 @@ type MeetingRow = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  approved_minutes_note_id?: string | null;
+  approved_minutes_artifact_id?: string | null;
+  approved_minutes_at?: string | null;
 };
 
 type FollowUpRow = {
@@ -178,6 +184,9 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    approvedMinutesNoteId: row.approved_minutes_note_id || null,
+    approvedMinutesArtifactId: row.approved_minutes_artifact_id || null,
+    approvedMinutesAt: row.approved_minutes_at || null,
   };
 }
 

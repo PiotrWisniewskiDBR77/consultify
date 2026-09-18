@@ -37,7 +37,7 @@ import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { meetingIntelligenceService } from '../../ai/meetingIntelligenceService.js';
 
@@ -101,13 +101,43 @@ describe('meeting boundary — route layer (real Postgres)', () => {
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: requireLocalDatabaseUrl() });
+    const now = new Date().toISOString();
+    for (const [orgId, name] of [
+      [ORG_A, 'Meeting Boundary Routes A'],
+      [ORG_B, 'Meeting Boundary Routes B'],
+    ] as const) {
+      await pool.query(
+        `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+         VALUES ($1,$2,'enterprise','active',1,$3)
+         ON CONFLICT (id) DO NOTHING`,
+        [orgId, `${PREFIX}${name}`, now]
+      );
+    }
+    for (const [userId, orgId, role] of [
+      [USER_A, ORG_A, 'ADMIN'],
+      [USER_B, ORG_B, 'ADMIN'],
+    ] as const) {
+      await pool.query(
+        `INSERT INTO users (id, organization_id, email, password, role, status, created_at)
+         VALUES ($1,$2,$3,'test-not-used',$4,'active',$5)
+         ON CONFLICT (id) DO NOTHING`,
+        [userId, orgId, `${userId}@example.test`, role, now]
+      );
+      await pool.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+         VALUES ($1,$2,$3,$4,'ACTIVE',$5)
+         ON CONFLICT (id) DO NOTHING`,
+        [`${PREFIX}membership-${userId}`, orgId, userId, role, now]
+      );
+    }
     const { default: meetingRoutes } = await import('../../../routes/meeting.routes.js');
     app = express();
     app.use(express.json());
     app.use('/api/meeting', meetingRoutes);
   });
 
-  afterAll(async () => {
+
+  const cleanupMeetingRows = async () => {
     await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
       `${PREFIX}%`,
     ]);
@@ -115,22 +145,44 @@ describe('meeting boundary — route layer (real Postgres)', () => {
       `DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting'`,
       [`${PREFIX}%`]
     );
+    await pool.query(`DELETE FROM meeting_note_materializations WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(`DELETE FROM meeting_notes WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
     await pool.query(
       `DELETE FROM meeting_follow_ups WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id LIKE $1)`,
       [`${PREFIX}%`]
     );
     await pool.query(`DELETE FROM meetings WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+  };
 
+  beforeEach(async () => {
+    await cleanupMeetingRows();
+  });
+
+  afterAll(async () => {
+    await cleanupMeetingRows();
     const remaining = await pool.query(
       `SELECT
          (SELECT COUNT(*)::int FROM meeting_notes WHERE organization_id LIKE $1) AS notes,
+         (SELECT COUNT(*)::int FROM meeting_note_materializations WHERE organization_id LIKE $1) AS materializations,
          (SELECT COUNT(*)::int FROM meetings WHERE organization_id LIKE $1) AS meetings,
          (SELECT COUNT(*)::int FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting') AS proposals,
          (SELECT COUNT(*)::int FROM artifact_handoff_receipts WHERE organization_id LIKE $1) AS receipts`,
       [`${PREFIX}%`]
     );
-    expect(remaining.rows[0]).toEqual({ notes: 0, meetings: 0, proposals: 0, receipts: 0 });
+    expect(remaining.rows[0]).toEqual({
+      notes: 0,
+      materializations: 0,
+      meetings: 0,
+      proposals: 0,
+      receipts: 0,
+    });
+    await pool.query(`DELETE FROM organization_members WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
+    await pool.query(`DELETE FROM users WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM organizations WHERE id LIKE $1`, [`${PREFIX}%`]);
     await pool.end();
   });
 

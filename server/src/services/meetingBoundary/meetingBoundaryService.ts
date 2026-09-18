@@ -266,6 +266,46 @@ export async function ensureMeetingBoundaryTables(): Promise<void> {
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_meeting_notes_proposal ON meeting_notes (proposal_id)`
   );
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS meeting_note_materializations (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      meeting_id TEXT NOT NULL,
+      note_id TEXT NOT NULL,
+      proposal_id TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      stage TEXT NOT NULL DEFAULT 'content',
+      artifact_id TEXT,
+      receipt_id TEXT,
+      failure_code TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      last_attempt_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await dbRun(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_meeting_note_materializations_note
+      ON meeting_note_materializations (organization_id, meeting_id, note_id)
+  `);
+  await dbRun(`
+    CREATE INDEX IF NOT EXISTS idx_meeting_note_materializations_artifact
+      ON meeting_note_materializations (organization_id, artifact_id)
+      WHERE artifact_id IS NOT NULL
+  `);
+  await dbRun(`
+    CREATE INDEX IF NOT EXISTS idx_meeting_note_materializations_receipt
+      ON meeting_note_materializations (organization_id, receipt_id)
+      WHERE receipt_id IS NOT NULL
+  `);
+  await dbRun(`ALTER TABLE meetings ADD COLUMN IF NOT EXISTS approved_minutes_note_id TEXT`);
+  await dbRun(`ALTER TABLE meetings ADD COLUMN IF NOT EXISTS approved_minutes_artifact_id TEXT`);
+  await dbRun(`ALTER TABLE meetings ADD COLUMN IF NOT EXISTS approved_minutes_at TIMESTAMPTZ`);
+  await dbRun(`
+    CREATE INDEX IF NOT EXISTS idx_meetings_approved_minutes_artifact
+      ON meetings (organization_id, approved_minutes_artifact_id)
+      WHERE approved_minutes_artifact_id IS NOT NULL
+  `);
 }
 
 // ---------------------------------------------------------------------------
@@ -748,6 +788,23 @@ async function materializeMeetingNote(input: {
       artifactId: registered.artifactId,
       receiptId: result.receipt.receiptId,
     });
+    await dbRun(
+      `UPDATE meetings
+          SET approved_minutes_note_id = ?,
+              approved_minutes_artifact_id = ?,
+              approved_minutes_at = COALESCE(approved_minutes_at, ?),
+              updated_at = ?
+        WHERE id = ? AND organization_id = ?`,
+      [
+        note.id,
+        registered.artifactId,
+        result.receipt.materializedAt || new Date().toISOString(),
+        new Date().toISOString(),
+        note.meetingId,
+        note.organizationId,
+      ],
+      { fallback: false }
+    );
     return result;
   } catch (error) {
     await recordMaterializationAttempt({
