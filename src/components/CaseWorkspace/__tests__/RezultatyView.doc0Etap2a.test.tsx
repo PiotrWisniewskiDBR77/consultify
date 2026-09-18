@@ -175,10 +175,12 @@ describe('otwarcieZOdpowiedziBackendu (przez useOtwarciaZBackendu)', () => {
     );
     const { result } = renderHook(() => useOtwarciaZBackendu([dokumentLink()]));
     await waitFor(() => expect(result.current[LINK_ID]?.status).toBe('otwieralny'));
-    expect(result.current[LINK_ID]).toMatchObject({
-      sciezka: `/documents/${ARTIFACT_ID}`,
-    });
-    expect(result.current[LINK_ID].ostrzezenie).toBeTruthy();
+    const otwarcie = result.current[LINK_ID];
+    expect(otwarcie.status).toBe('otwieralny');
+    expect(otwarcie).toMatchObject({ sciezka: `/documents/${ARTIFACT_ID}` });
+    if (otwarcie.status === 'otwieralny') {
+      expect(otwarcie.ostrzezenie).toBeTruthy();
+    }
   });
 
   it('przy OFF → dzisiejsza trasa (backend nie zmienia celu, tylko stan)', async () => {
