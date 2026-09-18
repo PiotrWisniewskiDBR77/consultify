@@ -1399,6 +1399,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         >
           <DocumentViewer
             artifactId={viewerRow.artifactId}
+            kind={viewerRow.kind === 'presentation' ? 'presentation' : 'document'}
             originRecordId={viewerRow.originRecordId}
             title={viewerRow.title}
             statusLabel={statusLabel(viewerRow.statusKey)}

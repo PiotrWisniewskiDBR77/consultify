@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
+import type { ArtifactNavigationKind } from '@/components/ReportsAndPresentations/artifactNavigation';
 import {
   buildDocumentViewerListPath,
   resolveArtifactOpenPath,
@@ -45,6 +46,7 @@ const DOCUMENT_STATUS_KEYS = [
 
 interface DocumentHeaderMeta {
   title: string | null;
+  kind: Extract<ArtifactNavigationKind, 'document' | 'presentation'>;
   statusKey: string | null;
   ownerName: string | null;
   updatedAt: string | null;
@@ -76,6 +78,23 @@ const text = (value: unknown): string | null => {
   const normalized = typeof value === 'string' ? value.trim() : '';
   return normalized || null;
 };
+
+function resolveViewerKind(
+  artifact: Record<string, unknown>,
+  actionTarget: Record<string, unknown>
+): Extract<ArtifactNavigationKind, 'document' | 'presentation'> {
+  const raw = [
+    text(artifact.outputType),
+    text(artifact.artifactFamily),
+    text(artifact.kind),
+    text(actionTarget.kind),
+    text(actionTarget.originRuntime),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return raw.includes('presentation') ? 'presentation' : 'document';
+}
 
 /**
  * HTTP status off a thrown `ApiError` (`.status`) or an axios-like error
@@ -115,6 +134,7 @@ async function loadDocumentMeta(artifactId: string): Promise<MetaResult> {
     kind: 'ok',
     meta: {
       title: text(artifact.resolvedTitle),
+      kind: resolveViewerKind(artifact, actionTarget),
       statusKey: statusKey ? statusKey.toLowerCase() : null,
       ownerName: text(artifact.ownerName),
       updatedAt: text(artifact.lastTransitionAt),
@@ -167,7 +187,7 @@ export const DocumentViewerPage: React.FC<{ artifactId: string }> = ({ artifactI
   }, [meta, tr]);
 
   const backToList = useCallback(() => {
-    navigate(buildDocumentViewerListPath(artifactId));
+    navigate(buildDocumentViewerListPath(artifactId, meta?.kind || 'document'));
   }, [artifactId, navigate]);
 
   const retry = useCallback(() => setReloadToken((token) => token + 1), []);
@@ -241,6 +261,7 @@ export const DocumentViewerPage: React.FC<{ artifactId: string }> = ({ artifactI
   return (
     <DocumentViewer
       artifactId={artifactId}
+      kind={settledMeta.kind}
       originRecordId={settledMeta.originRecordId}
       title={settledMeta.title}
       statusLabel={statusLabel}

@@ -90,11 +90,14 @@ describe('resolveArtifactOpenTarget — flaga ON (DEC-593)', () => {
     }
   });
 
-  it('prezentacja i arkusz → stara trasa (viewer tylko dla dokumentów)', () => {
+  it('zatwierdzona prezentacja → ten sam viewer SPEC-A z artifactId rejestru', () => {
     const presentation = resolveArtifactOpenTarget(
-      docRow({ kind: 'presentation', originRecordId: 'deck-1', statusKey: 'ready' })
+      docRow({ kind: 'presentation', originRecordId: 'deck-1', artifactId: 'art-deck-1', statusKey: 'ready' })
     );
-    expect(presentation).toEqual({ mode: 'path', path: getArtifactPath('presentation', 'deck-1') });
+    expect(presentation).toEqual({ mode: 'viewer', artifactId: 'art-deck-1' });
+  });
+
+  it('arkusz → stara trasa (viewer tylko dla dokumentów i prezentacji)', () => {
     const sheet = resolveArtifactOpenTarget(
       docRow({ kind: 'sheet', originRecordId: 'sheet-1', statusKey: 'ready' })
     );
@@ -138,6 +141,7 @@ describe('resolveDocumentViewerPath — etap 2a (trasa `/documents/:artifactId`)
   it('flaga ON → `/documents/<artifactId>` rejestru', () => {
     window.localStorage.setItem(LS_KEY, '1');
     expect(resolveDocumentViewerPath('art-doc0-1')).toBe('/documents/art-doc0-1');
+    expect(resolveDocumentViewerPath('art-deck-1', 'presentation')).toBe('/documents/art-deck-1');
   });
 
   it('flaga ON, ale id puste/brak → null (viewer nie ma czego otworzyć)', () => {
@@ -145,6 +149,7 @@ describe('resolveDocumentViewerPath — etap 2a (trasa `/documents/:artifactId`)
     expect(resolveDocumentViewerPath(undefined)).toBeNull();
     expect(resolveDocumentViewerPath(null)).toBeNull();
     expect(resolveDocumentViewerPath('   ')).toBeNull();
+    expect(resolveDocumentViewerPath('art-sheet-1', 'sheet')).toBeNull();
   });
 
   it('flaga ON, id ze znakami specjalnymi → zakodowane w segmencie trasy', () => {
@@ -157,5 +162,8 @@ describe('resolveDocumentViewerPath — etap 2a (trasa `/documents/:artifactId`)
       '/presentations?tab=documents&artifactId=art%2F1%20b'
     );
     expect(buildDocumentViewerListPath('')).toBe('/presentations?tab=documents&artifactId=');
+    expect(buildDocumentViewerListPath('art deck', 'presentation')).toBe(
+      '/presentations?tab=presentations&artifactId=art%20deck'
+    );
   });
 });

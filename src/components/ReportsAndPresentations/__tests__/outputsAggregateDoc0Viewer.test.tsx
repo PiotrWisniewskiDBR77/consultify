@@ -174,6 +174,23 @@ describe('openRow — flaga ON (DEC-593): zatwierdzony dokument → JEDEN Docume
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
+
+  it('2-klik na zatwierdzony deck otwiera ten sam viewer SPEC-A (bez nawigacji)', () => {
+    const deck = row({
+      kind: 'presentation',
+      originRecordId: 'deck-1',
+      artifactId: 'art-deck-1',
+      title: 'deck-approved-row',
+      statusKey: 'ready',
+      fileFormat: 'PPTX',
+    });
+    renderTab([deck]);
+    act(() => tableProps.current.onRowDoubleClick(aggregateRow(deck)));
+    expect(screen.getByTestId('doc0-viewer-stub')).toBeTruthy();
+    expect(screen.getByTestId('doc0-viewer-stub').getAttribute('data-artifact-id')).toBe('art-deck-1');
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
   it('kebab „Open" otwiera viewer', () => {
     renderTab();
     const menu = tableProps.current.rowMenu(aggregateRow(approvedDoc));

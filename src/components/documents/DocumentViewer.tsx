@@ -36,6 +36,8 @@ import {
 export interface DocumentViewerProps {
   /** Registry artifact id (`v8_output_artifacts.artifact_id`). */
   artifactId: string;
+  /** Materials archetype rendered by the same SPEC-A viewer shell. */
+  kind?: 'document' | 'presentation';
   /** Canvas draft id, when the row's primary origin is `work_canvas_drafts`. */
   originRecordId?: string | null;
   /** List-row title — used until the content resolves (and as a fallback). */
@@ -70,8 +72,17 @@ function withHardBreaks(markdown: string): string {
 }
 
 export function DocumentViewer(props: DocumentViewerProps) {
-  const { artifactId, originRecordId, title, statusLabel, ownerName, updatedAt, onClose, onEdit } =
-    props;
+  const {
+    artifactId,
+    kind = 'document',
+    originRecordId,
+    title,
+    statusLabel,
+    ownerName,
+    updatedAt,
+    onClose,
+    onEdit,
+  } = props;
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   /** DEC-461: PL key + EN default, zero hardcoded literals. */
@@ -100,6 +111,8 @@ export function DocumentViewer(props: DocumentViewerProps) {
 
   const readySections: DocumentContentSection[] =
     resolution?.state === 'ready' ? resolution.sections : [];
+  const isPresentation = kind === 'presentation';
+  const viewerNoun = isPresentation ? tr('deck', 'Deck') : tr('document', 'Document');
 
   const stateNode = useMemo<React.ReactNode>(() => {
     if (!resolution) {
@@ -164,7 +177,9 @@ export function DocumentViewer(props: DocumentViewerProps) {
     resolution?.state === 'ready' || resolution?.state === 'empty'
       ? resolution.registry === 'work_canvas_drafts'
         ? tr('registryCanvas', 'Work Canvas draft')
-        : tr('registryArtifact', 'Artifact content')
+        : isPresentation
+          ? tr('registryPresentation', 'Presentation deck')
+          : tr('registryArtifact', 'Artifact content')
       : '—';
 
   const rightPanel = useMemo(
@@ -229,15 +244,15 @@ export function DocumentViewer(props: DocumentViewerProps) {
 
   return (
     <StandardArtifactShell
-      karta="document"
+      karta={isPresentation ? 'presentation' : 'document'}
       klasa="L"
       header={{
-        title: (resolution?.state === 'ready' && resolution.title) || title?.trim() || tr('untitled', 'Document'),
+        title: (resolution?.state === 'ready' && resolution.title) || title?.trim() || tr('untitled', viewerNoun),
         onTitleChange: () => undefined,
         titleReadOnly: true,
         // The Materials registry stores documents as output_type='report'
         // (artifact_family='document'); `ArtifactType` has no 'document' member.
-        artifactType: 'report',
+        artifactType: isPresentation ? 'presentation' : 'report',
         artifactId,
         onSave: () => undefined,
         saveState: 'saved',
@@ -273,7 +288,7 @@ export function DocumentViewer(props: DocumentViewerProps) {
           }
         />
       }
-      panelAriaLabel={tr('panelAriaLabel', 'Document details')}
+      panelAriaLabel={tr('panelAriaLabel', isPresentation ? 'Deck details' : 'Document details')}
       loading={!resolution}
     />
   );

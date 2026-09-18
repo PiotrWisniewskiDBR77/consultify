@@ -4,7 +4,7 @@ import { getArtifactPath } from '@/utils/artifactLinks';
 
 import type { ArtifactGovernanceSummary, TemplateType } from './types';
 
-type ArtifactNavigationKind = 'document' | 'presentation' | 'sheet';
+export type ArtifactNavigationKind = 'document' | 'presentation' | 'sheet';
 
 export function resolveArtifactOpenPath(params: {
   kind: ArtifactNavigationKind;
@@ -55,7 +55,7 @@ export function resolveArtifactOpenPath(params: {
  * ready | exported | shared | archived). Fail-closed: status nieznany albo
  * roboczy NIE otwiera viewera, tylko starą trasę — tak samo jak flaga.
  */
-const APPROVED_DOCUMENT_STATUS_KEYS = new Set([
+const APPROVED_VIEWER_STATUS_KEYS = new Set([
   'ready',
   'exported',
   'shared',
@@ -63,6 +63,8 @@ const APPROVED_DOCUMENT_STATUS_KEYS = new Set([
   'approved',
   'final',
 ]);
+
+const VIEWER_KINDS = new Set<ArtifactNavigationKind>(['document', 'presentation']);
 
 export type ArtifactOpenTarget =
   | { mode: 'viewer'; artifactId: string }
@@ -75,10 +77,10 @@ export function resolveArtifactOpenTarget(params: {
   statusKey?: string | null;
   governance?: ArtifactGovernanceSummary | null;
 }): ArtifactOpenTarget {
-  if (params.kind === 'document' && isDocumentViewerEnabled()) {
+  if (VIEWER_KINDS.has(params.kind) && isDocumentViewerEnabled()) {
     const artifactId = String(params.artifactId || '').trim();
     const statusKey = String(params.statusKey || '').trim().toLowerCase();
-    if (artifactId && APPROVED_DOCUMENT_STATUS_KEYS.has(statusKey)) {
+    if (artifactId && APPROVED_VIEWER_STATUS_KEYS.has(statusKey)) {
       return { mode: 'viewer', artifactId };
     }
   }
@@ -99,8 +101,12 @@ export function resolveArtifactOpenTarget(params: {
  * branching cannot drift per screen; `null` = keep the pre-DOC-0 path, which is
  * what flag OFF must produce byte-for-byte.
  */
-export function resolveDocumentViewerPath(artifactId?: string | null): string | null {
+export function resolveDocumentViewerPath(
+  artifactId?: string | null,
+  kind: ArtifactNavigationKind = 'document'
+): string | null {
   if (!isDocumentViewerEnabled()) return null;
+  if (!VIEWER_KINDS.has(kind)) return null;
   const id = String(artifactId || '').trim();
   return id ? `/documents/${encodeURIComponent(id)}` : null;
 }
@@ -113,8 +119,12 @@ export function resolveDocumentViewerPath(artifactId?: string | null): string | 
  * `AssessmentOutput*Route` → lista Oceny): przy OFF ZAWSZE redirect, nigdzie
  * 404. `artifactId` przechowane w query, bo Hub czyta go jako `initialArtifactId`.
  */
-export function buildDocumentViewerListPath(artifactId: string): string {
-  return `/presentations?tab=documents&artifactId=${encodeURIComponent(String(artifactId || '').trim())}`;
+export function buildDocumentViewerListPath(
+  artifactId: string,
+  kind: ArtifactNavigationKind = 'document'
+): string {
+  const tab = kind === 'presentation' ? 'presentations' : 'documents';
+  return `/presentations?tab=${tab}&artifactId=${encodeURIComponent(String(artifactId || '').trim())}`;
 }
 
 /**
