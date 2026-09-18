@@ -663,6 +663,9 @@ const StagingFixesInitiativesI18nScreen = React.lazy(
 );
 const D77NextActionUnblockScreen = React.lazy(() => import('./screens/d77-nextaction-unblock'));
 const D28RelationFallbackScreen = React.lazy(() => import('./screens/d28-relation-fallback'));
+const D07InicjatywyFiltrProjektuUrlScreen = React.lazy(
+  () => import('./screens/d07-inicjatywy-filtr-projektu-url')
+);
 const Rp3InicjatywyAnalizaOffScreen = React.lazy(
   () => import('./screens/rp3-inicjatywy-analiza-off')
 );
@@ -980,6 +983,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'D-28 (DLUG-PO-MVP, DEC-596) — REALNY <PreviewRelations>: chip relacji bez własnego kindu (label = surowy UUID) musi czytać się po angielsku „Linked record" w EN UI, nie polskim literałem „Powiązany rekord"; drugi chip (kind project) to kontrola „Linked project" (para MTG-1 v2, niezmienna). &lang=en|pl &theme=light|dark',
     render: () => <D28RelationFallbackScreen />,
+  },
+  'd07-inicjatywy-filtr-projektu-url': {
+    label:
+      'D-07 (DLUG-PO-MVP) — REALNY <InitiativesHub> przy VITE_INITIATIVES_FOUR_BUTTONS=true: filtr projektami (L3, Menu 2) zapamiętany w adresie. &project=proj-digital|proj-ops deep-linkuje filtr (selekt + zawężony rejestr 3 z 5), pasek „Address" na dole pokazuje realny location.search z parametrem project. Bez &project= → „All projects" (5 wierszy). &lang=en|pl &theme=light|dark',
+    render: () => <D07InicjatywyFiltrProjektuUrlScreen />,
   },
   'rp3-inicjatywy-analiza-off': {
     label:

@@ -342,6 +342,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
   const handledDeepLinkOpenRef = useRef<string | null>(null);
+  // D-07: ref lustra `searchParams`, żeby efekt resetu zakresu mógł skasować
+  // `?project=` bez brania `searchParams` do zależności (inaczej reset odpalałby
+  // się przy każdej zmianie adresu). `projectScopeKeyRef` pamięta zakres org/user
+  // z poprzedniego uruchomienia efektu i odróżnia PIERWSZE montowanie oraz
+  // ponowne wywołanie w React.StrictMode (ten sam klucz → deep-link musi przeżyć)
+  // od PRAWDZIWEJ zmiany org/user (stary projekt trzeba wyczyścić).
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+  // `setSearchParams` NIE jest stabilny referencyjnie (react-router zmienia jego
+  // tożsamość przy każdej zmianie `searchParams`) — trzymany w ref, żeby efekt
+  // resetu zakresu mógł go wywołać, NIE biorąc go do zależności (inaczej każdy
+  // zapis `?project=` odpalałby reset i kasował właśnie zapisany parametr).
+  const setSearchParamsRef = useRef(setSearchParams);
+  setSearchParamsRef.current = setSearchParams;
+  const projectScopeKeyRef = useRef<string | null>(null);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_INITIATIVES_VIEW_MODE);
@@ -419,7 +434,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [fourButtonsArchiveScope, setFourButtonsArchiveScope] = useState<'current' | 'archive'>(
     'current'
   );
-  const [fourButtonsProjectId, setFourButtonsProjectId] = useState('');
+  // D-07: filtr projektami (L3) startuje z adresu `?project=`, żeby odświeżenie
+  // i link współdzielony zachowywały wybór (ten sam wzorzec co `lens` wyżej).
+  const [fourButtonsProjectId, setFourButtonsProjectId] = useState(
+    () => searchParams.get('project') || ''
+  );
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -619,11 +638,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   useEffect(() => {
     if (!initiativesFourButtonsEnabled) return;
     initiativeFetchRequestRef.current += 1;
-    setFourButtonsProjectId('');
+    // D-07: filtr projektami czyścimy TYLKO przy prawdziwej zmianie zakresu
+    // org/user. Pierwsze montowanie (previous === null) i ponowne wywołanie tego
+    // samego efektu w React.StrictMode (identyczny klucz) NIE kasują deep-linka
+    // `?project=` — inaczej adres współdzielony traciłby wybór, zanim cokolwiek
+    // się wyrenderuje. Warunek `previousOrg !== ''` pomija także moment, gdy org
+    // dopiero się hydratacja/domknął z pustego stanu (stary projekt = jeszcze nic).
+    const scopeKey = `${currentOrganization?.id ?? ''}:${currentUserId ?? ''}`;
+    const previous = projectScopeKeyRef.current;
+    const previousOrg = previous === null ? null : previous.split(':')[0];
+    const genuineSwitch = previous !== null && previousOrg !== '' && previous !== scopeKey;
+    if (genuineSwitch) {
+      setFourButtonsProjectId('');
+      const next = new URLSearchParams(searchParamsRef.current);
+      if (next.has('project')) {
+        next.delete('project');
+        setSearchParamsRef.current(next, { replace: true });
+      }
+    }
+    projectScopeKeyRef.current = scopeKey;
     setFourButtonsArchiveScope('current');
     setInitiatives([]);
     setAllInitiatives([]);
   }, [currentOrganization?.id, currentUserId, initiativesFourButtonsEnabled]);
+
+  // D-07: adres jest źródłem prawdy filtra projektami — back/forward i refresh
+  // odtwarzają wybór (ten sam wzorzec co sync `lens` powyżej).
+  useEffect(() => {
+    setFourButtonsProjectId(searchParams.get('project') || '');
+  }, [searchParams]);
 
   // D4b (2026-09-07/08): rejestr runtime-v1 niesie tylko `initiativeOwnerId`
   // (UUID) — bez tej mapy `toCanonicalInitiativeRegisterItem` nie ma jak
@@ -3171,7 +3214,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <select
               aria-label={t('initiatives.filters.project', 'Project')}
               value={fourButtonsProjectId}
-              onChange={(event) => setFourButtonsProjectId(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setFourButtonsProjectId(value);
+                // D-07: zapis wyboru do adresu — odświeżenie i link współdzielony
+                // zachowują filtr (ten sam wzorzec co onChange `lens` powyżej).
+                const next = new URLSearchParams(searchParams);
+                if (value) {
+                  next.set('project', value);
+                } else {
+                  next.delete('project');
+                }
+                setSearchParams(next, { replace: true });
+              }}
               className={MENU_2_FILTER_SELECT}
               data-testid="initiatives-project-filter"
             >

@@ -1,0 +1,5 @@
+light | select.value="proj-digital" | selectedLabel="Digital & Automation Roadmap" | opcje=3 | address="Address/initiatives?screen=d07-inicjatywy-filtr-projektu-url&project=proj-digital&lang=en&uwagi=0&theme=light" | digital=3/3 | ops=0/2
+dark | select.value="proj-digital" | selectedLabel="Digital & Automation Roadmap" | opcje=3 | address="Address/initiatives?screen=d07-inicjatywy-filtr-projektu-url&project=proj-digital&lang=en&uwagi=0&theme=dark" | digital=3/3 | ops=0/2
+bledyKonsoli=0
+braki=0
+zadania404=0

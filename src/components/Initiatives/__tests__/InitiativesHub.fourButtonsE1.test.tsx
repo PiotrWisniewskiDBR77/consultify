@@ -14,7 +14,7 @@
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => {
@@ -147,6 +147,37 @@ const renderHubAt = (entry: string) =>
     </MemoryRouter>
   );
 
+/* D-07: sonda adresu — rodzeństwo Huba WEWNĄTRZ tego samego MemoryRouter, więc
+   czyta `location.search`, który Hub zapisuje przez `setSearchParams`. Dzięki
+   temu test mierzy REALNY adres (produkt), a nie lokalne lustro stanu. */
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="loc-search">{location.search}</div>;
+}
+
+const renderHubWithProbe = (entry: string) =>
+  render(
+    <MemoryRouter initialEntries={[entry]}>
+      <InitiativesHub />
+      <LocationProbe />
+    </MemoryRouter>
+  );
+
+/* D-07: harness `dev-render` montuje Hub WEWNĄTRZ `<React.StrictMode>`, który
+   dwukrotnie wywołuje efekty na tym samym włóknie (setup→cleanup→setup). Zwykły
+   `render()` tego NIE odtwarza, więc boolowski strażnik „mounted" przeszedłby
+   testy jednostkowe, a w produkcie kasował deep-link `?project=`. Ta odmiana
+   mierzy dokładnie ten przypadek. */
+const renderHubWithProbeInStrictMode = (entry: string) =>
+  render(
+    <React.StrictMode>
+      <MemoryRouter initialEntries={[entry]}>
+        <InitiativesHub />
+        <LocationProbe />
+      </MemoryRouter>
+    </React.StrictMode>
+  );
+
 beforeEach(() => {
   window.localStorage.clear();
   appStoreState.currentOrganization = { id: 'org-1' };
@@ -242,6 +273,79 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
         return sum + count;
       }, 0)
     ).toBe(1);
+  });
+
+  // D-07: filtr projektami (L3) musi trafiać do ADRESU, żeby odświeżenie i link
+  // współdzielony zachowywały wybór. Sonda `loc-search` czyta realny
+  // `location.search` zapisany przez `setSearchParams` Huba — to pomiar produktu,
+  // nie lustra stanu. Mutacja: usunięcie zapisu URL w onChange → ten test RED.
+  it('writes the project filter choice to the URL and clears it on All projects', async () => {
+    listRegisteredInitiatives.mockResolvedValue({
+      initiatives: [
+        registered('project-a-row', 'Project A initiative', 'SCHEDULED', 'project-a'),
+        registered('project-b-row', 'Project B initiative', 'SCHEDULED', 'project-b'),
+      ],
+    });
+    renderHubWithProbe('/initiatives?lens=list');
+    expect(await screen.findByText('Project A initiative')).toBeInTheDocument();
+    expect(screen.getByTestId('loc-search').textContent).not.toContain('project=');
+
+    fireEvent.change(screen.getByTestId('initiatives-project-filter'), {
+      target: { value: 'project-a' },
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('loc-search').textContent).toContain('project=project-a')
+    );
+    // istniejący parametr `lens` musi przetrwać obok projektu (nie gubimy reszty)
+    expect(screen.getByTestId('loc-search').textContent).toContain('lens=list');
+
+    fireEvent.change(screen.getByTestId('initiatives-project-filter'), {
+      target: { value: '' },
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('loc-search').textContent).not.toContain('project=')
+    );
+  });
+
+  // D-07: deep-link `?project=` przywraca filtr (select + zawężony rejestr) bez
+  // żadnego kliknięcia — dokładnie „wysłać komuś link do odfiltrowanego rejestru".
+  // Mutacja: cofnięcie init do `useState('')` → ten test RED (select pusty,
+  // Project B znowu widoczny).
+  it('restores the project filter from a deep link and narrows the register on load', async () => {
+    listRegisteredInitiatives.mockResolvedValue({
+      initiatives: [
+        registered('project-a-row', 'Project A initiative', 'SCHEDULED', 'project-a'),
+        registered('project-b-row', 'Project B initiative', 'SCHEDULED', 'project-b'),
+      ],
+    });
+    renderHubWithProbe('/initiatives?lens=list&project=project-a');
+
+    expect(await screen.findByText('Project A initiative')).toBeInTheDocument();
+    expect(screen.getByTestId('initiatives-project-filter')).toHaveValue('project-a');
+    expect(screen.queryByText('Project B initiative')).toBeNull();
+    expect(screen.getByTestId('loc-search').textContent).toContain('project=project-a');
+  });
+
+  // D-07: ta sama rekonstrukcja deep-linka, ale w `<React.StrictMode>` (jak w
+  // harnessie `dev-render` i w produkcyjnym `main.tsx`). StrictMode dwukrotnie
+  // wywołuje efekt resetu zakresu; boolowski strażnik „mounted" ustawiał się na
+  // true przy pierwszym setup, więc DRUGI setup kasował `?project=`. Klucz zakresu
+  // (identyczny przy obu wywołaniach) NIE czyści — ten test to zamyka.
+  // Mutacja: powrót do strażnika boolowskiego → ten test RED (select pusty,
+  // Project B znowu widoczny).
+  it('keeps the deep-linked project filter across a React.StrictMode double effect run', async () => {
+    listRegisteredInitiatives.mockResolvedValue({
+      initiatives: [
+        registered('project-a-row', 'Project A initiative', 'SCHEDULED', 'project-a'),
+        registered('project-b-row', 'Project B initiative', 'SCHEDULED', 'project-b'),
+      ],
+    });
+    renderHubWithProbeInStrictMode('/initiatives?lens=list&project=project-a');
+
+    expect(await screen.findByText('Project A initiative')).toBeInTheDocument();
+    expect(screen.getByTestId('initiatives-project-filter')).toHaveValue('project-a');
+    expect(screen.queryByText('Project B initiative')).toBeNull();
+    expect(screen.getByTestId('loc-search').textContent).toContain('project=project-a');
   });
 
   it('preserves the legacy workspace copy and controls when the flag is off', async () => {
