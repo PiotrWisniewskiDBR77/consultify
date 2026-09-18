@@ -1956,7 +1956,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
                             immersive
-                              ? 'bg-danger-500/10 text-danger-400 ring-1 ring-danger-500/15'
+                              ? 'bg-danger-500/10 text-danger-600 dark:text-danger-400 ring-1 ring-danger-500/15'
                               : 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
                           }`}
                         >
