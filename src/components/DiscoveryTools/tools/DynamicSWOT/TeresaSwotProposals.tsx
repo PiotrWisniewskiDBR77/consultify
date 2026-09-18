@@ -39,7 +39,9 @@ export interface TeresaSwotProposalsProps {
 }
 
 type GeneratePhase = 'idle' | 'loading' | 'error';
-type ErrorKind = 'PROVIDER_ERROR' | 'INVALID_MODEL_RESPONSE' | 'UNKNOWN';
+type ErrorKind = 'PROVIDER_ERROR' | 'INVALID_MODEL_RESPONSE' | 'TIMEOUT' | 'UNKNOWN';
+
+const SWOT_PROPOSAL_GENERATION_TIMEOUT_MS = 30_000;
 
 type ProposalIssue =
   | { kind: 'stale'; currentVersion?: number }
@@ -61,8 +63,10 @@ const OPERATION_LABEL: Record<SwotProposal['operation'], { en: string; pl: strin
 
 function confidenceLabel(confidence: number, isPolish: boolean): string {
   const pct = Math.round(Math.max(0, Math.min(1, confidence || 0)) * 100);
-  if (confidence >= 0.75) return isPolish ? `Wysoka pewność · ${pct}%` : `High confidence · ${pct}%`;
-  if (confidence >= 0.4) return isPolish ? `Średnia pewność · ${pct}%` : `Medium confidence · ${pct}%`;
+  if (confidence >= 0.75)
+    return isPolish ? `Wysoka pewność · ${pct}%` : `High confidence · ${pct}%`;
+  if (confidence >= 0.4)
+    return isPolish ? `Średnia pewność · ${pct}%` : `Medium confidence · ${pct}%`;
   return isPolish ? `Niska pewność · ${pct}%` : `Low confidence · ${pct}%`;
 }
 
@@ -335,6 +339,8 @@ export function TeresaSwotProposals({
   const [, setLastKnownSessionVersion] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const timedOutRef = useRef(false);
   // Cancel-via-abort: createSwotProposals is a dedicated fetch() call (mirrors
   // createToolSession/getToolSession/updateToolSession's own style, not the
   // generic Api.post helper), so it accepts a real AbortSignal — clicking
@@ -343,13 +349,21 @@ export function TeresaSwotProposals({
   const cancelledRef = useRef(false);
   const mountedRef = useRef(true);
 
+  const clearGenerateTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      clearGenerateTimeout();
       abortRef.current?.abort();
     };
-  }, []);
+  }, [clearGenerateTimeout]);
 
   const refreshProposals = useCallback(async () => {
     try {
@@ -370,22 +384,36 @@ export function TeresaSwotProposals({
 
   const errorMessage = useMemo(() => {
     if (errorKind === 'PROVIDER_ERROR') {
-      return isPolish
-        ? 'Teresa jest chwilowo niedostępna.'
-        : 'Teresa is temporarily unavailable.';
+      return isPolish ? 'Teresa jest chwilowo niedostępna.' : 'Teresa is temporarily unavailable.';
     }
     if (errorKind === 'INVALID_MODEL_RESPONSE') {
       return isPolish
         ? 'Teresa nie ukończyła tej propozycji poprawnie.'
         : "Teresa couldn't complete this proposal correctly.";
     }
-    return isPolish ? 'Teresa nie ukończyła tego zadania — spróbuj ponownie.' : "Teresa couldn't complete this — try again.";
+    if (errorKind === 'TIMEOUT') {
+      return isPolish
+        ? 'Teresa potrzebowała zbyt dużo czasu — spróbuj ponownie.'
+        : 'Teresa took too long to prepare proposals — try again.';
+    }
+    return isPolish
+      ? 'Teresa nie ukończyła tego zadania — spróbuj ponownie.'
+      : "Teresa couldn't complete this — try again.";
   }, [errorKind, isPolish]);
 
   const handleGenerate = useCallback(async () => {
     const controller = new AbortController();
     abortRef.current = controller;
     cancelledRef.current = false;
+    timedOutRef.current = false;
+    clearGenerateTimeout();
+    timeoutRef.current = window.setTimeout(() => {
+      timedOutRef.current = true;
+      controller.abort();
+      if (!mountedRef.current || abortRef.current !== controller) return;
+      setErrorKind('TIMEOUT');
+      setPhase('error');
+    }, SWOT_PROPOSAL_GENERATION_TIMEOUT_MS);
     setPhase('loading');
     setErrorKind(null);
     try {
@@ -394,7 +422,8 @@ export function TeresaSwotProposals({
         quadrantFocus ? { quadrantFocus } : undefined,
         { signal: controller.signal }
       );
-      if (cancelledRef.current || !mountedRef.current) return;
+      clearGenerateTimeout();
+      if (cancelledRef.current || timedOutRef.current || !mountedRef.current) return;
       setProposals((current) => {
         const byId = new Map(current.map((p) => [p.id, p] as const));
         (res.proposals || []).forEach((p) => byId.set(p.id, p));
@@ -402,21 +431,32 @@ export function TeresaSwotProposals({
       });
       setPhase('idle');
     } catch (err: any) {
-      if (cancelledRef.current || err?.name === 'AbortError' || !mountedRef.current) return;
+      clearGenerateTimeout();
+      if (
+        cancelledRef.current ||
+        timedOutRef.current ||
+        err?.name === 'AbortError' ||
+        !mountedRef.current
+      )
+        return;
       const code = String(err?.data?.code || '').toUpperCase();
       setErrorKind(
-        code === 'PROVIDER_ERROR' || code === 'INVALID_MODEL_RESPONSE' ? (code as ErrorKind) : 'UNKNOWN'
+        code === 'PROVIDER_ERROR' || code === 'INVALID_MODEL_RESPONSE'
+          ? (code as ErrorKind)
+          : 'UNKNOWN'
       );
       setPhase('error');
     }
-  }, [toolSessionId, quadrantFocus]);
+  }, [toolSessionId, quadrantFocus, clearGenerateTimeout]);
 
   const handleCancel = useCallback(() => {
     cancelledRef.current = true;
+    timedOutRef.current = false;
+    clearGenerateTimeout();
     abortRef.current?.abort();
     setPhase('idle');
     setErrorKind(null);
-  }, []);
+  }, [clearGenerateTimeout]);
 
   const handleDecisionError = useCallback(
     (proposalId: string, err: any) => {
@@ -625,9 +665,7 @@ export function TeresaSwotProposals({
                   [proposal.id]: cur[proposal.id] ?? proposal.proposedAfter?.text ?? '',
                 }));
               }}
-              onEditChange={(value) =>
-                setEditDrafts((cur) => ({ ...cur, [proposal.id]: value }))
-              }
+              onEditChange={(value) => setEditDrafts((cur) => ({ ...cur, [proposal.id]: value }))}
               onAccept={() => handleAccept(proposal)}
               onReject={() => handleReject(proposal)}
               onRetryWithCurrentVersion={(currentVersion) => runAccept(proposal, currentVersion)}

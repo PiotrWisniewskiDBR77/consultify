@@ -13,9 +13,9 @@
  * `tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx`.
  */
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Api mock (overrides the global tests/setup.ts mock for this file) ───────
 const createSwotProposalsMock = vi.fn();
@@ -81,6 +81,10 @@ describe('TeresaSwotProposals (TLS-04)', () => {
     listSwotProposalsMock.mockResolvedValue({ proposals: [] });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   // ───────────────────────────────────────────────────────────────────────
   // 1. Loading + cancel
   // ───────────────────────────────────────────────────────────────────────
@@ -130,6 +134,31 @@ describe('TeresaSwotProposals (TLS-04)', () => {
     expect(screen.queryByText(/teresa is preparing proposals/i)).not.toBeInTheDocument();
   });
 
+  it('turns a hanging generation into a retryable error after 30 seconds', async () => {
+    vi.useFakeTimers();
+    createSwotProposalsMock.mockReturnValue(new Promise(() => {}));
+
+    render(<TeresaSwotProposals toolSessionId={TOOL_SESSION_ID} />);
+    await waitFor(() => expect(listSwotProposalsMock).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: /ask teresa/i }));
+
+    expect(screen.getByText(/teresa is preparing proposals/i)).toBeInTheDocument();
+    const callArgs = createSwotProposalsMock.mock.calls[0];
+    const options = callArgs[2] as { signal?: AbortSignal } | undefined;
+    expect(options?.signal?.aborted).toBe(false);
+
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+    });
+
+    expect(options?.signal?.aborted).toBe(true);
+    expect(screen.queryByText(/teresa is preparing proposals/i)).not.toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(/teresa took too long to prepare proposals/i);
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+  });
+
   // ───────────────────────────────────────────────────────────────────────
   // 2. Proposal card renders diff / sources-or-assumption / confidence / rationale
   // ───────────────────────────────────────────────────────────────────────
@@ -167,8 +196,12 @@ describe('TeresaSwotProposals (TLS-04)', () => {
 
     // Scope assertions to each proposal's own card root (ProposalDecisionCard
     // renders `rounded-2xl border border-c-ai/30 ...` per card).
-    const updateCard = screen.getByText('Improved weak point text').closest('.rounded-2xl') as HTMLElement;
-    const addCard = screen.getByText('Brand-new opportunity point').closest('.rounded-2xl') as HTMLElement;
+    const updateCard = screen
+      .getByText('Improved weak point text')
+      .closest('.rounded-2xl') as HTMLElement;
+    const addCard = screen
+      .getByText('Brand-new opportunity point')
+      .closest('.rounded-2xl') as HTMLElement;
     expect(updateCard).toBeTruthy();
     expect(addCard).toBeTruthy();
     expect(updateCard).not.toBe(addCard);
@@ -334,9 +367,7 @@ describe('TeresaSwotProposals (TLS-04)', () => {
     await user.click(screen.getByRole('button', { name: /^accept$/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/this swot changed since teresa proposed this/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/this swot changed since teresa proposed this/i)).toBeInTheDocument();
     });
     // Not a generic error message.
     expect(screen.queryByText(/failed to save the decision/i)).not.toBeInTheDocument();
