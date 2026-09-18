@@ -485,11 +485,17 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       | 'presentation'
       | 'sheet',
     id: string,
-    name: string
+    name: string,
+    /**
+     * DOC-0 etap 2a (DEC-593): `/documents/:artifactId` jest kluczem rejestru
+     * artefaktów, którego `id` (originRecordId) nie daje. Addytywne — `type`,
+     * `id` i `name` zostają, więc każdy dotychczasowy słuchacz widzi to samo.
+     */
+    artifactId?: string | null
   ) => {
     window.dispatchEvent(
       new CustomEvent('mywork-open-item', {
-        detail: { type, id, name },
+        detail: { type, id, name, artifactId },
       })
     );
   };
@@ -749,7 +755,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                         ? 'presentation'
                                         : 'sheet',
                                   row.originRecordId,
-                                  row.title
+                                  row.title,
+                                  row.artifactId
                                 )
                               }
                               className="flex items-center justify-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-1 text-[11px] font-medium hover:bg-c-surface-raised transition-colors"

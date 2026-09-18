@@ -40508,7 +40508,16 @@
       "owner": "Właściciel",
       "updated": "Zaktualizowano",
       "untitled": "Dokument",
-      "panelAriaLabel": "Szczegóły dokumentu"
+      "panelAriaLabel": "Szczegóły dokumentu",
+      "statusLabel": {
+        "draft": "Szkic",
+        "generated": "Wygenerowany",
+        "editing": "Edycja",
+        "ready": "Gotowy",
+        "exported": "Wyeksportowany",
+        "shared": "Udostępniony",
+        "archived": "Zarchiwizowany"
+      }
     },
     "contextAssetSelector": {
       "loadingDocuments": "Ładowanie dokumentów...",

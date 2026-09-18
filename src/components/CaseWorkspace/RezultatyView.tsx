@@ -41,6 +41,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
+import { resolveDocumentViewerPath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
@@ -168,6 +169,25 @@ export const TYP_OBIEKTU_NA_MODUL: Record<string, ArtifactType> = {
 };
 
 /**
+ * DOC-0 etap 2a (DEC-593) — JEDNO rozwidlenie trasy dokumentu dla trzech
+ * klasyfikatorów niżej (`rozstrzygnijOtwarcie`, `otwarcieZOdpowiedziBackendu`,
+ * `rozstrzygnijOtwarcieDowodu`). Nagłówek sekcji wyżej: trzy miejsca liczące
+ * trasę osobno to rozjazd kwestią czasu, więc decyzja „dokument → samodzielny
+ * ekran `/documents/:artifactId`" mieszka tutaj, w jednym zdaniu warunku.
+ *
+ * `null` = trasa dzisiejsza (`getArtifactPath`) — flaga
+ * `VITE_DOC0_DOCUMENT_VIEWER` OFF, wiersz bez `artifactId` rejestru, albo
+ * obiekt inny niż dokument.
+ */
+function sciezkaWidokaDokumentu(
+  typ: ArtifactType | undefined,
+  artifactId: string | null | undefined
+): string | null {
+  if (typ !== 'report') return null;
+  return resolveDocumentViewerPath(artifactId);
+}
+
+/**
  * Typy obiektów, którymi wolno wypełnić select „Typ obiektu" w dialogu
  * „Powiąż istniejący obiekt" (pakiet N2) — DOKŁADNIE te, które
  * `TYP_OBIEKTU_NA_MODUL` wyżej umie otworzyć. Świadomie NIE każdy string,
@@ -265,7 +285,8 @@ export function rozstrzygnijOtwarcie(link: CaseArtifactLink, isPolish = false): 
 
   return {
     status: 'otwieralny',
-    sciezka: getArtifactPath(typ, link.artifactId),
+    sciezka:
+      sciezkaWidokaDokumentu(typ, link.artifactId) ?? getArtifactPath(typ, link.artifactId),
     etykieta: etykietaTypu,
   };
 }
@@ -367,7 +388,8 @@ function otwarcieZOdpowiedziBackendu(
     };
   }
 
-  const sciezka = getArtifactPath(typ, idZrodla);
+  const sciezka =
+    sciezkaWidokaDokumentu(typ, idZrodla) ?? getArtifactPath(typ, idZrodla);
 
   if (resolution.state === 'STALE') {
     return {
@@ -528,7 +550,7 @@ export function rozstrzygnijOtwarcieDowodu(
   }
   return {
     status: 'otwieralny',
-    sciezka: getArtifactPath(typ, ref.id),
+    sciezka: sciezkaWidokaDokumentu(typ, ref.id) ?? getArtifactPath(typ, ref.id),
     etykieta: linkedTypeLabel(ref.type, isPolish) || ref.type,
   };
 }

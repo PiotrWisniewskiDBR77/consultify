@@ -68,6 +68,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
+import { resolveDocumentViewerPath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { HubBarSlotsProvider, useHubBar } from '@/components/shared/HubBarSlots';
 import { useStandardPanelControls } from '@/components/standard/StandardModuleBar';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
@@ -1654,7 +1655,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isEnabled } = useFeatureFlagsContext();
   useEffect(() => {
     const handler = (e: Event) => {
-      const { type, id, name } = (e as CustomEvent).detail || {};
+      const { type, id, name, artifactId } = (e as CustomEvent).detail || {};
       if (!type || !id) return;
       if (type === 'sheet') {
         void (async () => {
@@ -1683,7 +1684,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       // artifact types still navigate to their own module (deck/doc → Canvas,
       // budget/valuation/report → full module). SSOT: resolveOpenItemRoute.
       if (resolveOpenItemRoute(type) === 'navigate') {
-        navigate(getArtifactPath(type as any, String(id)));
+        // DOC-0 etap 2a (DEC-593): dokument z `artifactId` rejestru idzie przy
+        // fladze ON na `/documents/:artifactId`; OFF = dotychczasowa trasa.
+        const viewerPath = type === 'report' ? resolveDocumentViewerPath(artifactId) : null;
+        navigate(viewerPath ?? getArtifactPath(type as any, String(id)));
         return;
       }
       const tabMap: Record<string, ModuleTab> = {

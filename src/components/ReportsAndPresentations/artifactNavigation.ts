@@ -93,6 +93,31 @@ export function resolveArtifactOpenTarget(params: {
 }
 
 /**
+ * DOC-0 etap 2a (DEC-593) — samodzielna trasa widoku dokumentu `/documents/:artifactId`.
+ *
+ * ONE helper for all callers (panel inicjatywy, My Work, Workspace) so the
+ * branching cannot drift per screen; `null` = keep the pre-DOC-0 path, which is
+ * what flag OFF must produce byte-for-byte.
+ */
+export function resolveDocumentViewerPath(artifactId?: string | null): string | null {
+  if (!isDocumentViewerEnabled()) return null;
+  const id = String(artifactId || '').trim();
+  return id ? `/documents/${encodeURIComponent(id)}` : null;
+}
+
+/**
+ * Back target and OFF redirect: the documents list with the row selected.
+ *
+ * Pomiar 18.09 konwencji flagowanych tras obiektowych w `AppRoutes.tsx`
+ * (`AuditPackObjectRoute` → `/audit-programs?tab=library`,
+ * `AssessmentOutput*Route` → lista Oceny): przy OFF ZAWSZE redirect, nigdzie
+ * 404. `artifactId` przechowane w query, bo Hub czyta go jako `initialArtifactId`.
+ */
+export function buildDocumentViewerListPath(artifactId: string): string {
+  return `/presentations?tab=documents&artifactId=${encodeURIComponent(String(artifactId || '').trim())}`;
+}
+
+/**
  * Cel akcji „Użyj wzorca". ★ Dwa RÓŻNE identyfikatory:
  *  - `artifactIndexId` — wiersz indeksu artefaktów (dotychczasowe `templateArtifactId`),
  *  - `canonicalTemplateId` — rekord szablonu w runtime, którego oczekuje generator.

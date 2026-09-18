@@ -17,7 +17,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getArtifactPath } from '@/utils/artifactLinks';
 
-import { resolveArtifactOpenPath, resolveArtifactOpenTarget } from '../artifactNavigation';
+import {
+  buildDocumentViewerListPath,
+  resolveArtifactOpenPath,
+  resolveArtifactOpenTarget,
+  resolveDocumentViewerPath,
+} from '../artifactNavigation';
 import { DOCUMENT_VIEWER_FLAG_KEYS } from '../../documents/documentViewerFlag';
 
 const LS_KEY = DOCUMENT_VIEWER_FLAG_KEYS.localStorage;
@@ -106,5 +111,51 @@ describe('resolveArtifactOpenTarget — flaga ON (DEC-593)', () => {
       docRow({ governance: { openPath: '/wordy?artifactId=x' } })
     );
     expect(target).toEqual({ mode: 'viewer', artifactId: 'art-doc0-1' });
+  });
+});
+
+/**
+ * DOC-0 etap 2a (DEC-593, Wpis 106 pkt Q1/Q2) — JEDNO źródło trasy viewera dla
+ * nowej trasy `/documents/:artifactId` i trzech przełączonych wołaczy
+ * (Initiatives · MyWork notebook · CaseWorkspace Rezultaty). Zasada ta sama co
+ * w etapie 1: `null` = „zostań przy dzisiejszym celu", więc flaga OFF jest
+ * parytetem bajt w bajt w każdym wołaczu (`viewerPath ?? <stara trasa>`).
+ *
+ * MUTACJE: (a) usunięcie warunku flagi w `resolveDocumentViewerPath` → test OFF
+ * CZERWONY; (b) `return null` w gałęzi ON (stary cel) → testy ON CZERWONE;
+ * (c) zgubienie `artifactId` w `buildDocumentViewerListPath` → test celu OFF CZERWONY.
+ */
+describe('resolveDocumentViewerPath — etap 2a (trasa `/documents/:artifactId`)', () => {
+  it('flaga OFF → null, czyli dzisiejszy cel w każdym wołaczu', () => {
+    window.localStorage.setItem(LS_KEY, '0');
+    expect(resolveDocumentViewerPath('art-doc0-1')).toBeNull();
+  });
+
+  it('brak flagi (fail-closed) → null', () => {
+    expect(resolveDocumentViewerPath('art-doc0-1')).toBeNull();
+  });
+
+  it('flaga ON → `/documents/<artifactId>` rejestru', () => {
+    window.localStorage.setItem(LS_KEY, '1');
+    expect(resolveDocumentViewerPath('art-doc0-1')).toBe('/documents/art-doc0-1');
+  });
+
+  it('flaga ON, ale id puste/brak → null (viewer nie ma czego otworzyć)', () => {
+    window.localStorage.setItem(LS_KEY, '1');
+    expect(resolveDocumentViewerPath(undefined)).toBeNull();
+    expect(resolveDocumentViewerPath(null)).toBeNull();
+    expect(resolveDocumentViewerPath('   ')).toBeNull();
+  });
+
+  it('flaga ON, id ze znakami specjalnymi → zakodowane w segmencie trasy', () => {
+    window.localStorage.setItem(LS_KEY, '1');
+    expect(resolveDocumentViewerPath('art/1 b')).toBe('/documents/art%2F1%20b');
+  });
+
+  it('cel OFF (`buildDocumentViewerListPath`) trzyma zakładkę Materiałów i ten sam wiersz', () => {
+    expect(buildDocumentViewerListPath('art/1 b')).toBe(
+      '/presentations?tab=documents&artifactId=art%2F1%20b'
+    );
+    expect(buildDocumentViewerListPath('')).toBe('/presentations?tab=documents&artifactId=');
   });
 });

@@ -39946,7 +39946,16 @@
       "owner": "Owner",
       "updated": "Updated",
       "untitled": "Document",
-      "panelAriaLabel": "Document details"
+      "panelAriaLabel": "Document details",
+      "statusLabel": {
+        "draft": "Draft",
+        "generated": "Generated",
+        "editing": "Editing",
+        "ready": "Ready",
+        "exported": "Exported",
+        "shared": "Shared",
+        "archived": "Archived"
+      }
     },
     "contextAssetSelector": {
       "loadingDocuments": "Loading documents...",

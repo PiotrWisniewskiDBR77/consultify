@@ -1,0 +1,11 @@
+docs_total|142
+rt:native_artifact|125
+rt:report|17
+tbl:assessment_reports|0
+tbl:audit_reports|0
+tbl:execution_report_snapshots|0
+tbl:imported_reports|0
+tbl:method_outputs|0
+tbl:report_definitions|0
+tbl:reports|0
+tbl:tool_reports|0

@@ -1,0 +1,374 @@
+[
+  {
+    "key": "doc0-etap2a-url-en-light",
+    "entry": "url",
+    "theme": "light",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=url",
+    "clicked": "none (bare deep link)",
+    "caller": null,
+    "pathBefore": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": false,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 48.8,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 1,
+      "textLuminance": 0.008,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 18.15,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-initiative-en-light",
+    "entry": "initiative",
+    "theme": "light",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=initiative",
+    "clicked": "Outputs tab → output row",
+    "caller": {
+      "file": "doc0-etap2a-initiative-en-light-caller-1440x900.png",
+      "sizeKb": 19.1,
+      "rowText": "Digital Roadmap 2026–2028",
+      "rowBox": {
+        "x": 1040,
+        "y": 306,
+        "w": 178,
+        "h": 36
+      },
+      "contrast": {
+        "sampledPixels": 6408,
+        "bgLuminance": 0.953,
+        "textLuminance": 0.024,
+        "textPixelShare": 0.0521,
+        "wcagContrastRatio": 13.64,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/initiatives/ini-doc0-1",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": false,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 48.8,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 1,
+      "textLuminance": 0.008,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 18.15,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-notebook-en-light",
+    "entry": "notebook",
+    "theme": "light",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=notebook",
+    "clicked": "Linked outputs → Open",
+    "caller": {
+      "file": "doc0-etap2a-notebook-en-light-caller-1440x900.png",
+      "sizeKb": 22.8,
+      "rowText": "Digital Roadmap 2026–2028",
+      "rowBox": {
+        "x": 1090,
+        "y": 214,
+        "w": 186,
+        "h": 36
+      },
+      "contrast": {
+        "sampledPixels": 6696,
+        "bgLuminance": 0.953,
+        "textLuminance": 0.008,
+        "textPixelShare": 0.0349,
+        "wcagContrastRatio": 17.34,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/my-work",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": false,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 48.8,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 1,
+      "textLuminance": 0.008,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 18.15,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-rezultaty-en-light",
+    "entry": "rezultaty",
+    "theme": "light",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=rezultaty",
+    "clicked": "Linked objects → Open",
+    "caller": {
+      "file": "doc0-etap2a-rezultaty-en-light-caller-1440x900.png",
+      "sizeKb": 23.3,
+      "rowText": "Document Deliverable for the client Linked 08/09/2026 Open",
+      "rowBox": {
+        "x": 108,
+        "y": 820,
+        "w": 1256,
+        "h": 76
+      },
+      "contrast": {
+        "sampledPixels": 95456,
+        "bgLuminance": 1,
+        "textLuminance": 0.008,
+        "textPixelShare": 0.0013,
+        "wcagContrastRatio": 18.15,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/cases/case-doc0-1",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": false,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 48.8,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 1,
+      "textLuminance": 0.008,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 18.15,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-url-en-dark",
+    "entry": "url",
+    "theme": "dark",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=url",
+    "clicked": "none (bare deep link)",
+    "caller": null,
+    "pathBefore": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": true,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 40.1,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 0.008,
+      "textLuminance": 0.925,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 16.86,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-initiative-en-dark",
+    "entry": "initiative",
+    "theme": "dark",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=initiative",
+    "clicked": "Outputs tab → output row",
+    "caller": {
+      "file": "doc0-etap2a-initiative-en-dark-caller-1440x900.png",
+      "sizeKb": 16.6,
+      "rowText": "Digital Roadmap 2026–2028",
+      "rowBox": {
+        "x": 1040,
+        "y": 306,
+        "w": 178,
+        "h": 36
+      },
+      "contrast": {
+        "sampledPixels": 6408,
+        "bgLuminance": 0.012,
+        "textLuminance": 0.8,
+        "textPixelShare": 0.0521,
+        "wcagContrastRatio": 13.76,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/initiatives/ini-doc0-1",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": true,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 40.1,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 0.008,
+      "textLuminance": 0.925,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 16.86,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-notebook-en-dark",
+    "entry": "notebook",
+    "theme": "dark",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=notebook",
+    "clicked": "Linked outputs → Open",
+    "caller": {
+      "file": "doc0-etap2a-notebook-en-dark-caller-1440x900.png",
+      "sizeKb": 22.1,
+      "rowText": "Digital Roadmap 2026–2028",
+      "rowBox": {
+        "x": 1090,
+        "y": 214,
+        "w": 186,
+        "h": 36
+      },
+      "contrast": {
+        "sampledPixels": 6696,
+        "bgLuminance": 0.016,
+        "textLuminance": 0.925,
+        "textPixelShare": 0.0349,
+        "wcagContrastRatio": 14.85,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/my-work",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": true,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 40.1,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 0.008,
+      "textLuminance": 0.925,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 16.86,
+      "wcagAA": true
+    }
+  },
+  {
+    "key": "doc0-etap2a-rezultaty-en-dark",
+    "entry": "rezultaty",
+    "theme": "dark",
+    "url": "http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=rezultaty",
+    "clicked": "Linked objects → Open",
+    "caller": {
+      "file": "doc0-etap2a-rezultaty-en-dark-caller-1440x900.png",
+      "sizeKb": 22,
+      "rowText": "Document Deliverable for the client Linked 08/09/2026 Open",
+      "rowBox": {
+        "x": 108,
+        "y": 820,
+        "w": 1256,
+        "h": 76
+      },
+      "contrast": {
+        "sampledPixels": 95456,
+        "bgLuminance": 0.008,
+        "textLuminance": 0.925,
+        "textPixelShare": 0.0013,
+        "wcagContrastRatio": 16.86,
+        "wcagAA": true
+      }
+    },
+    "pathBefore": "/cases/case-doc0-1",
+    "pathAfter": "/documents/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+    "landedOnRoute": true,
+    "darkClass": true,
+    "panelPresent": true,
+    "viewerTitle": "Digital Roadmap 2026–2028",
+    "panelSections": [
+      "Actions",
+      "Edit",
+      "Properties"
+    ],
+    "crimsonHits": 0,
+    "sizeKb": 40.1,
+    "consoleErrors": 0,
+    "consoleErrorTexts": [],
+    "pageErrors": 0,
+    "pageErrorTexts": [],
+    "contrast": {
+      "sampledPixels": 950400,
+      "bgLuminance": 0.008,
+      "textLuminance": 0.925,
+      "textPixelShare": 0.0032,
+      "wcagContrastRatio": 16.86,
+      "wcagAA": true
+    }
+  }
+]

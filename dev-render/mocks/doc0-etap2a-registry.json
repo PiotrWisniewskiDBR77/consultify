@@ -1,0 +1,69 @@
+{
+  "artifactEnvelope": {
+    "data": {
+      "artifactId": "4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+      "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+      "outputType": "report",
+      "artifactFamily": "document",
+      "deliveryState": "ready",
+      "titleSnapshot": "Digital Roadmap 2026\u20132028",
+      "ownerUserId": "d62073a5-7095-5817-b383-4dc8942937d6",
+      "canonicalHome": "outputs_library",
+      "visibilityScope": "organization",
+      "projectId": null,
+      "contextSnapshotId": null,
+      "executionRunId": null,
+      "templateFamilyRef": null,
+      "sourceInitiativeId": null,
+      "aiGovernancePresetRef": null,
+      "originSummary": {
+        "exportFormat": "docx"
+      },
+      "isDraft": false,
+      "createdBy": "d62073a5-7095-5817-b383-4dc8942937d6",
+      "createdAt": "2026-09-08T14:58:06.124Z",
+      "lastTransitionAt": "2026-09-08T14:58:06.124Z",
+      "originRuntime": "report",
+      "originRecordId": "cd81551c-5c33-52b4-abb4-878fde387949",
+      "resolvedTitle": "Digital Roadmap 2026\u20132028",
+      "originTitle": "Digital Roadmap 2026\u20132028",
+      "originStatus": "APPROVED",
+      "reportType": "roadmap",
+      "presentationMode": null,
+      "slideCount": null,
+      "declaredSlideCount": null,
+      "contentState": null,
+      "exportFormat": "docx",
+      "sourceRefs": [],
+      "publishState": null,
+      "publishReviewers": [],
+      "reviewGateCount": 0,
+      "ownerName": null,
+      "duplicateCount": 1,
+      "duplicateArtifactIds": []
+    },
+    "originLinks": [
+      {
+        "linkId": "c7e30c04-f939-54a8-8354-87cc21e0dd1a",
+        "artifactId": "4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+        "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+        "originRuntime": "report",
+        "originRecordId": "cd81551c-5c33-52b4-abb4-878fde387949",
+        "isPrimaryOrigin": true,
+        "createdAt": "2026-09-08T14:58:06.124Z"
+      }
+    ]
+  },
+  "actionTargetEnvelope": {
+    "data": {
+      "artifactId": "4d6600e3-6ddd-52df-b0aa-85afa4c86c1c",
+      "originRuntime": "report",
+      "originRecordId": "cd81551c-5c33-52b4-abb4-878fde387949",
+      "openPath": "/reports/builder/cd81551c-5c33-52b4-abb4-878fde387949",
+      "exportPath": "/api/report-builder/cd81551c-5c33-52b4-abb4-878fde387949/export/pdf",
+      "deletePath": "/api/report-builder/cd81551c-5c33-52b4-abb4-878fde387949",
+      "reviewPath": "/api/artifacts/4d6600e3-6ddd-52df-b0aa-85afa4c86c1c/start-review",
+      "authority": "report_builder"
+    }
+  }
+}

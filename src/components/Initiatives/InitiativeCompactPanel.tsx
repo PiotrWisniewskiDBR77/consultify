@@ -45,6 +45,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
+import { resolveDocumentViewerPath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
@@ -817,13 +818,19 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 loading={outputsLoading}
                 error={outputsError}
                 onOpen={(row) => {
+                  // DOC-0 etap 2a (DEC-593): dokument przy fladze ON idzie na
+                  // samodzielny ekran `/documents/:artifactId`; OFF i wiersz bez
+                  // `artifactId` = dotychczasowa trasa generatora.
+                  const viewerPath =
+                    row.kind === 'document' ? resolveDocumentViewerPath(row.artifactId) : null;
                   const targetPath =
-                    row.kind === 'sheet'
+                    viewerPath ??
+                    (row.kind === 'sheet'
                       ? getArtifactPath('sheet', row.originRecordId)
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
                           row.originRecordId
-                        );
+                        ));
                   onClose();
                   navigate(targetPath);
                 }}

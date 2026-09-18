@@ -1,0 +1,36 @@
+// READ-ONLY capture of the two registry payloads the DOC-0 etap 2a deep link
+// reads (`GET /api/artifacts/:id` and `GET /api/artifacts/:id/action-target`),
+// produced by the PRODUCTION service + the PRODUCTION payload builder against the
+// local dump copy (pool C container qoder-c-pg-1, port 6620). Nothing is written.
+import { buildActionTargetPayload } from '/Users/piotrwisniewski/Developer/qoder-wt/consultify-c/server/src/routes/artifacts.routes.js';
+import * as artifactRegistryService from '/Users/piotrwisniewski/Developer/qoder-wt/consultify-c/server/src/services/v8/artifactRegistryService.js';
+
+const ORG = '468b234c-66c4-54e1-b626-5e0fb3a92f6a';
+const USER = 'd62073a5-7095-5817-b383-4dc8942937d6';
+const ARTIFACT = '4d6600e3-6ddd-52df-b0aa-85afa4c86c1c';
+
+const artifact = await artifactRegistryService.getArtifactForUser({
+  organizationId: ORG,
+  artifactId: ARTIFACT,
+  userId: USER,
+  roleKey: 'MEMBER',
+});
+
+if (!artifact) {
+  process.stdout.write('ARTIFACT_NOT_FOUND\n');
+  process.exit(1);
+}
+
+const originLinks = await artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, ORG);
+
+process.stdout.write(
+  JSON.stringify(
+    {
+      artifactEnvelope: { data: artifact, originLinks },
+      actionTargetEnvelope: { data: buildActionTargetPayload(artifact) },
+    },
+    null,
+    2
+  )
+);
+process.exit(0);

@@ -1,0 +1,131 @@
+[shot] doc0-etap2a-url-en-light → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=url
+[shot] doc0-etap2a-initiative-en-light → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=initiative
+[shot] doc0-etap2a-notebook-en-light → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=notebook
+[shot] doc0-etap2a-rezultaty-en-light → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=light&ff_doc0_document_viewer=1&entry=rezultaty
+[shot] doc0-etap2a-url-en-dark → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=url
+[shot] doc0-etap2a-initiative-en-dark → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=initiative
+[shot] doc0-etap2a-notebook-en-dark → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=notebook
+[shot] doc0-etap2a-rezultaty-en-dark → http://127.0.0.1:5421/doc0-etap2a.html?lang=en&theme=dark&ff_doc0_document_viewer=1&entry=rezultaty
+[
+  {
+    "key": "doc0-etap2a-url-en-light",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 48.8,
+    "callerKb": null,
+    "callerRow": null,
+    "callerContrast": null,
+    "callerAA": null,
+    "bledyKonsoli": 0,
+    "contrast": 18.15,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-initiative-en-light",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 48.8,
+    "callerKb": 19.1,
+    "callerRow": "Digital Roadmap 2026–2028",
+    "callerContrast": 13.64,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 18.15,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-notebook-en-light",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 48.8,
+    "callerKb": 22.8,
+    "callerRow": "Digital Roadmap 2026–2028",
+    "callerContrast": 17.34,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 18.15,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-rezultaty-en-light",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 48.8,
+    "callerKb": 23.3,
+    "callerRow": "Document Deliverable for the client Linked 08/09/2026 Open",
+    "callerContrast": 18.15,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 18.15,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-url-en-dark",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 40.1,
+    "callerKb": null,
+    "callerRow": null,
+    "callerContrast": null,
+    "callerAA": null,
+    "bledyKonsoli": 0,
+    "contrast": 16.86,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-initiative-en-dark",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 40.1,
+    "callerKb": 16.6,
+    "callerRow": "Digital Roadmap 2026–2028",
+    "callerContrast": 13.76,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 16.86,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-notebook-en-dark",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 40.1,
+    "callerKb": 22.1,
+    "callerRow": "Digital Roadmap 2026–2028",
+    "callerContrast": 14.85,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 16.86,
+    "aa": true
+  },
+  {
+    "key": "doc0-etap2a-rezultaty-en-dark",
+    "landed": true,
+    "title": true,
+    "panel": true,
+    "crimson": 0,
+    "kb": 40.1,
+    "callerKb": 22,
+    "callerRow": "Document Deliverable for the client Linked 08/09/2026 Open",
+    "callerContrast": 16.86,
+    "callerAA": true,
+    "bledyKonsoli": 0,
+    "contrast": 16.86,
+    "aa": true
+  }
+]
+TOTAL bledyKonsoli= 0  landed= 8/8

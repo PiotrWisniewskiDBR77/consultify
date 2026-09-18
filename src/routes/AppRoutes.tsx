@@ -16,9 +16,11 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
+import { isDocumentViewerEnabled } from '@/components/documents/documentViewerFlag';
 import { buildExecutionRetiredTabRedirect } from '@/components/Execution/executionNavigationState';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
+import { buildDocumentViewerListPath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -640,6 +642,16 @@ const AuditPackObjectPage = lazyWithRetry(
   () => import('@/components/Audit/method/pack/AuditPackObjectPage')
 );
 
+// DOC-0 etap 2a (Wpis 106 / 117): standalone read-only document screen
+// `/documents/:artifactId`, reachable from a deep link (chat, e-mail, browser
+// history) and from the three in-app callers. Flag-gated
+// (`ff_doc0_document_viewer`, `VITE_DOC0_DOCUMENT_VIEWER`, default OFF until
+// the owner accepts it on screenshots) — see `DocumentViewerRoute` niżej and
+// `src/components/documents/documentViewerFlag.ts`.
+const DocumentViewerPage = lazyWithRetry(
+  () => import('@/components/documents/DocumentViewerPage')
+);
+
 // Assessment Output artifact screens (tor "wołacze" 2026-09-02): two
 // components built and visually accepted by Piotr, reachable by these two
 // routes. Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON
@@ -943,6 +955,33 @@ const AuditPackObjectRoute: React.FC = () => {
       }
     />
   );
+};
+
+/**
+ * DOC-0 etap 2a (Wpis 106 / 117, DEC-593) — standalone read-only document
+ * screen `/documents/:artifactId`.
+ *
+ * Flag-gated (`isDocumentViewerEnabled`, default OFF until the owner accepts
+ * it on screenshots, fail-closed — CLAUDE.md #7). OFF → redirects to the
+ * Materials list with the row selected, i.e. exactly where the document was
+ * reachable before this route existed. Measured 18.09 on the existing flagged
+ * object routes in this file (`AuditPackObjectRoute` above,
+ * `AssessmentOutputReportRoute` below): OFF is ALWAYS a redirect to the list,
+ * never a 404 — a dead URL in a chat message must land the user somewhere
+ * they can work. `artifactId` is kept in the query because
+ * `ReportsAndPresentationsHub` reads it as `initialArtifactId`.
+ *
+ * Name/status/owner/updated are NOT route params: a bare deep link carries
+ * only the artifact id, so `DocumentViewerPage` fills them from the existing
+ * registry read model (`GET /api/artifacts/:id`, `.../action-target`).
+ */
+export const DocumentViewerRoute: React.FC = () => {
+  const params = useParams<{ artifactId: string }>();
+  const artifactId = params.artifactId ?? '';
+  if (!isDocumentViewerEnabled()) {
+    return <Navigate to={buildDocumentViewerListPath(artifactId)} replace />;
+  }
+  return <DocumentViewerPage artifactId={artifactId} />;
 };
 
 /**
@@ -2910,6 +2949,34 @@ export const AppRoutes: React.FC = () => {
                 </ProductionModuleGate>
               </MainLayout>
             </BetaGate>
+          }
+        />
+        {/* DOC-0 etap 2a (Wpis 106 / 117, DEC-593) — samodzielny ekran dokumentu.
+            Te same strażniki co lista Materiałów obok, bo to ten sam moduł;
+            flaga `VITE_DOC0_DOCUMENT_VIEWER` — patrz `DocumentViewerRoute` powyżej. */}
+        <Route
+          path="/documents/:artifactId"
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <BetaGate moduleId="MODULE_PRESENTATIONS">
+                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials')]}>
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Outputs"
+                  >
+                    <RouteErrorBoundary>
+                      <AnimationWrapper variant="slideUp">
+                        <Suspense
+                          fallback={<LoadingScreen message={t('documents.viewer.loading', 'Loading the document…')} />}
+                        >
+                          <DocumentViewerRoute />
+                        </Suspense>
+                      </AnimationWrapper>
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            </ProtectedRoute>
           }
         />
         <Route path={ROUTES.PRESENTATION_STUDIO} element={<PresentationStudioRedirect />} />
