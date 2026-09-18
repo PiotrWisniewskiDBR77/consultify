@@ -1,0 +1,47 @@
+# QD3 stan PO — kopia dumpu qd3_kopia @ qoder-d-pg-4:6633, 2026-09-18T20:04:48Z UTC
+# kolejnosc: K7 --apply (3 orgi) -> QD3 sweep --apply (23077 wierszy) -> 2. przebieg sweep (0)
+Border style is 0.
+## organizations (wszystkie)
+3935603f-e81c-4fc3-a154-623394e7cc32|TT22TT|TRIAL|2026-09-09 09:39:04.493853
+3af18124-275e-484c-8ca1-b512915423c9|QA Fable 13.09|TRIAL|2026-09-13 12:58:07.766758
+468b234c-66c4-54e1-b626-5e0fb3a92f6a|Northwind Manufacturing Ltd.|PAID|2026-09-08 14:46:45.821584
+8bed87c6-a77e-4d7b-a2b7-bffedfb89c02|TT22TT 2 |TRIAL|2026-09-10 13:16:36.982
+9151ee70-0141-43fd-9614-8ea609a7e5aa|My Company|TRIAL|2026-09-09 10:01:51.566333
+a3e05d4a-5397-419d-b486-8e44366c0063|DBR77|PAID|2026-02-19 07:58:37.065762
+a6b81efe-98b8-426d-bac6-03340e1ea4f6|TT22TT|TRIAL|2026-09-09 10:05:22.133
+b8dbb6e9-e855-4245-9748-21e5186390d2|CTO Service (staging)|TRIAL|2026-09-16 17:56:05.804369
+be953b47-1dba-469c-98cb-414806f36276|TT22TT|TRIAL|2026-09-09 09:45:38.106
+c56e8bd5-3295-4366-b150-72e978fb8f18|QA Fable 13.09|TRIAL|2026-09-13 13:56:22.035
+dbr77|DBR77 Digital Consulting|PAID|2026-04-03 18:27:54.727074
+system|System|TRIAL|2026-03-03 18:29:48.561246
+## liczniki tabel
+access_requests|1
+artifact_lineage_events|908
+artifact_lineage_receipts|421
+async_jobs|0
+demo_sessions|0
+initiatives|94
+organization_members|46
+organizations|12
+results_writer_observations|338
+users|34
+v8_artifact_origin_links|956
+work_signal_runs|2157
+work_signals|145
+## checksum realnych organizacji (bez prefiksu klonu)
+abefaf06286125e3fb20ba0419cc22eb|12
+## wiersze realnych organizacji w tabelach resztkowych
+artifact_lineage_events|908
+artifact_lineage_receipts|421
+results_writer_observations|83
+v8_artifact_origin_links|956
+work_signal_runs|2157
+work_signals|145
+## reszta klonow wg prefiksu (dowolny stan, nie tylko dangling)
+artifact_lineage_events|0
+artifact_lineage_receipts|0
+organizations|0
+results_writer_observations|255
+v8_artifact_origin_links|0
+work_signal_runs|0
+work_signals|0

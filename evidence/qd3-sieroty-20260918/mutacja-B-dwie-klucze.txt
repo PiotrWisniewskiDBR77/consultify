@@ -1,0 +1,3 @@
+# M-B: --apply BEZ FORCE_PURGE=true — dwie klucze
+[31m✗[0m --apply requires FORCE_PURGE=true (two-key safety).
+EXIT=1

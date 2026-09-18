@@ -1,0 +1,6 @@
+
+[1mK7 — cleanup orphan demo orgs (id starting with "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+
+[32m✓[0m No organizations match id starting with "ateliertoys-demo-session-". Nothing to clean. (DB is already clean of K7 residue.)

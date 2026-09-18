@@ -1,0 +1,4 @@
+# M-E: reczny DELETE z results_writer_observations — trigger append-only
+ERROR:  results_writer_observations is append-only: DELETE is not permitted (observation_id=68393068-e410-4e8f-9f0c-2d3bcf28cde6). An owner-governed purge must explicitly disable trigger trg_results_writer_observation_no_delete.
+CONTEXT:  PL/pgSQL function enforce_results_writer_observation_no_delete() line 3 at RAISE
+EXIT=1

@@ -1,0 +1,10 @@
+# M-A: DEMO_ORG_ID='%' — prefiks nie jest wzorcem LIKE (left(...) = $1, zero wildcardow)
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "%-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[32m✓[0m No dangling clone residue found. Nothing to sweep (2nd pass = 0 is the expected idempotent result).
+EXIT=0

@@ -1,0 +1,41 @@
+# M-F: guard append-only WYLACZONY (mutacja kodu) -> apply musi sie wywalic na triggerze i cofnac CALA transakcje.
+--- liczniki PRZED proba:
+access_requests|4
+async_jobs|3
+demo_sessions|3
+initiatives|97
+organization_members|49
+users|37
+--- przebieg --apply --include-live-orgs FORCE_PURGE=true:
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+[36mℹ[0m Scope: ALL clone-prefixed rows (--include-live-orgs)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 7, rows: 273
+   - access_requests.organization_id (text): 3
+   - async_jobs.organization_id (text): 3
+   - demo_sessions.session_org_id (text): 3
+   - initiatives.organization_id (text): 3
+   - organization_members.organization_id (text): 3
+   - results_writer_observations.organization_id (text): 255
+   - users.organization_id (text): 3
+
+[36mℹ[0m Backup dir: /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/qd3-residue-2026-09-18T20-06-36-900Z
+[2m  → deleted 3 from access_requests[0m
+[2m  → deleted 3 from async_jobs[0m
+[2m  → deleted 3 from demo_sessions[0m
+[2m  → deleted 3 from initiatives[0m
+[2m  → deleted 3 from organization_members[0m
+[31m✗[0m Sweep failed, transaction rolled back: results_writer_observations is append-only: DELETE is not permitted (observation_id=68393068-e410-4e8f-9f0c-2d3bcf28cde6). An owner-governed purge must explicitly disable trigger trg_results_writer_observation_no_delete.
+[31m✗[0m results_writer_observations is append-only: DELETE is not permitted (observation_id=68393068-e410-4e8f-9f0c-2d3bcf28cde6). An owner-governed purge must explicitly disable trigger trg_results_writer_observation_no_delete.
+EXIT=1
+--- liczniki PO nieudanej probie (musza byc IDENTYCZNE = fail-closed, zero czesciowego usuniecia):
+access_requests|4
+async_jobs|3
+demo_sessions|3
+initiatives|97
+organization_members|49
+users|37

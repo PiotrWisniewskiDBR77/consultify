@@ -1,0 +1,3 @@
+# M-C: connection string produkcyjny (centerbeam) bez ALLOW_PROD
+[31m✗[0m Connection string looks like PRODUCTION (centerbeam). Refusing. Set ALLOW_PROD=true only if that is really the intent.
+EXIT=1

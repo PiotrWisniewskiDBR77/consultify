@@ -1,0 +1,20 @@
+
+[1mK7 — cleanup orphan demo orgs (id starting with "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+
+[36mℹ[0m Found [1m3[0m orphan org(s) matching id starting with "ateliertoys-demo-session-".
+   - ateliertoys-demo-session-f786e8f37a-qd3t0001 | Atelier Toys | Thu Sep 10 2026 06:07:00 GMT-0500 (Central Daylight Time)
+   - ateliertoys-demo-session-f786e8f37a-qd3t0002 | Atelier Toys | Fri Sep 11 2026 07:27:00 GMT-0500 (Central Daylight Time)
+   - ateliertoys-demo-session-f786e8f37a-qd3t0003 | Atelier Toys | Sat Sep 12 2026 08:29:00 GMT-0500 (Central Daylight Time)
+
+[36mℹ[0m Checking 100 NO-ACTION/RESTRICT dependent table(s) that must be cleared first...
+[33m⚠[0m NO-ACTION dependents present (will be deleted first, after backup):
+   - async_jobs.organization_id: 3
+   - users.organization_id: 3
+
+[32m✓[0m Backup written: /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/k7-orphan-orgs-2026-09-18T20-01-23-085Z.json
+[2m  → cleared 3 from async_jobs[0m
+[2m  → cleared 3 from users[0m
+[32m✓[0m Deleted 3 org row(s) + 6 NO-ACTION dependent row(s). CASCADE handled the rest.
+[2m  → Restore from /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/k7-orphan-orgs-2026-09-18T20-01-23-085Z.json if needed.[0m

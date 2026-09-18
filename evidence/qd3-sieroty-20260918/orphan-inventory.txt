@@ -1,0 +1,9 @@
+SCOPED_COLUMNS=1293 TEXT_COLUMNS=1281
+TABLES_WITH_CLONE_ROWS=12
+TOTAL_CLONE_ROWS=23350
+DISTINCT_CLONE_IDS=130
+HITS=[{"tabela":"work_signal_runs","kolumna":"organization_id","n":18638},{"tabela":"work_signals","kolumna":"organization_id","n":3296},{"tabela":"artifact_lineage_events","kolumna":"organization_id","n":381},{"tabela":"artifact_lineage_receipts","kolumna":"organization_id","n":381},{"tabela":"v8_artifact_origin_links","kolumna":"organization_id","n":381},{"tabela":"results_writer_observations","kolumna":"organization_id","n":255},{"tabela":"access_requests","kolumna":"organization_id","n":3},{"tabela":"async_jobs","kolumna":"organization_id","n":3},{"tabela":"demo_sessions","kolumna":"session_org_id","n":3},{"tabela":"initiatives","kolumna":"organization_id","n":3},{"tabela":"organization_members","kolumna":"organization_id","n":3},{"tabela":"users","kolumna":"organization_id","n":3}]
+CLONE_ORG_ROWS_STILL_IN_ORGANIZATIONS=3
+CLONE_IDS_WITHOUT_ORG_ROW=127
+SAMPLE_IDS=["ateliertoys-demo-session-f786e8f37a-qd3t0001","ateliertoys-demo-session-f786e8f37a-qd3t0002","ateliertoys-demo-session-f786e8f37a-qd3t0003","ateliertoys-demo-session-0c285cc5a2-mu3xeuxw","ateliertoys-demo-session-0c285cc5a2-mu3xexaf"]
+ELAPSED_MS=718

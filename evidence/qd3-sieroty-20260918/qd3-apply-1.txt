@@ -1,0 +1,25 @@
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 6, rows: 23332
+   - artifact_lineage_events.organization_id (text): 381
+   - artifact_lineage_receipts.organization_id (text): 381
+   - v8_artifact_origin_links.organization_id (text): 381
+   - work_signal_runs.organization_id (text): 18638
+   - work_signals.organization_id (text): 3296
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 255 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[36mℹ[0m Backup dir: /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/qd3-residue-2026-09-18T20-03-57-082Z
+[2m  → deleted 381 from artifact_lineage_events[0m
+[2m  → deleted 381 from artifact_lineage_receipts[0m
+[2m  → deleted 381 from v8_artifact_origin_links[0m
+[2m  → deleted 18638 from work_signal_runs[0m
+[2m  → deleted 3296 from work_signals[0m
+[32m✓[0m COMMITTED: deleted 23077 dangling residue row(s) across 5 table.column pair(s).
+[33m⚠[0m Left behind on purpose: 255 append-only row(s).
+[2m  → Backup: /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/qd3-residue-2026-09-18T20-03-57-082Z[0m

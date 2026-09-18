@@ -1,0 +1,66 @@
+# M-G: petla odtworzeniowa — guard przywrocony po mutacji M-F, potem K7 i sweep na zywo
+--- (1) dry-run sweep (guard znowu dziala: results_writer_observations SKIPPED):
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 1, rows: 254
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 254 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[32m✓[0m DRY-RUN complete. No changes made.
+[2m  → Sweepable rows: 0. Re-run with: --apply FORCE_PURGE=true[0m
+EXIT=0
+--- (2) K7 --apply (kasuje 3 wiersze organizacji + zaleznosci NO-ACTION, reszte CASCADE):
+
+[1mK7 — cleanup orphan demo orgs (id starting with "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+
+[36mℹ[0m Found [1m3[0m orphan org(s) matching id starting with "ateliertoys-demo-session-".
+   - ateliertoys-demo-session-f786e8f37a-qd3t0001 | Atelier Toys | Thu Sep 10 2026 06:07:00 GMT-0500 (Central Daylight Time)
+   - ateliertoys-demo-session-f786e8f37a-qd3t0002 | Atelier Toys | Fri Sep 11 2026 07:27:00 GMT-0500 (Central Daylight Time)
+   - ateliertoys-demo-session-f786e8f37a-qd3t0003 | Atelier Toys | Sat Sep 12 2026 08:29:00 GMT-0500 (Central Daylight Time)
+
+[36mℹ[0m Checking 100 NO-ACTION/RESTRICT dependent table(s) that must be cleared first...
+[33m⚠[0m NO-ACTION dependents present (will be deleted first, after backup):
+   - async_jobs.organization_id: 3
+   - users.organization_id: 3
+
+[32m✓[0m Backup written: /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/k7-orphan-orgs-2026-09-18T20-07-24-717Z.json
+[2m  → cleared 3 from async_jobs[0m
+[2m  → cleared 3 from users[0m
+[32m✓[0m Deleted 3 org row(s) + 6 NO-ACTION dependent row(s). CASCADE handled the rest.
+[2m  → Restore from /Users/piotrwisniewski/Developer/qoder-wt/consultify-d/server/_backup/k7-orphan-orgs-2026-09-18T20-07-24-717Z.json if needed.[0m
+EXIT=0
+--- (3) K7 --apply 2. przebieg:
+
+[1mK7 — cleanup orphan demo orgs (id starting with "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [31mAPPLY (destructive)[0m
+
+[32m✓[0m No organizations match id starting with "ateliertoys-demo-session-". Nothing to clean. (DB is already clean of K7 residue.)
+EXIT=0
+--- (4) sweep dry-run PO K7 (to jest wlasnie klasa reszty, ktora przezywa K7):
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 1, rows: 255
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 255 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[32m✓[0m DRY-RUN complete. No changes made.
+[2m  → Sweepable rows: 0. Re-run with: --apply FORCE_PURGE=true[0m
+EXIT=0
+--- (5) stan koncowy:
+organizations|12
+results_writer_observations|338
+rwo_dangling_clone|255
+users|34

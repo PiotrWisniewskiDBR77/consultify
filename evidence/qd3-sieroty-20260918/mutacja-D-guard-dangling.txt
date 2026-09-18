@@ -1,0 +1,43 @@
+# M-D: fixture znovu zaladowany (3 zywe klony). Pokaz: guard 'dangling' NIE rusza zywych klonow (to domena K7),
+# a --include-live-orgs widzi ich wiersze -> guard rozroznia, nie jest atrapa.
+--- (1) dry-run, domyslny zakres dangling-only:
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 1, rows: 254
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 254 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[32m✓[0m DRY-RUN complete. No changes made.
+[2m  → Sweepable rows: 0. Re-run with: --apply FORCE_PURGE=true[0m
+EXIT=0
+--- (2) dry-run, --include-live-orgs:
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: 127.0.0.1:6633
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: ALL clone-prefixed rows (--include-live-orgs)
+
+[36mℹ[0m Organization-scoped columns discovered: 1293
+[36mℹ[0m Tables with residue: 7, rows: 273
+   - access_requests.organization_id (text): 3
+   - async_jobs.organization_id (text): 3
+   - demo_sessions.session_org_id (text): 3
+   - initiatives.organization_id (text): 3
+   - organization_members.organization_id (text): 3
+   - users.organization_id (text): 3
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 255 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[32m✓[0m DRY-RUN complete. No changes made.
+[2m  → Sweepable rows: 18. Re-run with: --apply FORCE_PURGE=true[0m
+EXIT=0
+--- (3) liczniki po obu dry-runach (musza byc nietkniete):
+demo_sessions|3
+organization_members|49
+organizations|15
+users|37
