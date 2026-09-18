@@ -9,7 +9,7 @@
  * Question-count pills moved out of the right panel).
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -79,6 +79,39 @@ const renderDocument = () =>
     <TemplateBuilder isOpen presentation="document" onClose={vi.fn()} onSuccess={vi.fn()} />
   );
 
+const makeQuestions = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    id: `q-${index + 1}`,
+    category: 'core',
+    questionText: `Question ${index + 1}`,
+    sortOrder: index + 1,
+    answerType: 'open',
+    answerOptions: [],
+    isRequired: true,
+  }));
+
+/** Loads template `tmpl-1` (draft, version 2) with exactly `count` questions. */
+const mockLoadedTemplate = (count: number) => {
+  apiGet.mockImplementation(async (url: string) => {
+    if (typeof url === 'string' && url.endsWith('/questions')) return makeQuestions(count);
+    return {
+      id: 'tmpl-1',
+      name: 'Northwind interview',
+      status: 'draft',
+      version: 2,
+      scope: 'organization',
+      areaTags: [],
+    };
+  });
+};
+
+const AI_MENU_ITEMS = ['analizuj', 'uzupelnij-sekcje', 'uzupelnij-dokument'];
+
+const menuPositions = (menu: HTMLElement) =>
+  within(menu)
+    .getAllByRole('menuitem')
+    .map((item) => item.getAttribute('data-pozycja'));
+
 beforeEach(() => {
   flagState.enabled = false;
   apiPost.mockReset();
@@ -128,5 +161,138 @@ describe('TemplateBuilder full-page flag switch (DEC-533 / U-07)', () => {
     expect(questionsHeader.className).toContain('justify-between');
     expect(questionsHeader.className).not.toContain('justify-end');
     expect(counter.className).not.toContain('absolute');
+  });
+});
+
+describe('TemplateBuilder full-page header behaviour (Wpis 103 P1)', () => {
+  it('Publish in the full-page header posts to the publish endpoint, not the draft patch', async () => {
+    flagState.enabled = true;
+    mockLoadedTemplate(3);
+    render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    );
+
+    const header = await screen.findByTestId('template-builder-fullpage-header');
+    await waitFor(() => expect(within(header).getByText('3 questions')).toBeInTheDocument());
+    fireEvent.click(within(header).getByText('Publish'));
+
+    await waitFor(() =>
+      expect(apiPost).toHaveBeenCalledWith(
+        '/interview/templates/tmpl-1/publish',
+        expect.objectContaining({ expectedVersion: 2 })
+      )
+    );
+    expect(apiPatch).not.toHaveBeenCalledWith('/interview/templates/tmpl-1', expect.anything());
+  });
+
+  it('Back in the full-page header calls onClose', async () => {
+    flagState.enabled = true;
+    mockLoadedTemplate(3);
+    const onClose = vi.fn();
+    render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={onClose}
+        onSuccess={vi.fn()}
+      />
+    );
+
+    const header = await screen.findByTestId('template-builder-fullpage-header');
+    fireEvent.click(within(header).getByRole('button', { name: /Back/i }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('the question-count pill follows the loaded question list (6 vs 3)', async () => {
+    flagState.enabled = true;
+
+    mockLoadedTemplate(6);
+    const first = render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    );
+    await waitFor(() =>
+      expect(
+        within(screen.getByTestId('template-builder-fullpage-header')).getByText('6 questions')
+      ).toBeInTheDocument()
+    );
+    first.unmount();
+
+    mockLoadedTemplate(3);
+    render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    );
+    await waitFor(() =>
+      expect(
+        within(screen.getByTestId('template-builder-fullpage-header')).getByText('3 questions')
+      ).toBeInTheDocument()
+    );
+  });
+
+  it('flag ON with the modal presentation stays out of the full-page layout', async () => {
+    flagState.enabled = true;
+    mockLoadedTemplate(3);
+    render(<TemplateBuilder isOpen templateId="tmpl-1" onClose={vi.fn()} onSuccess={vi.fn()} />);
+
+    await screen.findByText('Question 3');
+
+    expect(screen.queryByTestId('template-builder-fullpage-header')).not.toBeInTheDocument();
+  });
+
+  it('full-page mode keeps the "Work with AI" entry in the header and opens the N-card menu', async () => {
+    flagState.enabled = true;
+    mockLoadedTemplate(3);
+    render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    );
+
+    const header = await screen.findByTestId('template-builder-fullpage-header');
+    fireEvent.click(within(header).getByTestId('pracuj-z-ai'));
+
+    expect(menuPositions(await screen.findByTestId('pracuj-z-ai-menu'))).toEqual(AI_MENU_ITEMS);
+  });
+
+  it('flag OFF opens the same AI menu from the shell toolbar (parity with full page)', async () => {
+    mockLoadedTemplate(3);
+    render(
+      <TemplateBuilder
+        isOpen
+        presentation="document"
+        templateId="tmpl-1"
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    );
+
+    await screen.findByText('Question 3');
+    expect(screen.queryByTestId('template-builder-fullpage-header')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('pracuj-z-ai'));
+
+    expect(menuPositions(await screen.findByTestId('pracuj-z-ai-menu'))).toEqual(AI_MENU_ITEMS);
   });
 });

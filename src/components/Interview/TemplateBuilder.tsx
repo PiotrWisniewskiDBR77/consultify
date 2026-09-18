@@ -1795,6 +1795,30 @@ ${sourceText || '(none)'}`;
       ? t('interview.templateBuilder.draft', 'Draft')
       : t('interview.templateBuilder.published', 'Published');
 
+  // Wpis 103 P1: pełna strona (flaga ON) musi mieć TO SAMO wejście do AI co
+  // N-karta — jeden komponent, dwa miejsca montażu (nagłówek ON / toolbar OFF).
+  const aiArtifactButton = (
+    <PracujZAI
+      isPolish={isPolish}
+      onAnalizuj={handleCheckQuality}
+      analizaWToku={isCheckingQuality}
+      aktywnaSekcja="template-content"
+      kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }}
+      moznaEdytowac={!isApplicationTemplate}
+      powodTylkoOdczyt={t('interview.templateBuilder.applicationTemplateReadOnlyReason', 'This is a system template — read-only.')}
+      uzupelnijSekcje={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => proposeQuestionImprovementsWithAI(),
+        opis: t('interview.templateBuilder.proposeChangesPreviewNotice', 'Proposed changes will appear in a preview to approve.'),
+      }}
+      uzupelnijDokument={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: handleGenerateWithAI,
+        opis: t('interview.templateBuilder.generateWholeTemplatePreviewNotice', 'A draft of the whole template will appear before saving.'),
+      }}
+    />
+  );
+
   const builderContent = (
     <div
       className={
@@ -1845,16 +1869,19 @@ ${sourceText || '(none)'}`;
                 </span>
               </div>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<Send />}
-              onClick={() => handleSave(true)}
-              disabled={isSaving || isApplicationTemplate}
-              loading={isSaving}
-            >
-              {t('interview.templateBuilder.publish', 'Publish')}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0" data-testid="template-builder-fullpage-ai">
+              {aiArtifactButton}
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Send />}
+                onClick={() => handleSave(true)}
+                disabled={isSaving || isApplicationTemplate}
+                loading={isSaving}
+              >
+                {t('interview.templateBuilder.publish', 'Publish')}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-between px-4 h-10 border-b border-c-border/60 shrink-0 bg-c-surface-raised text-c-text">
@@ -2834,27 +2861,6 @@ ${sourceText || '(none)'}`;
       ),
     },
   };
-  const ai = (
-    <PracujZAI
-      isPolish={isPolish}
-      onAnalizuj={handleCheckQuality}
-      analizaWToku={isCheckingQuality}
-      aktywnaSekcja="template-content"
-      kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }}
-      moznaEdytowac={!isApplicationTemplate}
-      powodTylkoOdczyt={t('interview.templateBuilder.applicationTemplateReadOnlyReason', 'This is a system template — read-only.')}
-      uzupelnijSekcje={{
-        rodzaj: 'wlasnaPropozycja',
-        uruchom: () => proposeQuestionImprovementsWithAI(),
-        opis: t('interview.templateBuilder.proposeChangesPreviewNotice', 'Proposed changes will appear in a preview to approve.'),
-      }}
-      uzupelnijDokument={{
-        rodzaj: 'wlasnaPropozycja',
-        uruchom: handleGenerateWithAI,
-        opis: t('interview.templateBuilder.generateWholeTemplatePreviewNotice', 'A draft of the whole template will appear before saving.'),
-      }}
-    />
-  );
   return (
     <StandardArtifactShell
       karta="interview_template"
@@ -2886,7 +2892,7 @@ ${sourceText || '(none)'}`;
         <NModeToolbar
           activeSectionLabel={isPolish ? sections[0].label.pl : sections[0].label.en}
           isPolish={isPolish}
-          aiArtifactButton={ai}
+          aiArtifactButton={aiArtifactButton}
         />
       }
       panelAriaLabel={t('interview.templateBuilder.documentPanelAriaLabel', 'Interview template details')}
