@@ -1506,6 +1506,18 @@ router.patch(
     const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
     if (!meeting) return;
 
+    // MTG-1 v2 (DEC-596): moving the lifecycle is an organizer action, not a
+    // participant action. loadAccessibleMeetingForAgenda already lets any
+    // attendee view the meeting, so gate the transition on chair/creator or an
+    // org OWNER/ADMIN — a plain attendee gets 403, not the 404 hide-path.
+    const callerId = String(req.user?.id || '');
+    const isOrganizer =
+      (!!callerId && meeting.createdBy === callerId) ||
+      (!!meeting.chairUserId && meeting.chairUserId === callerId);
+    if (!isMeetingAdmin(req) && !isOrganizer) {
+      return res.status(403).json({ code: 'MEETING_LIFECYCLE_FORBIDDEN' });
+    }
+
     const nextState = req.body?.nextState;
     if (!isMeetingLifecycleState(nextState)) {
       return res.status(400).json({ code: 'MEETING_LIFECYCLE_STATE_INVALID' });
