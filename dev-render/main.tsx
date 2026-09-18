@@ -494,6 +494,10 @@ const InterviewSessionsStatusScreen = React.lazy(
 const InterviewCandidateCardScreen = React.lazy(
   () => import('./screens/interview-candidate-card')
 );
+// IS-3a (Wpis 95 / DEC-533) — real InterviewHub with the template editor open.
+const Is3aTemplateEditorHubScreen = React.lazy(
+  () => import('./screens/is3a-template-editor-hub')
+);
 const U05SesjaWywiaduPowlokaScreen = React.lazy(
   () => import('./screens/u05-sesja-wywiadu-powloka')
 );
@@ -1499,6 +1503,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ST-2 (DEC-540 / U-09) etap 1 — REALNY <InterviewHub /> na zakładce Initiatives przy VITE_ST2_CANDIDATE_CARD=true: produkcyjny <InterviewCandidateInbox /> w prawdziwej powłoce modułu (StandardModuleBar/rail/taby), karta kandydata widoczna tylko dla autora (+ADMIN), akcja "Approve as draft → Initiatives" woła istniejący endpoint accept. Trzeci kandydat innego autora jest odfiltrowany. &tab=initiatives &lang=en|pl &theme=light|dark',
     render: () => <InterviewCandidateCardScreen />,
+  },
+  'is3a-template-editor-hub': {
+    label:
+      'IS-3a (Wpis 95 / DEC-533) — REALNY <InterviewHub /> na zakładce Templates z otwartym edytorem szablonu (dokument z sessionStorage `moduleHub.openDocuments.interview`, szablon demo); flaga VITE_INTERVIEW_TEMPLATE_FULLPAGE z env serwera harnessu (OFF domyślnie, ON = pełna strona). &lang=en|pl &theme=light|dark',
+    render: () => <Is3aTemplateEditorHubScreen />,
   },
   'u05-sesja-wywiadu-powloka': {
     label:

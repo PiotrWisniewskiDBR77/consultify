@@ -33,6 +33,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertCircle,
+  ArrowLeft,
   CalendarDays,
   ChevronDown,
   ChevronRight,
@@ -74,6 +75,7 @@ import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactSh
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
+import { isInterviewTemplateFullPageEnabled } from '@/utils/interviewTemplateFullPageFlag';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import {
@@ -1782,6 +1784,16 @@ ${sourceText || '(none)'}`;
   if (!isOpen) return null;
 
   const isDocumentMode = presentation === 'document';
+  // DEC-533 (U-07 / IS-3a): when the rollout flag is ON, the document editor
+  // leaves the N-card StandardArtifactShell and renders the restored full-page
+  // layout — header Back · name · status · Publish with the Status/Version/
+  // Question-count pills moved out of the right panel and into the header.
+  // Flag OFF keeps the current shell byte-for-byte.
+  const isFullPageDocument = isDocumentMode && isInterviewTemplateFullPageEnabled();
+  const fullPageStatusLabel =
+    template.status === 'draft'
+      ? t('interview.templateBuilder.draft', 'Draft')
+      : t('interview.templateBuilder.published', 'Published');
 
   const builderContent = (
     <div
@@ -1799,24 +1811,71 @@ ${sourceText || '(none)'}`;
         }
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-10 border-b border-c-border/60 shrink-0 bg-c-surface-raised text-c-text">
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText size={12} className="text-amber-600 dark:text-amber-300 shrink-0" />
-            <div className="min-w-0">
-              <div className="text-[11px] font-medium text-c-text-secondary">
-                {template.status === 'draft'
-                  ? t('interview.templateBuilder.draft')
-                  : t('interview.templateBuilder.published')}
+        {isFullPageDocument ? (
+          <div
+            className="flex items-center justify-between gap-3 px-4 h-14 border-b border-c-border/60 shrink-0 bg-c-surface-raised text-c-text"
+            data-testid="template-builder-fullpage-header"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t('common.back', 'Back')}
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-c-text-secondary hover:bg-c-surface hover:text-c-text transition-colors shrink-0"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <div className="text-sm font-semibold text-c-text truncate min-w-0">
+                {template.name || t('interview.templateBuilder.defaultTitle', 'Interview template')}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="inline-flex items-center gap-1 rounded-full border border-c-border-strong px-2 py-0.5 text-[11px] text-c-text-secondary">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      template.status === 'draft' ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`}
+                  />
+                  {fullPageStatusLabel}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-c-border-strong px-2 py-0.5 text-[11px] text-c-text-secondary">
+                  {t('interview.templateBuilder.versionFieldLabel', 'Version')} {template.version || 1}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-c-border-strong px-2 py-0.5 text-[11px] text-c-text-secondary">
+                  {questions.length} {t('interview.templateBuilder.questions', 'questions')}
+                </span>
               </div>
             </div>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Send />}
+              onClick={() => handleSave(true)}
+              disabled={isSaving || isApplicationTemplate}
+              loading={isSaving}
+            >
+              {t('interview.templateBuilder.publish', 'Publish')}
+            </Button>
           </div>
-          <button
-            onClick={onClose}
-            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-c-text-muted hover:bg-c-surface-raised hover:text-c-text dark:hover:bg-white/10 dark:hover:text-white transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between px-4 h-10 border-b border-c-border/60 shrink-0 bg-c-surface-raised text-c-text">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText size={12} className="text-amber-600 dark:text-amber-300 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[11px] font-medium text-c-text-secondary">
+                  {template.status === 'draft'
+                    ? t('interview.templateBuilder.draft')
+                    : t('interview.templateBuilder.published')}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="inline-flex items-center justify-center h-6 w-6 rounded-md text-c-text-muted hover:bg-c-surface-raised hover:text-c-text dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {isLoading ? (
           <LoadingState variant="spinner" className="flex-1 py-0" />
@@ -2114,8 +2173,14 @@ ${sourceText || '(none)'}`;
             {/* Right Panel - Questions Editor */}
             <div className="flex-1 flex flex-col overflow-hidden bg-c-bg/40 dark:bg-c-bg/30">
               {/* Questions Header */}
-              <div className="relative px-4 h-12 border-b border-c-border-strong/80 flex items-center justify-end shrink-0">
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-[11px] text-c-text-muted">
+              <div
+                className="px-4 h-12 border-b border-c-border-strong/80 flex items-center justify-between gap-3 shrink-0"
+                data-testid="template-questions-header"
+              >
+                <div
+                  className="flex items-center gap-1.5 text-[11px] text-c-text-muted shrink-0"
+                  data-testid="template-questions-counter"
+                >
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   <span>
                     ({orderedQuestions.length} {t('interview.templateBuilder.questions')})
@@ -2699,6 +2764,11 @@ ${sourceText || '(none)'}`;
   );
 
   if (!isDocumentMode) return builderContent;
+
+  // DEC-533 (U-07 / IS-3a): flag ON restores the full-page editor — the same
+  // builderContent, now with the full-page header, rendered without the N-card
+  // StandardArtifactShell. Flag OFF falls through to the shell below unchanged.
+  if (isFullPageDocument) return builderContent;
 
   // DEC-461 / F7 (odbiór P13-A): literały polskie na sztywno zamienione na
   // `t()` z domyślną wartością EN. Statusy „Szkic"/„Opublikowany" biorą TE
