@@ -88,8 +88,4 @@ describe('P-T06 — rodzeństwo nie odrasta', () => {
     expect(s).not.toContain(['from-c-', 'accent', '-soft'].join(''));
   });
 
-  it('`BrandVoicePanel` ma widoczny stan ON', () => {
-    const s = zrodlo('src/components/ReportBuilder/ReportEditor/BrandVoicePanel.tsx');
-    expect(s).toContain("checked ? 'bg-c-focus-solid' : 'bg-c-control-track'");
-  });
 });

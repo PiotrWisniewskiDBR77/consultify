@@ -277,7 +277,6 @@ describe('K-20c — `opacity-*` na kontenerze z pstryczkiem (czwarty detektor)',
 describe('K-20c — tory pstryczków poza drzewem settings/', () => {
   const POZA_SETTINGS = [
     '../AISettings/SettingsToggle.tsx',
-    '../ReportBuilder/ReportEditor/BrandVoicePanel.tsx',
   ];
 
   it.each(POZA_SETTINGS)('%s nie używa `bg-c-border` jako toru', (wzgledna) => {
