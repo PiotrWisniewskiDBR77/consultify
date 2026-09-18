@@ -1,0 +1,14 @@
+{
+  "base": "c1213d39adaff2ae484fe6e9d4857e37b9f58b40",
+  "baseline": 156,
+  "candidate": 156,
+  "added": [],
+  "removed": [],
+  "control": 157,
+  "controlAdded": [
+    "src/services/aiReview/aiReviewSummary.ts(92,7): error TS2322: Type 'string' is not assignable to type 'number'."
+  ],
+  "final": 156,
+  "finalAdded": [],
+  "finalRemoved": []
+}

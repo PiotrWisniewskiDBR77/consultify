@@ -10,7 +10,7 @@ export interface AiReviewSummary {
   score0to100: number | null;
   verdict: 'good' | 'needs_attention' | 'blocked' | 'empty' | 'timeout';
   reviewedAt: string | null;
-  sourceModule: 'interview' | 'assessment' | 'materials';
+  sourceModule: 'interview';
   sourceId: string;
   rubricVersion?: string;
   signals: AiReviewSignal[];
@@ -31,78 +31,30 @@ export function verdictFromScore(score0to100: number | null): AiReviewSummary['v
   return 'blocked';
 }
 
-export function fromScoreAiReview(input: {
-  score0to100: number | null | undefined;
-  reviewedAt?: string | null;
-  sourceModule: AiReviewSummary['sourceModule'];
-  sourceId: string;
-  rubricVersion?: string;
-  signals?: AiReviewSignal[];
-}): AiReviewSummary {
-  const rawScore = input.score0to100;
-  const score0to100 =
-    typeof rawScore === 'number' && Number.isFinite(rawScore)
-      ? Math.round(Math.max(0, Math.min(100, rawScore)))
-      : null;
-
-  return {
-    score0to100,
-    verdict: verdictFromScore(score0to100),
-    reviewedAt: input.reviewedAt ?? null,
-    sourceModule: input.sourceModule,
-    sourceId: input.sourceId,
-    rubricVersion: input.rubricVersion,
-    signals: input.signals || [],
-  };
-}
-
-export function fromAssessmentAiReview(input: {
-  overallScore?: number | null;
-  scale?: '0-100' | '1-5';
-  reviewedAt?: string | null;
-  sourceId: string;
-  signals?: AiReviewSignal[];
-}): AiReviewSummary {
-  const score0to100 =
-    input.scale === '1-5'
-      ? mapRubricScoreTo100(input.overallScore)
-      : typeof input.overallScore === 'number'
-        ? input.overallScore
-        : null;
-  return fromScoreAiReview({
-    score0to100,
-    reviewedAt: input.reviewedAt,
-    sourceModule: 'assessment',
-    sourceId: input.sourceId,
-    signals: input.signals,
-  });
-}
-
-export function fromMaterialsAiReview(input: {
-  qualityScore?: number | null;
-  reviewedAt?: string | null;
-  sourceId: string;
-  signals?: AiReviewSignal[];
-}): AiReviewSummary {
-  return fromScoreAiReview({
-    score0to100: input.qualityScore,
-    reviewedAt: input.reviewedAt,
-    sourceModule: 'materials',
-    sourceId: input.sourceId,
-    signals: input.signals,
-  });
-}
-
-function severityFromWeakVerdict(
-  v: string | undefined
-): AiReviewSignal['severity'] {
+function severityFromWeakVerdict(v: string | undefined): AiReviewSignal['severity'] {
   if (v === 'insufficient' || v === 'unanswered') return 'critical';
   if (v === 'needs_improvement') return 'warning';
   return 'info';
 }
 
+/** List endpoints expose a partial review snapshot, unlike the evaluation endpoint. */
+export type InterviewAiReviewSnapshot = Partial<
+  Omit<V8InterviewSessionEvaluation, 'weakAnswerMap'>
+> & {
+  rubricVersion?: string;
+  weakAnswerMap?: Array<{
+    key: string;
+    label?: string;
+    score?: number;
+    verdict?: string;
+    feedback?: string;
+    fixType?: string;
+    isRequired?: boolean;
+  }>;
+};
+
 export function fromInterviewAiReview(
-  aiReview: V8InterviewSessionEvaluation | null | undefined,
+  aiReview: InterviewAiReviewSnapshot | null | undefined,
   aiReviewedAt: string | null | undefined,
   sourceId: string
 ): AiReviewSummary {
@@ -130,7 +82,7 @@ export function fromInterviewAiReview(
     reviewedAt: aiReviewedAt ?? null,
     sourceModule: 'interview',
     sourceId,
-    rubricVersion: (aiReview as { rubricVersion?: string }).rubricVersion,
+    rubricVersion: aiReview.rubricVersion,
     signals,
   };
 }

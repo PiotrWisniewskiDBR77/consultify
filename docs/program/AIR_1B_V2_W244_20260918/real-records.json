@@ -1,0 +1,876 @@
+[
+  {
+    "id": "ia_93b71a55-33e9-4e2a-8ffc-d0f6f89e93cb",
+    "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "session_id": "5dc28761-4c49-4d5d-aa62-e8c7febf62cc",
+    "assignee_user_id": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+    "status": "submitted",
+    "ai_review_snapshot_json": {
+      "overallScore": 4.6,
+      "overallVerdict": "ready_for_approval",
+      "questionEvaluations": [
+        {
+          "questionId": "f2f46b09-7ff7-4ef7-abe1-ebd7b6a46772",
+          "score": 4.6,
+          "verdict": "sufficient",
+          "feedback": "The answer can be improved by discussing potential root causes or consequences of the identified digital maturity level, beyond the operational deficiencies listed.",
+          "fixType": "expand_answer",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 4,
+              "maxScore": 4,
+              "justification": "The answer uses specific examples such as '62% kluczowych proces\u00f3w nadal opiera si\u0119 na arkuszach Excel,' detailing the specific date and nature of the operational audit."
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 4,
+              "maxScore": 4,
+              "justification": "Cites checkable sources including 'raport audytu operacyjnego z 15.05.2026' and 'log czasu HR maj 2026' for its claims."
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "The answer provides context on maturity level by explaining key deficiencies such as reliance on Excel and manual reporting but lacks deeper analysis of root causes."
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 4,
+              "maxScore": 4,
+              "justification": "Includes quantifiable data such as '62% kluczowych proces\u00f3w' and '\u015br. 6h/miesi\u0105c \u0142\u0105cznie' for team reporting times."
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "The answer is coherent in its explanation of digital maturity, but the mention of a 'test A3 \u2014 historia wersji po odes\u0142aniu' may cause slight confusion."
+            }
+          ],
+          "rubricTotal": 18,
+          "rubricMax": 20
+        }
+      ],
+      "recommendations": [
+        "Provide more contextual background on why the deficiencies impact digital maturity negatively.",
+        "Elaborate on any improvement initiatives that may affect future levels of digital maturity.",
+        "Focus on integrating specific evidence into a broader narrative about digital maturity beyond just presenting data."
+      ],
+      "weakAnswerMap": [],
+      "rubricVersion": "oxford-v1",
+      "rubricCriteria": [
+        {
+          "key": "concreteness",
+          "label": "Concreteness",
+          "description": "Specific facts, names, numbers, or examples instead of vague generalities (\"some\", \"a lot\", \"we try to\").",
+          "maxScore": 4
+        },
+        {
+          "key": "evidence",
+          "label": "Evidence",
+          "description": "Cites something checkable \u2014 a data point, named system/process, document, or observed event \u2014 to support the claim.",
+          "maxScore": 4
+        },
+        {
+          "key": "depth",
+          "label": "Depth",
+          "description": "Goes beyond restating the question \u2014 explains mechanism, root cause, trade-off, or context rather than a surface answer.",
+          "maxScore": 4
+        },
+        {
+          "key": "measurability",
+          "label": "Measurability",
+          "description": "Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).",
+          "maxScore": 4
+        },
+        {
+          "key": "coherence",
+          "label": "Coherence",
+          "description": "Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.",
+          "maxScore": 4
+        }
+      ]
+    },
+    "ai_reviewed_at": "2026-09-08T05:42:01.625",
+    "name": "Interview 7/21/2026",
+    "owner_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+    "total_questions": 1,
+    "answered_questions": 1,
+    "started_at": "2026-07-21T04:02:18.643+00:00",
+    "last_activity_at": "2026-07-21T04:24:06.721+00:00"
+  },
+  {
+    "id": "ia_c370876b-4b08-4398-bcdd-0f7f53dc535d",
+    "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "session_id": "5c26b401-63c6-407f-9622-5a6301b3ac11",
+    "assignee_user_id": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+    "status": "approved",
+    "ai_review_snapshot_json": {
+      "overallScore": 3.8,
+      "overallVerdict": "ready_for_approval",
+      "questionEvaluations": [
+        {
+          "questionId": "2747d5f8-e6b8-47f4-ade5-434a42f7c977",
+          "score": 3.8,
+          "verdict": "needs_improvement",
+          "feedback": "Good structured answer with concrete examples and clear scoring, but needs deeper analysis of root causes and more verifiable evidence beyond the single audit reference.",
+          "fixType": "expand_answer",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "Answer provides specific examples like 'arkuszach Excel', 'raport\u00f3w r\u0119cznych co miesi\u0105c', and 'narz\u0119dzia BI', avoiding vague generalities."
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 2,
+              "maxScore": 4,
+              "justification": "Cites 'audyt operacyjny maj 2026' as checkable evidence, but other claims lack specific documentation or verifiable sources."
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 2,
+              "maxScore": 4,
+              "justification": "Lists three concrete issues but doesn't explain underlying causes, impacts on operations, or contextual factors behind the digital immaturity."
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "Provides clear quantifiable assessment '2/5' and specific timeframe 'co miesi\u0105c' and date 'maj 2026'."
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 4,
+              "maxScore": 4,
+              "justification": "Directly answers the digital maturity assessment question with consistent reasoning and supporting points that align with the stated score."
+            }
+          ],
+          "rubricTotal": 14,
+          "rubricMax": 20
+        }
+      ],
+      "recommendations": [
+        "Provide more detailed explanations of why specific issues exist and their operational impact",
+        "Include additional verifiable sources or documentation beyond single audit references",
+        "Expand on the context and consequences of identified digital maturity gaps",
+        "Remove test-related content and disclaimers from actual responses"
+      ],
+      "weakAnswerMap": [
+        {
+          "key": "ai_2747d5f8-e6b8-47f4-ade5-434a42f7c977",
+          "label": "Jak oceniasz dojrza\u0142o\u015b\u0107 cyfrow\u0105 obszaru testowego (Organization)?",
+          "questionId": "2747d5f8-e6b8-47f4-ade5-434a42f7c977",
+          "score": 3.8,
+          "verdict": "needs_improvement",
+          "feedback": "Good structured answer with concrete examples and clear scoring, but needs deeper analysis of root causes and more verifiable evidence beyond the single audit reference.",
+          "fixType": "expand_answer",
+          "isRequired": false,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "Answer provides specific examples like 'arkuszach Excel', 'raport\u00f3w r\u0119cznych co miesi\u0105c', and 'narz\u0119dzia BI', avoiding vague generalities."
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 2,
+              "maxScore": 4,
+              "justification": "Cites 'audyt operacyjny maj 2026' as checkable evidence, but other claims lack specific documentation or verifiable sources."
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 2,
+              "maxScore": 4,
+              "justification": "Lists three concrete issues but doesn't explain underlying causes, impacts on operations, or contextual factors behind the digital immaturity."
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 3,
+              "maxScore": 4,
+              "justification": "Provides clear quantifiable assessment '2/5' and specific timeframe 'co miesi\u0105c' and date 'maj 2026'."
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 4,
+              "maxScore": 4,
+              "justification": "Directly answers the digital maturity assessment question with consistent reasoning and supporting points that align with the stated score."
+            }
+          ],
+          "depthHint": "This answer could be deeper: Evidence"
+        }
+      ],
+      "rubricVersion": "oxford-v1",
+      "rubricCriteria": [
+        {
+          "key": "concreteness",
+          "label": "Concreteness",
+          "description": "Specific facts, names, numbers, or examples instead of vague generalities (\"some\", \"a lot\", \"we try to\").",
+          "maxScore": 4
+        },
+        {
+          "key": "evidence",
+          "label": "Evidence",
+          "description": "Cites something checkable \u2014 a data point, named system/process, document, or observed event \u2014 to support the claim.",
+          "maxScore": 4
+        },
+        {
+          "key": "depth",
+          "label": "Depth",
+          "description": "Goes beyond restating the question \u2014 explains mechanism, root cause, trade-off, or context rather than a surface answer.",
+          "maxScore": 4
+        },
+        {
+          "key": "measurability",
+          "label": "Measurability",
+          "description": "Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).",
+          "maxScore": 4
+        },
+        {
+          "key": "coherence",
+          "label": "Coherence",
+          "description": "Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.",
+          "maxScore": 4
+        }
+      ]
+    },
+    "ai_reviewed_at": "2026-07-21T04:11:21.349",
+    "name": "Interview 7/21/2026",
+    "owner_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+    "total_questions": 1,
+    "answered_questions": 1,
+    "started_at": "2026-07-21T04:09:17.278+00:00",
+    "last_activity_at": "2026-07-21T04:11:03.453+00:00"
+  },
+  {
+    "id": "ia_dba08117-0f34-4cf7-832a-86dfd982268a",
+    "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "session_id": "89f9d390-010f-44bb-90d7-e43990098ee5",
+    "assignee_user_id": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+    "status": "completed",
+    "ai_review_snapshot_json": {
+      "overallScore": 1,
+      "overallVerdict": "insufficient",
+      "questionEvaluations": [
+        {
+          "questionId": "150c86ad-7093-48dd-a8e8-33de2ffa5dc2",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        },
+        {
+          "questionId": "caa6e553-2c74-4485-985c-db59794c27dd",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        },
+        {
+          "questionId": "dccd1f68-79f4-4539-9892-beb4f9a32e09",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        },
+        {
+          "questionId": "37c81492-5938-4253-83b7-3a58b2b16188",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        },
+        {
+          "questionId": "21a7285a-790a-47f6-bb73-87f47ec4b4d2",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        },
+        {
+          "questionId": "7fe47164-f2e7-4f10-83a1-a9fe0ff8e801",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ],
+          "rubricTotal": 0,
+          "rubricMax": 20
+        }
+      ],
+      "recommendations": [],
+      "weakAnswerMap": [
+        {
+          "key": "ai_150c86ad-7093-48dd-a8e8-33de2ffa5dc2",
+          "label": "Jaka jest Twoja rola w kontek\u015bcie tego projektu/inicjatywy?",
+          "questionId": "150c86ad-7093-48dd-a8e8-33de2ffa5dc2",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": true,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        },
+        {
+          "key": "ai_21a7285a-790a-47f6-bb73-87f47ec4b4d2",
+          "label": "Jakie decyzje musz\u0105 zapa\u015b\u0107 w najbli\u017cszych 2 tygodniach?",
+          "questionId": "21a7285a-790a-47f6-bb73-87f47ec4b4d2",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": true,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        },
+        {
+          "key": "ai_caa6e553-2c74-4485-985c-db59794c27dd",
+          "label": "Jakie s\u0105 Twoje oczekiwania wobec rezultat\u00f3w?",
+          "questionId": "caa6e553-2c74-4485-985c-db59794c27dd",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": true,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        },
+        {
+          "key": "ai_dccd1f68-79f4-4539-9892-beb4f9a32e09",
+          "label": "Jakie widzisz najwi\u0119ksze ryzyka?",
+          "questionId": "dccd1f68-79f4-4539-9892-beb4f9a32e09",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": true,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        },
+        {
+          "key": "ai_7fe47164-f2e7-4f10-83a1-a9fe0ff8e801",
+          "label": "Czy jest co\u015b, o czym powinienem wiedzie\u0107, a o co nie zapyta\u0142em?",
+          "questionId": "7fe47164-f2e7-4f10-83a1-a9fe0ff8e801",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": false,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        },
+        {
+          "key": "ai_37c81492-5938-4253-83b7-3a58b2b16188",
+          "label": "Kto powinien by\u0107 zaanga\u017cowany, a kto nie jest?",
+          "questionId": "37c81492-5938-4253-83b7-3a58b2b16188",
+          "score": 1,
+          "verdict": "unanswered",
+          "feedback": "No answer provided.",
+          "fixType": "complete_required_fields",
+          "isRequired": false,
+          "rubric": [
+            {
+              "criterion": "concreteness",
+              "label": "Concreteness",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "evidence",
+              "label": "Evidence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "depth",
+              "label": "Depth",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "measurability",
+              "label": "Measurability",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            },
+            {
+              "criterion": "coherence",
+              "label": "Coherence",
+              "score": 0,
+              "maxScore": 4,
+              "justification": ""
+            }
+          ]
+        }
+      ],
+      "rubricVersion": "oxford-v1",
+      "rubricCriteria": [
+        {
+          "key": "concreteness",
+          "label": "Concreteness",
+          "description": "Specific facts, names, numbers, or examples instead of vague generalities (\"some\", \"a lot\", \"we try to\").",
+          "maxScore": 4
+        },
+        {
+          "key": "evidence",
+          "label": "Evidence",
+          "description": "Cites something checkable \u2014 a data point, named system/process, document, or observed event \u2014 to support the claim.",
+          "maxScore": 4
+        },
+        {
+          "key": "depth",
+          "label": "Depth",
+          "description": "Goes beyond restating the question \u2014 explains mechanism, root cause, trade-off, or context rather than a surface answer.",
+          "maxScore": 4
+        },
+        {
+          "key": "measurability",
+          "label": "Measurability",
+          "description": "Contains a quantifiable, verifiable, or falsifiable statement (a number, date, percentage, threshold, or named comparison).",
+          "maxScore": 4
+        },
+        {
+          "key": "coherence",
+          "label": "Coherence",
+          "description": "Directly and consistently answers what was actually asked, without contradicting itself or drifting off-topic.",
+          "maxScore": 4
+        }
+      ]
+    },
+    "ai_reviewed_at": "2026-07-20T19:08:37.811",
+    "name": "Interview 7/20/2026",
+    "owner_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+    "total_questions": 6,
+    "answered_questions": 0,
+    "started_at": "2026-07-20T19:08:12.231+00:00",
+    "last_activity_at": "2026-07-20T19:08:12.231+00:00"
+  }
+]

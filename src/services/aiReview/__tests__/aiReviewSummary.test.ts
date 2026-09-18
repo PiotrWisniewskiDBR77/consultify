@@ -3,10 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AI_SCORE_THRESHOLD_GOOD,
   AI_SCORE_THRESHOLD_NEEDS_ATTENTION,
-  fromAssessmentAiReview,
   fromInterviewAiReview,
-  fromMaterialsAiReview,
-  fromScoreAiReview,
   mapRubricScoreTo100,
   verdictFromScore,
 } from '../aiReviewSummary';
@@ -50,7 +47,13 @@ describe('aiReviewSummary adapter (AIR-1a, DEC-566/569)', () => {
 
     it('maps overallScore 4.2 → 80, verdict good', () => {
       const s = fromInterviewAiReview(
-        { overallScore: 4.2, overallVerdict: 'ready_for_approval', questionEvaluations: [], recommendations: [], weakAnswerMap: [] },
+        {
+          overallScore: 4.2,
+          overallVerdict: 'ready_for_approval',
+          questionEvaluations: [],
+          recommendations: [],
+          weakAnswerMap: [],
+        },
         '2026-09-18T10:00:00Z',
         'assign-2'
       );
@@ -61,7 +64,13 @@ describe('aiReviewSummary adapter (AIR-1a, DEC-566/569)', () => {
 
     it('maps overallScore 2.5 → 38, verdict blocked', () => {
       const s = fromInterviewAiReview(
-        { overallScore: 2.5, overallVerdict: 'insufficient', questionEvaluations: [], recommendations: [], weakAnswerMap: [] },
+        {
+          overallScore: 2.5,
+          overallVerdict: 'insufficient',
+          questionEvaluations: [],
+          recommendations: [],
+          weakAnswerMap: [],
+        },
         null,
         'assign-3'
       );
@@ -77,22 +86,53 @@ describe('aiReviewSummary adapter (AIR-1a, DEC-566/569)', () => {
           questionEvaluations: [],
           recommendations: ['Add more detail'],
           weakAnswerMap: [
-            { key: 'q1', label: 'Revenue model', score: 1, verdict: 'insufficient', feedback: 'Too vague', fixType: 'rewrite' as any, isRequired: true },
-            { key: 'q2', label: 'Timeline', score: 2, verdict: 'needs_improvement', feedback: 'Missing dates', fixType: 'expand' as any, isRequired: false },
+            {
+              key: 'q1',
+              label: 'Revenue model',
+              score: 1,
+              verdict: 'insufficient',
+              feedback: 'Too vague',
+              fixType: 'rewrite' as any,
+              isRequired: true,
+            },
+            {
+              key: 'q2',
+              label: 'Timeline',
+              score: 2,
+              verdict: 'needs_improvement',
+              feedback: 'Missing dates',
+              fixType: 'expand' as any,
+              isRequired: false,
+            },
           ],
         },
         '2026-09-18T12:00:00Z',
         'assign-4'
       );
       expect(s.signals).toHaveLength(2);
-      expect(s.signals[0]).toEqual({ label: 'Revenue model', severity: 'critical', message: 'Too vague' });
-      expect(s.signals[1]).toEqual({ label: 'Timeline', severity: 'warning', message: 'Missing dates' });
+      expect(s.signals[0]).toEqual({
+        label: 'Revenue model',
+        severity: 'critical',
+        message: 'Too vague',
+      });
+      expect(s.signals[1]).toEqual({
+        label: 'Timeline',
+        severity: 'warning',
+        message: 'Missing dates',
+      });
       expect(s.verdict).toBe('needs_attention');
     });
 
     it('preserves rubricVersion when present', () => {
       const s = fromInterviewAiReview(
-        { overallScore: 4, overallVerdict: 'ready_for_approval', questionEvaluations: [], recommendations: [], weakAnswerMap: [], rubricVersion: 'v2.1' } as any,
+        {
+          overallScore: 4,
+          overallVerdict: 'ready_for_approval',
+          questionEvaluations: [],
+          recommendations: [],
+          weakAnswerMap: [],
+          rubricVersion: 'v2.1',
+        } as any,
         null,
         'assign-5'
       );
@@ -100,35 +140,16 @@ describe('aiReviewSummary adapter (AIR-1a, DEC-566/569)', () => {
     });
   });
 
-  describe('AIR-1b shared adapters', () => {
-    it('normalizes assessment review as a 0-100 source', () => {
-      const s = fromAssessmentAiReview({ overallScore: 82, sourceId: 'assessment-1', reviewedAt: '2026-09-18T09:00:00Z' });
-      expect(s.sourceModule).toBe('assessment');
-      expect(s.sourceId).toBe('assessment-1');
-      expect(s.score0to100).toBe(82);
-      expect(s.verdict).toBe('good');
-    });
-
-    it('can map legacy assessment 1-5 score before using the shared thresholds', () => {
-      const s = fromAssessmentAiReview({ overallScore: 3, scale: '1-5', sourceId: 'assessment-2' });
-      expect(s.sourceModule).toBe('assessment');
-      expect(s.score0to100).toBe(50);
-      expect(s.verdict).toBe('needs_attention');
-    });
-
-    it('normalizes materials review and clamps the score', () => {
-      const s = fromMaterialsAiReview({ qualityScore: 120, sourceId: 'material-1' });
-      expect(s.sourceModule).toBe('materials');
-      expect(s.score0to100).toBe(100);
-      expect(s.verdict).toBe('good');
-    });
-
-    it('keeps empty shared review fail-closed for any module', () => {
-      const s = fromScoreAiReview({ score0to100: undefined, sourceModule: 'materials', sourceId: 'material-2' });
-      expect(s.score0to100).toBeNull();
-      expect(s.verdict).toBe('empty');
-      expect(s.signals).toEqual([]);
-    });
+  it('preserves interview identity for populated partial list snapshots', () => {
+    const summary = fromInterviewAiReview(
+      { overallScore: 3, weakAnswerMap: [{ key: 'q', verdict: 'unanswered' }] },
+      null,
+      'session-partial'
+    );
+    expect(summary.sourceModule).toBe('interview');
+    expect(summary.sourceId).toBe('session-partial');
+    expect(summary.score0to100).toBe(50);
+    expect(summary.signals).toEqual([{ label: 'q', severity: 'critical', message: '' }]);
+    expect(fromInterviewAiReview({}, null, 'session-empty').score0to100).toBeNull();
   });
-
 });

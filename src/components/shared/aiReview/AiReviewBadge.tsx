@@ -45,13 +45,16 @@ export const AiReviewBadge: React.FC<AiReviewBadgeProps> = ({
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold" data-ai-review-badge>
+    <span
+      className="inline-flex max-w-full flex-wrap justify-end items-center gap-1.5 text-xs font-semibold"
+      data-ai-review-badge
+    >
       <span className={`inline-flex items-center gap-1 ${toneClass(summary.verdict)}`}>
         <Gauge size={12} />
         {summary.score0to100}
       </span>
       <span
-        className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none ${pillClass(summary.verdict)}`}
+        className={`inline-flex max-w-full items-center justify-center text-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none ${pillClass(summary.verdict)}`}
       >
         {labels[summary.verdict]}
       </span>

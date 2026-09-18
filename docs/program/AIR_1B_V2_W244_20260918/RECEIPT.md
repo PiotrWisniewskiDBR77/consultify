@@ -1,0 +1,17 @@
+# AIR-1b v2 — AI review in Interview
+
+Scope decision W244(b): Interview only. Three unused converters (fromScoreAiReview/fromAssessmentAiReview/fromMaterialsAiReview) and their artificial tests removed from our delta. No claim for Assessment or Materials. Preserve the canonical line exports if AIR-1a lands before final rebase.
+
+Base: ls-remote c1213d39adaff2ae484fe6e9d4857e37b9f58b40. This line does not yet contain the shared adapter; this candidate still includes the historical prerequisite AIR-1a commit. W246 identifies its two inherited TS2345 diagnostics. Before that clarification arrived, a structural partial-snapshot input was added in the adapter (no Hub type-cast); this brings total back to156. No additional Hub fixes retained. Reconcile this type with Qoder's canonical adapter on final integration; do not overwrite canonical exports.
+
+Own full foreground baseline156 (same exact base measured this session for PMO), candidate156, diagnostic sets added=[], removed=[]. Instrument injection `const __s: number = "x"` in adapter ->157, sole new TS2322 at92:7; reverted. Final formatted candidate measured separately (local tsc-final.log).
+
+Mutation D-105 changes sourceModule ONLY in the populated-review return, leaving null branch intact:1RED22PASS. mapRubricScoreTo100 replaced by return100:11RED12PASS. Restored16files106PASS including real Hub importers, actual shared components and default-OFF flag.
+
+Actual production InterviewHub and InterviewSessionPreviewBody rendered with API-boundary replay of three records from a fresh local pgvector17 dump restore (RC0), not a local mirror of either component. Scores4.6/3.8/1 ->90/70/0, Good/Needs attention/Blocked. All raw snapshots and IDs in real-records.json. This is real PG read + browser render, not a new model call or end-to-end API claim. Four EN1440x900 screenshots light/dark, Assigned and actual Sessions preview, visually inspected after animation settled; pageerrors0. Narrow table badge now wraps within its real cell; browser asserts each badge is inside its cell. No new table/Hub geometry change. PNG-derived foreground/background contrast per score/verdict is recorded in browser-proof.json; minimum light4.72/dark5.61 (strongest glyph color with at least3pixels, dominant background; not computedStyle).
+
+Callers: fromInterviewAiReview -> InterviewHub.tsx:6847,7159; mapRubricScoreTo100 -> aiReviewSummary.ts:72; verdictFromScore -> same:81; severityFromWeakVerdict -> same signal mapping. AiReviewBadge -> InterviewHub.tsx:6849; AiReviewPanelSection -> InterviewSessionPreview.tsx:188. Zone W244 shared display/adapter + existing Interview consumers; no unrelated package edits.
+
+Reproduce browser: copy w244-air.html.txt and w244-air-main.tsx.txt into dev-render without .txt; start VITE_INTERVIEW_AI_SCORE=true npx vite --config dev-render/vite.config.ts --host127.0.0.1 --port3228; run capture.mjs from repository root. Harness uses actual CSS/i18n/store/router/Hub, external network disabled. Synthetic role is harness access glue; business rows are dump records. Flag remains default OFF in production, ARG/ENV in Dockerfile.api. Screenshots and browser proof included here.
+
+Final foreground tsc156 versus own baseline156, raw sets added0/removed0; server tsc0 with lock-ci toolchain/dependencies (normal exit0). Language, Docker flags205/217/0, canon345<=346 and artifacts8/0/117 PASS. API-boundary harness stopped; owned database removed and fstrim completed. No migrations or external writes.

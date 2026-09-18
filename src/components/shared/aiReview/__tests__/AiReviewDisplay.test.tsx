@@ -23,13 +23,13 @@ const summary: AiReviewSummary = {
   score0to100: 49,
   verdict: 'blocked',
   reviewedAt: '2026-09-18T09:00:00Z',
-  sourceModule: 'assessment',
-  sourceId: 'assessment-1',
+  sourceModule: 'interview',
+  sourceId: 'interview-1',
   signals: [{ label: 'Evidence', severity: 'critical', message: 'Missing proof' }],
 };
 
 describe('AIR-1b shared AI review display', () => {
-  it('renders the same column badge contract for a non-interview module', () => {
+  it('renders the same column badge contract for Interview', () => {
     render(<AiReviewBadge summary={summary} labels={labels} />);
 
     expect(screen.getByText('49')).toBeTruthy();
@@ -40,7 +40,9 @@ describe('AIR-1b shared AI review display', () => {
   it('renders the shared right-panel section with source module and signals', () => {
     render(<AiReviewPanelSection summary={summary} labels={labels} />);
 
-    expect(screen.getByTestId('ai-review-block').getAttribute('data-ai-review-panel')).toBe('assessment');
+    expect(screen.getByTestId('ai-review-block').getAttribute('data-ai-review-panel')).toBe(
+      'interview'
+    );
     expect(screen.getByText('AI review')).toBeTruthy();
     expect(screen.getByText('Evidence')).toBeTruthy();
     expect(screen.getByText(/Missing proof/)).toBeTruthy();

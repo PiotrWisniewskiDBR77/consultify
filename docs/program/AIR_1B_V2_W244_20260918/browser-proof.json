@@ -1,0 +1,281 @@
+{
+  "result": [
+    {
+      "theme": "light",
+      "badges": [
+        "90Good",
+        "70Needs attention",
+        "0Blocked"
+      ],
+      "geometry": [
+        {
+          "text": "90Good",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        },
+        {
+          "text": "70Needs attention",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        },
+        {
+          "text": "0Blocked",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        }
+      ],
+      "pixels": [
+        {
+          "text": "90",
+          "x": 1076.984375,
+          "y": 273,
+          "width": 32.015625,
+          "height": 16,
+          "background": [
+            254,
+            254,
+            253
+          ],
+          "glyph": {
+            "rgb": "2,104,51",
+            "n": 34,
+            "ratio": 6.8665862391855095
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Good",
+          "x": 1068.734375,
+          "y": 295,
+          "width": 40.265625,
+          "height": 16,
+          "background": [
+            228,
+            239,
+            232
+          ],
+          "glyph": {
+            "rgb": "2,104,51",
+            "n": 23,
+            "ratio": 5.877107867416207
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "70",
+          "x": 1078.03125,
+          "y": 336,
+          "width": 30.96875,
+          "height": 16,
+          "background": [
+            254,
+            254,
+            253
+          ],
+          "glyph": {
+            "rgb": "163,84,28",
+            "n": 31,
+            "ratio": 5.415970193416949
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Needs attention",
+          "x": 1051,
+          "y": 358,
+          "width": 58,
+          "height": 26,
+          "background": [
+            245,
+            237,
+            230
+          ],
+          "glyph": {
+            "rgb": "163,84,28",
+            "n": 46,
+            "ratio": 4.7209378180542725
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "0",
+          "x": 1085,
+          "y": 409,
+          "width": 24,
+          "height": 16,
+          "background": [
+            254,
+            254,
+            253
+          ],
+          "glyph": {
+            "rgb": "193,4,47",
+            "n": 18,
+            "ratio": 6.256721062635834
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Blocked",
+          "x": 1055.6875,
+          "y": 431,
+          "width": 53.3125,
+          "height": 16,
+          "background": [
+            252,
+            229,
+            233
+          ],
+          "glyph": {
+            "rgb": "193,4,47",
+            "n": 34,
+            "ratio": 5.268777076338538
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "badges": [
+        "90Good",
+        "70Needs attention",
+        "0Blocked"
+      ],
+      "geometry": [
+        {
+          "text": "90Good",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        },
+        {
+          "text": "70Needs attention",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        },
+        {
+          "text": "0Blocked",
+          "insideCell": true,
+          "width": 58,
+          "cellWidth": 90
+        }
+      ],
+      "pixels": [
+        {
+          "text": "90",
+          "x": 1076.984375,
+          "y": 273,
+          "width": 32.015625,
+          "height": 16,
+          "background": [
+            14,
+            20,
+            38
+          ],
+          "glyph": {
+            "rgb": "63,185,80",
+            "n": 34,
+            "ratio": 7.209042888710943
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Good",
+          "x": 1068.734375,
+          "y": 295,
+          "width": 40.265625,
+          "height": 16,
+          "background": [
+            19,
+            37,
+            42
+          ],
+          "glyph": {
+            "rgb": "63,185,80",
+            "n": 23,
+            "ratio": 6.235545434580505
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "70",
+          "x": 1078.03125,
+          "y": 336,
+          "width": 30.96875,
+          "height": 16,
+          "background": [
+            14,
+            20,
+            38
+          ],
+          "glyph": {
+            "rgb": "232,163,61",
+            "n": 31,
+            "ratio": 8.491521895058428
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Needs attention",
+          "x": 1051,
+          "y": 358,
+          "width": 58,
+          "height": 26,
+          "background": [
+            37,
+            35,
+            40
+          ],
+          "glyph": {
+            "rgb": "232,163,61",
+            "n": 46,
+            "ratio": 7.2144238545011286
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "0",
+          "x": 1085,
+          "y": 409,
+          "width": 24,
+          "height": 16,
+          "background": [
+            14,
+            20,
+            38
+          ],
+          "glyph": {
+            "rgb": "240,111,94",
+            "n": 18,
+            "ratio": 6.22683934849698
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        },
+        {
+          "text": "Blocked",
+          "x": 1055.6875,
+          "y": 431,
+          "width": 53.3125,
+          "height": 16,
+          "background": [
+            37,
+            27,
+            44
+          ],
+          "glyph": {
+            "rgb": "240,111,94",
+            "n": 34,
+            "ratio": 5.614425081154904
+          },
+          "method": "PNG dominant background versus strongest glyph color present in at least 3 pixels"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
