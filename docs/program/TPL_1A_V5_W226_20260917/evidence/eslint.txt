@@ -1,0 +1,10 @@
+
+/Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5-w226-20260917/src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx
+   63:10  warning  'ReportsTabContent' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  118:5   warning  Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead  no-restricted-syntax
+  118:5   warning  Arbitrary Tailwind color bg-[#…] is banned. Use a token class (bg-crimson-600, etc.)            no-restricted-syntax
+  328:25  warning  'setBundleRefresh' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  685:30  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  688:12  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+
+✖ 6 problems (0 errors, 6 warnings)

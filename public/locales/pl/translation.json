@@ -37347,6 +37347,7 @@
     "templates": {
       "allFormats": "Wszystkie formaty",
       "allScopes": "Wszystkie źródła",
+      "sourceLabel": "Źródło",
       "backToLibrary": "Wzorce",
       "deprecatedUseBlocked": "Wycofanego wzorca nie można użyć.",
       "galleryEmpty": "Żaden wzorzec nie pasuje do filtrów.",

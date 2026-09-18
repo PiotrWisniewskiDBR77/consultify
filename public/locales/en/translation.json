@@ -37157,6 +37157,7 @@
       "viewToggle": "Template library view",
       "allFormats": "All formats",
       "allScopes": "All sources",
+      "sourceLabel": "Source",
       "scopeUnknown": "Unknown",
       "orphanedHint": "No canonical template record — it cannot be used for generation.",
       "orphanedBadge": "No source",

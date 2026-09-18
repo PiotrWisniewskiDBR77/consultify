@@ -1,0 +1,2 @@
+• Huby list z legacy menu (renderują listę, brak importu StandardModuleBar — R2b): 1 z 7 *Hub.tsx
+✓ check-list-canon: brak NOWYCH naruszeń kanonu tabel (staged: 2 plików; naruszeń 0, baseline 0 — dług nie rośnie)

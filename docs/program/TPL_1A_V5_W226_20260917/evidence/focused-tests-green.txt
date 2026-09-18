@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5-w226-20260917
+
+stdout | src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 41ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 16ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Biblioteka wzorców': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3 15ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 13ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność) 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > dropdown Status niesie pozycję „Robocze" (dawny przycisk „Pokaż robocze") 86ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy) 11ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy) 7ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy) 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > TPL-1a v5: Źródło jest dropdownem Menu 2, zawęża listę i zapisuje wybór w URL 52ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > TPL-1a v5: deep link source odtwarza dropdown i filtrowaną listę 15ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: pstryczek Galeria|Tabela stoi w Menu 2, nie w treści 11ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > [ODMROZENIE 11_MATERIALS DEC-558] Biblioteka wzorców: CTA otwiera pełny governed builder 15ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': CTA NIE jest zamrożony 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': CTA NIE jest zamrożony 9ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': CTA NIE jest zamrożony 8ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': CTA NIE jest zamrożony 10ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Arkusze: segment „Arkusze | Źródła danych" nie jest renderowany (Fala 2 · 3.17) 10ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  19:35:57
+   Duration  2.32s (transform 1.04s, setup 143ms, import 1.42s, tests 396ms, environment 274ms)

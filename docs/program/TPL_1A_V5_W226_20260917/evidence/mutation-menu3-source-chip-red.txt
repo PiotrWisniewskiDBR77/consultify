@@ -1,0 +1,63 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5-w226-20260917
+
+stdout | src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Biblioteka wzorców': zero przycisków „Pokaż robocze"/„Filtry" i DOKŁADNIE jeden rząd Menu 3
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': DOKŁADNIE dwa dropdowny Menu 2 (Status + Widoczność)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > dropdown Status niesie pozycję „Robocze" (dawny przycisk „Pokaż robocze")
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy)
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': Menu 3 to ≤3 chipy (Wszystkie · Szkic · Gotowy)
+ × src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > TPL-1a v5: Źródło jest dropdownem Menu 2, zawęża listę i zapisuje wybór w URL 41ms
+   → expected <button type="button" …(3)></button> to be null
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > TPL-1a v5: deep link source odtwarza dropdown i filtrowaną listę
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Biblioteka wzorców: pstryczek Galeria|Tabela stoi w Menu 2, nie w treści
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > [ODMROZENIE 11_MATERIALS DEC-558] Biblioteka wzorców: CTA otwiera pełny governed builder
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Wszystkie': CTA NIE jest zamrożony
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Dokumenty': CTA NIE jest zamrożony
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Prezentacje': CTA NIE jest zamrożony
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > zakładka 'Arkusze': CTA NIE jest zamrożony
+ ↓ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > Arkusze: segment „Arkusze | Źródła danych" nie jest renderowany (Fala 2 · 3.17)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx > Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d) > TPL-1a v5: Źródło jest dropdownem Menu 2, zawęża listę i zapisuje wybór w URL
+AssertionError: expected <button type="button" …(3)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-pressed="false"
+  class="inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200 bg-transparent text-c-text-muted hover:bg-state-hover hover:text-slate-900 dark:border-white/10 dark:hover:text-slate-200"
+  data-testid="materials-menu3-chip-scope-personal"
+  type="button"
+>
+  Personal
+</button>
+
+ ❯ src/components/ReportsAndPresentations/__tests__/materialsMenuStandard.contract.test.tsx:337:66
+    335|     expect(screen.getByTestId('materials-menu3-chip-type-sheet')).toBe…
+    336|     expect(screen.getByTestId('materials-menu3-chip-type-presentation'…
+    337|     expect(screen.queryByTestId(/^materials-menu3-chip-scope-/)).toBeN…
+       |                                                                  ^
+    338|     expect(screen.queryByTestId('materials-menu3-chip-all-scopes')).to…
+    339|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 skipped (22)
+   Start at  19:35:48
+   Duration  1.94s (transform 1.02s, setup 139ms, import 1.39s, tests 43ms, environment 279ms)

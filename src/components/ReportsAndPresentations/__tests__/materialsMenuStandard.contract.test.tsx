@@ -9,11 +9,8 @@
  *   Menu 3: JEDEN rząd chipów; ≤3 tam, gdzie Menu 2 ma dropdown statusu.
  *   Zero przycisków „Pokaż robocze" i „Filtry".
  *
- * Biblioteka wzorców jest świadomym wyjątkiem od „dwóch dropdownów": jej
- * wymiarem widoczności jest `scope` (Osobisty/System/Organizacja/Nieznany), a
- * ten — decyzją właściciela („ten cały pasek powinien wjechać do menu
- * trzeciego") — mieszka w Menu 3 razem z formatami. Drugi dropdown o tym samym
- * znaczeniu byłby dubletem, więc zakładka ma Status + Pochodzenie i prawa.
+ * TPL-1a v5: Biblioteka wzorców ma Status + Źródło w Menu 2. Menu 3 zawiera
+ * wyłącznie formaty; wybór źródła zawęża ten sam zbiór i zapisuje się w URL.
  *
  * MUTACJE (zmierzone ręcznie 06.09.2026 przy tym dyżurze — patrz meldunek):
  *  1. przywrócenie przycisku „Pokaż robocze" w `rightControls`
@@ -25,14 +22,24 @@
  * makiety 16.09; kontrakt broni teraz aktywnego wejścia do governed buildera.
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+// Ten kontrakt mierzy zapis filtra w URL, więc potrzebuje prawdziwego
+// `useNavigate`, które globalny setup testów domyślnie zastępuje no-opem.
+vi.unmock('react-router-dom');
+
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string, opts?: unknown) => {
+      const messages: Record<string, string> = {
+        'reports.personal': 'Personal',
+        'reports.application': 'Application',
+        'reports.organization': 'Organization',
+      };
+      if (messages[k]) return messages[k];
       if (typeof opts === 'string') return opts;
       if (opts && typeof opts === 'object' && 'defaultValue' in opts) {
         return String((opts as { defaultValue: unknown }).defaultValue);
@@ -103,7 +110,22 @@ vi.mock('../SheetsTabContent', () => ({
 }));
 vi.mock('../TemplatesTabContent', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../TemplatesTabContent')>()),
-  TemplatesTabContent: () => <div data-testid="tab-content-templates" />,
+  TemplatesTabContent: ({
+    templates,
+    activeFilters,
+  }: {
+    templates: Array<{ type: string; scope: string }>;
+    activeFilters: Array<{ column: string; value: string }>;
+  }) => {
+    const visible = templates.filter((template) =>
+      activeFilters.every(
+        (filter) =>
+          (filter.column !== 'type' || template.type === filter.value) &&
+          (filter.column !== 'scope' || template.scope === filter.value)
+      )
+    );
+    return <div data-testid="tab-content-templates" data-visible-count={visible.length} />;
+  },
 }));
 vi.mock('../BundleHistoryPanel', () => ({ BundleHistoryPanel: () => null }));
 vi.mock('../TemplateProvenanceApprovalDialog', () => ({
@@ -150,10 +172,16 @@ const outputRow = (
   governance: { visibilityScope, publishState: 'in_review' },
 });
 
+const LocationProbe = () => {
+  const location = useLocation();
+  return <output data-testid="location-search">{location.search}</output>;
+};
+
 const renderHubAt = (entry: string) =>
   render(
     <MemoryRouter initialEntries={[entry]}>
       <ReportsAndPresentationsHub />
+      <LocationProbe />
     </MemoryRouter>
   );
 
@@ -209,6 +237,24 @@ beforeEach(() => {
       type: 'presentation',
       category: 'custom',
       scope: 'personal',
+      status: 'draft',
+      updatedAt: '2026-09-01T10:00:00.000Z',
+    },
+    {
+      id: 'tpl-3',
+      title: 'Wzorzec arkusza systemowego',
+      type: 'sheet',
+      category: 'system',
+      scope: 'system',
+      status: 'approved',
+      updatedAt: '2026-09-01T10:00:00.000Z',
+    },
+    {
+      id: 'tpl-4',
+      title: 'Wzorzec bez źródła',
+      type: 'report',
+      category: 'custom',
+      scope: 'unknown',
       status: 'draft',
       updatedAt: '2026-09-01T10:00:00.000Z',
     },
@@ -279,24 +325,53 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
     }
   );
 
-  it('Biblioteka wzorców: Menu 3 = formaty + źródła, Menu 2 bez dropdownu Widoczność', async () => {
+  it('TPL-1a v5: Źródło jest dropdownem Menu 2, zawęża listę i zapisuje wybór w URL', async () => {
     renderHubAt('/materials?tab=templates');
     await screen.findByTestId('reports-presentations-hub');
 
-    // Formaty
+    // Menu 3 zachowuje wyłącznie formaty. Ta asercja jest punktem mutacji:
+    // przywrócenie dawnych chipów scope musi dać RED.
     expect(screen.getByTestId('materials-menu3-chip-type-report')).toBeInTheDocument();
     expect(screen.getByTestId('materials-menu3-chip-type-sheet')).toBeInTheDocument();
     expect(screen.getByTestId('materials-menu3-chip-type-presentation')).toBeInTheDocument();
-    // Źródła
-    expect(screen.getByTestId('materials-menu3-chip-scope-personal')).toBeInTheDocument();
-    expect(screen.getByTestId('materials-menu3-chip-scope-system')).toBeInTheDocument();
-    expect(screen.getByTestId('materials-menu3-chip-scope-organization')).toBeInTheDocument();
-    expect(screen.getByTestId('materials-menu3-chip-scope-unknown')).toBeInTheDocument();
+    expect(screen.queryByTestId(/^materials-menu3-chip-scope-/)).toBeNull();
+    expect(screen.queryByTestId('materials-menu3-chip-all-scopes')).toBeNull();
 
-    // Widoczność wzorca = źródło, a to stoi w Menu 3 → brak drugiego dropdownu.
     expect(screen.queryByTestId('materials-visibility-dropdown')).toBeNull();
     expect(screen.getByTestId('materials-status-dropdown')).toBeInTheDocument();
+    const source = screen.getByTestId('materials-source-dropdown');
+    expect(source).toBeInTheDocument();
     expect(screen.getByTestId('materials-provenance-btn')).toBeInTheDocument();
+
+    fireEvent.click(within(source).getByRole('button'));
+    const options = within(source).getAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual([
+      'All sources4',
+      'Personal1',
+      'Application1',
+      'Organization1',
+      'Unknown1',
+    ]);
+    fireEvent.click(within(source).getByRole('option', { name: /Personal/ }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('tab-content-templates')).toHaveAttribute('data-visible-count', '1')
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('location-search')).toHaveTextContent(
+        '?tab=templates&source=personal'
+      )
+    );
+  });
+
+  it('TPL-1a v5: deep link source odtwarza dropdown i filtrowaną listę', async () => {
+    renderHubAt('/materials?tab=templates&source=system');
+    await screen.findByTestId('reports-presentations-hub');
+
+    expect(
+      within(screen.getByTestId('materials-source-dropdown')).getByRole('button')
+    ).toHaveTextContent('Source: Application');
+    expect(screen.getByTestId('tab-content-templates')).toHaveAttribute('data-visible-count', '1');
   });
 
   it('Biblioteka wzorców: pstryczek Galeria|Tabela stoi w Menu 2, nie w treści', async () => {

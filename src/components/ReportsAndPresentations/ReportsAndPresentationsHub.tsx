@@ -202,6 +202,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     initialTemplatesView,
     initialWorkbookTemplateId,
     initialOpenProvenance,
+    initialTemplateSource,
   } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
@@ -236,10 +237,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       initialTemplatesView: templatesView,
       initialWorkbookTemplateId: deepLink.workbookTemplateId,
       initialOpenProvenance: deepLink.openProvenance,
+      initialTemplateSource: TEMPLATE_SCOPE_ORDER.includes(params.get('source') as TemplateScope)
+        ? (params.get('source') as TemplateScope)
+        : null,
     };
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
+  const initialTemplateSourceLabel = initialTemplateSource
+    ? templateScopeLabel(t, initialTemplateSource)
+    : null;
   // Internal sub-view of the 'templates' tab — see kanon note above initialTab.
   const [templatesView, setTemplatesView] = useState<TemplatesLibraryView>(initialTemplatesView);
   const [workbookTemplateId, setWorkbookTemplateId] = useState<string | null>(
@@ -651,6 +658,26 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     if (initialOpenProvenance) setTemplateProvenanceOpen(true);
   }, [initialTab, initialTemplatesView, initialWorkbookTemplateId, initialOpenProvenance]);
 
+  // TPL-1a v5: `source` jest częścią deep linku Biblioteki wzorców. Osobny
+  // efekt zachowuje równoległy filtr formatu przy zmianie samego źródła,
+  // a przy zimnym wejściu odtwarza filtr z URL po resecie trasy powyżej.
+  React.useEffect(() => {
+    if (initialTab !== 'templates') return;
+    setActiveFilters((prev) => {
+      const withoutSource = prev.filter((filter) => filter.column !== 'scope');
+      if (!initialTemplateSource) return withoutSource;
+      return [
+        ...withoutSource,
+        {
+          id: `scope:${initialTemplateSource}`,
+          column: 'scope',
+          value: initialTemplateSource,
+          label: initialTemplateSourceLabel || initialTemplateSource,
+        },
+      ];
+    });
+  }, [initialTab, initialTemplateSource, initialTemplateSourceLabel]);
+
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   React.useEffect(() => {
     if (activeTab === 'templates') {
@@ -662,13 +689,29 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     }
   }, [activeTab, setWorkspaceContext]);
 
-  const handleRemoveFilter = useCallback((id: string) => {
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+  const writeTemplateSourceToUrl = useCallback(
+    (source: TemplateScope | null) => {
+      const params = new URLSearchParams(location.search || '');
+      if (source) params.set('source', source);
+      else params.delete('source');
+      const query = params.toString();
+      navigate(`${location.pathname}${query ? `?${query}` : ''}`, { replace: true });
+    },
+    [location.pathname, location.search, navigate]
+  );
+
+  const handleRemoveFilter = useCallback(
+    (id: string) => {
+      setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+      if (id.startsWith('scope:')) writeTemplateSourceToUrl(null);
+    },
+    [writeTemplateSourceToUrl]
+  );
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters([]);
-  }, []);
+    if (activeTab === 'templates') writeTemplateSourceToUrl(null);
+  }, [activeTab, writeTemplateSourceToUrl]);
 
   const setSinglePreset = useCallback(
     (column: string, value: string | null, label?: string, color?: string) => {
@@ -682,6 +725,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       });
     },
     []
+  );
+
+  const setTemplateSourcePreset = useCallback(
+    (source: TemplateScope | null) => {
+      setSinglePreset(
+        'scope',
+        source,
+        source ? templateScopeLabel(t, source) : undefined,
+        'bg-slate-400'
+      );
+      writeTemplateSourceToUrl(source);
+    },
+    [setSinglePreset, t, writeTemplateSourceToUrl]
   );
 
   /**
@@ -818,6 +874,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const activeVisibilityFilter = activeFilters.find(
       (f) => f.column === 'visibilityScope' || f.column === 'publishState'
     );
+    const activeTemplateSource = activeFilters.find((f) => f.column === 'scope')?.value as
+      TemplateScope | undefined;
+    const activeTemplateType = activeFilters.find((f) => f.column === 'type')?.value as
+      TemplateType | undefined;
 
     const statusDropdownValue = showDrafts
       ? '__drafts__'
@@ -916,11 +976,26 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         .filter((o) => o.count > 0 || o.id === visibilityDropdownValue),
     ];
 
-    /* Biblioteka wzorców NIE dostaje dropdownu „Widoczność": jej wymiar
-       widoczności to `scope` (Osobisty/System/Organizacja/Nieznany), a ten —
-       decyzją właściciela z 06.09 („ten cały pasek powinien wjechać do menu
-       trzeciego") — mieszka w Menu 3 razem z formatami. Drugi, równoległy
-       dropdown o tym samym znaczeniu byłby dubletem. */
+    const templateSourceCount = (source: TemplateScope | null) =>
+      templatesAfterSearch.filter(
+        (item) =>
+          (source === null || item.scope === source) &&
+          (activeTemplateType === undefined || item.type === activeTemplateType)
+      ).length;
+    const templateSourceOptions = [
+      {
+        id: '__all__',
+        label: t('rap.templates.allScopes', 'All sources'),
+        count: templateSourceCount(null),
+      },
+      ...TEMPLATE_SCOPE_ORDER.map((source) => ({
+        id: source,
+        label: templateScopeLabel(t, source),
+        count: templateSourceCount(source),
+      })),
+    ];
+
+    /* W Bibliotece wzorców `scope` jest filtrem Źródło obok Statusu. */
     const showVisibilityDropdown = activeTab !== 'templates';
 
     return (
@@ -959,6 +1034,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           }}
           data-testid="materials-status-dropdown"
         />
+        {activeTab === 'templates' ? (
+          <Menu2PresetDropdown
+            className="shrink-0"
+            compact
+            label={t('rap.templates.sourceLabel', 'Source')}
+            options={templateSourceOptions}
+            value={activeTemplateSource ?? '__all__'}
+            onChange={(id) =>
+              setTemplateSourcePreset(id === '__all__' ? null : (id as TemplateScope))
+            }
+            data-testid="materials-source-dropdown"
+          />
+        ) : null}
         {showVisibilityDropdown ? (
           <Menu2PresetDropdown
             className="shrink-0"
@@ -1023,6 +1111,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     activeFilters,
     activeTab,
     setSinglePreset,
+    setTemplateSourcePreset,
     showDrafts,
     t,
     tabRows,
@@ -1030,6 +1119,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     tabStatusOptions,
     templatesGalleryEnabled,
     templatesInnerView,
+    templatesAfterSearch,
     templatesView,
     setTemplateProvenanceOpen,
   ]);
@@ -1141,12 +1231,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             (type === null || item.type === type) &&
             (currentScope === undefined || item.scope === currentScope)
         ).length;
-      const scopeCount = (scope: TemplateScope | null) =>
-        templatesAfterSearch.filter(
-          (item) =>
-            (scope === null || item.scope === scope) &&
-            (currentType === undefined || item.type === currentType)
-        ).length;
 
       return (
         <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
@@ -1173,32 +1257,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             >
               {templateTypeLabelPlural(t)[type]}
               <Menu3Badge count={typeCount(type)} active={currentType === type} />
-            </Menu3Chip>
-          ))}
-          <span className="mx-1.5 h-4 w-px bg-c-border" aria-hidden="true" />
-          <Menu3Chip
-            active={!currentScope}
-            onClick={() => setSinglePreset('scope', null)}
-            data-testid="materials-menu3-chip-all-scopes"
-          >
-            {t('rap.templates.allScopes', 'All sources')}
-            <Menu3Badge count={scopeCount(null)} active={!currentScope} />
-          </Menu3Chip>
-          {TEMPLATE_SCOPE_ORDER.map((scope) => (
-            <Menu3Chip
-              key={scope}
-              active={currentScope === scope}
-              onClick={() =>
-                setSinglePreset(
-                  'scope',
-                  currentScope === scope ? null : scope,
-                  templateScopeLabel(t, scope)
-                )
-              }
-              data-testid={`materials-menu3-chip-scope-${scope}`}
-            >
-              {templateScopeLabel(t, scope)}
-              <Menu3Badge count={scopeCount(scope)} active={currentScope === scope} />
             </Menu3Chip>
           ))}
         </div>
