@@ -1,0 +1,90 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify-b[39m
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify-b[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts
+[22m[39m2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts
+[22m[39m2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 19:37:17:3717 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_dump","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6612/consultify_dump host=127.0.0.1 port=6612 database=consultify_dump source=app:pool-config
+2026-09-17 19:37:18:3718 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-17 19:37:18:3718 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_dump","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6612/consultify_dump host=127.0.0.1 port=6612 database=consultify_dump source=app:pool-config
+2026-09-17 19:37:18:3718 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+(node:11253) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessA org=lts-1789691838359-org sessionProject=lts-1789691838359-proj1 twinProject=lts-1789691838359-proj1 twin=lts-1789691838359-sessA--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mcreates the twin once and is idempotent for the SAME frozen session
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessA org=lts-1789691838359-org sessionProject=lts-1789691838359-proj1 twinProject=lts-1789691838359-proj1 twin=lts-1789691838359-sessA--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mreuses ONE twin across DIFFERENT sessions sharing a project_id (AssessmentHub join key)
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessC org=lts-1789691838359-org sessionProject=lts-1789691838359-proj2 twinProject=lts-1789691838359-proj2 twin=lts-1789691838359-sessC--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mreuses ONE twin across DIFFERENT sessions sharing a project_id (AssessmentHub join key)
+[22m[39m2026-09-17 19:37:18:3718 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessC org=lts-1789691838359-org sessionProject=lts-1789691838359-proj2 twinProject=lts-1789691838359-proj2 twin=lts-1789691838359-sessC--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22mcreates the twin once and is idempotent for the SAME frozen session[32m 180[2mms[22m[39m
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mstores project_id=NULL (not the FK-missing slug) and stays idempotent via PK
+[22m[39m2026-09-17 19:37:19:3719 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessNoProj org=lts-1789691838359-org sessionProject=lts-1789691838359-ghost-project twinProject=<null> twin=lts-1789691838359-sessNoProj--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mstores project_id=NULL (not the FK-missing slug) and stays idempotent via PK
+[22m[39m2026-09-17 19:37:19:3719 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessNoProj org=lts-1789691838359-org sessionProject=lts-1789691838359-ghost-project twinProject=<null> twin=lts-1789691838359-sessNoProj--assessment--drd-twin created=YES state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mstores project_id=NULL (not the FK-missing slug) and stays idempotent via PK
+[22m[39m2026-09-17 19:37:19:3719 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessNoProj org=lts-1789691838359-org sessionProject=lts-1789691838359-ghost-project twinProject=<null> twin=lts-1789691838359-sessNoProj--assessment--drd-twin created=NO (idempotent) state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+[90mstdout[2m | server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22m[2mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22m[2mstores project_id=NULL (not the FK-missing slug) and stays idempotent via PK
+[22m[39m2026-09-17 19:37:19:3719 [32minfo[39m: [32m[legacyTwinService] session=lts-1789691838359-sessNoProj org=lts-1789691838359-org sessionProject=lts-1789691838359-ghost-project twinProject=<null> twin=lts-1789691838359-sessNoProj--assessment--drd-twin created=NO (idempotent) state=frozen snapshotAreas=0 output=<null> backfilled=NO[39m
+
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22mreuses ONE twin across DIFFERENT sessions sharing a project_id (AssessmentHub join key)[32m 64[2mms[22m[39m
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22mstores project_id=NULL (not the FK-missing slug) and stays idempotent via PK[32m 62[2mms[22m[39m
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22mthrows SESSION_NOT_FROZEN for a non-frozen session and writes nothing[32m 29[2mms[22m[39m
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts[2m > [22mU-25 v2 / DEC-572 — ensureLegacyAssessmentTwinForSession (REAL Postgres)[2m > [22mthrows SESSION_NOT_FOUND for an unknown / cross-org session[32m 5[2mms[22m[39m
+ [32m✓[39m server/src/services/assessment/__tests__/legacyTwinService.realdb.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 879[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 19:37:15
+[2m   Duration [22m 3.36s[2m (transform 1.03s, setup 402ms, import 1.15s, tests 879ms, environment 721ms)[22m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 19:37:15
+[2m   Duration [22m 3.36s[2m (transform 1.03s, setup 402ms, import 1.15s, tests 879ms, environment 721ms)[22m
+
+JSON report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify-b/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify-b/junit.xml

@@ -14,6 +14,11 @@ import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
 import type { PgTransactionClient } from '../utils/queryHelpers.js';
+import {
+  buildDrdAxesData,
+  deriveAssessmentScores,
+  type DrdAxisAggregate,
+} from './assessment/drdAxisAggregation.js';
 import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
@@ -2479,52 +2484,11 @@ export async function getSourceDataForReport(
   const assessment = await getAssessmentSourceData(report.report.sourceId);
   if (!assessment) return null;
 
-  // Extract per-axis data from DRD answers
-  const axesData: Record<string, unknown> = {};
-  const drdAnswers = (assessment.answers as any)?.drd?.areas || {};
-
-  // DRD axis names for richer AI context
-  const DRD_AXIS_NAMES: Record<string, string> = {
-    '1': 'Digital Processes',
-    '2': 'Digital Products & Services',
-    '3': 'Digital Business Models',
-    '4': 'Data & Analytics',
-    '5': 'Organizational Culture',
-    '6': 'Cybersecurity & Risk',
-    '7': 'AI & Machine Learning',
-  };
-
-  // Group by axis and compute per-axis summary
-  for (let i = 1; i <= 7; i++) {
-    const axisKey = String(i);
-    const axisAreas: Record<string, unknown> = {};
-    let totalAchieved = 0;
-    let totalTarget = 0;
-    let areaCount = 0;
-
-    for (const [areaId, areaData] of Object.entries(drdAnswers)) {
-      if (areaId.startsWith(axisKey)) {
-        axisAreas[areaId] = areaData;
-        const area = areaData as any;
-        if (area?.achievedLevel != null) {
-          totalAchieved += area.achievedLevel;
-          totalTarget += area.targetLevel || area.achievedLevel;
-          areaCount++;
-        }
-      }
-    }
-
-    if (Object.keys(axisAreas).length > 0) {
-      axesData[axisKey] = {
-        areas: axisAreas,
-        axisName: DRD_AXIS_NAMES[axisKey] || `Axis ${axisKey}`,
-        areaCount,
-        averageScore: areaCount > 0 ? Math.round((totalAchieved / areaCount) * 10) / 10 : 0,
-        averageTarget: areaCount > 0 ? Math.round((totalTarget / areaCount) * 10) / 10 : 0,
-        gap: areaCount > 0 ? Math.round(((totalTarget - totalAchieved) / areaCount) * 10) / 10 : 0,
-      };
-    }
-  }
+  // Extract per-axis data from DRD answers. RG-1 v3 (Wpis 89): the grouping and
+  // the score recomputation live in `assessment/drdAxisAggregation.ts` — ONE
+  // arithmetic shared with the legacy-twin writer, so a twin materialized from a
+  // frozen Method Core session and a report generated from it cannot drift.
+  const axesData: Record<string, unknown> = buildDrdAxesData(assessment.answers);
 
   // Ensure assessment.scores is populated — compute from answers if empty
   if (
@@ -2532,27 +2496,11 @@ export async function getSourceDataForReport(
     Object.keys(assessment.scores).length === 0 ||
     !(assessment.scores as any).axes
   ) {
-    const computedAxes: any[] = [];
-    for (const [axisKey, axisInfo] of Object.entries(axesData) as [string, any][]) {
-      computedAxes.push({
-        axisId: axisKey,
-        axisName: axisInfo.axisName,
-        score: axisInfo.averageScore,
-        maxScore: 7,
-        target: axisInfo.averageTarget,
-        gap: axisInfo.gap,
-        fullMark: 7,
-      });
-    }
-    if (computedAxes.length > 0) {
-      const overallAvg = computedAxes.reduce((s, a) => s + a.score, 0) / computedAxes.length;
-      assessment.scores = {
-        axes: computedAxes,
-        overallScore: Math.round(overallAvg * 10) / 10,
-        maxScore: 7,
-        assessmentType: assessment.assessmentType,
-      };
-    }
+    const computed = deriveAssessmentScores(
+      axesData as Record<string, DrdAxisAggregate>,
+      assessment.assessmentType
+    );
+    if (computed) assessment.scores = computed as unknown as Record<string, unknown>;
   }
 
   return { assessment, axesData };
