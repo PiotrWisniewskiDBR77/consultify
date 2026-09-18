@@ -207,8 +207,15 @@ describe('migration coverage — 9xx and lettered same-day files are executable'
     }
   });
 
+  it('includes canonical seed files that boot already records in tp_migration_history', async () => {
+    const { isExecutableMigration } = await import('../migrationExecutionPolicy.js');
+    expect(isExecutableMigration('20260412_seed_business_templates.sql')).toBe(true);
+    expect(isExecutableMigration('20260720_seed_v6_interview_library_templates.sql')).toBe(true);
+  });
+
   it('still excludes the files the runner deliberately skips', async () => {
     const { isExecutableMigration } = await import('../migrationExecutionPolicy.js');
     expect(isExecutableMigration('000_initdb_core_tables.sql')).toBe(false);
+    expect(isExecutableMigration('125_seed_old_demo.sql')).toBe(false);
   });
 });

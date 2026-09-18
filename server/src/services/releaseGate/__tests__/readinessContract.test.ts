@@ -11,6 +11,11 @@
  * could answer 200 while the SQL chain had failed rows, skipped rows, pending migrations or
  * unexplained checksum drift.
  */
+import crypto from 'crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import path from 'path';
+import { tmpdir } from 'os';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -30,6 +35,7 @@ const okSql = (over: Partial<SqlChainEvaluation> = {}): SqlChainEvaluation => ({
   unexplainedDrift: [],
   approvedVariants: [],
   attestedLegacyVariants: [],
+  postconditionVerified: [],
   unverifiable: [],
   detail: 'chain complete',
   ...over,
@@ -219,5 +225,57 @@ describe('shared evaluator — one implementation, not a test copy', () => {
     const e = await evaluateSqlChain({ db: db as any, migrationsDir: process.cwd() });
     expect(e.state).toBe('error');
     expect(isSqlChainAcceptable(e)).toBe(false);
+  });
+
+
+  it('treats canonical seed migration as applied when tp_migration_history has the matching checksum', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'sql-chain-two-ledgers-'));
+    const filename = '20260412_seed_business_templates.sql';
+    const sql = 'CREATE TABLE IF NOT EXISTS d110_seed_probe(id text primary key);\n';
+    writeFileSync(path.join(dir, filename), sql);
+    const shortChecksum = crypto.createHash('sha256').update(sql).digest('hex').slice(0, 16);
+    const db = {
+      query: vi.fn(async (text: string) => {
+        if (text.includes("to_regclass('public.schema_migrations')")) return { rows: [{ present: true }] };
+        if (text.includes('FROM schema_migrations')) return { rows: [] };
+        if (text.includes("to_regclass('public.tp_migration_history')")) return { rows: [{ present: true }] };
+        if (text.includes('FROM tp_migration_history')) {
+          return { rows: [{ filename, checksum: shortChecksum }] };
+        }
+        throw new Error(`unexpected query: ${text}`);
+      }),
+    };
+
+    try {
+      const e = await evaluateSqlChain({ db: db as any, migrationsDir: dir });
+      expect(e.state).toBe('ok');
+      expect(e.pending).toEqual([]);
+      expect(isSqlChainAcceptable(e)).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports the same canonical seed as pending when the legacy ledger check is absent', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'sql-chain-two-ledgers-red-'));
+    const filename = '20260412_seed_business_templates.sql';
+    writeFileSync(path.join(dir, filename), 'CREATE TABLE IF NOT EXISTS d110_seed_probe(id text primary key);\n');
+    const db = {
+      query: vi.fn(async (text: string) => {
+        if (text.includes("to_regclass('public.schema_migrations')")) return { rows: [{ present: true }] };
+        if (text.includes('FROM schema_migrations')) return { rows: [] };
+        if (text.includes("to_regclass('public.tp_migration_history')")) return { rows: [{ present: false }] };
+        throw new Error(`unexpected query: ${text}`);
+      }),
+    };
+
+    try {
+      const e = await evaluateSqlChain({ db: db as any, migrationsDir: dir });
+      expect(e.state).toBe('pending');
+      expect(e.pending).toEqual([filename]);
+      expect(isSqlChainAcceptable(e)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -23,6 +23,8 @@ import {
   type AttestationQueryable,
   type AttestationResult,
 } from './schemaAttestation.js';
+import { classifyMigrationChecksum, fileChecksum } from '../tablePlatform/migrationIdentity.js';
+import { attestTablePlatformPresentWithoutHistory } from './tablePlatformPresentWithoutHistory.js';
 import { isExecutableMigration } from './migrationExecutionPolicy.js';
 import { classifySqlChainChecksum } from './sqlChainChecksumPolicy.js';
 
@@ -134,6 +136,45 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
     // The runner's own definition of "required" — never a raw directory listing.
     const required = onDisk.filter((f) => isExecutableMigration(f));
 
+    const currentChecksums = new Map<string, { full: string; short: string }>();
+    for (const filename of required) {
+      const content = fs.readFileSync(path.join(deps.migrationsDir, filename), 'utf-8');
+      currentChecksums.set(filename, {
+        full: crypto.createHash('sha256').update(content).digest('hex'),
+        short: fileChecksum(content),
+      });
+    }
+
+    const tpExists = await deps.db.query(
+      `SELECT to_regclass('public.tp_migration_history') IS NOT NULL AS present`
+    );
+    const tpLedgerFilenames = new Set<string>();
+    if (tpExists.rows[0]?.present && required.length > 0) {
+      const tpRows = await deps.db.query(
+        `SELECT filename, checksum FROM tp_migration_history WHERE filename = ANY($1::text[])`,
+        [required]
+      );
+      for (const row of tpRows.rows) {
+        const filename = String(row.filename);
+        tpLedgerFilenames.add(filename);
+        if (applied.get(filename)?.status === 'success') continue;
+        const current = currentChecksums.get(filename);
+        const stored = row.checksum == null ? null : String(row.checksum);
+        if (!current) continue;
+        const content = fs.readFileSync(path.join(deps.migrationsDir, filename), 'utf-8');
+        const tpVerdict = classifyMigrationChecksum(filename, stored, content);
+        if (tpVerdict === 'drift') continue;
+        applied.set(filename, { status: 'success', checksum: current.full });
+      }
+    }
+
+    for (const filename of required) {
+      if (applied.get(filename)?.status === 'success' || tpLedgerFilenames.has(filename)) continue;
+      if (!(await attestTablePlatformPresentWithoutHistory(deps.db, filename))) continue;
+      const current = currentChecksums.get(filename);
+      if (current) applied.set(filename, { status: 'success', checksum: current.full });
+    }
+
     const acc = { ...empty, ledgerPresent: true };
 
     const requiredSet = new Set(required);
@@ -155,7 +196,7 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
         acc.unverifiable.push(filename);
         continue;
       }
-      const current = crypto
+      const current = currentChecksums.get(filename)?.full ?? crypto
         .createHash('sha256')
         .update(fs.readFileSync(path.join(deps.migrationsDir, filename), 'utf-8'))
         .digest('hex');

@@ -47,6 +47,8 @@ import {
   classifySqlChainChecksum,
   type ChecksumVerdict,
 } from '../src/services/releaseGate/sqlChainChecksumPolicy.js';
+import { attestTablePlatformPresentWithoutHistory } from '../src/services/releaseGate/tablePlatformPresentWithoutHistory.js';
+import { classifyMigrationChecksum } from '../src/services/tablePlatform/migrationIdentity.js';
 
 type Args = {
   dir?: string;
@@ -347,6 +349,60 @@ async function getApplied(db: Queryable): Promise<Map<string, AppliedMigrationRo
   return map;
 }
 
+export async function mergeTablePlatformHistory(
+  db: Queryable,
+  applied: Map<string, AppliedMigrationRow>,
+  candidates: Migration[],
+  options: { writeAttestedRows?: boolean } = {}
+): Promise<Map<string, AppliedMigrationRow>> {
+  if (candidates.length === 0) return applied;
+  const present = await db.query(`SELECT to_regclass('public.tp_migration_history') AS t`);
+  const hasTablePlatformLedger = Boolean(present.rows[0]?.t);
+
+  const candidateByFilename = new Map(candidates.map((m) => [m.filename, m]));
+  const res = hasTablePlatformLedger
+    ? await db.query(
+        `SELECT filename, checksum FROM tp_migration_history WHERE filename = ANY($1::text[])`,
+        [[...candidateByFilename.keys()]]
+      )
+    : { rows: [] };
+
+  const ledgerFilenames = new Set<string>();
+  for (const r of res.rows || []) {
+    const filename = String(r.filename);
+    ledgerFilenames.add(filename);
+    if (applied.get(filename)?.status === 'success') continue;
+    const migration = candidateByFilename.get(filename);
+    if (!migration) continue;
+    const storedChecksum = r.checksum === null || r.checksum === undefined ? null : String(r.checksum);
+    const content = fs.readFileSync(migration.filepath, 'utf-8');
+    const tpVerdict = classifyMigrationChecksum(filename, storedChecksum, content);
+    if (tpVerdict === 'drift') continue;
+
+    // TP history stores short runtime checksums and old rows may have NULL.
+    // Reuse TP's own checksum policy: match/approved historical variant prove
+    // the exact file lineage, while NULL is legacy applied-but-unverifiable —
+    // reported by the runtime runner, never re-run as pending. Promote only to
+    // an in-memory success row with the current full SHA so preflight/pending
+    // logic remains one path.
+    applied.set(filename, { filename, status: 'success', checksum: migration.checksum });
+  }
+
+  for (const [filename, migration] of candidateByFilename) {
+    if (applied.get(filename)?.status === 'success' || ledgerFilenames.has(filename)) continue;
+    if (!(await attestTablePlatformPresentWithoutHistory(db, filename))) continue;
+    applied.set(filename, { filename, status: 'success', checksum: migration.checksum });
+    if (options.writeAttestedRows && hasTablePlatformLedger) {
+      await db.query(
+        `INSERT INTO tp_migration_history (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
+        [filename, migration.checksum.slice(0, 16)]
+      );
+    }
+  }
+
+  return applied;
+}
+
 async function recordResult(
   db: Queryable,
   m: Migration,
@@ -543,10 +599,16 @@ export function runPreflightChecks(
  * (CREATE TABLE + CREATE INDEX), so a dry run against a virgin database must
  * treat a missing ledger as "nothing applied yet" rather than create one.
  */
-async function readLedgerIfPresent(db: Queryable): Promise<Map<string, AppliedMigrationRow>> {
+async function readLedgerIfPresent(
+  db: Queryable,
+  candidates: Migration[],
+  options: { writeAttestedRows?: boolean } = {}
+): Promise<Map<string, AppliedMigrationRow>> {
   const present = await db.query(`SELECT to_regclass('schema_migrations') AS t`);
-  if (!present.rows[0]?.t) return new Map<string, AppliedMigrationRow>();
-  return getApplied(db);
+  const applied = present.rows[0]?.t
+    ? await getApplied(db)
+    : new Map<string, AppliedMigrationRow>();
+  return mergeTablePlatformHistory(db, applied, candidates);
 }
 
 // Errors that mean "this migration's objects are already there" rather than
@@ -894,7 +956,7 @@ async function main() {
 
     if (dryRun) {
       // A dry run mutates NOTHING: no lock, no CREATE TABLE, no index.
-      applied = await readLedgerIfPresent(client);
+      applied = await readLedgerIfPresent(client, candidates);
     } else {
       await acquireMigrationLock(client);
       lockHeld = true;
@@ -908,12 +970,18 @@ async function main() {
       );
       if (existingLedger.rows[0]?.t) {
         applied = await getApplied(client);
+        await mergeTablePlatformHistory(client, applied, candidates, { writeAttestedRows: true });
         runLedgerPreflight(candidates, applied);
         ledgerPreflightComplete = true;
         await ensureSchemaMigrationsTable(client);
       } else {
         await ensureSchemaMigrationsTable(client);
-        applied = new Map<string, AppliedMigrationRow>();
+        applied = await mergeTablePlatformHistory(
+          client,
+          new Map<string, AppliedMigrationRow>(),
+          candidates,
+          { writeAttestedRows: true }
+        );
       }
     }
 

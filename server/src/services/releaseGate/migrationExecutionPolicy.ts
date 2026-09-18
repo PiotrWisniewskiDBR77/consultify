@@ -39,14 +39,21 @@ export function isSqliteOnlyMigration(filename: string): boolean {
   // iCloud/duplicate artifacts (e.g. "515_xxx 2.sql")
   if (/\s+\d+\.sql$/.test(f)) return true;
 
-  // Seed/demo data files are not part of the schema migration flow.
+  const canonicalPgFlow = /^(?:7\d{2}|\d{8})_.*\.sql$/.test(f);
+
+  // Seed/demo data files are not part of the schema migration flow — unless
+  // they are canonical-flow files that the live Table Platform boot runner
+  // already applies and records in tp_migration_history. The offline runner
+  // must see the same required set, then decide applied/pending by checking
+  // BOTH ledgers.
   if (
-    f.includes('seed') ||
-    f.includes('mock') ||
-    f.includes('demo') ||
-    f.startsWith('add_') ||
-    f === 'assessment-module.sql' ||
-    f === 'fix_conversations_table.sql'
+    !canonicalPgFlow &&
+    (f.includes('seed') ||
+      f.includes('mock') ||
+      f.includes('demo') ||
+      f.startsWith('add_') ||
+      f === 'assessment-module.sql' ||
+      f === 'fix_conversations_table.sql')
   ) {
     return true;
   }
