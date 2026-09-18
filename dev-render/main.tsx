@@ -489,6 +489,10 @@ const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview
 const InterviewSessionsStatusScreen = React.lazy(
   () => import('./screens/interview-sessions-status')
 );
+// IS-2b (U-05 / DEC-535) — real InterviewHub Sessions tab fed the IS-2a enriched columns.
+const InterviewSessionsFullColumnsScreen = React.lazy(
+  () => import('./screens/interview-sessions-full-columns')
+);
 // ST-2 (DEC-540 / U-09) etap 1 — Interview initiative candidate card (inbox).
 const InterviewCandidateCardScreen = React.lazy(
   () => import('./screens/interview-candidate-card')
@@ -1516,6 +1520,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'UI-latki-20260828 — REALNY <InterviewHub /> zakładka Sesje, kolumna status: 5 wierszy (assigned/in_progress/submitted/approved/completed) — weryfikacja etykiety "Przydzielony" i neutralnego tonu dla assigned.',
     render: () => <InterviewSessionsStatusScreen />,
+  },
+  'interview-sessions-full-columns': {
+    label:
+      'IS-2b (U-05 / DEC-535) — REALNY <InterviewHub /> zakładka Sessions zasilony pełnym zestawem kolumn, który IS-2a dodał do /interview/sessions za INTERVIEW_SESSIONS_FULL_COLUMNS (template/assignee/due/submitted). Wiersze: submitted (due rozliczony), in_progress (po terminie → OVERDUE), anonimowy (respondent zamaskowany, assignee widoczny), completed (rozliczony) oraz legacy bez pól wzbogaconych (graceful "—"/"Unassigned"). &lang=en|pl &theme=light|dark',
+    render: () => <InterviewSessionsFullColumnsScreen />,
   },
   'interview-candidate-card': {
     label:

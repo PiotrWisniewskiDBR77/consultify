@@ -1,0 +1,29 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify[39m
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/piotrwisniewski/Developer/qoder-wt/consultify[39m
+
+[90mstdout[2m | src/components/Interview/__tests__/InterviewHub.is2bSessionsColumns.test.tsx
+[22m[39m🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+[90mstdout[2m | src/components/Interview/__tests__/InterviewHub.is2bSessionsColumns.test.tsx
+[22m[39m🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ [32m✓[39m src/components/Interview/__tests__/InterviewHub.is2bSessionsColumns.test.tsx[2m > [22mInterviewHub — IS-2b active sessions list renders the server-enriched columns[2m > [22mTEMPLATE / ASSIGNEE / DUE / SUBMITTED cells render the values the active endpoint now sends[32m 181[2mms[22m[39m
+ [32m✓[39m src/components/Interview/__tests__/InterviewHub.is2bSessionsColumns.test.tsx[2m > [22mInterviewHub — IS-2b active sessions list renders the server-enriched columns[2m > [22ma row without the enriched fields falls back to Unassigned, not a fabricated value[32m 46[2mms[22m[39m
+ [32m✓[39m src/components/Interview/__tests__/InterviewHub.is2bSessionsColumns.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 07:47:53
+[2m   Duration [22m 3.64s[2m (transform 2.17s, setup 140ms, import 2.90s, tests 229ms, environment 278ms)[22m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 07:47:53
+[2m   Duration [22m 3.64s[2m (transform 2.17s, setup 140ms, import 2.90s, tests 229ms, environment 278ms)[22m
+
+JSON report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/qoder-wt/consultify/junit.xml
