@@ -40,7 +40,13 @@ import { useInitiativeContext } from './InitiativeContext';
 import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
 import { InitiativeStatusPipeline } from './InitiativeStatusPipeline';
 import type { InitiativeSectionProps } from './types';
-import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
+import {
+  formatNextGateLabel,
+  GATE_CONFIG,
+  GATE_DEFINITIONS,
+  getRoleLabel,
+  resolveNextGate,
+} from './types';
 
 type AIGatesProposal = {
   initiative: {
@@ -70,7 +76,7 @@ type AIGatesProposal = {
       taskId: string;
       assigneeId?: string;
       dueDate?: string; // YYYY-MM-DD
-      status?: 'TODO' | 'IN_PROGRESS' | "BLOCKED" | 'DONE';
+      status?: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE';
       reason: string;
     }>;
   };
@@ -139,7 +145,7 @@ const GATE_DECISION_TYPES = [
 ] as const;
 
 const ALLOWED_PRIORITIES = ['critical', 'high', 'medium', 'low'] as const;
-const ALLOWED_TASK_STATUSES = ['TODO', 'IN_PROGRESS', "BLOCKED", 'DONE'] as const;
+const ALLOWED_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
 
 const normalizeTaskStatus = (
   value?: string
@@ -167,7 +173,7 @@ const normalizeRaidStatus = (value?: string): string | undefined => {
   if (!raw) return undefined;
   const up = raw.toUpperCase();
   // keep a small canonical set, but allow pass-through for backend flexibility
-  if (up === 'OPEN' || up === 'IN_PROGRESS' || up === "BLOCKED" || up === 'RESOLVED') return up;
+  if (up === 'OPEN' || up === 'IN_PROGRESS' || up === 'BLOCKED' || up === 'RESOLVED') return up;
   return up;
 };
 
@@ -215,8 +221,12 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   } = useInitiativeContext();
 
   const status = (initiative?.status || 'DRAFT') as string;
-  const nextGate = getNextGateForStatus(status);
+  const nextGate = useMemo(
+    () => resolveNextGate(status, gateReadiness?.availableTransitions),
+    [gateReadiness, status]
+  );
   const nextGateConfig = nextGate ? GATE_CONFIG[nextGate] : null;
+  const nextGateName = formatNextGateLabel(nextGate, t);
   const canRequestApproval =
     nextGateConfig && !pendingApprovals.some((a) => a.gateType === nextGate);
 
@@ -346,9 +356,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         label: initiativeReadinessCheckLabel(key, serverLabel, tt),
         pass: !!r.pass,
         severity: String(r.severity || 'warning'),
-        suggestedAction: serverAction
-          ? initiativeReadinessActionText(key, serverAction, tt)
-          : '',
+        suggestedAction: serverAction ? initiativeReadinessActionText(key, serverAction, tt) : '',
         suggestedActor: initiativeReadinessActorLabel(
           String(r.suggestedActor || r.suggested_actor || ''),
           tt
@@ -1048,7 +1056,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         <div className="flex items-center gap-2">
           {nextGate && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-              {t('initiatives.gateReadinessSection.next')}: {nextGate}
+              {t('initiatives.gateReadinessSection.next')}: {nextGateName}
             </span>
           )}
           {requiredGates.length > 0 && (

@@ -4,6 +4,8 @@
  * Types used across all initiative sections and the dynamic renderer.
  */
 
+import { enumLabel, type EnumTranslateFn } from '@/utils/enumLabel';
+
 // ==========================================
 // DATA TYPES
 // ==========================================
@@ -285,13 +287,7 @@ export interface InitiativeSectionProps {
 // ==========================================
 
 export type TimelineMode =
-  | 'ESTIMATE'
-  | 'PLANNING'
-  | 'READY_TO_LOCK'
-  | 'BASELINED'
-  | 'TRACKING'
-  | 'CLOSED'
-  | 'COMPLETED';
+  'ESTIMATE' | 'PLANNING' | 'READY_TO_LOCK' | 'BASELINED' | 'TRACKING' | 'CLOSED' | 'COMPLETED';
 
 export interface TimelineMilestone {
   id: string;
@@ -392,11 +388,7 @@ export interface TimelineRow {
   infoEventParticipantMode?: 'person' | 'group';
   infoEventParticipantUserId?: string;
   infoEventParticipantGroupKey?:
-    | 'project_team'
-    | 'steering_committee'
-    | 'sponsor_group'
-    | 'all_stakeholders'
-    | 'custom_group';
+    'project_team' | 'steering_committee' | 'sponsor_group' | 'all_stakeholders' | 'custom_group';
 
   // ── Notification-specific ──
   notificationCadence?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
@@ -407,11 +399,7 @@ export interface TimelineRow {
   notificationRecipientUserId?: string;
   notificationRecipientUserName?: string;
   notificationRecipientGroupKey?:
-    | 'project_team'
-    | 'steering_committee'
-    | 'sponsor_group'
-    | 'all_stakeholders'
-    | 'custom_group';
+    'project_team' | 'steering_committee' | 'sponsor_group' | 'all_stakeholders' | 'custom_group';
   notificationTriggerMode?: 'event_based' | 'cyclical';
   notificationTriggerEvent?: 'on_start' | 'on_complete' | 'before_next_action' | 'manual_gate';
   /** Lead time before next action (for before_next_action trigger) */
@@ -774,9 +762,15 @@ export const SEVERITY_CONFIG = {
 export const getModuleFromStatus = (status: string): keyof typeof MODULE_CONFIG => {
   if (['DRAFT', 'PENDING_APPROVAL'].includes(status)) return 'TOOLS';
   if (
-    ['REVIEW', 'PENDING_APPROVAL', 'PLANNING', 'APPROVED', 'SCHEDULED', 'CANCELLED', 'ARCHIVED'].includes(
-      status
-    )
+    [
+      'REVIEW',
+      'PENDING_APPROVAL',
+      'PLANNING',
+      'APPROVED',
+      'SCHEDULED',
+      'CANCELLED',
+      'ARCHIVED',
+    ].includes(status)
   )
     return 'INITIATIVES';
   if (['IN_EXECUTION', 'IN_EXECUTION', 'DONE'].includes(status)) return 'EXECUTION';
@@ -786,15 +780,38 @@ export const getModuleFromStatus = (status: string): keyof typeof MODULE_CONFIG 
 
 export const getNextGateForStatus = (status: string): string | null => {
   const gateMap: Record<string, string> = {
+    DRAFT: 'SUBMIT_FOR_REVIEW',
     REVIEW: 'PROMOTE',
+    PENDING_APPROVAL: 'APPROVE',
     PLANNING: 'APPROVE',
-    APPROVED: 'SCHEDULE',
+    APPROVED: 'START',
+    IN_EXECUTION: 'COMPLETE',
     EXECUTING: 'COMPLETE',
     DONE: 'START_TRACKING',
     BLOCKED: 'UNBLOCK',
   };
-  return gateMap[status] || null;
+  return gateMap[String(status || '').toUpperCase()] || null;
 };
+
+export function resolveNextGate(
+  status: string,
+  availableTransitions?: Array<{ gate?: unknown }> | null
+): string | null {
+  const transitions = Array.isArray(availableTransitions) ? availableTransitions : [];
+  const transition = transitions.find((item) => {
+    const gate = String(item?.gate || '')
+      .trim()
+      .toUpperCase();
+    return gate && gate !== 'CANCEL';
+  });
+  return transition?.gate
+    ? String(transition.gate).trim().toUpperCase()
+    : getNextGateForStatus(status);
+}
+
+export function formatNextGateLabel(gate: string | null | undefined, t: EnumTranslateFn): string {
+  return gate ? enumLabel('initiativeGateAction', gate, t) : '';
+}
 
 export const getRoleLabel = (role: string, isPolish: boolean): string => {
   const labels: Record<string, { en: string; pl: string }> = {
