@@ -8622,9 +8622,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
    * konkurencyjna ścieżka do backendu.
    */
   const applyInsightAnalysisChange = useCallback(
-    (change: { fieldId: string; proposedValue: string; mode?: string }) => {
+    (change: { fieldId: string; proposedValue: string; mode?: string; sectionId?: string }) => {
       if (change.fieldId !== INSIGHT_MANUAL_FIELD_ID) return false;
-      const sectionId = activeNSection;
+      const sectionId = change.sectionId || activeNSection;
       const current = sectionDrafts[sectionId] ?? sectionOverrides[sectionId]?.content ?? '';
       const next =
         change.mode === 'append' && current.trim()

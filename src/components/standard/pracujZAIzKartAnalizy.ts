@@ -34,13 +34,25 @@ export interface MostPracujZAIOpcje {
   isPolish: boolean;
 }
 
+const ID_SEPARATOR = '::';
+
+function zakodujPoleId(sekcjaId: string | undefined, poleId: string): string {
+  return sekcjaId ? `${sekcjaId}${ID_SEPARATOR}${poleId}` : poleId;
+}
+
+function odkodujPoleId(poleId: string): { sekcjaId?: string; poleId: string } {
+  const idx = poleId.indexOf(ID_SEPARATOR);
+  if (idx <= 0) return { poleId };
+  return { sekcjaId: poleId.slice(0, idx), poleId: poleId.slice(idx + ID_SEPARATOR.length) };
+}
+
 function naPole(
   pole: CardAnalysisField,
   sekcja: SekcjaKarty | undefined,
   isPolish: boolean
 ): PoleDoUzupelnienia {
   return {
-    id: pole.id,
+    id: zakodujPoleId(sekcja?.id, pole.id),
     etykieta: pole.label,
     wartosc: String(pole.value ?? ''),
     format: pole.kind === 'list' ? 'list' : 'paragraph',
@@ -62,11 +74,12 @@ export function zbudujZrodlaPracujZAI(opcje: MostPracujZAIOpcje): {
 } {
   const { sekcje, polaSekcji, applyChange, isPolish } = opcje;
 
-  const zastosuj = (poleId: string, wartosc: string): boolean =>
-    applyChange({
+  const zastosuj = (poleId: string, wartosc: string): boolean => {
+    const decoded = odkodujPoleId(poleId);
+    return applyChange({
       id: `pracuj-z-ai-${poleId}`,
-      fieldId: poleId,
-      fieldLabel: poleId,
+      fieldId: decoded.poleId,
+      fieldLabel: decoded.poleId,
       rationale: isPolish
         ? 'Uzupełnienie pustego pola przez „Pracuj z AI".'
         : 'Empty field filled in via "Work with AI".',
@@ -76,18 +89,22 @@ export function zbudujZrodlaPracujZAI(opcje: MostPracujZAIOpcje): {
       // więc nie ma czego dopisywać (append) ani czego nadpisać.
       mode: 'replace',
       severity: 'medium',
-    });
+      sectionId: decoded.sekcjaId,
+    } as CardAnalysisChange & { sectionId?: string });
+  };
 
   const polaZakresu = (sekcjaId: string | null, caly: boolean): PoleDoUzupelnienia[] => {
-    const idsDoObjecia = caly
-      ? sekcje.map((s) => s.id)
-      : sekcjaId
-        ? [sekcjaId]
-        : [];
+    const idsDoObjecia = caly ? sekcje.map((s) => s.id) : sekcjaId ? [sekcjaId] : [];
     return idsDoObjecia.flatMap((id) =>
       polaSekcji(id)
         .filter((p) => p.writable)
-        .map((p) => naPole(p, sekcje.find((s) => s.id === id), isPolish))
+        .map((p) =>
+          naPole(
+            p,
+            sekcje.find((s) => s.id === id),
+            isPolish
+          )
+        )
     );
   };
 
