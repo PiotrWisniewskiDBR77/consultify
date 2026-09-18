@@ -639,6 +639,13 @@
     "teresa": {
       "label": "Teresa"
     },
+    "projectSwitcher": {
+      "label": "Project context",
+      "ariaLabel": "Select project context",
+      "allProjects": "All projects",
+      "empty": "No project memberships",
+      "loadFailed": "Projects unavailable"
+    },
     "split": {
       "assistantSubtitle": "Your transformation assistant"
     },

@@ -25,6 +25,7 @@ import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { FirstRunOnboarding } from '../components/Onboarding/FirstRunOnboarding';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
+import { ProjectContextSwitcher } from '../components/Projects/ProjectContextSwitcher';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -52,7 +53,11 @@ const DeferredHelpSidePanel: React.FC = () => {
     if (isOpen) setHasOpened(true);
   }, [isOpen]);
   if (!isOpen && !hasOpened) return null;
-  return <React.Suspense fallback={null}><HelpSidePanel /></React.Suspense>;
+  return (
+    <React.Suspense fallback={null}>
+      <HelpSidePanel />
+    </React.Suspense>
+  );
 };
 
 const UnifiedChatPanel = React.lazy(() =>
@@ -471,6 +476,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               </div>
 
               <div className="flex items-center gap-4">
+                <ProjectContextSwitcher />
+                <div className="hidden h-4 w-px bg-slate-200 dark:bg-white/10 lg:block"></div>
                 <SystemHealth />
                 <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                 <LLMSelector compact={isMobile} />
