@@ -1,0 +1,2 @@
+Not implemented: navigation to another Document
+Not implemented: Window's scrollTo() method
