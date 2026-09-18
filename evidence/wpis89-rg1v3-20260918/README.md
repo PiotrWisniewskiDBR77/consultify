@@ -107,3 +107,25 @@ zmierzonym powyżej (fabularne liczby v2 „2.4 / 42 obszary / 0–4" USUNIĘTE)
   „Overall Maturity Overview": 7 osi ze zmierzonymi wynikami 3.1/3.0/2.8/2.8/2.4/2.2/2.0,
   gapy, skala 1–7, overall 37% (2.6/7).
 - `KONSOLA-BLEDY` i `SIEC-4XX5XX` puste przy każdym zrzucie → bledyKonsoli=0.
+
+## Powtórka bramki PO rebase na `origin/integracja/20260911` (= `e05ea74752`)
+
+Commit po rebase: `d11543161e`. Rebase bez konfliktów. Logi z prefiksem `w89-post-`:
+
+1. server tsc: exit 0, 0 błędów (`w89-post-tsc-server.log`).
+2. root tsc (8 GB): HEAD 156 (`w89-post-tsc-root.log`) = BAZA `e05ea74752` 156
+   (`w89-post-tsc-root-base.log`, worktree `base-89` przestawiony na nowy HEAD linii).
+3. canon 345/346, artefakt 8/8 (stdout powyżej, bez regresji).
+4. jezyk exit 0 (`w89-post-jezyk.log`), build exit 0 (`w89-post-build.log`).
+5. Testy: realpg 4/4 (`w89-post-realpg.log`), aggregacja 7/7, realdb 5/5,
+   reportGeneration 2/2, contract 4/4, sourceRefsE2E 3/3.
+6. Czerwienie ZASTANE potwierdzone ponownie na NOWEJ linii: `assessment.routes.test.ts`
+   „no tests" (`w89-post-routes.log` vs `w89-post-base-routes.log`) i
+   `assessmentTargetLevel.day25.pg.test.ts` 1 failed | 10 passed „expected 400 to be 201"
+   (`w89-post-day25.log` vs `w89-post-base-day25.log`).
+7. Higiena bazy po przebiegach: bliźniaki=0, raporty=0, artefakty=0.
+
+Uwaga przyrządowa: katalog `evidence/wpis89-*` leży poza stożkiem sparse-checkout
+(`/evidence/qoder-*/`), więc po rebase git odmaterializował go z dysku (pliki zostały
+w commicie). Przywrócone przez `git sparse-checkout add /evidence/wpis89-rg1v3-20260918/`;
+logi `w89-post-*` dodane drugim commitem.
