@@ -1,0 +1,84 @@
+{
+  "endpoint": "GET /api/v8/interview/sessions",
+  "db": "kopia staging-pre-zasiew-demo-20260918T0129.dump w qoder-pg-2 (pg17), DB consultify_is2a",
+  "login": "POST /api/auth/login james.whitfield@northwind.example (haslo seeda 01-rdzen: /private/tmp/dane-pokazowe-en/northwind-konta.txt; hash ustawiony NA KOPII, dump pre-zasiew)",
+  "before": {
+    "code": 200,
+    "count": 6,
+    "rows": [
+      {
+        "id": "13c932b0-e750-410c-996b-66a98f8fb234",
+        "templateName": null,
+        "assigneeName": null,
+        "dueAt": null,
+        "submittedAt": null,
+        "status": "in_progress"
+      },
+      {
+        "id": "53197963-c59c-42d2-9ed0-4501221ffd48",
+        "templateName": null,
+        "assigneeName": null,
+        "dueAt": null,
+        "submittedAt": null,
+        "status": "in_progress"
+      },
+      {
+        "id": "87d0f2ba-c1ad-4a72-9aa2-6d5f6e57ecce",
+        "templateName": null,
+        "assigneeName": null,
+        "dueAt": null,
+        "submittedAt": null,
+        "status": "submitted"
+      }
+    ],
+    "rowKeys": 20
+  },
+  "after": {
+    "code": 200,
+    "count": 6,
+    "rows": [
+      {
+        "id": "13c932b0-e750-410c-996b-66a98f8fb234",
+        "templateName": "Process Pain Mapping",
+        "assigneeName": "Irina Lebedjuk",
+        "dueAt": "2026-10-20T16:00:00.000Z",
+        "submittedAt": null,
+        "status": "in_progress"
+      },
+      {
+        "id": "53197963-c59c-42d2-9ed0-4501221ffd48",
+        "templateName": "Strategic Direction Discovery",
+        "assigneeName": "Piotr Wiśniewski",
+        "dueAt": "2026-10-02T16:00:00.000Z",
+        "submittedAt": null,
+        "status": "in_progress"
+      },
+      {
+        "id": "87d0f2ba-c1ad-4a72-9aa2-6d5f6e57ecce",
+        "templateName": "Automation Readiness",
+        "assigneeName": "Irina Lebedjuk",
+        "dueAt": "2026-10-13T16:00:00.000Z",
+        "submittedAt": "2026-09-15T13:28:24.977Z",
+        "status": "submitted"
+      }
+    ],
+    "rowKeys": 32
+  },
+  "addedKeys": [
+    "sessionRuntimeStatus",
+    "assignmentStatus",
+    "assignmentPriority",
+    "assignmentCreatedBy",
+    "templateName",
+    "templateCategory",
+    "respondentId",
+    "respondentName",
+    "assigneeId",
+    "assigneeName",
+    "assigneeEmail",
+    "dueAt"
+  ],
+  "removedKeys": [],
+  "sharedFieldMismatches": 0,
+  "idsEqual": true
+}
