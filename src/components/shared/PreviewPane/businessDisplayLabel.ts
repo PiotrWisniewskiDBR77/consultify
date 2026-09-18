@@ -74,10 +74,21 @@ export const resolveBusinessDisplayLabel = ({
  * (`sharedComponents.relationKind.*`) — wartość żyje w locale, nie w kodzie.
  * `RELATION_KIND_LABELS` poniżej to zastany dług PL sprzed DEC-461: w tej
  * naprawie dopisujemy tylko kind, którego realnie używa podgląd (Wpis 70 P2),
- * reszty mapy i samego fallbacku nie ruszamy.
+ * reszty mapy nie ruszamy.
+ *
+ * D-28: generyczny fallback (kind bez wpisu) NIE jest już twardym literałem PL
+ * `?? 'Powiązany rekord'` — w EN UI pokazywał polski. Teraz idzie przez parę
+ * i18n `RELATION_GENERIC_FALLBACK` (`sharedComponents.relationKind.record`),
+ * dokładnie jak kindy nazwane powyżej.
  */
 const RELATION_KIND_I18N: Readonly<Record<string, { klucz: string; en: string }>> = Object.freeze({
   project: { klucz: 'sharedComponents.relationKind.project', en: 'Linked project' },
+});
+
+/** Generyczna para EN/PL dla relacji bez własnego kindu (D-28). */
+const RELATION_GENERIC_FALLBACK: Readonly<{ klucz: string; en: string }> = Object.freeze({
+  klucz: 'sharedComponents.relationKind.record',
+  en: 'Linked record',
 });
 
 const RELATION_KIND_LABELS: Readonly<Record<string, string>> = Object.freeze({
@@ -99,7 +110,10 @@ export const relationFallbackLabel = (type?: string): string => {
   const kind = String(type ?? '').toLowerCase();
   const para = RELATION_KIND_I18N[kind];
   if (para) return tlumaczPozaHookiem(para.klucz, para.en);
-  return RELATION_KIND_LABELS[kind] ?? 'Powiązany rekord';
+  return (
+    RELATION_KIND_LABELS[kind] ??
+    tlumaczPozaHookiem(RELATION_GENERIC_FALLBACK.klucz, RELATION_GENERIC_FALLBACK.en)
+  );
 };
 
 /** Detects an identifier even when a screen prefixes it, e.g. `Realizacja · <uuid>`. */

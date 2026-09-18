@@ -50386,7 +50386,8 @@
       "noLinkedDocuments": "Brak powiązań"
     },
     "relationKind": {
-      "project": "Powiązany projekt"
+      "project": "Powiązany projekt",
+      "record": "Powiązany rekord"
     },
     "previewCompletenessRing": {
       "missingFields": "Brakujące pola"

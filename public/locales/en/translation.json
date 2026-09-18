@@ -50023,7 +50023,8 @@
       "noLinkedDocuments": "No linked documents"
     },
     "relationKind": {
-      "project": "Linked project"
+      "project": "Linked project",
+      "record": "Linked record"
     },
     "previewCompletenessRing": {
       "missingFields": "Missing fields"
