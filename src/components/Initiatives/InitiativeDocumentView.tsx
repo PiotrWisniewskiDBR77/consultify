@@ -10599,6 +10599,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   initiativeId={initiativeId}
                   expectedVersion={initiative?.canonicalVersion ?? null}
                   reviewerUserId={sponsorId || null}
+                  currentUserId={currentUser?.id || null}
                 />
               ),
             } as ArtifactRightPanelSection,

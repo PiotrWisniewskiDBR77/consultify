@@ -12945,17 +12945,48 @@
   },
   "initiatives": {
     "pmo": {
-      "queues": {"review": "To review", "discuss": "To discuss", "approve": "To approve", "blocked": "Blocked", "overdue": "Overdue"},
-      "inbox": {"stage": "Initiative stage decision", "definition": "Definition review", "analysis": "Analysis review", "portfolio": "Portfolio decision", "schedule": "Schedule decision", "handoff": "Handoff decision", "acceptance": "Acceptance decision", "reason": "This initiative stage requires your action."},
-      "columns": {"stage": "Stage", "responsible": "Responsible", "due": "Due", "nextStep": "Next step"},
-      "stageTransition": "Stage transition", "transitionSaved": "Stage transition saved",
-      "conditionsMet": "All server preflight conditions are met", "whoApproves": "Who approves",
-      "requestDecision": "Request decision", "approveTransition": "Approve transition",
-      "requestReason": "Stage transition requested from the initiative card.", "requested": "Decision requested",
-      "requestFailed": "Could not request a decision", "requestUnavailable": "Complete the conditions and assign a reviewer first",
-      "noTransition": "No transition is available for your role at this stage.", "decisionLog": "Decision log",
-      "logUnavailable": "The immutable decision log could not be loaded.", "noDecisions": "No recorded gate decisions.",
-      "reviewer": "Reviewer", "approved": "Approved", "rejected": "Rejected"
+      "queues": {
+        "review": "To review",
+        "discuss": "To discuss",
+        "approve": "To approve",
+        "blocked": "Blocked",
+        "overdue": "Overdue"
+      },
+      "inbox": {
+        "stage": "Initiative stage decision",
+        "definition": "Definition review",
+        "analysis": "Analysis review",
+        "portfolio": "Portfolio decision",
+        "schedule": "Schedule decision",
+        "handoff": "Handoff decision",
+        "acceptance": "Acceptance decision",
+        "reason": "This initiative stage requires your action."
+      },
+      "columns": {
+        "stage": "Stage",
+        "responsible": "Responsible",
+        "due": "Due",
+        "nextStep": "Next step"
+      },
+      "stageTransition": "Stage transition",
+      "transitionSaved": "Stage transition saved",
+      "conditionsMet": "All server preflight conditions are met",
+      "whoApproves": "Who approves",
+      "requestDecision": "Request decision",
+      "approveTransition": "Approve transition",
+      "requestReason": "Stage transition requested from the initiative card.",
+      "requested": "Decision requested",
+      "requestFailed": "Could not request a decision",
+      "requestUnavailable": "Complete the conditions and assign a reviewer first",
+      "unsupportedTransitionTarget": "This transition is not supported by the PMO decision request yet.",
+      "noTransition": "No transition is available for your role at this stage.",
+      "decisionLog": "Decision log",
+      "logUnavailable": "The immutable decision log could not be loaded.",
+      "noDecisions": "No recorded gate decisions.",
+      "reviewer": "Reviewer",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "selfReviewBlocked": "Choose a reviewer other than yourself before requesting this decision."
     },
     "workload": {
       "aria": "Initiatives workload",
