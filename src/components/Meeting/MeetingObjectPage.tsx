@@ -161,6 +161,7 @@ import {
   resolveMeetingLifecycleState,
 } from './meetingLifecycle';
 import { translateOperatorMessage } from './meetingOperatorBriefI18n';
+import { isMeetingProtocolEnabled } from './meetingProtocolFlag';
 
 type Section = 'details' | 'minutes' | 'decisions';
 
@@ -1296,6 +1297,24 @@ export const MeetingObjectPage: React.FC = () => {
   // ── Centrum: trzy sekcje = te same trasy co dziś (details/minutes/decisions) ──
   const detailsContent = (
     <div className="grid gap-4 p-5 lg:grid-cols-2">
+      {isMeetingProtocolEnabled() ? (
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`${ROUTES.MEETINGS.ROOT}/${encodeURIComponent(meeting.id)}/protocol`)
+          }
+          className="lg:col-span-2 flex items-center justify-between gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-5 py-4 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          data-testid="meeting-open-protocol"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-c-text">
+            <FileText size={16} className="text-c-text-muted" />
+            {t('meeting.protocol.open', 'Protocol')}
+          </span>
+          <span className="text-xs text-c-text-muted">
+            {t('meeting.protocol.openHint', 'Open the structured protocol document')}
+          </span>
+        </button>
+      ) : null}
       <ParticipantsField
         participants={participants}
         legacyAttendees={meeting.attendees}

@@ -344,6 +344,12 @@ const MeetingHub = lazyWithRetry(() =>
 const MeetingObjectPage = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingObjectPage').then((m) => ({ default: m.MeetingObjectPage }))
 );
+// MTG-2a (DEC-607) — `/meetings/:meetingId/protocol`: the structured protocol
+// document (archetype-B), reachable from the meeting card only while the
+// `VITE_MEETING_PROTOCOL` flag is ON.
+const MeetingProtocolPage = lazyWithRetry(() =>
+  import('@/components/Meeting/MeetingProtocolPage').then((m) => ({ default: m.MeetingProtocolPage }))
+);
 // DEC-425 — neutral "planned for Wave 2" screen shown on every /meetings/**
 // route while `isMeetingsModuleEnabled()` is OFF (default). See
 // meetingsModuleFlag.ts and MeetingsWave2Placeholder.tsx header comments.
@@ -3181,6 +3187,47 @@ export const AppRoutes: React.FC = () => {
                   >
                     <RouteErrorBoundary>
                       <MeetingObjectPage />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.meeting', 'Meeting'),
+                    t('meeting.meetingLabel', 'Meeting'),
+                  ]
+                }
+                noPadding
+              >
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
+              </MainLayout>
+            )
+          }
+        />
+        <Route
+          path={ROUTES.MEETINGS.PROTOCOL}
+          element={
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.meeting', 'Meeting'),
+                      t('meeting.meetingLabel', 'Meeting'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingProtocolPage />
                     </RouteErrorBoundary>
                   </ProductionModuleGate>
                 </MainLayout>

@@ -141,6 +141,7 @@ export const ROUTES = {
     MINUTES: '/meetings/:meetingId/minutes',
     DECISIONS: '/meetings/:meetingId/decisions',
     NOTE: '/meetings/:meetingId/notes/:noteId',
+    PROTOCOL: '/meetings/:meetingId/protocol',
   },
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
