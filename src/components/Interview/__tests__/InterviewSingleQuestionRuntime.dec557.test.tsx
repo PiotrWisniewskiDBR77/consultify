@@ -13,11 +13,13 @@
  *      LIGHT card (`bg-white`): pixel contrast 1.70:1 (label) and 1.28:1
  *      (content) in light theme, 4.32:1 (label) in dark — all < 4.5:1.
  *      Fixed with the `text-c-warning` token (light #a3541c -> 5.15:1; dark
- *      #e8a33d -> 7.97:1). Dark content (10.06:1) is NOT repainted — it keeps
- *      `dark:text-amber-200/90`.
+ *      #e8a33d -> 7.97:1).
+ *   3. D-21: the immersive hint CONTENT kept a raw Tailwind dark override
+ *      (`dark:text-amber-200/90`) on top of the token; removed so the
+ *      `--c-warning` token paints both themes (dark 7.97:1, still AA).
  *
- * MUTATION PROOF: restoring `line-through` or `text-amber-400/70` turns the
- * matching test red.
+ * MUTATION PROOF: restoring `line-through`, `text-amber-400/70` or
+ * `dark:text-amber-200/90` turns the matching test red.
  */
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
@@ -106,5 +108,13 @@ describe('DEC-557 (Wpis 43) — approved question readable + hint contrast AA', 
     expect(label.className).not.toContain('amber-400');
     const content = screen.getByText(HINT_TEXT);
     expect(content.className).toContain('text-c-warning');
+  });
+
+  it('D-21: immersive hint content has NO raw dark amber override — the token paints both themes', () => {
+    render(<InterviewSingleQuestionRuntime {...baseProps} immersive />);
+    const content = screen.getByText(HINT_TEXT);
+    const classes = content.className.split(/\s+/);
+    expect(classes).toContain('text-c-warning');
+    expect(classes).not.toContain('dark:text-amber-200/90');
   });
 });

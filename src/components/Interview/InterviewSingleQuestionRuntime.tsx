@@ -2217,7 +2217,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                               <p
                                 className={`text-sm leading-relaxed ${
                                   immersive
-                                    ? 'text-c-warning dark:text-amber-200/90'
+                                    ? 'text-c-warning'
                                     : 'text-amber-950 dark:text-amber-200/90'
                                 }`}
                               >
