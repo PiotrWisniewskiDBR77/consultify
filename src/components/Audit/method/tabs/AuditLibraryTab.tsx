@@ -15,7 +15,8 @@
  * `verificationStatus === 'VERIFIED'` — oś typu źródła go nie zna.
  */
 import { CheckCircle2, Library as LibraryIcon, PlayCircle, Send } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   type StandardRowMenu,
@@ -29,6 +30,7 @@ import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { isAuditPackageViewerEnabled } from '@/utils/auditPackageViewerFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from '../auditRoleLabels';
@@ -71,6 +73,14 @@ export interface AuditLibraryTabProps {
   onPublishPack: (pack: AuditPackSummary) => void;
   /** `${packId}:approve-expert` albo `${packId}:publish` w trakcie wywołania — wyłącza przycisk, żeby nie zdublować kliku. */
   pendingPackActionKey: string | null;
+  /**
+   * OP-2 (Wpis 99): deep link `?tab=library&selectPackId=…` z ekranu obiektu
+   * pakietu. ZAZNACZA wiersz (hub czyta parametr i podaje go tutaj — ten sam
+   * wzór co `initialSelectedId` zakładki Processes) i NIC nie uruchamia:
+   * „Rozpocznij audyt" pozostaje klikem użytkownika, żeby nawigacja nigdy nie
+   * tworzyła programu audytowego sama z siebie. Pominięty → zachowanie 1:1.
+   */
+  initialSelectedId?: string | null;
 }
 
 /**
@@ -197,11 +207,17 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   onApprovePackExpert,
   onPublishPack,
   pendingPackActionKey,
+  initialSelectedId,
 }) => {
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  // OP-2 (Wpis 99): flaga czytana RAZ na montowanie — `resetAuditPackageViewerFlagCache`
+  // w testach plus ponowne renderowanie daje deterministyczny wynik, a lista nie
+  // zmienia zachowania w trakcie sesji użytkownika.
+  const viewerEnabled = useMemo(() => isAuditPackageViewerEnabled(), []);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);
   const [detail, setDetail] = useState<AuditPackDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -228,6 +244,21 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   }, [selectedId]);
 
   const selectedPack = packs.find((p) => p.id === selectedId) || null;
+
+  /**
+   * JEDNO wejście do szczegółów pakietu — klik wiersza i kebab „Podgląd"
+   * wołają tę samą funkcję, więc flaga `VITE_AUDIT_PACKAGE_VIEWER` nie może
+   * rozjechać tych dwóch ścieżek. OFF = dzisiejszy prawy panel bez zmian
+   * (`useJedenPanel` musi dostać `otworz()` z realnego kliku, nigdy z efektu).
+   */
+  const openPack = (id: string) => {
+    if (viewerEnabled) {
+      navigate(`/audit-programs/packs/${encodeURIComponent(id)}`);
+      return;
+    }
+    jedenPanel.otworz();
+    setSelectedId(id);
+  };
 
   const columns: TableColumn[] = [
     {
@@ -379,10 +410,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => {
-          jedenPanel.otworz();
-          setSelectedId(row.id);
-        },
+        // „Otwórz podgląd" z kebabu idzie przez TEN SAM `openPack` co klik
+        // wiersza — przy fladze ON obie ścieżki prowadzą na trasę obiektu.
+        preview: () => openPack(row.id),
       },
     };
   };
@@ -457,10 +487,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
           data={packs}
           loading={loading}
           rowMenu={rowMenu}
-          onRowClick={(row) => {
-            jedenPanel.otworz();
-            setSelectedId(String(row.id));
-          }}
+          onRowClick={(row) => openPack(String(row.id))}
           selectedRowId={selectedId}
           persistKey="audits.method.library"
           empty={{

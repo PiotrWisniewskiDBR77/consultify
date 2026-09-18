@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OP-2a Audit Pack Object — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      OP-2a (Wpis 99) evidence harness — separate entry point on purpose: the
+      shared `dev-render/index.html` → `main.tsx` registry statically imports
+      screens that do not exist at this worktree's base commit (documented in
+      `method-workspace.html` / `mw010-vault.html`). This entry mounts ONLY
+      `screens/qoder-op2a-pack-object` (the REAL `AuditsMethodHub` + the REAL
+      `AuditPackObjectPage`) and bypasses the shared registry entirely.
+
+      Params: ?lang=en&theme=light|dark&view=list|object&pack=pack-draft-1|pack-published-1
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/qoder-op2a-pack-object-main.tsx"></script>
+  </body>
+</html>

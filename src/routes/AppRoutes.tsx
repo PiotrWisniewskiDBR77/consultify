@@ -32,6 +32,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
+import { isAuditPackageViewerEnabled } from '@/utils/auditPackageViewerFlag';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { isExceleEngineEnabled } from '@/utils/exceleFlag';
@@ -633,6 +634,15 @@ const AuditReportDocumentView = lazyWithRetry(
   () => import('@/components/Audit/method/AuditReportDocumentView')
 );
 
+// OP-2 (Wpis 99, wiersz planu 65 / U-27): ekran obiektu pakietu audytowego
+// (SPEC-A archetyp C Rekord) — drugie wejście do pakietu obok prawego panelu
+// listy. Flag-gated (`ff_auditPackageViewer`, `VITE_AUDIT_PACKAGE_VIEWER`,
+// default OFF do akceptu właściciela) — patrz `AuditPackObjectRoute` niżej i
+// `src/utils/auditPackageViewerFlag.ts`.
+const AuditPackObjectPage = lazyWithRetry(
+  () => import('@/components/Audit/method/pack/AuditPackObjectPage')
+);
+
 // Assessment Output artifact screens (tor "wołacze" 2026-09-02): two
 // components built and visually accepted by Piotr, reachable by these two
 // routes. Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON
@@ -902,6 +912,40 @@ const AuditReportDocumentRoute: React.FC = () => {
     return <Navigate to="/audit-programs?tab=reports" replace />;
   }
   return <AuditReportDocumentView reportId={params.reportId} />;
+};
+
+/**
+ * Audits module entry for the pack OBJECT screen (OP-2, Wpis 99 —
+ * `AuditPackObjectPage`, SPEC-A archetype C Rekord, `GET /audits/packs/:id`).
+ * Flag-gated (`isAuditPackageViewerEnabled`, default OFF until the owner
+ * accepts it on screenshots, fail-closed — CLAUDE.md #7): OFF → redirects to
+ * the Library tab, i.e. exactly where the pack was reachable before this route
+ * existed (read-only right panel, DEC-397).
+ *
+ * „Start audit" does NOT create the program here on purpose: the real flow
+ * (`AuditsMethodHub.handleStartAudit` — idempotency key, canonical readback,
+ * list refresh, tab switch) belongs to the hub, and copying it into a route
+ * component is how the same gate ends up implemented twice. The button is
+ * gated by the SAME `evaluateStartGate` as the list kebab and deep-links to
+ * that pack in the Library, where the hub's handler runs it.
+ */
+const AuditPackObjectRoute: React.FC = () => {
+  const params = useParams<{ packId: string }>();
+  const navigate = useNavigate();
+  if (!isAuditPackageViewerEnabled()) {
+    return <Navigate to="/audit-programs?tab=library" replace />;
+  }
+  return (
+    <AuditPackObjectPage
+      packId={params.packId ?? null}
+      onBack={() => navigate('/audit-programs?tab=library')}
+      onStartAudit={(pack) =>
+        navigate(
+          `/audit-programs?tab=library&selectPackId=${encodeURIComponent(pack.id)}`
+        )
+      }
+    />
+  );
 };
 
 /**
@@ -1877,6 +1921,29 @@ export const AppRoutes: React.FC = () => {
 
         {/* Retired parallel entry: the canonical kernel now owns /audit-programs. */}
         <Route path="/audit-programs/method" element={<Navigate to="/audit-programs" replace />} />
+
+        {/* OP-2 (Wpis 99, wiersz planu 65 / U-27) — ekran obiektu pakietu
+            audytowego (SPEC-A archetyp C Rekord), otwierany z listy Biblioteki
+            za flagą `VITE_AUDIT_PACKAGE_VIEWER`. Flag-gated — patrz
+            `AuditPackObjectRoute` powyżej. */}
+        <Route
+          path="/audit-programs/packs/:packId"
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits')]}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message={t('layout.loading.audits')} />}>
+                        <AuditPackObjectRoute />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Canonical criterion workspace: one governed lifecycle from source
             and evidence through finding, remediation and closure. */}

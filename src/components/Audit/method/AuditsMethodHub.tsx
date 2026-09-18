@@ -861,6 +861,7 @@ export const AuditsMethodHub: React.FC = () => {
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'library' ? (
           <AuditLibraryTab
+            initialSelectedId={searchParams.get('selectPackId')}
             packs={filteredPacks}
             loading={packsLoading}
             error={packsError}
