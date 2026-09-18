@@ -2574,18 +2574,17 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </div>
       </header>
 
-      {workspaceNavV2 && !isTemplateMode ? (
-        <ReportWorkspaceModeBar
-          mode={effectiveWorkspaceMode}
-          onChange={handleWorkspaceModeChange}
-        />
-      ) : null}
-
-      {!isTemplateMode && (!workspaceNavV2 || effectiveWorkspaceMode === 'write') ? (
+      {!isTemplateMode ? (
         <div className="shrink-0 px-4 py-2">
           <NModeMenu2
             isPolish={isPl}
             sectionsMenu={<span className="text-xs font-medium text-c-text-secondary">{t('common.sections', 'Sections')}</span>}
+            centerControl={workspaceNavV2 ? (
+              <ReportWorkspaceModeBar
+                mode={effectiveWorkspaceMode}
+                onChange={handleWorkspaceModeChange}
+              />
+            ) : undefined}
             aiButton={
               <PracujZAI
                 isPolish={isPl}

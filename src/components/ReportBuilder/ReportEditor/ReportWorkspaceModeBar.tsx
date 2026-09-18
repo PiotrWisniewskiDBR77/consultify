@@ -9,25 +9,35 @@ interface ReportWorkspaceModeBarProps {
   onChange: (mode: ReportBuilderWorkspaceMode) => void;
 }
 
+const L = {
+  ariaLabel: { en: 'Report workspace mode', pl: 'Tryb pracy raportu' },
+  write: { en: 'Write', pl: 'Pisanie' },
+  review: { en: 'Review', pl: 'Recenzja' },
+  publish: { en: 'Publish', pl: 'Publikacja' },
+} as const;
+
+const pick = (pair: { en: string; pl: string }, language?: string) =>
+  language?.toLowerCase().startsWith('pl') ? pair.pl : pair.en;
+
 export const ReportWorkspaceModeBar: React.FC<ReportWorkspaceModeBarProps> = ({
   mode,
   onChange,
 }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const items = [
-    { id: 'write' as const, icon: PenLine, label: t('reportBuilder.nav.write', 'Write') },
+    { id: 'write' as const, icon: PenLine, label: pick(L.write, i18n.language) },
     {
       id: 'review' as const,
       icon: MessageSquareText,
-      label: t('reportBuilder.nav.review', 'Review'),
+      label: pick(L.review, i18n.language),
     },
-    { id: 'publish' as const, icon: Eye, label: t('reportBuilder.nav.publish', 'Publish') },
+    { id: 'publish' as const, icon: Eye, label: pick(L.publish, i18n.language) },
   ];
 
   return (
     <nav
-      aria-label={t('reportBuilder.nav.ariaLabel', 'Report workspace mode')}
-      className="flex h-10 items-end gap-6 border-b border-c-border-subtle px-6"
+      aria-label={pick(L.ariaLabel, i18n.language)}
+      className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-c-border-subtle bg-c-surface p-0.5"
       data-testid="report-builder-mode-bar"
     >
       {items.map(({ id, icon: Icon, label }) => (
@@ -37,13 +47,13 @@ export const ReportWorkspaceModeBar: React.FC<ReportWorkspaceModeBarProps> = ({
           onClick={() => onChange(id)}
           aria-current={mode === id ? 'page' : undefined}
           data-testid={`report-builder-mode-${id}`}
-          className={`flex h-10 items-center gap-2 border-b-2 px-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+          className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
             mode === id
-              ? 'border-c-border-strong text-c-text'
-              : 'border-transparent text-c-text-secondary hover:text-c-text'
+              ? 'bg-c-surface-raised text-c-text shadow-sm'
+              : 'text-c-text-muted hover:bg-state-hover hover:text-c-text-secondary'
           }`}
         >
-          <Icon size={15} aria-hidden="true" />
+          <Icon size={13} aria-hidden="true" className="shrink-0" />
           {label}
         </button>
       ))}

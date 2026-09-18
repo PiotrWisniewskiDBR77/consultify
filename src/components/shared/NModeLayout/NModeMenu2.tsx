@@ -243,6 +243,8 @@ export interface NModeMenu2Props {
   sectionsMenu?: React.ReactNode;
   /** ŚRODEK — przełącznik Edycja | Podgląd. Pomiń `onReadModeChange`, by ukryć. */
   readMode?: boolean;
+  /** ŚRODEK — alternatywny kontroler trybu dla powierzchni z własnym cyklem pracy. */
+  centerControl?: React.ReactNode;
   onReadModeChange?: (readMode: boolean) => void;
   modeToggleDisabled?: boolean;
   /** PRAWA (opcjonalnie) — „How to" / „Baza wiedzy". */
@@ -270,6 +272,7 @@ export interface NModeMenu2Props {
 export const NModeMenu2: React.FC<NModeMenu2Props> = ({
   sectionsMenu,
   readMode,
+  centerControl,
   onReadModeChange,
   modeToggleDisabled,
   howToButton,
@@ -279,7 +282,14 @@ export const NModeMenu2: React.FC<NModeMenu2Props> = ({
   isPolish = false,
   className = '',
 }) => {
-  const showToggle = typeof onReadModeChange === 'function';
+  const centerNode = centerControl ?? (typeof onReadModeChange === 'function' ? (
+    <Menu2ModeToggle
+      readMode={!!readMode}
+      onChange={onReadModeChange}
+      disabled={modeToggleDisabled}
+      isPolish={isPolish}
+    />
+  ) : null);
 
   return (
     <div
@@ -293,19 +303,12 @@ export const NModeMenu2: React.FC<NModeMenu2Props> = ({
       </div>
 
       {/* ── ŚRODEK: geometryczna oś CAŁEGO paska, nie środek wolnego miejsca ─ */}
-      {showToggle && (
+      {centerNode && (
         <div
           data-menu2-zone="center"
           className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         >
-          <div className="pointer-events-auto">
-            <Menu2ModeToggle
-              readMode={!!readMode}
-              onChange={onReadModeChange!}
-              disabled={modeToggleDisabled}
-              isPolish={isPolish}
-            />
-          </div>
+          <div className="pointer-events-auto">{centerNode}</div>
         </div>
       )}
 
