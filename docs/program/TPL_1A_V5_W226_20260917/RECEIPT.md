@@ -62,3 +62,15 @@ i pomiar `menu3Scopes=0` dla obu motywów.
 Zmiana dotyka wyłącznie Huba Materiałów, jego kontraktu i dwóch plików locale. Nie zmienia
 `artifactNavigation.ts`, `OutputsAggregateTabContent.tsx` ani `artifactRegistryService.ts`.
 Przegląd końcowy nie wykazał otwartego defektu w zakresie DEC-631.
+
+## v5b — Wpis 235 i dług D-95
+
+- Zaktualizowano stary kontrakt DEC-423: trzeci kanoniczny `Menu2PresetDropdown`
+  jest filtrem Source wymaganym przez DEC-631 (`toHaveLength(3)`).
+- **D-95:** test renderu dokumentu broni wszystkich włączonych bloków i ich kolejności;
+  dodatkowy guard wiąże canvas Review/Publish z pełną kolekcją `blocks`.
+- **D-95:** `BlockCard.navV2.test.tsx` broni jednego aktywnego Regenerate oraz jednego
+  kebaba z Configure, AI i Comments.
+- Focused GREEN: 3 pliki / 7 testów PASS; ESLint nowych i zmienionych testów/kontraktu: 0 błędów; `git diff --check`: PASS.
+- Mutacje: licznik dropdownów 3→2 = RED; Publish `blocks.slice(0, 1)` = RED; usunięcie Comments z kebaba = RED (każda RC=1).
+- Zgodnie z Wpisem 235 nie powtarzano odbioru wizualnego ani wcześniejszych pomiarów.

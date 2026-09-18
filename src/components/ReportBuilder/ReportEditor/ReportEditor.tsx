@@ -462,7 +462,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   );
 };
 
-const ReportDocumentView: React.FC<{
+export const ReportDocumentView: React.FC<{
   blocks: BlockConfig[];
   reportTitle: string;
   styling: ReportStyling;

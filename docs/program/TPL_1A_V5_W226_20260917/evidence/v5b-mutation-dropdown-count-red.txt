@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5b-w235-20260917
+
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > nie ma bespoke popovera „Filters" (przycisk/stan/stopka Wyczyść wszystko|Zrobione) 26ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > renderuje kanoniczne dropdowny Menu 2 (Status, Widoczność, Source) 1ms
+ × src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > używa istniejącego Menu2PresetDropdown (Inicjatywy DEC-420) — nie pisze nowego komponentu 5ms
+   → expected [ '<Menu2PresetDropdown', …(2) ] to have a length of 2 but got 3
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > CTA „Nowy output" zmieniony na „Nowy materiał" (żargon → P4) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > używa istniejącego Menu2PresetDropdown (Inicjatywy DEC-420) — nie pisze nowego komponentu
+AssertionError: expected [ '<Menu2PresetDropdown', …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts:50:23
+     48|     // DEC-631: trzeci preset = Source (obok Status + Widoczność).
+     49|     const usageHits = source.match(/<Menu2PresetDropdown/g) || [];
+     50|     expect(usageHits).toHaveLength(2);
+       |                       ^
+     51|   });
+     52|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:18:55
+   Duration  757ms (transform 87ms, setup 211ms, import 10ms, tests 34ms, environment 385ms)

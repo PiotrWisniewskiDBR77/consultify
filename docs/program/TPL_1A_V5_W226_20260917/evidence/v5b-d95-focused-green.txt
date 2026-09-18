@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5b-w235-20260917
+
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > nie ma bespoke popovera „Filters" (przycisk/stan/stopka Wyczyść wszystko|Zrobione) 17ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > renderuje kanoniczne dropdowny Menu 2 (Status, Widoczność, Source) 1ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > używa istniejącego Menu2PresetDropdown (Inicjatywy DEC-420) — nie pisze nowego komponentu 0ms
+ ✓ src/components/ReportsAndPresentations/__tests__/materialsMenu2Filters.contract.test.ts > ReportsAndPresentationsHub — Menu 2 filtry (DEC-423) > CTA „Nowy output" zmieniony na „Nowy materiał" (żargon → P4) 0ms
+ ✓ src/components/ReportBuilder/ReportEditor/__tests__/BlockCard.navV2.test.tsx > RB-3 D-95 BlockCard navigation v2 contract > keeps one active Regenerate action and Configure/AI/Comments in one kebab 151ms
+stdout | src/components/ReportBuilder/ReportEditor/__tests__/ReportDocumentView.navV2.test.tsx
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+
+ ✓ src/components/ReportBuilder/ReportEditor/__tests__/ReportDocumentView.navV2.test.tsx > RB-3 D-95 whole-document Publish contract > renders every enabled report block in document order 22ms
+ ✓ src/components/ReportBuilder/ReportEditor/__tests__/ReportDocumentView.navV2.test.tsx > RB-3 D-95 whole-document Publish contract > passes the complete block collection from Review/Publish canvas to the document view 0ms
+
+ Test Files  3 passed (3)
+      Tests  7 passed (7)
+   Start at  21:20:05
+   Duration  1.53s (transform 920ms, setup 461ms, import 1.19s, tests 197ms, environment 897ms)

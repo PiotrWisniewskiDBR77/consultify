@@ -1,0 +1,575 @@
+
+ RUN  v4.1.11 /Users/piotrwisniewski/Developer/codex-wt/b-tpl1a-v5b-w235-20260917
+
+ × src/components/ReportBuilder/ReportEditor/__tests__/BlockCard.navV2.test.tsx > RB-3 D-95 BlockCard navigation v2 contract > keeps one active Regenerate action and Configure/AI/Comments in one kebab 345ms
+   → Unable to find an accessible element with the role "button" and name "Comments"
+
+Here are the accessible roles:
+
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"w-full font-semibold text-sm text-c-text bg-transparent border-none outline-none focus:ring-0"[39m
+    [33mplaceholder[39m=[32m"Block title..."[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"Executive summary"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Regenerate":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle opacity-0 group-hover:opacity-100"[39m
+    [33mtitle[39m=[32m"Regenerate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Block actions":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Block actions"[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded transition-opacity opacity-100"[39m
+  [36m/>[39m
+
+  Name "Configure":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex w-full items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "AI":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex w-full items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Add below":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Disable":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Copy":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Remove":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary"[39m
+  [36m/>[39m
+
+  Name "Edit":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors font-medium"[39m
+  [36m/>[39m
+
+  Name "Copy":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded transition-colors font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-6 h-6 bg-blue-600 text-c-text rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr[39m
+    [33mclass[39m=[32m"my-1 border-c-border-subtle"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<hr[39m
+    [33mclass[39m=[32m"my-1 border-c-border-subtle"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"
+        group relative bg-c-surface rounded-xl border-2 transition-all
+        border-blue-500 shadow-lg shadow-blue-500/10
+
+      "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cursor-grab text-c-text-secondary hover:text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-grip w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-8 h-8 rounded-lg bg-gradient-to-br from-c-tag-2 to-c-tag-2 flex items-center justify-center text-c-text flex-shrink-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-file-text w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 9H8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 13H8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 17H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"w-full font-semibold text-sm text-c-text bg-transparent border-none outline-none focus:ring-0"[39m
+            [33mplaceholder[39m=[32m"Block title..."[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"Executive summary"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-1.5 mt-0.5"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-[10px] text-c-text-secondary capitalize"[39m
+            [36m>[39m
+              [0msummary[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-[9px] px-1 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded font-medium"[39m
+            [36m>[39m
+              [0mGenerated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle opacity-0 group-hover:opacity-100"[39m
+          [33mtitle[39m=[32m"Regenerate"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw w-3 h-3"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mRegenerate[0m
+        [36m</button>[39m
+        [36m<di...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ReportBuilder/ReportEditor/__tests__/BlockCard.navV2.test.tsx > RB-3 D-95 BlockCard navigation v2 contract > keeps one active Regenerate action and Configure/AI/Comments in one kebab
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Comments"
+
+Here are the accessible roles:
+
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"w-full font-semibold text-sm text-c-text bg-transparent border-none outline-none focus:ring-0"[39m
+    [33mplaceholder[39m=[32m"Block title..."[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"Executive summary"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Regenerate":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle opacity-0 group-hover:opacity-100"[39m
+    [33mtitle[39m=[32m"Regenerate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Block actions":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Block actions"[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded transition-opacity opacity-100"[39m
+  [36m/>[39m
+
+  Name "Configure":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex w-full items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "AI":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex w-full items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Add below":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Disable":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Copy":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"[39m
+  [36m/>[39m
+
+  Name "Remove":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full flex items-center gap-2 px-3 py-1.5 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-1 text-c-text-secondary hover:text-c-text-secondary"[39m
+  [36m/>[39m
+
+  Name "Edit":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors font-medium"[39m
+  [36m/>[39m
+
+  Name "Copy":
+  [36m<button[39m
+    [33mclass[39m=[32m"flex items-center gap-1 px-2 py-1 text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded transition-colors font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-6 h-6 bg-blue-600 text-c-text rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr[39m
+    [33mclass[39m=[32m"my-1 border-c-border-subtle"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<hr[39m
+    [33mclass[39m=[32m"my-1 border-c-border-subtle"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"
+        group relative bg-c-surface rounded-xl border-2 transition-all
+        border-blue-500 shadow-lg shadow-blue-500/10
+
+      "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cursor-grab text-c-text-secondary hover:text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-grip w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"5"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"19"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"19"[39m
+              [33mr[39m=[32m"1"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-8 h-8 rounded-lg bg-gradient-to-br from-c-tag-2 to-c-tag-2 flex items-center justify-center text-c-text flex-shrink-0"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-file-text w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 9H8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 13H8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 17H8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 min-w-0"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"w-full font-semibold text-sm text-c-text bg-transparent border-none outline-none focus:ring-0"[39m
+            [33mplaceholder[39m=[32m"Block title..."[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"Executive summary"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-1.5 mt-0.5"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-[10px] text-c-text-secondary capitalize"[39m
+            [36m>[39m
+              [0msummary[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-[9px] px-1 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded font-medium"[39m
+            [36m>[39m
+              [0mGenerated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle opacity-0 group-hover:opacity-100"[39m
+          [33mtitle[39m=[32m"Regenerate"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw w-3 h-3"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mRegenerate[0m
+        [36m</button>[39m
+        [36m<di...
+ ❯ Object.getElementError ../../Consultify/node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../Consultify/node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../Consultify/node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../Consultify/node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ReportBuilder/ReportEditor/__tests__/BlockCard.navV2.test.tsx:64:19
+     62|     expect(screen.getByRole('button', { name: 'Configure' })).toBeInTh…
+     63|     expect(screen.getByRole('button', { name: 'AI' })).toBeInTheDocume…
+     64|     expect(screen.getByRole('button', { name: 'Comments' })).toBeInThe…
+       |                   ^
+     65|   });
+     66| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  21:19:00
+   Duration  1.31s (transform 208ms, setup 214ms, import 309ms, tests 347ms, environment 320ms)
