@@ -16,6 +16,10 @@ import { v4 as uuidv4 } from 'uuid';
 import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
 import { INITIATIVE_LIFECYCLE_STAGES } from '../constants/initiativeLifecycleStages.js';
+import {
+  derivePmoRoleFromLegacyStakeholderRole,
+  normalizePmoRole,
+} from '../services/pmo/initiativeStageSlaService.js';
 import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeLegacyBudgetItem } from '../domain/initiatives-execution/budgetItems.js';
 import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
@@ -5606,6 +5610,8 @@ export class InitiativeController {
           s.external_name as "externalName",
           s.external_email as "externalEmail",
           s.role,
+          s.pmo_role as "pmoRole",
+          s.pmo_role_source as "pmoRoleSource",
           s.raci_type as "raciType",
           s.influence_level as "influenceLevel",
           s.interest_level as "interestLevel",
@@ -5630,8 +5636,16 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { userId, raciType, role, externalName, externalEmail, influenceLevel, interestLevel } =
-        req.body || {};
+      const {
+        userId,
+        raciType,
+        role,
+        pmoRole,
+        externalName,
+        externalEmail,
+        influenceLevel,
+        interestLevel,
+      } = req.body || {};
 
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -5717,6 +5731,11 @@ export class InitiativeController {
         resolvedRaci = 'I';
       }
 
+      const requestedPmoRole = normalizePmoRole(pmoRole);
+      const derivedPmoRole = derivePmoRoleFromLegacyStakeholderRole(resolvedDbRole);
+      const resolvedPmoRole = requestedPmoRole || derivedPmoRole;
+      const resolvedPmoRoleSource = requestedPmoRole ? 'overridden' : resolvedPmoRole ? 'derived' : null;
+
       // DB requires influence_level + interest_level NOT NULL (1..5). Default to 3.
       const inf = Number.isFinite(Number(influenceLevel)) ? Number(influenceLevel) : 3;
       const intr = Number.isFinite(Number(interestLevel)) ? Number(interestLevel) : 3;
@@ -5730,11 +5749,13 @@ export class InitiativeController {
           external_name,
           external_email,
           role,
+          pmo_role,
+          pmo_role_source,
           raci_type,
           influence_level,
           interest_level,
           created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           initiativeId,
@@ -5742,6 +5763,8 @@ export class InitiativeController {
           userId ? null : externalName,
           userId ? null : externalEmail || null,
           resolvedDbRole || 'CONTRIBUTOR',
+          resolvedPmoRole,
+          resolvedPmoRoleSource,
           resolvedRaci || null,
           inf,
           intr,

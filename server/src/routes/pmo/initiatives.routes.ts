@@ -72,6 +72,7 @@ import {
 } from '../../services/v8/transformationInitiativeTransitionAdapterService.js';
 import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
 import { getProgramRollup } from '../../services/pmo/programRollupService.js';
+import { runInitiativeStageSlaEscalationTick } from '../../services/pmo/initiativeStageSlaService.js';
 import {
   getCapacityTimeline,
   getInitiativeCapacity,
@@ -190,6 +191,43 @@ router.use(demoContextMiddleware);
 // tenant-scoped actor context; the child router additionally enforces project capability.
 router.use('/runtime-v1', initiativesExecutionRuntimeRouter);
 router.use('/runtime-v1', initiativesCapacityAdvisorRouter);
+
+/**
+ * PMO-1b manual SLA tick. Staging keeps DISABLE_SCHEDULER=true, so the daily
+ * job 46 path must also be runnable by an admin for proof and controlled use.
+ * Default is dry-run; writes require an explicit `{ dryRun: false }`.
+ */
+router.post('/stage-sla/tick', requireOrgRole('admin'), async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const dryRun = req.body?.dryRun !== false;
+  const limit = Number.isFinite(Number(req.body?.limit)) ? Number(req.body.limit) : undefined;
+  const result = await runInitiativeStageSlaEscalationTick({
+    dryRun,
+    organizationId: String(orgId),
+    limit,
+  });
+  return res.json({
+    dryRun: result.dryRun,
+    escalated: result.escalated,
+    skippedAlreadyToday: result.skippedAlreadyToday,
+    skippedInvalidStage: result.skippedInvalidStage,
+    errors: result.errors,
+    candidates: result.candidates.map((candidate) => ({
+      dueDateId: candidate.dueDateId,
+      initiativeId: candidate.initiativeId,
+      initiativeTitle: candidate.initiativeTitle,
+      lifecycleStage: candidate.lifecycleStage,
+      nextLifecycleStage: candidate.nextLifecycleStage,
+      dueAt: candidate.dueAt,
+      escalationLevel: candidate.escalationLevel,
+      targetPmoRole: candidate.targetPmoRole,
+      targetUserId: candidate.targetUserId,
+      route: candidate.route,
+      reason: candidate.reason,
+    })),
+  });
+});
 // Runtime-v1 above remains the sole execution-work writer. Everything below
 // is the legacy Initiative/PMO compatibility surface and is read-only under
 // AMD-EXE-SPINE-AUTHORITY-004.

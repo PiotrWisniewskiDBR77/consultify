@@ -12,6 +12,7 @@ describe('decision escalation scheduler authority', () => {
     );
 
     expect(dailyRegistrations).toHaveLength(1);
+    expect(source).toContain('runInitiativeStageSlaEscalationTick');
     expect(source).not.toContain('decisionEscalationChainService');
     expect(source).not.toContain('[Scheduler] Running Decision Auto-Escalation');
   });

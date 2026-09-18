@@ -84,13 +84,25 @@ export async function runDecisionEscalationSchedulerTick(): Promise<void> {
   if (process.env.DECISION_ESCALATION_CRON_ENABLED === 'false') return;
   try {
     const { runDecisionEscalationTick } = await import('../jobs/decisionEscalationJob.js');
+    const { runInitiativeStageSlaEscalationTick } = await import(
+      '../services/pmo/initiativeStageSlaService.js'
+    );
     const result = await runDecisionEscalationTick();
+    const pmoSlaResult = await runInitiativeStageSlaEscalationTick();
     if (result.escalated > 0 || result.errors > 0) {
       logger.info('[Scheduler] Decision escalation sweep', {
         escalated: result.escalated,
         errors: result.errors,
         skippedAtMax: result.skippedAtMax,
         skippedAlreadyToday: result.skippedAlreadyToday,
+      });
+    }
+    if (pmoSlaResult.escalated > 0 || pmoSlaResult.errors > 0) {
+      logger.info('[Scheduler] PMO stage SLA sweep', {
+        escalated: pmoSlaResult.escalated,
+        errors: pmoSlaResult.errors,
+        skippedAlreadyToday: pmoSlaResult.skippedAlreadyToday,
+        skippedInvalidStage: pmoSlaResult.skippedInvalidStage,
       });
     }
   } catch (err: any) {

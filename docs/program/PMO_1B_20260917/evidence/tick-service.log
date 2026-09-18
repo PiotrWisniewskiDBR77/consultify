@@ -1,0 +1,50 @@
+2026-09-17 21:13:23:1323 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-17 21:13:23:1323 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-17 21:13:23:1323 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-17 21:13:23:1323 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-17 21:13:23:1323 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-17 21:13:24:1324 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-17 21:13:24:1324 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-17 21:13:24:1324 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-17 21:13:24:1324 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-17 21:13:24:1324 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_pmo1b","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6458/consultify_pmo1b host=127.0.0.1 port=6458 database=consultify_pmo1b source=app:pool-config
+2026-09-17 21:13:24:1324 [33mwarn[39m: [33m[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()[39m
+2026-09-17 21:13:24:1324 [37mdebug[39m: [37m[Postgres] Client connected[39m
+{
+  "dryRun": true,
+  "candidates": 1,
+  "first": {
+    "dueDateId": "pmo1b-due-proof",
+    "organizationId": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "initiativeId": "da588307-778c-4089-b86a-38b3a45793d7",
+    "initiativeTitle": "API Gateway v2",
+    "lifecycleStage": "IN_EXECUTION",
+    "nextLifecycleStage": "DELIVERED",
+    "dueAt": "2026-09-16T02:11:33.667Z",
+    "escalationLevel": 1,
+    "targetPmoRole": "SPONSOR",
+    "targetUserId": "188a66b0-f284-4869-b26c-355df56d808a",
+    "route": "sponsor",
+    "reason": "PMO stage SLA is overdue: IN_EXECUTION → DELIVERED, due at 2026-09-16T02:11:33.667Z."
+  }
+}
+{
+  "dryRun": false,
+  "escalated": 1,
+  "errors": 0,
+  "first": {
+    "dueDateId": "pmo1b-due-proof",
+    "organizationId": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "initiativeId": "da588307-778c-4089-b86a-38b3a45793d7",
+    "initiativeTitle": "API Gateway v2",
+    "lifecycleStage": "IN_EXECUTION",
+    "nextLifecycleStage": "DELIVERED",
+    "dueAt": "2026-09-16T02:11:33.667Z",
+    "escalationLevel": 1,
+    "targetPmoRole": "SPONSOR",
+    "targetUserId": "188a66b0-f284-4869-b26c-355df56d808a",
+    "route": "sponsor",
+    "reason": "PMO stage SLA is overdue: IN_EXECUTION → DELIVERED, due at 2026-09-16T02:11:33.667Z."
+  }
+}
