@@ -497,6 +497,10 @@ const InterviewCandidateCardScreen = React.lazy(
 const Is3aTemplateEditorHubScreen = React.lazy(
   () => import('./screens/is3a-template-editor-hub')
 );
+// AIR-1a (Wpis 119/120, DEC-566/569) — real InterviewHub managed tab with AI score column.
+const Air1aManagedAiScoreScreen = React.lazy(
+  () => import('./screens/air1a-managed-ai-score')
+);
 const U05SesjaWywiaduPowlokaScreen = React.lazy(
   () => import('./screens/u05-sesja-wywiadu-powloka')
 );
@@ -1522,6 +1526,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'IS-3a (Wpis 95 / DEC-533) — REALNY <InterviewHub /> na zakładce Templates z otwartym edytorem szablonu (dokument z sessionStorage `moduleHub.openDocuments.interview`, szablon demo); flaga VITE_INTERVIEW_TEMPLATE_FULLPAGE z env serwera harnessu (OFF domyślnie, ON = pełna strona). &lang=en|pl &theme=light|dark',
     render: () => <Is3aTemplateEditorHubScreen />,
+  },
+  'air1a-managed-ai-score': {
+    label:
+      'AIR-1a (Wpis 119/120, DEC-566/569) — REALNY <InterviewHub /> na zakładce Managed z kolumną AI Score (80/50 thresholds + verdict pill) i blokiem AI Review w podglądzie sesji. Wymaga VITE_INTERVIEW_AI_SCORE=true na serwerze harnessu. &lang=en|pl &theme=light|dark',
+    render: () => <Air1aManagedAiScoreScreen />,
   },
   'u05-sesja-wywiadu-powloka': {
     label:
