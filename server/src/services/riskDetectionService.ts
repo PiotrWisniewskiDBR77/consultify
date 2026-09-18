@@ -12,6 +12,11 @@
 import { all as dbAll } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import {
+  buildWorkRiskReadModel,
+  type WorkRiskObservation,
+  type WorkRiskRecord,
+} from './execution/workRiskBoundary.js';
 import { calculateRiskScore, categorizeScore, DEFAULT_THRESHOLDS } from './raidScoringService.js';
 
 export interface RiskSignal {
@@ -34,6 +39,18 @@ export interface RiskSignal {
   suggestedAction: string;
   sourceData?: Record<string, unknown>;
 }
+
+type WorkRiskSourceData = {
+  workRiskBoundary?: Pick<
+    WorkRiskRecord,
+    | 'sourceType'
+    | 'sourceId'
+    | 'riskState'
+    | 'decisionLevel'
+    | 'missingEvidence'
+    | 'requiresHumanReview'
+  >;
+};
 
 interface AppetiteThresholds {
   greenMax: number;
@@ -89,6 +106,7 @@ interface InitiativeRow {
   progress: number | null;
   owner_business_id: string | null;
   owner_execution_id: string | null;
+  project_id: string | null;
 }
 
 interface RaidRow {
@@ -103,6 +121,7 @@ interface RaidRow {
   mitigation_plan: string | null;
   mitigation_status: string | null;
   due_date: string | null;
+  project_id: string | null;
 }
 
 interface DependencyRow {
@@ -114,6 +133,100 @@ interface DependencyRow {
 
 const BLOCKED_LONG_DAYS = 5;
 const SLA_WARNING_DAYS = 7;
+
+function initiativeWorkState(init: InitiativeRow): WorkRiskObservation['workState'] {
+  const status = String(init.status || '').toUpperCase();
+  if (status === 'CLOSED' || status === 'DONE' || status === 'COMPLETED') return 'done';
+  if (status === 'REJECTED' || status === 'CANCELLED' || status === 'CANCELED') return 'cancelled';
+  if (init.on_hold) return 'blocked';
+  if (status === 'PLANNED' || status === 'PENDING_APPROVAL' || status === 'DRAFT') return 'planned';
+  return 'active';
+}
+
+function levelFromSeverity(severity: RiskSignal['severity']): 0 | 1 | 2 | 3 {
+  if (severity === 'CRITICAL') return 3;
+  if (severity === 'HIGH') return 2;
+  if (severity === 'MEDIUM') return 1;
+  return 0;
+}
+
+function boundarySummary(record: WorkRiskRecord): WorkRiskSourceData['workRiskBoundary'] {
+  return {
+    sourceType: record.sourceType,
+    sourceId: record.sourceId,
+    riskState: record.riskState,
+    decisionLevel: record.decisionLevel,
+    missingEvidence: record.missingEvidence,
+    requiresHumanReview: record.requiresHumanReview,
+  };
+}
+
+function classifyInitiativeSignal(
+  organizationId: string,
+  init: InitiativeRow,
+  input: {
+    signalId: string;
+    severity: RiskSignal['severity'];
+    baselineImpact: WorkRiskObservation['baselineImpact'];
+    reasonCode: string;
+    evidenceRef: string;
+    observedAt: Date;
+  }
+): WorkRiskSourceData {
+  if (!init.project_id) return {};
+  const readModel = buildWorkRiskReadModel({ organizationId, projectId: init.project_id }, [
+    {
+      organizationId,
+      projectId: init.project_id,
+      sourceType: 'initiative',
+      sourceId: input.signalId,
+      initiativeId: init.id,
+      workState: initiativeWorkState(init),
+      baselineImpact: input.baselineImpact,
+      measuredLevel: levelFromSeverity(input.severity),
+      reasonCode: input.reasonCode,
+      observedAt: input.observedAt.toISOString(),
+      evidenceRef: input.evidenceRef,
+      generatedBy: 'system',
+    },
+  ]);
+  const [record] = readModel.records;
+  return record ? { workRiskBoundary: boundarySummary(record) } : {};
+}
+
+function classifyRaidSignal(
+  organizationId: string,
+  raid: RaidRow,
+  init: InitiativeRow | null,
+  input: {
+    signalId: string;
+    severity: RiskSignal['severity'];
+    reasonCode: string;
+    evidenceRef: string;
+    observedAt: Date;
+  }
+): WorkRiskSourceData {
+  const projectId = raid.project_id || init?.project_id;
+  if (!projectId) return {};
+  const readModel = buildWorkRiskReadModel({ organizationId, projectId }, [
+    {
+      organizationId,
+      projectId,
+      sourceType: 'report',
+      sourceId: input.signalId,
+      initiativeId: raid.initiative_id || null,
+      workState: init ? initiativeWorkState(init) : 'active',
+      baselineImpact: init ? 'within_initiative' : 'unknown',
+      measuredLevel: levelFromSeverity(input.severity),
+      reasonCode: input.reasonCode,
+      observedAt: input.observedAt.toISOString(),
+      evidenceRef: input.evidenceRef,
+      generatedBy: 'system',
+    },
+  ]);
+  const [record] = readModel.records;
+  return record ? { workRiskBoundary: boundarySummary(record) } : {};
+}
 
 export async function detectRiskSignals(
   organizationId: string,
@@ -141,7 +254,7 @@ export async function detectRiskSignals(
     let initQuery = `
       SELECT id, name, status, ${initiativeSelect('priority')}, ${initiativeSelect('planned_end_date')}, ${initiativeSelect('planned_start_date')},
              ${initiativeSelect('start_date')}, ${initiativeSelect('sla_deadline')}, ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('on_hold')}, ${initiativeSelect('progress')},
-             ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}
+             ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}, ${initiativeSelect('project_id')}
       FROM initiatives
       WHERE organization_id = ?
         AND status NOT IN ('CLOSED', 'REJECTED')
@@ -180,7 +293,18 @@ export async function detectRiskSignals(
             daysOverdue > 14
               ? 'Escalate to sponsor. Consider replanning or scope reduction.'
               : 'Review timeline with owner. Update planned end date or remove blockers.',
-          sourceData: { daysOverdue, plannedEnd: endDate },
+          sourceData: {
+            daysOverdue,
+            plannedEnd: endDate,
+            ...classifyInitiativeSignal(organizationId, init, {
+              signalId: `overdue-${init.id}`,
+              severity,
+              baselineImpact: 'approved_baseline',
+              reasonCode: 'initiative_overdue',
+              evidenceRef: `initiatives:${init.id}:planned_end_date`,
+              observedAt: now,
+            }),
+          },
         });
       }
     }
@@ -204,7 +328,18 @@ export async function detectRiskSignals(
           description: `"${init.name}" has been blocked for ${blockedDays} days. Reason: ${init.blocked_reason || 'Not specified'}.`,
           suggestedAction:
             'Identify and escalate the blocker. Assign an owner to resolve it or consider alternative approaches.',
-          sourceData: { blockedDays, reason: init.blocked_reason },
+          sourceData: {
+            blockedDays,
+            reason: init.blocked_reason,
+            ...classifyInitiativeSignal(organizationId, init, {
+              signalId: `blocked-${init.id}`,
+              severity,
+              baselineImpact: 'within_initiative',
+              reasonCode: 'initiative_blocked_long',
+              evidenceRef: `initiatives:${init.id}:blocked_at`,
+              observedAt: now,
+            }),
+          },
         });
       }
     }
@@ -228,7 +363,18 @@ export async function detectRiskSignals(
           description: `"${init.name}" has an SLA deadline on ${new Date(init.sla_deadline).toLocaleDateString()}. Only ${daysUntilSla} days remain.`,
           suggestedAction:
             'Prioritize this initiative. Ensure resources are allocated and blockers removed.',
-          sourceData: { daysUntilSla, slaDeadline: init.sla_deadline },
+          sourceData: {
+            daysUntilSla,
+            slaDeadline: init.sla_deadline,
+            ...classifyInitiativeSignal(organizationId, init, {
+              signalId: `sla-${init.id}`,
+              severity: daysUntilSla <= 3 ? 'HIGH' : 'MEDIUM',
+              baselineImpact: 'approved_baseline',
+              reasonCode: 'sla_breach_proximity',
+              evidenceRef: `initiatives:${init.id}:sla_deadline`,
+              observedAt: now,
+            }),
+          },
         });
       }
     }
@@ -269,14 +415,19 @@ export async function detectRiskSignals(
       }
     }
 
-    const raidQuery = `
+    let raidQuery = `
       SELECT r.id, r.initiative_id, r.type, r.title, r.status, r.probability, r.impact,
-             r.owner_id, r.mitigation_plan, r.mitigation_status, r.due_date
+             r.owner_id, r.mitigation_plan, r.mitigation_status, r.due_date, i.project_id
       FROM raid_items r
+      LEFT JOIN initiatives i ON i.id = r.initiative_id AND i.organization_id = r.organization_id
       WHERE r.organization_id = ?
         AND r.status NOT IN ('CLOSED', 'MITIGATED')
     `;
     const raidParams: unknown[] = [organizationId];
+    if (projectId) {
+      raidQuery += ' AND i.project_id = ?';
+      raidParams.push(projectId);
+    }
     const raidItems = ((await dbAll(raidQuery, raidParams)) || []) as RaidRow[];
 
     // F3 — risk appetite drives escalation. Read the org's appetite thresholds
@@ -294,7 +445,7 @@ export async function detectRiskSignals(
       );
       const riskCategory = categorizeScore(riskScore, appetite);
       const isHighSeverity = riskCategory !== 'GREEN';
-      const init = raid.initiative_id ? initMap.get(raid.initiative_id) : null;
+      const init = raid.initiative_id ? (initMap.get(raid.initiative_id) ?? null) : null;
       const initName = init?.name || 'Unlinked';
 
       if (isHighSeverity && !raid.owner_id) {
@@ -308,7 +459,17 @@ export async function detectRiskSignals(
           description: `Risk "${raid.title}" (${raid.impact} impact) has no assigned owner.`,
           suggestedAction:
             'Assign a risk owner immediately. High-impact risks must have clear ownership.',
-          sourceData: { raidId: raid.id, impact: raid.impact },
+          sourceData: {
+            raidId: raid.id,
+            impact: raid.impact,
+            ...classifyRaidSignal(organizationId, raid, init, {
+              signalId: `unowned-risk-${raid.id}`,
+              severity: raid.impact === 'CRITICAL' ? 'CRITICAL' : 'HIGH',
+              reasonCode: 'risk_without_owner',
+              evidenceRef: `raid_items:${raid.id}:owner_id`,
+              observedAt: now,
+            }),
+          },
         });
       }
 
@@ -326,7 +487,18 @@ export async function detectRiskSignals(
           title: `No mitigation for high risk: "${raid.title}"`,
           description: `Risk "${raid.title}" has ${raid.impact} impact but no mitigation plan defined.`,
           suggestedAction: 'Define a mitigation plan with owner, due date, and response strategy.',
-          sourceData: { raidId: raid.id, impact: raid.impact, probability: raid.probability },
+          sourceData: {
+            raidId: raid.id,
+            impact: raid.impact,
+            probability: raid.probability,
+            ...classifyRaidSignal(organizationId, raid, init, {
+              signalId: `unmitigated-risk-${raid.id}`,
+              severity: 'HIGH',
+              reasonCode: 'high_risk_without_mitigation',
+              evidenceRef: `raid_items:${raid.id}:mitigation_plan`,
+              observedAt: now,
+            }),
+          },
         });
       }
 
@@ -348,6 +520,13 @@ export async function detectRiskSignals(
             score: riskScore,
             threshold: appetite.autoEscalateAbove,
             category: riskCategory,
+            ...classifyRaidSignal(organizationId, raid, init, {
+              signalId: `appetite-breach-${raid.id}`,
+              severity: 'CRITICAL',
+              reasonCode: 'risk_above_appetite',
+              evidenceRef: `raid_items:${raid.id}:risk_score`,
+              observedAt: now,
+            }),
           },
         });
       }
@@ -362,7 +541,17 @@ export async function detectRiskSignals(
           title: `Overdue RAID item: "${raid.title}"`,
           description: `RAID item "${raid.title}" was due ${new Date(raid.due_date).toLocaleDateString()} and has not been resolved.`,
           suggestedAction: 'Review and update the RAID item. Escalate if it is blocking progress.',
-          sourceData: { raidId: raid.id, dueDate: raid.due_date },
+          sourceData: {
+            raidId: raid.id,
+            dueDate: raid.due_date,
+            ...classifyRaidSignal(organizationId, raid, init, {
+              signalId: `overdue-risk-${raid.id}`,
+              severity: 'MEDIUM',
+              reasonCode: 'raid_item_overdue',
+              evidenceRef: `raid_items:${raid.id}:due_date`,
+              observedAt: now,
+            }),
+          },
         });
       }
     }
