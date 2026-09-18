@@ -18,3 +18,5 @@ Instrument control: appended exactly `const __s: number = "x"` to production Pmo
 Self-review mutation: removed `!reviewerIsCurrentActor &&` from transitionProposalReady;1FAILED8PASS. Restored production source;33/33 actual-component tests PASS.
 
 Server tsc:0, normal exit0, TypeScript and server dependencies from lock-ci clean npm-ci station; no source changes there. Final base readback remains c1213d39adaff2ae484fe6e9d4857e37b9f58b40. KOSZT: not available from session counter | version v4d | repeat YES.
+
+W247 rebase:34bc633ff987fa6f362082d610aad6e04e0f7ed2, range-diff3/3 identical patches; actual-card tests33PASS. Own new-base foreground tsc156 and rebased candidate156, full diagnostic sets added0/removed0. Instrument control above remains applicable; no production changes. Current final SHA and new backup in OD_CODEXA.
