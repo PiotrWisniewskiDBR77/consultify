@@ -265,6 +265,7 @@ export interface AuditPackDetail extends AuditPackSummary {
  * drzewem, bez wiązania tego modułu z typami edytora kryteriów.
  */
 export interface CriteriaNodeLike {
+  id: string;
   children?: readonly CriteriaNodeLike[] | null;
 }
 

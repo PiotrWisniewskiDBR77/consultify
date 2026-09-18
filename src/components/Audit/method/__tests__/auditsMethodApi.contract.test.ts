@@ -14,6 +14,7 @@ import {
   listOutputs,
   listPacks,
   listPrograms,
+  type CriteriaNodeLike,
 } from '../auditsMethodApi';
 
 describe('auditsMethodApi canonical response contract', () => {
@@ -199,7 +200,7 @@ describe('auditsMethodApi report-chain commands', () => {
 // produktowa = WSZYSTKIE węzły (spójnie z serwerowym `criteria_count =
 // COUNT(*)`), NIE tylko korzenie i NIE tylko liście.
 describe('countCriteriaNodes — D-91 jedno źródło licznika (wszystkie węzły drzewa)', () => {
-  const leaf = (id: string) => ({ id, children: [] as unknown[] });
+  const leaf = (id: string): CriteriaNodeLike => ({ id, children: [] });
 
   it('drzewo 3 poziomów 1+2+4 → 7 (wszystkie węzły, nie 1 korzeń i nie 4 liście)', () => {
     const tree = [
