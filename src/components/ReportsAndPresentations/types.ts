@@ -267,6 +267,8 @@ export interface ReportItem {
   exportFormats: string[];
   /** Persisted document format; `Unknown` means the registry did not provide one. */
   fileFormat?: MaterialFileFormat;
+  /** Registry runtime that produced the document (report / native_artifact / assessment_report). */
+  sourceType?: string;
   sourceRefs?: Array<string | ArtifactSourceRef>;
   governance?: ArtifactGovernanceSummary;
   [key: string]: unknown;
