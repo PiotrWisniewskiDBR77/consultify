@@ -88,8 +88,12 @@ export interface ProtocolDecision {
   status: string;
 }
 
+/** MTG-2a v2 (Wpis 131): where a decisions/actions block came from. */
+export type ProtocolBlockSource = 'register' | 'approved_note';
+
 export interface ProtocolDecisionsBlock {
   kind: 'decisions';
+  source: ProtocolBlockSource;
   items: ProtocolDecision[];
 }
 
@@ -105,6 +109,7 @@ export interface ProtocolAction {
 
 export interface ProtocolActionsBlock {
   kind: 'actions';
+  source: ProtocolBlockSource;
   items: ProtocolAction[];
 }
 

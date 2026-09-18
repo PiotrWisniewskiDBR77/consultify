@@ -162,4 +162,69 @@ describe('MeetingProtocolViewer — approve / errata wiring (W109b)', () => {
     expect(screen.queryByRole('button', { name: /^Approve$/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /Create errata version/i })).toBeNull();
   });
+
+  // MTG-2a v2 (Wpis 131): the viewer labels each block's SOURCE from the block's
+  // `source` value. MUTATION: swapping the viewer's source ternary (register↔note)
+  // turns this RED.
+  it('labels the SOURCE per block: approved note for decisions, register for actions', async () => {
+    fetchMock.mockResolvedValue(
+      makePreview({
+        content: {
+          meetingId: MEETING_ID,
+          generatedAt: '2026-07-01T12:00:00.000Z',
+          blocks: [
+            {
+              kind: 'meta',
+              title: 'Quarterly Review',
+              startAt: '2026-07-01T10:00:00.000Z',
+              endAt: '2026-07-01T11:00:00.000Z',
+              timezone: null,
+              location: 'Zoom',
+              meetingType: 'internal',
+              lifecycleState: 'scheduled',
+            },
+            {
+              kind: 'decisions',
+              source: 'approved_note',
+              items: [
+                {
+                  statement: 'Escalate the delay',
+                  rationale: '',
+                  owner: null,
+                  decisionType: null,
+                  impact: null,
+                  rejectedAlternative: null,
+                  decidedBy: null,
+                  decidedAt: null,
+                  status: 'recorded',
+                },
+              ],
+            },
+            {
+              kind: 'actions',
+              source: 'register',
+              items: [
+                {
+                  title: 'Send the summary',
+                  owner: null,
+                  dueAt: null,
+                  status: 'open',
+                  taskId: null,
+                  taskStatus: null,
+                  agendaItemTitle: null,
+                },
+              ],
+            },
+          ],
+        },
+      })
+    );
+    render(<MeetingProtocolViewer meetingId={MEETING_ID} onClose={() => {}} />);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId('meeting-protocol-document')).toBeInTheDocument()
+    );
+    expect(screen.getByTestId('decisions-source').textContent).toBe('From approved note');
+    expect(screen.getByTestId('actions-source').textContent).toBe('From follow-ups register');
+  });
 });

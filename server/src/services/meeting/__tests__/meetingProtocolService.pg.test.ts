@@ -482,6 +482,26 @@ describe('MTG-2a protocol (real PG)', () => {
     expect(act.items[0].dueAt).toBe('2026-09-30');
   });
 
+  guard('B10 decisions/actions blocks carry their SOURCE label (register vs approved note)', async () => {
+    // MEETING_FULL: rejestry strukturalne niepuste -> źródło 'register'.
+    const full = await buildProtocolContent({ organizationId: ORG, meetingId: MEETING_FULL });
+    const fullDec = full.blocks.find((b) => b.kind === 'decisions');
+    const fullAct = full.blocks.find((b) => b.kind === 'actions');
+    if (fullDec?.kind !== 'decisions') throw new Error('no decisions block (full)');
+    if (fullAct?.kind !== 'actions') throw new Error('no actions block (full)');
+    expect(fullDec.source).toBe('register');
+    expect(fullAct.source).toBe('register');
+
+    // MEETING_NOTE: rejestry puste, fallback z zatwierdzonej notatki -> 'approved_note'.
+    const note = await buildProtocolContent({ organizationId: ORG, meetingId: MEETING_NOTE });
+    const noteDec = note.blocks.find((b) => b.kind === 'decisions');
+    const noteAct = note.blocks.find((b) => b.kind === 'actions');
+    if (noteDec?.kind !== 'decisions') throw new Error('no decisions block (note)');
+    if (noteAct?.kind !== 'actions') throw new Error('no actions block (note)');
+    expect(noteDec.source).toBe('approved_note');
+    expect(noteAct.source).toBe('approved_note');
+  });
+
   guard('B7 previewProtocol does NOT persist a row for a fresh meeting', async () => {
     // MEETING_EMPTY (nie MEETING_FULL) — niezależne od B8, które utrwala wersje
     // na MEETING_FULL; kolejność testów jest losowa (config `order: 'random'`).

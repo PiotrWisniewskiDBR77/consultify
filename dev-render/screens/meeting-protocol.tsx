@@ -121,6 +121,7 @@ const BLOCKS = [
   },
   {
     kind: 'decisions',
+    source: 'register',
     items: [
       {
         statement: 'Adopt a staged phase-2 rollout by region instead of a single big-bang release.',
@@ -138,6 +139,7 @@ const BLOCKS = [
   },
   {
     kind: 'actions',
+    source: 'approved_note',
     items: [
       {
         title: 'Re-baseline the data-migration plan and circulate the recovery schedule',

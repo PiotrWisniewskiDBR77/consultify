@@ -89,8 +89,17 @@ export interface ProtocolDecision {
   status: string;
 }
 
+/**
+ * MTG-2a v2 (Wpis 131) — where a decisions/actions block came from. The
+ * fallback fires ONLY when the structural register is empty, so a block is
+ * always wholly one or the other; the viewer labels it "from decisions
+ * register" / "from follow-ups register" vs "from approved note".
+ */
+export type ProtocolBlockSource = 'register' | 'approved_note';
+
 export interface ProtocolDecisionsBlock {
   kind: 'decisions';
+  source: ProtocolBlockSource;
   items: ProtocolDecision[];
 }
 
@@ -106,6 +115,7 @@ export interface ProtocolAction {
 
 export interface ProtocolActionsBlock {
   kind: 'actions';
+  source: ProtocolBlockSource;
   items: ProtocolAction[];
 }
 
@@ -519,7 +529,9 @@ export async function buildProtocolContent(input: {
     decidedAt: d.decided_at || null,
     status: String(d.status || 'recorded'),
   }));
+  let decisionSource: ProtocolBlockSource = 'register';
   if (!decisionItems.length && noteDecisions.length) {
+    decisionSource = 'approved_note';
     decisionItems = noteDecisions
       .map((raw) => {
         const statement = String(raw?.decision || raw?.statement || '').trim();
@@ -539,7 +551,9 @@ export async function buildProtocolContent(input: {
       })
       .filter((d): d is ProtocolDecision => d !== null);
   }
-  if (decisionItems.length) blocks.push({ kind: 'decisions', items: decisionItems });
+  if (decisionItems.length) {
+    blocks.push({ kind: 'decisions', source: decisionSource, items: decisionItems });
+  }
 
   // 7. Akcje — ukryte, jeśli brak. Fallback: strukturalne pozycje z
   //    zatwierdzonej notatki (action_items_json), gdy rejestr
@@ -556,7 +570,9 @@ export async function buildProtocolContent(input: {
       agendaItemTitle: agendaItem ? agendaItem.title : null,
     };
   });
+  let actionSource: ProtocolBlockSource = 'register';
   if (!actionItems.length && noteActions.length) {
+    actionSource = 'approved_note';
     actionItems = noteActions
       .map((raw) => {
         const title = String(raw?.task || raw?.title || '').trim();
@@ -573,7 +589,9 @@ export async function buildProtocolContent(input: {
       })
       .filter((a): a is ProtocolAction => a !== null);
   }
-  if (actionItems.length) blocks.push({ kind: 'actions', items: actionItems });
+  if (actionItems.length) {
+    blocks.push({ kind: 'actions', source: actionSource, items: actionItems });
+  }
 
   // 8. Stopka — zawsze: następne spotkanie (z serii) + historia wersji.
   blocks.push({

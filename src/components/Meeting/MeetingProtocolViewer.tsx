@@ -338,6 +338,11 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
         {/* 6. Decisions — from the decision register (or approved-note fallback). */}
         {decisions && decisions.items.length > 0 && (
           <Block icon={CheckSquare} title={tr('decisions', 'Decisions')}>
+            <div className={`${LABEL} mb-3 normal-case`} data-testid="decisions-source">
+              {decisions.source === 'approved_note'
+                ? tr('sourceApprovedNote', 'From approved note')
+                : tr('sourceDecisionsRegister', 'From decisions register')}
+            </div>
             <ol className="space-y-4">
               {decisions.items.map((decision, index) => (
                 <li key={`decision-${index}`} className="border-b border-c-border-subtle pb-4 last:border-0 last:pb-0">
@@ -386,6 +391,11 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
         {/* 7. Actions — follow-ups with task-status readback. */}
         {actions && actions.items.length > 0 && (
           <Block icon={ClipboardList} title={tr('actions', 'Actions')}>
+            <div className={`${LABEL} mb-3 normal-case`} data-testid="actions-source">
+              {actions.source === 'approved_note'
+                ? tr('sourceApprovedNote', 'From approved note')
+                : tr('sourceFollowUpsRegister', 'From follow-ups register')}
+            </div>
             <ol className="space-y-3">
               {actions.items.map((action, index) => (
                 <li key={`action-${index}`} className="border-b border-c-border-subtle pb-3 last:border-0 last:pb-0">
