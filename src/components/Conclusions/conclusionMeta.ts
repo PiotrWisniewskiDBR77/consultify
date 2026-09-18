@@ -20,6 +20,8 @@ export function sourceLabel(t: TFunction, sourceModule: string): string {
     assessment_siri: ['conclusions.source.siri', 'SIRI assessment'],
     assessment_adma: ['conclusions.source.adma', 'ADMA assessment'],
     interview: ['conclusions.source.interview', 'Interview'],
+    audit: ['conclusions.source.audit', 'Audit'],
+    audits: ['conclusions.source.audit', 'Audit'],
     wnioski: ['conclusions.source.readout', 'Readout'],
   };
   const [i18nKey, fallback] = map[key] || ['conclusions.source.other', sourceModule || 'Other'];
@@ -29,6 +31,38 @@ export function sourceLabel(t: TFunction, sourceModule: string): string {
 /** Tailwind token classes for a source chip (neutral, no crimson). */
 export function sourceTone(_sourceModule: string): string {
   return 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)] border border-[var(--c-border-subtle)]';
+}
+
+/**
+ * Evidence-ref type labels. The server bridges write machine keys
+ * (`audit_evidence` — auditReportConclusionBridge.ts:135, `audit_report` :52,
+ * `interview_finding`/`interview_insight`/`assessment_report`/`tool_session` —
+ * ConclusionService, `report`/`conclusion_readout` — ConclusionReadoutService);
+ * the readout must show a human name, never the raw key (owner note U-29:
+ * "6+ rows with the raw key 'audit_evidence'"). Unknown keys are humanized
+ * (snake/kebab → words) so no raw key can ever leak into the UI.
+ */
+export function evidenceTypeLabel(t: TFunction, raw: string | null | undefined): string {
+  const key = String(raw || '').trim().toLowerCase();
+  if (!key) return t('conclusions.evidenceType.unknown', 'Evidence');
+  const map: Record<string, [string, string]> = {
+    audit_evidence: ['conclusions.evidenceType.audit_evidence', 'Audit evidence'],
+    audit_report: ['conclusions.evidenceType.audit_report', 'Audit report'],
+    assessment_report: ['conclusions.evidenceType.assessment_report', 'Assessment report'],
+    tool_session: ['conclusions.evidenceType.tool_session', 'Tool session'],
+    interview_finding: ['conclusions.evidenceType.interview_finding', 'Interview finding'],
+    interview_insight: ['conclusions.evidenceType.interview_insight', 'Interview insight'],
+    report: ['conclusions.evidenceType.report', 'Report'],
+    conclusion_readout: ['conclusions.evidenceType.conclusion_readout', 'Conclusion readout'],
+  };
+  const hit = map[key];
+  if (hit) return t(hit[0], hit[1]);
+  const humanized = key
+    .replace(/[_\-.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
+  return t(`conclusions.evidenceType.${key}`, humanized || 'Evidence');
 }
 
 export type ConfidenceKey = 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';

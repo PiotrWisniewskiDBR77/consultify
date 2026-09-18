@@ -19,6 +19,7 @@ import type { ConclusionDetail } from '@/services/api/conclusions.api';
 import {
   confidenceLabel,
   confidenceTone,
+  evidenceTypeLabel,
   sourceLabel,
   sourceTone,
   statusLabel,
@@ -103,7 +104,7 @@ export const ConclusionReadout: React.FC<{
               >
                 <div className="mb-0.5 flex items-center gap-1.5 text-xs font-medium text-[var(--c-text-secondary)]">
                   <ShieldCheck size={13} aria-hidden />
-                  {ev.type}
+                  {evidenceTypeLabel(t, ev.type)}
                 </div>
                 {ev.excerpt && (
                   <p className="text-sm leading-relaxed text-[var(--c-text)]">{ev.excerpt}</p>

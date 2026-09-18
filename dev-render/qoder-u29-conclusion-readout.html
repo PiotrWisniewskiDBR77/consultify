@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>U-29 Conclusion Readout (audit source) — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      U-29 (Wpis 125) evidence harness — separate entry point on purpose: the
+      shared `dev-render/index.html` → `main.tsx` registry statically imports
+      screens that do not exist at this worktree's base commit. This entry
+      mounts ONLY the REAL `ConclusionReadout` with an inline audit-source
+      fixture and bypasses the shared registry entirely.
+
+      The readout is a pure presentational component (`detail` + `onBack`), so
+      no fake server is needed. The fixture reproduces the U-29 defect surface:
+      `sourceModule='audit'` (previously rendered the source chip as "Other") and
+      `evidenceRefs` with raw server type keys `audit_evidence` / `audit_report`
+      (previously shown verbatim).
+
+      Params: ?lang=en&theme=light|dark
+    -->
+    <div id="dev-render-root" style="min-height: 100vh; width: 100vw"></div>
+    <script type="module" src="/qoder-u29-conclusion-readout-main.tsx"></script>
+  </body>
+</html>

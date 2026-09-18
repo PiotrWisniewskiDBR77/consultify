@@ -43664,7 +43664,19 @@
       "adma": "ADMA assessment",
       "interview": "Interview",
       "readout": "Readout",
+      "audit": "Audit",
       "other": "Other"
+    },
+    "evidenceType": {
+      "audit_evidence": "Audit evidence",
+      "audit_report": "Audit report",
+      "assessment_report": "Assessment report",
+      "tool_session": "Tool session",
+      "interview_finding": "Interview finding",
+      "interview_insight": "Interview insight",
+      "report": "Report",
+      "conclusion_readout": "Conclusion readout",
+      "unknown": "Evidence"
     },
     "confidence": {
       "high": "High confidence",

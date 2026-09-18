@@ -43979,7 +43979,19 @@
       "adma": "Ocena ADMA",
       "interview": "Wywiad",
       "readout": "Podsumowanie",
+      "audit": "Audyt",
       "other": "Inne"
+    },
+    "evidenceType": {
+      "audit_evidence": "Dowód audytowy",
+      "audit_report": "Raport z audytu",
+      "assessment_report": "Raport z oceny",
+      "tool_session": "Sesja narzędzia",
+      "interview_finding": "Ustalenie z wywiadu",
+      "interview_insight": "Wgląd z wywiadu",
+      "report": "Raport",
+      "conclusion_readout": "Readout wniosku",
+      "unknown": "Dowód"
     },
     "confidence": {
       "high": "Wysoka pewność",
