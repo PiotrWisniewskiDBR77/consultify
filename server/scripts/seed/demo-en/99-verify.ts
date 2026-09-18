@@ -145,12 +145,22 @@ async function main() {
        )::int AS n`,
       [ORG_ID]
     );
-    if (Number(d9Dosiany.rows[0]?.n ?? 0) > 0) {
+    const d9Suma = Number(d9Dosiany.rows[0]?.n ?? 0);
+    // Kontrola 42 (twarda `==`): D9 MUSI być wykonany. Pominięcie bloku D9
+    // (26 kontroli) NIE MOŻE kończyć się PASS — gdy etap 09 nie został
+    // uruchomiony (interview_assignments+snapshots == 0), ta asercja FAIL-uje
+    // i ustawia exitCode 1, zamiast cichych „15/15" wybielających pad etapu.
+    zestaw.push({
+      nazwa: 'D9 wykonany (interview_assignments+snapshots > 0)',
+      oczekiwane: 1,
+      rzeczywiste: d9Suma > 0 ? 1 : 0,
+    });
+    if (d9Suma > 0) {
       const d9 = await verifyD9(c);
       console.log(`[verify] --- D9 (dosiew po tescie): ${d9.length} kontroli ---`);
       for (const a of d9) zestaw.push({ nazwa: `D9 · ${a.nazwa}`, oczekiwane: a.oczekiwane, rzeczywiste: a.rzeczywiste, sposob: a.sposob });
     } else {
-      console.log('[verify] --- D9 (dosiew po tescie): POMINIETY (etap 09 jeszcze nie uruchomiony) ---');
+      console.warn('[verify] WARN --- D9 (dosiew po tescie): POMINIETY (etap 09 nie uruchomiony) → asercja "D9 wykonany" FAIL, exit 1 ---');
     }
 
     console.log(`[verify] organizacja: ${ORG_NAZWA}`);

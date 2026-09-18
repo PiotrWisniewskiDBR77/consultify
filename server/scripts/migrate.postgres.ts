@@ -250,6 +250,15 @@ function isSqliteOnlyMigration(m: Migration): boolean {
   // iCloud/duplicate artifacts (e.g. "515_xxx 2.sql")
   if (/\s+\d+\.sql$/.test(f)) return true;
 
+  // Exception to the seed exclusion below: this file carries GLOBAL v6 interview
+  // library templates (product reference data), not demo/seed content. The live
+  // boot autorun already registers it in tp_migration_history (staging row 372)
+  // and its 38 INSERTs are idempotent (ON CONFLICT (id) DO NOTHING), so the
+  // offline runner must not diverge by skipping it — without these v6_* rows the
+  // demo seed etap 09 `--api` gets `404 Template not found`
+  // (v6_t03_strategic_direction_discovery) and D9 is silently skipped.
+  if (f === '20260720_seed_v6_interview_library_templates.sql') return false;
+
   // Seed/demo data files should not be part of schema migration flow.
   if (
     f.includes('seed') ||
@@ -577,8 +586,13 @@ async function applySql(db: Queryable, m: Migration) {
   // We keep this deterministic and intentionally narrow to avoid rewriting arbitrary SQL.
 
   // `INSERT OR IGNORE INTO ...;` → `INSERT INTO ... ON CONFLICT DO NOTHING;`
+  // The `(?=\s)` lookahead is load-bearing: without it the pattern also matches the
+  // phrase inside a prose comment (e.g. ``INSERT OR IGNORE INTO`` in the header of
+  // 20260720_seed_v6_interview_library_templates.sql), lazily swallowing everything up
+  // to the first `;` and corrupting an already-Postgres-native file. A real statement
+  // always has whitespace after INTO (`INTO <table>`); the comment has a backtick.
   sql = sql.replace(
-    /\bINSERT\s+OR\s+IGNORE\s+INTO\b([\s\S]*?);/gi,
+    /\bINSERT\s+OR\s+IGNORE\s+INTO\b(?=\s)([\s\S]*?);/gi,
     (_m, rest) => `INSERT INTO${rest}\nON CONFLICT DO NOTHING;`
   );
 
