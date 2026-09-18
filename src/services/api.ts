@@ -15211,8 +15211,10 @@ export const Api = {
     total_seats_available: 0,
   }),
   // Project Details
-  getProjectDetails: async (projectId: string) =>
-    ({ id: projectId, name: '', description: '', goal: '', status: 'active' }) as any,
+  getProjectDetails: async (projectId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/projects/${projectId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch project details');
+  },
   // AI Chat Feedback — reports an AI answer for review.
   // M01-010: this used to `return { success: true }` WITHOUT calling anything, so
   // the UI confirmed a report that never left the browser. The real endpoint is

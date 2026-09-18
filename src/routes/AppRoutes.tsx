@@ -459,6 +459,9 @@ const ProjectIntelligenceView = lazyWithRetry(() =>
 const MyProjects = lazyWithRetry(() =>
   import('@/components/MyWork/MyProjects').then((m) => ({ default: m.MyProjects }))
 );
+const ProjectDetailScreen = lazyWithRetry(() =>
+  import('@/components/MyWork/ProjectDetailScreen').then((m) => ({ default: m.ProjectDetailScreen }))
+);
 
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
 const InterviewHub = lazyWithRetry(() =>
@@ -1852,6 +1855,18 @@ export const AppRoutes: React.FC = () => {
             pmoProjectsEnabled ? (
               <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), t('myWork.projects.projects', 'Projects')]}>
                 <RouteErrorBoundary><MyProjects /></RouteErrorBoundary>
+              </MainLayout>
+            ) : (
+              <Navigate to="/my-work" replace />
+            )
+          }
+        />
+        <Route
+          path={`${ROUTES.PROJECTS}/:projectId`}
+          element={
+            pmoProjectsEnabled ? (
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), t('myWork.projects.projects', 'Projects')]}>
+                <RouteErrorBoundary><ProjectDetailScreen /></RouteErrorBoundary>
               </MainLayout>
             ) : (
               <Navigate to="/my-work" replace />

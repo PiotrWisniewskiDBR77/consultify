@@ -824,6 +824,12 @@ export const MyProjects: React.FC = () => {
       return {
         primary: [
           {
+            id: 'open-project',
+            label: t('myWork.projects.openProject', 'Open project'),
+            icon: FolderKanban,
+            onClick: () => navigate(`${ROUTES.PROJECTS}/${project.id}`),
+          },
+          {
             id: 'assign-program',
             label: t('myWork.projects.label4', 'Assign to program'),
             icon: Layers,
@@ -856,7 +862,7 @@ export const MyProjects: React.FC = () => {
         },
       };
     },
-    [programs, isPolish, handleAssignProgram]
+    [handleAssignProgram, navigate, programs, t]
   );
 
   // Skróty klawiszowe (brak akcji rozstrzygających w tym MVP — read-only).
