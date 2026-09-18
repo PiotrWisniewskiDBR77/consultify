@@ -5238,6 +5238,7 @@ export function createInitiativesExecutionRuntimeRouter(
         plan: plan.scenario,
         supply,
         fallbackDemandFte,
+        taskDemand,
         previous,
         ownerId: actor.userId,
       });
