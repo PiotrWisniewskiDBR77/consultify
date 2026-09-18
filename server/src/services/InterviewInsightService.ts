@@ -17,7 +17,12 @@ import {
   buildInsightTypeGuidanceBlock,
 } from './ai/insightTypePromptRegistry.js';
 import { llmService } from './ai/llmService.js';
-import { resolveLocale, withResolvedLocaleInstruction } from './ai/languagePolicy.js';
+import {
+  resolveAiLanguage,
+  resolveLocale,
+  withResolvedLocaleInstruction,
+  type AiLanguage,
+} from './ai/languagePolicy.js';
 import {
   assertCardMeetsFormula,
   buildRepairBriefFromVerdict,
@@ -542,6 +547,69 @@ export const INTERVIEW_INSIGHT_SYSTEM_PROMPT_BASE =
  */
 export function buildInterviewInsightSystemPrompt(locale: unknown): string {
   return withResolvedLocaleInstruction(INTERVIEW_INSIGHT_SYSTEM_PROMPT_BASE, locale);
+}
+
+/**
+ * IS-3b v2 (Wpis 123 pkt 1, DEC-510/U-08) — kształt prozy `executive_summary`.
+ *
+ * DLACZEGO: właściciel chce w tym miejscu TEKSTU czytanego jak brief, a generator
+ * dawał JEDEN akapit 60–130 słów bez łamań (`InterviewInsightService.ts:2352/2413`),
+ * więc frontowy `split('\n\n')` zawsze renderował jeden `<p>`. Decyzja CTO: kształt
+ * wymusza PROMPT serwera (nie sklejka na froncie) — trzy NAZWANE akapity
+ * „What we heard / What it means / What to do", rozdzielone pustą linią (`\n\n`),
+ * w locale użytkownika. To JEDYNE miejsce, z którego prompt i test kształtu czytają
+ * nazwy sekcji i limit słów — powrót do jednego akapitu wywraca test (mutacja iii).
+ *
+ * `oczyscProzeWniosku` (interviewInsightProse.ts) NIE zjada `\n\n` ani nagłówków
+ * (brak reguły zwijającej `\n\n`; nagłówki to zwykły tekst) — potwierdzone testem.
+ */
+export const EXECUTIVE_SUMMARY_PARAGRAPH_HEADERS: Record<
+  AiLanguage,
+  { heard: string; means: string; doNext: string }
+> = {
+  en: { heard: 'What we heard', means: 'What it means', doNext: 'What to do' },
+  pl: { heard: 'Co usłyszeliśmy', means: 'Co to znaczy', doNext: 'Co zrobić' },
+  de: { heard: 'Was wir gehört haben', means: 'Was es bedeutet', doNext: 'Was zu tun ist' },
+  es: { heard: 'Lo que escuchamos', means: 'Lo que significa', doNext: 'Lo que hay que hacer' },
+  ja: { heard: '聞こえたこと', means: 'その意味', doNext: '次の一手' },
+  ar: { heard: 'ما سمعناه', means: 'ماذا يعني', doNext: 'ما يجب فعله' },
+};
+
+/** Nazwane nagłówki trzech akapitów dla locale (norm. synchroniczna, domyślnie `en`). */
+export function executiveSummaryParagraphHeaders(locale: unknown): {
+  heard: string;
+  means: string;
+  doNext: string;
+} {
+  return EXECUTIVE_SUMMARY_PARAGRAPH_HEADERS[resolveAiLanguage(locale)] ??
+    EXECUTIVE_SUMMARY_PARAGRAPH_HEADERS.en;
+}
+
+export const EXECUTIVE_SUMMARY_WORD_RANGE = { min: 150, max: 260 } as const;
+
+/**
+ * Instrukcja kształtu `executive_summary` w prompcie generatora: linia do struktury
+ * JSON (wartość pola) i fragment wymogów minimalnych. Oba niosą te same trzy
+ * nazwane sekcje i limit 150–260 słów, rozdzielone pustą linią (`\n\n`).
+ */
+export function buildExecutiveSummaryPromptSpec(locale: unknown): {
+  structureLine: string;
+  minimumFragment: string;
+} {
+  const h = executiveSummaryParagraphHeaders(locale);
+  const { min, max } = EXECUTIVE_SUMMARY_WORD_RANGE;
+  const structureLine =
+    `Three short named prose sections separated by a blank line (\\n\\n), ${min}-${max} words total. ` +
+    `Start each section with its header EXACTLY as given, in the user's language, then 2-4 sentences. ` +
+    `Section 1 '${h.heard}': answer-first — lead with the conclusion the evidence supports. ` +
+    `Section 2 '${h.means}': the so-what implication for the business. ` +
+    `Section 3 '${h.doNext}': the evidence-bounded next move and an explicit confidence posture. ` +
+    `Format: ${h.heard}\\n\\n<prose>\\n\\n${h.means}\\n\\n<prose>\\n\\n${h.doNext}\\n\\n<prose>. ` +
+    `No methodology, no filler, no answer_ids or UUIDs.`;
+  const minimumFragment =
+    `executive_summary ${min}-${max} words as three named sections ` +
+    `("${h.heard}" / "${h.means}" / "${h.doNext}") separated by blank lines`;
+  return { structureLine, minimumFragment };
 }
 
 /**
@@ -2213,8 +2281,10 @@ class InterviewInsightService {
     analysisScope?: InsightAnalysisScope,
     approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack,
     contextDocumentPack?: ContextDocumentPack,
-    generationPreferences?: InsightGenerationPreferences
+    generationPreferences?: InsightGenerationPreferences,
+    locale?: unknown
   ): string {
+    const execSummarySpec = buildExecutiveSummaryPromptSpec(locale);
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
     const isMultiSession = sessionCount > 1;
     const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds: [], filters: {} });
@@ -2349,7 +2419,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
 
 {
   "schema_version": "${INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION}",
-  "executive_summary": "3-5 sentences / 60-130 words. Answer-first (lead with the conclusion), then the so-what implication, then an explicit confidence posture. No methodology, no filler.",
+  "executive_summary": "${execSummarySpec.structureLine}",
   "themes": [
     {
       "title": "Action-title carrying the conclusion (≤14 words, not a bare topic)",
@@ -2410,7 +2480,7 @@ Rules:
 - Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. Recommendation-like content must stay clearly labeled as a hypothesis/opportunity with evidence limits.
 - If evidence is weak or incomplete, note it in missing_data.
 - Material Quality is not a blocking gate. It is an honest assessment of how far the generated insight can be trusted.
-- Minimums for a decision-useful readout: ≥3 themes (each ≥50-word description + ≥1 evidence_ref), ≥2 issues (each with severity + ≥1 evidence_ref), ≥2 missing_data entries, executive_summary 60-130 words across ≥3 sentences.
+- Minimums for a decision-useful readout: ≥3 themes (each ≥50-word description + ≥1 evidence_ref), ≥2 issues (each with severity + ≥1 evidence_ref), ≥2 missing_data entries, ${execSummarySpec.minimumFragment}.
 - Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume), but never drop below the minimums above.
 `;
 
@@ -2698,6 +2768,15 @@ Rules:
         approvedOrgKnowledgePack ||
         (await this.buildApprovedOrgKnowledgePack(organizationId, scope.context_mode));
       const formattedData = this.formatSessionDataForPrompt(sessionData);
+
+      // F7 (DEC-461): wnioski z wywiadu wychodziły PO POLSKU nawet dla org/usera
+      // `en` — prompt systemowy NIE niósł żadnej instrukcji językowej, a prompt
+      // naprawczy niżej był napisany po polsku, więc model dziedziczył polski.
+      // Resolver DEC-510: users.language → users.locale → organizations.default_language → 'en'.
+      // IS-3b v2 (Wpis 123 pkt 1): ten sam locale nadaje NAZWY trzech akapitów
+      // `executive_summary` w prompcie użytkownika, więc rozstrzygamy go PRZED
+      // `buildV6Prompt` i podajemy do obu promptów (systemowego i użytkownika).
+      const resolvedLocale = await resolveLocale({ userId: userId || null, organizationId });
       const prompt = this.buildV6Prompt(
         promptType,
         formattedData,
@@ -2706,14 +2785,10 @@ Rules:
         scope,
         orgKnowledgePack,
         contextDocumentPack,
-        generationPreferences
+        generationPreferences,
+        resolvedLocale
       );
 
-      // F7 (DEC-461): wnioski z wywiadu wychodziły PO POLSKU nawet dla org/usera
-      // `en` — prompt systemowy NIE niósł żadnej instrukcji językowej, a prompt
-      // naprawczy niżej był napisany po polsku, więc model dziedziczył polski.
-      // Resolver DEC-510: users.language → users.locale → organizations.default_language → 'en'.
-      const resolvedLocale = await resolveLocale({ userId: userId || null, organizationId });
       const systemPrompt = buildInterviewInsightSystemPrompt(resolvedLocale);
 
       const response = await llmService.generateResponse({

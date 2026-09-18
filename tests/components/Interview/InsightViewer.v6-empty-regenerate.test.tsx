@@ -183,6 +183,7 @@ vi.mock('@/services/api/v8/interview', () => ({
     deleteInsightComment: vi.fn().mockResolvedValue({ success: true }),
     deleteInsight: vi.fn().mockResolvedValue({ success: true }),
     getInsights: vi.fn().mockResolvedValue({ insights: [] }),
+    getAnswerApprovals: vi.fn().mockResolvedValue({ assignmentId: '', approvals: [] }),
   },
 }));
 

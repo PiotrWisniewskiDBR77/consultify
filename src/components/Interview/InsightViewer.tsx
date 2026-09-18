@@ -127,6 +127,7 @@ import {
   type V8InsightMaterialQuality,
   type V8InsightSourcePack,
   V8InterviewApi,
+  type V8InterviewAnswerApproval,
   type V8InterviewReportPack,
   type V8InterviewReportReadiness,
   type V8InterviewReportWorksheetStatus,
@@ -135,8 +136,14 @@ import {
 import type { CardAnalysisField } from '@/services/cardAnalysis';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
-import { TEXT_L1 } from '@/styles/typography';
+import { TEXT_L1, TEXT_L3 } from '@/styles/typography';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
+import { isInterviewExecSummaryProseEnabled } from '@/utils/interviewExecSummaryProseFlag';
+import {
+  isExecutiveSummarySectionHeader,
+  splitExecutiveSummaryParagraphs,
+} from '@/utils/interviewExecSummaryProse';
+import { sumApprovedAnswers } from '@/utils/interviewOfficialAnswers';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { looksLikeInternalIdentifierText } from '@/utils/detectInternalIdentifierText';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
@@ -348,6 +355,7 @@ interface Insight {
   filters?: Record<string, any>;
   content?: string;
   executiveSummary?: string;
+  generationContext?: Record<string, unknown>;
   themes?: InsightTheme[];
   issues?: InsightIssue[];
   opportunities?: InsightOpportunity[];
@@ -375,6 +383,7 @@ interface SourceSession {
   completedAt?: string;
   respondentRole?: string;
   department?: string;
+  assignmentId?: string;
 }
 
 interface SourceSessionSummary {
@@ -1369,6 +1378,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [sourceSessionSummaries, setSourceSessionSummaries] = useState<
     Record<string, SourceSessionSummary>
   >({});
+  // IS-3b v2 (Wpis 122/123 pkt 2): „OFFICIAL ANSWERS" = rejestr zatwierdzeń
+  // (suma `latestDecision === 'approved'` po przydziałach sesji), NIE liczba
+  // odpowiedzi. null = niezaładowane/niedostępne (wtedy fallback), liczba = wynik.
+  const [approvedAnswersCount, setApprovedAnswersCount] = useState<number | null>(null);
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
   const [findings, setFindings] = useState<V8InsightFinding[]>([]);
   const [findingsPresentation, setFindingsPresentation] = useState<PresentationState<number>>(
@@ -1990,6 +2003,84 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return firstParagraph || '';
   }, [insight?.content]);
 
+  // IS-3b (DEC-510 / U-08): the Executive Summary section renders the generator's
+  // prose (insight.executiveSummary) as document typography instead of the
+  // markdown-derived lead paragraph above. Whole change is behind the flag; OFF
+  // keeps today's Callout byte-for-byte.
+  const execSummaryProseEnabled = isInterviewExecSummaryProseEnabled();
+
+  const executiveSummaryProse = (insight?.executiveSummary || '').trim();
+
+  const executiveSummaryParagraphs = useMemo(
+    () => splitExecutiveSummaryParagraphs(executiveSummaryProse),
+    [executiveSummaryProse]
+  );
+
+  const displayedExecutiveSummary =
+    execSummaryProseEnabled && executiveSummaryProse ? executiveSummaryProse : executiveSummary;
+
+  const executiveSummaryRenderParagraphs =
+    executiveSummaryParagraphs.length > 0
+      ? executiveSummaryParagraphs
+      : displayedExecutiveSummary
+        ? [displayedExecutiveSummary]
+        : [];
+
+  // OFFICIAL ANSWERS single source (Wpis 95 IS-3b defect): the counter and the
+  // list must read ONE register. generationContext.sourceMaterial.includedAnswerCount
+  // is the server-computed sum of included session answers and survives the
+  // missing generateSummary step, unlike the summary_facts-derived list length.
+  const includedAnswerCountFromContext = useMemo(() => {
+    const sourceMaterial = insight?.generationContext?.sourceMaterial as
+      | { includedAnswerCount?: unknown }
+      | undefined;
+    const raw = sourceMaterial?.includedAnswerCount;
+    return typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? raw : null;
+  }, [insight?.generationContext]);
+
+  // IS-3b v2 (Wpis 122/123 pkt 2): gdy proza ON, „OFFICIAL ANSWERS" czyta REJESTR
+  // ZATWIERDZEŃ per przydział sesji (`GET /interview/assignments/:id/answer-approvals`),
+  // nie `includedAnswerCount` (odpowiedziane). ≤10 przydziałów (sourceSessionIds
+  // jest cięte do 10). Fail-soft: brak flagi/brak assignmentId → null (fallback);
+  // wszystkie wołania padły → null; pusty rejestr z udanego odczytu → 0 (to jest
+  // poprawna semantyka: nic nie zatwierdzono).
+  useEffect(() => {
+    if (!execSummaryProseEnabled) {
+      setApprovedAnswersCount(null);
+      return;
+    }
+    const assignmentIds = Array.from(
+      new Set(sourceSessions.map((session) => session.assignmentId).filter(Boolean))
+    ).slice(0, 10) as string[];
+    if (assignmentIds.length === 0) {
+      setApprovedAnswersCount(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.allSettled(
+        assignmentIds.map((assignmentId) => V8InterviewApi.getAnswerApprovals(assignmentId))
+      );
+      if (cancelled) return;
+      const fulfilled = results.filter(
+        (
+          result
+        ): result is PromiseFulfilledResult<{
+          assignmentId: string;
+          approvals: V8InterviewAnswerApproval[];
+        }> => result.status === 'fulfilled'
+      );
+      if (fulfilled.length === 0) {
+        setApprovedAnswersCount(null);
+        return;
+      }
+      setApprovedAnswersCount(sumApprovedAnswers(fulfilled.map((result) => result.value?.approvals)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [execSummaryProseEnabled, sourceSessions]);
+
   const officialAnswers = useMemo(
     () =>
       uniqueNonEmpty(
@@ -2222,7 +2313,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         v6Opportunities.length > 0 ? v6Opportunities.length : opportunityReadout.length,
       signals: v6Signals.length > 0 ? v6Signals.length : hiddenSignals.length,
       evidence: v6EvidenceMap.length,
-      officialAnswers: officialAnswers.length,
+      officialAnswers:
+        execSummaryProseEnabled && approvedAnswersCount !== null
+          ? approvedAnswersCount
+          : execSummaryProseEnabled && includedAnswerCountFromContext !== null
+            ? includedAnswerCountFromContext
+            : officialAnswers.length,
     }),
     [
       v6Themes.length,
@@ -2234,6 +2330,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       opportunityReadout.length,
       hiddenSignals.length,
       officialAnswers.length,
+      execSummaryProseEnabled,
+      includedAnswerCountFromContext,
+      approvedAnswersCount,
     ]
   );
 
@@ -3810,10 +3909,55 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'executive-summary':
           component = (
             <div className="space-y-4">
-              {renderSectionCardHeader('executive-summary', !!executiveSummary)}
-              <Callout variant="purple" title={t('interview.insightViewer.readThisAsAConsulting')}>
-                {executiveSummary || t('interview.insightViewer.noSummaryAvailable')}
-              </Callout>
+              {renderSectionCardHeader('executive-summary', !!displayedExecutiveSummary)}
+              {execSummaryProseEnabled ? (
+                <div data-testid="insight-exec-summary-prose" className="space-y-3">
+                  {executiveSummaryRenderParagraphs.length > 0 ? (
+                    executiveSummaryRenderParagraphs.map((paragraph, paragraphIndex) =>
+                      isExecutiveSummarySectionHeader(paragraph) ? (
+                        <p
+                          key={paragraphIndex}
+                          data-testid="insight-exec-summary-section-header"
+                          className="text-sm font-semibold tracking-tight text-c-text"
+                        >
+                          {paragraph}
+                        </p>
+                      ) : (
+                        <p key={paragraphIndex} className={TEXT_L3}>
+                          {paragraph}
+                        </p>
+                      )
+                    )
+                  ) : (
+                    <div
+                      data-testid="insight-exec-summary-empty"
+                      className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-c-border-subtle bg-c-surface-raised/40 px-4 py-4"
+                    >
+                      <p className={TEXT_L3}>{t('interview.insightViewer.summaryNotGenerated')}</p>
+                      {canRegenerateV6 && (
+                        <button
+                          type="button"
+                          onClick={handleRegenerate}
+                          disabled={isRegenerating}
+                          data-testid="insight-exec-summary-regenerate"
+                          className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                        >
+                          {isRegenerating ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <RefreshCw size={12} />
+                          )}
+                          {t('interview.insightViewer.regenerate')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Callout variant="purple" title={t('interview.insightViewer.readThisAsAConsulting')}>
+                  {executiveSummary || t('interview.insightViewer.noSummaryAvailable')}
+                </Callout>
+              )}
 
               {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (karta-insight, „do poprawki"), dosłownie:
                   „W oknie centralnym mamy trzy kolumny (…). Zróbmy to w trzech dużych
@@ -3823,6 +3967,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   Pierwszy dostał niebieski `c-info` — wcześniej był szary, więc kolory
                   były realnie DWA, nie trzy. Niebieski, nie crimson: to nie jest stan
                   krytyczny (CLAUDE.md pułapka #1). */}
+              {!execSummaryProseEnabled && (
               <div className="flex flex-col gap-2">
                 {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (druga tura): poprzednik dał temu
                     wierszowi TYLKO niebieską szynę i niebieski napis, a tło i ramkę
@@ -3881,6 +4026,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
               </div>
+              )}
 
               {evidenceQuotes.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -8788,6 +8934,31 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 typeMeta.label
               ),
             },
+            // IS-3b (Wpis 95 / DEC-510): the three executive-summary counter tiles
+            // relocate here as PROPERTIES rows when the prose render is ON. Same
+            // insightCounts source as the tiles and the nav badges — one register.
+            ...(execSummaryProseEnabled
+              ? [
+                  {
+                    id: 'official-answers',
+                    label: t('interview.insightViewer.officialAnswers'),
+                    value: String(insightCounts.officialAnswers),
+                    mono: true,
+                  },
+                  {
+                    id: 'issues-risks',
+                    label: t('interview.insightViewer.issuesRisks'),
+                    value: String(insightCounts.issues),
+                    mono: true,
+                  },
+                  {
+                    id: 'signals-opportunities',
+                    label: t('interview.insightViewer.signalsOpportunities'),
+                    value: String(insightCounts.signals + insightCounts.opportunities),
+                    mono: true,
+                  },
+                ]
+              : []),
           ]}
         />
       ),

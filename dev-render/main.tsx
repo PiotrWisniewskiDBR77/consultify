@@ -482,6 +482,7 @@ const W1RolloutLegacyPathScreen = React.lazy(() => import('./screens/w1-rollout-
 const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
+const Is3bExecSummaryV2Screen = React.lazy(() => import('./screens/is3b-exec-summary-v2'));
 const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
 const InterviewProgressbar153Screen = React.lazy(
   () => import('./screens/interview-progressbar-153')
@@ -1510,6 +1511,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-insight': {
     label: 'KARTY N — Insight (harness odbioru 2026-07-21)',
     render: () => <KartaInsightScreen />,
+  },
+  'is3b-exec-summary-v2': {
+    label: 'IS-3b v2 — Executive Summary: trzy nazwane sekcje / stan pusty (DEC-510)',
+    render: () => <Is3bExecSummaryV2Screen />,
   },
   'karta-interview': {
     label: 'KARTY N — Interview Session (harness odbioru 2026-07-21)',
