@@ -4854,57 +4854,90 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? [persistedConversationImage]
             : [];
 
-      // Save user message to conversation store
+      const buildUserMessageMetadata = () =>
+        uploadedAttachments.length > 0 ||
+        uploadedImages.length > 0 ||
+        failedAttachments.length > 0 ||
+        attachmentDocIds.length > 0 ||
+        canvasContextPacket
+          ? {
+              ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
+              ...(uploadedImages.length > 0 ? { images: uploadedImages } : {}),
+              ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
+              // Persist the KB doc ids attached to this turn so the RAG scope can be
+              // reconstructed after a page reload (previously only sent to the live AI call).
+              ...(attachmentDocIds.length > 0 ? { attachmentDocIds } : {}),
+              ...(canvasContextPacket
+                ? {
+                    canvasContext: {
+                      schemaVersion: canvasContextPacket.schemaVersion,
+                      activeDraft: canvasContextPacket.activeDraft,
+                      memorySnapshot: canvasContextPacket.memorySnapshot,
+                      selection: canvasContextPacket.selection
+                        ? {
+                            mode: canvasContextPacket.selection.mode,
+                            selectedText: canvasContextPacket.selection.selectedText,
+                          }
+                        : null,
+                    },
+                  }
+                : {}),
+            }
+          : undefined;
+
+      // Save user message to conversation store. If a stale/foreign conversation id
+      // survived rehydration, do not stream into that dead session: create a fresh
+      // conversation and persist the same user turn there before calling Teresa.
       if (conversationId) {
         try {
-          const userMessageMetadata =
-            uploadedAttachments.length > 0 ||
-            uploadedImages.length > 0 ||
-            failedAttachments.length > 0 ||
-            attachmentDocIds.length > 0 ||
-            canvasContextPacket
-              ? {
-                  ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
-                  ...(uploadedImages.length > 0 ? { images: uploadedImages } : {}),
-                  ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
-                  // Persist the KB doc ids attached to this turn so the RAG scope can be
-                  // reconstructed after a page reload (previously only sent to the live AI call).
-                  ...(attachmentDocIds.length > 0 ? { attachmentDocIds } : {}),
-                  ...(canvasContextPacket
-                    ? {
-                        canvasContext: {
-                          schemaVersion: canvasContextPacket.schemaVersion,
-                          activeDraft: canvasContextPacket.activeDraft,
-                          memorySnapshot: canvasContextPacket.memorySnapshot,
-                          selection: canvasContextPacket.selection
-                            ? {
-                                mode: canvasContextPacket.selection.mode,
-                                selectedText: canvasContextPacket.selection.selectedText,
-                              }
-                            : null,
-                        },
-                      }
-                    : {}),
-                }
-              : undefined;
           await addMessageToConversation({
             conversationId,
             role: 'user',
             content,
             messageType: 'text',
-            metadata: userMessageMetadata as any,
+            metadata: buildUserMessageMetadata() as any,
           });
-        } catch (err) {
-          // Don't silently swallow: the store keeps the optimistic bubble flagged with
-          // localError and retries in the background (idempotent via clientMessageId), but
-          // surface a non-blocking warning so the user knows this turn may not be persisted.
-          console.error('[UnifiedChatPanel] Failed to save user message:', err);
-          toast.error(
-            t(
-              'aiChat.errors.messageSaveFailed',
-              "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
-            )
-          );
+        } catch (err: any) {
+          const status = err?.response?.status || err?.status;
+          const code = String(err?.data?.code || err?.response?.data?.code || '').toUpperCase();
+          if (status === 404 || status === 403 || code === 'CHAT_CONVERSATION_NOT_FOUND') {
+            console.warn(
+              '[UnifiedChatPanel] stale_conversation_recovery',
+              err
+            );
+            try {
+              const fresh = await createConversation();
+              conversationId = fresh.id;
+              if (useConversationStore.getState().activeConversationId !== conversationId) {
+                setActiveConversation(conversationId);
+              }
+              await addMessageToConversation({
+                conversationId,
+                role: 'user',
+                content,
+                messageType: 'text',
+                metadata: buildUserMessageMetadata() as any,
+              });
+            } catch (recoveryErr) {
+              console.error(
+                '[UnifiedChatPanel] Failed to recover Teresa conversation:',
+                recoveryErr
+              );
+              toast.error(getTeresaStartFailureMessage(i18n.language));
+              return;
+            }
+          } else {
+            // Don't silently swallow: the store keeps the optimistic bubble flagged with
+            // localError and retries in the background (idempotent via clientMessageId), but
+            // surface a non-blocking warning so the user knows this turn may not be persisted.
+            console.error('[UnifiedChatPanel] Failed to save user message:', err);
+            toast.error(
+              t(
+                'aiChat.errors.messageSaveFailed',
+                "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
+              )
+            );
+          }
         }
       }
 

@@ -484,6 +484,38 @@ describe('UnifiedChatPanel chat route wiring', () => {
     expect(harness.clearKickoff).not.toHaveBeenCalled();
   });
 
+  it('odtwarza rozmowę Teresy po martwym conversationId przed streamem', async () => {
+    harness.conversationState.activeConversationId = '99999999-9999-4999-8999-999999999999';
+    harness.conversationState.createConversation = vi.fn(async () => ({ id: 'conversation-368' }));
+    harness.addConversationMessage
+      .mockRejectedValueOnce({ status: 404, data: { code: 'CHAT_CONVERSATION_NOT_FOUND' } })
+      .mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter initialEntries={['/chat/99999999-9999-4999-8999-999999999999']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'send-text-only' }));
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalledTimes(1));
+    expect(harness.conversationState.createConversation).toHaveBeenCalledTimes(1);
+    expect(harness.addConversationMessage).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ conversationId: '99999999-9999-4999-8999-999999999999' })
+    );
+    expect(harness.addConversationMessage).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        conversationId: 'conversation-368',
+        content: 'What else can you see?',
+      })
+    );
+    expect(harness.startStream.mock.calls[0]?.[3]).toEqual(
+      expect.objectContaining({ conversationId: 'conversation-368' })
+    );
+  });
+
   it('changes the work panel title and accessible label after opening it', () => {
     render(
       <MemoryRouter initialEntries={['/chat']}>

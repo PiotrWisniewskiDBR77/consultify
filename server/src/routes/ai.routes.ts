@@ -159,6 +159,30 @@ const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: R
     if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
+
+    const conversationId = String((req.body as any)?.conversationId || '').trim();
+    if (conversationId) {
+      const conversation = await dbGet<{ id?: string }>(
+        `SELECT id FROM conversations
+         WHERE id = ?
+           AND user_id = ?
+           AND deleted_at IS NULL
+           AND (organization_id = ? OR organization_id IS NULL)`,
+        [conversationId, userId, organizationId],
+        { fallback: false }
+      );
+      if (!conversation?.id) {
+        logger.warn('[AI Stream] chat_conversation_not_found', {
+          userId,
+          organizationId,
+          conversationId,
+        });
+        return res.status(404).json({
+          code: 'CHAT_CONVERSATION_NOT_FOUND',
+          error: 'CHAT_CONVERSATION_NOT_FOUND',
+        });
+      }
+    }
   } catch (error) {
     logger.warn('[AI Stream] membership verification unavailable', {
       userId,
