@@ -454,7 +454,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-primary-500" />
+              <Loader2 size={24} className="animate-spin text-c-text-muted" />
             </div>
           ) : currentDocs.length === 0 ? (
             <div className="text-center py-16 px-4">

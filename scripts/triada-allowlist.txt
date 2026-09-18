@@ -20,3 +20,9 @@ src/components/Onboarding/EnterpriseOnboardingWizard.tsx
 # pilnować (ten sam wzorzec co dwa wyjątki wyżej).
 */src/components/settings/__tests__/UstawieniaPstryczki.k20.test.ts
 src/components/settings/__tests__/UstawieniaPstryczki.k20.test.ts
+# D-87 (DEC-646): ratchet NEGATYWNY pilnujący, że pierścień ładowania listy
+# dokumentów niesie token neutralny `text-c-text-muted`, a NIE crimson
+# `text-primary-500` — musi nazwać zakazany token, żeby go pilnować (ten sam
+# wzorzec co wyjątki wyżej).
+*/src/components/documents/__tests__/DocumentSidePanel.spinnerToken.test.tsx
+src/components/documents/__tests__/DocumentSidePanel.spinnerToken.test.tsx

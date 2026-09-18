@@ -8,6 +8,9 @@
  *
  * Parametry URL:
  *   ?projekt=1   — panel dostaje projectId (wysyłka realnie leci na serwer)
+ *   ?loading=1   — fetch listy dokumentów nigdy się nie rozstrzyga, więc panel
+ *                  zostaje w stanie `loading` i spinner listy jest widoczny
+ *                  (D-87: zrzut tokenu neutralnego spinera)
  *   (bez)        — panel bez projektu
  */
 import React, { useEffect } from 'react';
@@ -17,6 +20,7 @@ import { useAppStore } from '../../src/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);
 const zProjektem = params.get('projekt') === '1';
+const trybLadowania = params.get('loading') === '1';
 
 const realFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -29,6 +33,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
       400
     );
   }
+  // D-87: hold the list fetch pending so the loading spinner stays on screen.
+  if (url.includes('/documents') && trybLadowania) return new Promise<Response>(() => {});
   if (url.includes('/documents')) return odp([]);
   return realFetch(input, init);
 };
