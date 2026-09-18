@@ -457,6 +457,29 @@ describe('AuditLibraryTab', () => {
       ).toBe('—');
     });
 
+    it('formatPackCriteriaCount: DRZEWO 1+2+4 → „7" (wszystkie węzły, nie 1 korzeń) — D-91', () => {
+      const base = packDetailFixture(verifiedInternalProcedure);
+      // `GET /audits/packs/:id` zwraca drzewo (buildCriteriaTree): korzeń + 2 dzieci + 4 wnuki = 7 węzłów.
+      const nested = [
+        {
+          id: 'root',
+          children: [
+            { id: 'a', children: [{ id: 'a1', children: [] }, { id: 'a2', children: [] }] },
+            { id: 'b', children: [{ id: 'b1', children: [] }, { id: 'b2', children: [] }] },
+          ],
+        },
+      ] as unknown as AuditPackDetail['criteria'];
+      // criteriaCount undefined = realny kształt getPackById (nie niesie licznika z listy);
+      // stary kod `criteria.length` dałby „1" (korzeń), jedno źródło countCriteriaNodes daje „7".
+      expect(
+        formatPackCriteriaCount({
+          ...base,
+          criteria: nested,
+          criteriaCount: undefined as unknown as number,
+        })
+      ).toBe('7');
+    });
+
     it('brak danych → „—" w Rights / Finding taxonomy / Criteria count, a „undefined" nigdy nie trafia do DOM', async () => {
       const bareDetail = {
         ...packDetailFixture(verifiedInternalProcedure),

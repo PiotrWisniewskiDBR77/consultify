@@ -7,6 +7,7 @@ vi.mock('@/services/api', () => ({
 }));
 
 import {
+  countCriteriaNodes,
   finalizeOutput,
   generateReport,
   getProgramCoverage,
@@ -190,5 +191,52 @@ describe('auditsMethodApi report-chain commands', () => {
     await expect(
       generateReport({ programId: 'program-1', outputId: 'out-1', reportKind: 'audit_report' })
     ).rejects.toThrow('missing id');
+  });
+});
+
+// D-91 (Wpis 121): `countCriteriaNodes` to JEDNO źródło licznika kryteriów.
+// `GET /audits/packs/:id` zwraca drzewo (węzły z `children[]`), a decyzja
+// produktowa = WSZYSTKIE węzły (spójnie z serwerowym `criteria_count =
+// COUNT(*)`), NIE tylko korzenie i NIE tylko liście.
+describe('countCriteriaNodes — D-91 jedno źródło licznika (wszystkie węzły drzewa)', () => {
+  const leaf = (id: string) => ({ id, children: [] as unknown[] });
+
+  it('drzewo 3 poziomów 1+2+4 → 7 (wszystkie węzły, nie 1 korzeń i nie 4 liście)', () => {
+    const tree = [
+      {
+        id: 'root',
+        children: [
+          { id: 'a', children: [leaf('a1'), leaf('a2')] },
+          { id: 'b', children: [leaf('b1'), leaf('b2')] },
+        ],
+      },
+    ];
+    expect(countCriteriaNodes(tree)).toBe(7);
+  });
+
+  it('płaska lista bez dzieci → liczba węzłów', () => {
+    expect(countCriteriaNodes([leaf('c1'), leaf('c2'), leaf('c3')])).toBe(3);
+  });
+
+  it('wiele korzeni sumuje się (2 korzenie po 2 liście → 6)', () => {
+    const forest = [
+      { id: 'r1', children: [leaf('x'), leaf('y')] },
+      { id: 'r2', children: [leaf('z'), leaf('w')] },
+    ];
+    expect(countCriteriaNodes(forest)).toBe(6);
+  });
+
+  it('węzły bez pola children (płaski kontrakt) liczą się jako 1 każdy', () => {
+    const flat = [
+      { id: 'c1', parentId: null },
+      { id: 'c2', parentId: 'c1' },
+    ];
+    expect(countCriteriaNodes(flat)).toBe(2);
+  });
+
+  it('puste / undefined / null → 0 (nigdy NaN ani undefined)', () => {
+    expect(countCriteriaNodes([])).toBe(0);
+    expect(countCriteriaNodes(undefined)).toBe(0);
+    expect(countCriteriaNodes(null)).toBe(0);
   });
 });

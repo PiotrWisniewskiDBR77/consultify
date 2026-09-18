@@ -251,6 +251,34 @@ export interface AuditPackDetail extends AuditPackSummary {
   criteria: AuditPackCriterionNode[];
 }
 
+/**
+ * D-91: JEDNO źródło licznika kryteriów. `GET /audits/packs/:id` zwraca
+ * `criteria` jako DRZEWO (`packService.buildCriteriaTree` — węzły niosą
+ * `children[]`), więc `criteria.length` policzyłoby TYLKO korzenie (1 dla
+ * drzewa z jednym korzeniem) — to defekt „Criteria count: 1 zamiast 6/7"
+ * zmierzony na stagingu (wdrożenie 28). Liczymy KAŻDY węzeł (korzenie +
+ * wszyscy potomkowie), spójnie z serwerowym licznikiem listy
+ * `criteria_count = COUNT(*) FROM audit_pack_criteria WHERE pack_id`.
+ *
+ * Typ strukturalny z opcjonalnym `children` działa zarówno z płaskim
+ * `AuditPackCriterionSummary[]` (statyczny typ kontraktu) jak i z runtime'owym
+ * drzewem, bez wiązania tego modułu z typami edytora kryteriów.
+ */
+export interface CriteriaNodeLike {
+  children?: readonly CriteriaNodeLike[] | null;
+}
+
+export function countCriteriaNodes(
+  nodes: readonly CriteriaNodeLike[] | undefined | null
+): number {
+  if (!Array.isArray(nodes)) return 0;
+  let total = 0;
+  for (const node of nodes) {
+    total += 1 + countCriteriaNodes(node?.children);
+  }
+  return total;
+}
+
 export interface ListPacksParams {
   search?: string;
   status?: PackPublicationStatus | 'all';

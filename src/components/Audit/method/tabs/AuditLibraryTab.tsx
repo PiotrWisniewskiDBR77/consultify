@@ -45,6 +45,7 @@ import {
 import {
   AUDIT_SOURCE_TYPES,
   AUDIT_VERIFICATION_STATES,
+  countCriteriaNodes,
   getPack,
   isComplianceGrade,
   PACK_PUBLICATION_STATUSES,
@@ -184,14 +185,20 @@ export function evaluatePublishPackGate(
 }
 
 /**
- * OP-2-lite (Wpis 85, wiersz planu 65 / U-27): liczba kryteriów pakietu bez
- * surowych wartości. Preferuje realną listę `criteria`, potem `criteriaCount`,
- * a gdy żadne nie daje skończonej liczby → „—" (placeholder neutralny
- * językowo, ten sam co pola `source`/`roles` obok) — NIGDY „undefined" w DOM.
+ * OP-2-lite (Wpis 85, wiersz planu 65 / U-27) + D-91 (Wpis 121): liczba
+ * kryteriów pakietu bez surowych wartości. `GET /audits/packs/:id` zwraca
+ * `criteria` jako DRZEWO (węzły niosą `children[]`), więc liczymy WSZYSTKIE
+ * węzły przez wspólne źródło `countCriteriaNodes` — samo `criteria.length`
+ * policzyłoby tylko korzenie („1 zamiast 6/7", defekt D-91 ze stagingu).
+ * Ta sama funkcja zasila pigułkę/wiersz „Criteria count"/plakietkę sekcji na
+ * ekranie obiektu OP-2a (`AuditPackObjectPage`) — jedno źródło licznika.
+ * Gdy drzewo daje 0, sięgamy po `criteriaCount` z listy; gdy żadne nie daje
+ * skończonej liczby → „—" (placeholder neutralny językowo, ten sam co pola
+ * `source`/`roles` obok) — NIGDY „undefined" w DOM.
  */
 export function formatPackCriteriaCount(detail: AuditPackDetail): string {
-  const fromList = Array.isArray(detail.criteria) ? detail.criteria.length : 0;
-  const count = fromList || detail.criteriaCount;
+  const fromTree = countCriteriaNodes(detail.criteria);
+  const count = fromTree || detail.criteriaCount;
   return typeof count === 'number' && Number.isFinite(count) ? String(count) : '—';
 }
 

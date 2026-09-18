@@ -81,6 +81,7 @@ import {
 } from '../auditStatusTones';
 import {
   approvePackByExpert,
+  countCriteriaNodes,
   getPack,
   isComplianceGrade,
   listPrograms,
@@ -660,7 +661,7 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
       id: 'criteria',
       icon: ListChecks,
       label: { en: 'Criteria', pl: 'Kryteria' },
-      badge: pack.criteria.length,
+      badge: countCriteriaNodes(pack.criteria),
       alwaysShow: true,
       component: editingCriteria && canEditCriteria ? (
         <PackCriteriaEditor

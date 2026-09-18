@@ -421,6 +421,49 @@ describe('AuditPackObjectPage — OP-2 ekran obiektu pakietu', () => {
       screen.queryByText('No audit programs were started from this pack yet.')
     ).not.toBeInTheDocument();
   });
+
+  it('pigułka i „Criteria count" liczą WSZYSTKIE węzły drzewa (1+2+4 → 7), nie 1 korzeń — D-91', async () => {
+    // `getPackById` zwraca drzewo (buildCriteriaTree): korzeń + 2 dzieci + 4 wnuki = 7 węzłów.
+    const nested = [
+      {
+        id: 'root',
+        parentId: null,
+        ordinal: 1,
+        refCode: 'ZAK-1',
+        nodeKind: 'branch',
+        title: 'Root criterion',
+        mandatory: true,
+        children: [
+          {
+            id: 'a',
+            children: [
+              { id: 'a1', children: [] },
+              { id: 'a2', children: [] },
+            ],
+          },
+          {
+            id: 'b',
+            children: [
+              { id: 'b1', children: [] },
+              { id: 'b2', children: [] },
+            ],
+          },
+        ],
+      },
+    ] as unknown as AuditPackDetail['criteria'];
+    // criteriaCount=1 (błędne) celowo: wartość musi pochodzić z licznika drzewa, nie z fallbacka serwera.
+    mockedGetPack.mockResolvedValue(makeDetail({ criteria: nested, criteriaCount: 1 }));
+    renderPage();
+
+    await screen.findAllByText('Client QMS Procedure');
+    // Stary kod `criteria.length` = 1 (korzeń) — jedno źródło countCriteriaNodes = 7.
+    expect(screen.getByTestId('audit-pack-criteria-pill').textContent).toMatch(/7/);
+    await waitFor(() => expect(propertyValue('Criteria count')).toBe('7'));
+    // Badge sekcji w nawigacji niesie TĘ SAMĄ liczbę (jedno źródło, nie `criteria.length`).
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^criteria/i }).textContent).toMatch(/7/)
+    );
+  });
 });
 
 /**
