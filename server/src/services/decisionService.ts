@@ -60,6 +60,15 @@ export interface CreateDecisionInput {
   idempotencyKey?: string;
   sourceType?: string;
   sourceId?: string;
+  /**
+   * MTG-2b (DEC-607, Wpis 109): unified-decision context link
+   * (`decisions.context_type`/`context_id`, migration 295 — no new migration).
+   * A meeting decision promoted to the register carries
+   * `contextType='meeting'` + `contextId=<meetingId>` so it stays filterable
+   * back to its source meeting alongside `sourceType='meeting_decision'`.
+   */
+  contextType?: string;
+  contextId?: string;
   /** Internal acceptance hook; never exposed by an HTTP schema. */
   faultInjection?: 'AFTER_CORE' | 'AFTER_HISTORY';
 }
@@ -251,8 +260,9 @@ class DecisionService {
                 id, organization_id, project_id, initiative_id, task_id,
                 title, description, type, decision_maker_id,
                 options, criteria, deadline, escalation_deadline,
-                status, created_by, created_at, updated_at, idempotency_key, source_type, source_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
+                status, created_by, created_at, updated_at, idempotency_key, source_type, source_id,
+                context_type, context_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -273,6 +283,8 @@ class DecisionService {
         input.idempotencyKey || null,
         input.sourceType || null,
         input.sourceId || null,
+        input.contextType || null,
+        input.contextId || null,
       ]
     );
 

@@ -3,6 +3,10 @@ import { validate as isUuid } from 'uuid';
 import { withPgTransaction } from '../../database/PostgresDatabase.js';
 import { TaskService } from '../TaskService.js';
 import { getMeetingNote } from '../meetingBoundary/meetingBoundaryService.js';
+import {
+  getMeetingFollowUpRecord,
+  setMeetingFollowUpTaskId,
+} from '../meetingService.js';
 
 export class MeetingNoteTaskFunnelError extends Error {
   constructor(
@@ -10,10 +14,27 @@ export class MeetingNoteTaskFunnelError extends Error {
     public readonly code:
       | 'NOTE_NOT_APPROVED'
       | 'ACTION_ITEM_NOT_FOUND'
+      | 'FOLLOW_UP_NOT_FOUND'
       | 'TASK_IDEMPOTENCY_COLLISION'
   ) {
     super(message);
   }
+}
+
+/**
+ * MTG-2b (DEC-607, Wpis 100/U-52): the funnel used to fold the action's due
+ * date into the task DESCRIPTION as free text and never set the structured
+ * `due_date`, so "ze spotkania coś wychodzi" lost the termin — the created
+ * task had `due_date = NULL` and no calendar/My-Work due ordering. Parse the
+ * (free-text or ISO) deadline into a real ISO-8601 datetime; return null when
+ * it is absent or unparseable so we never write a bogus date.
+ */
+function parseDeadlineToIso(value?: string | null): string | null {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
 }
 
 export async function createTaskFromMeetingNoteAction(input: {
@@ -117,6 +138,7 @@ export async function createTaskFromMeetingNoteAction(input: {
       const assigneeId = ownerCheck.rows[0]?.id || input.actorId;
 
       const service = new TaskService({ query } as any);
+      const dueDate = parseDeadlineToIso(action.deadline);
       const task = await service.createTask(
         {
           projectId: input.projectId && isUuid(input.projectId) ? input.projectId : null,
@@ -130,6 +152,7 @@ export async function createTaskFromMeetingNoteAction(input: {
           status: 'todo',
           priority: action.priority || 'medium',
           assigneeId,
+          ...(dueDate ? { dueDate } : {}),
         },
         input.actorId,
         { idempotencyKey, sourceType, sourceId }
@@ -148,4 +171,129 @@ export async function createTaskFromMeetingNoteAction(input: {
     }
     throw error;
   }
+}
+
+/**
+ * MTG-2b (DEC-607, Wpis 100/U-52) — "ze spotkania coś wychodzi": convert a
+ * meeting ACTION (a `meeting_follow_ups` row, the protocol's A-01… block) into
+ * a Realizacja task WITHOUT losing its termin or owner, then write the task id
+ * back onto the follow-up so the protocol can read `tasks.status` and show the
+ * return status.
+ *
+ * Unlike `createTaskFromMeetingNoteAction` (whose source is free-text lifted
+ * from a transcript), a follow-up row carries STRUCTURED `dueAt` and
+ * `ownerUserId`, so both survive the conversion as real columns:
+ *   - termin  → `tasks.due_date` (ISO), not just description text;
+ *   - owner   → `tasks.assignee_id` when `ownerUserId` is a live member of the
+ *               org (tenant-guarded), else the actor performing the conversion
+ *               (a NULL assignee would make the task invisible to My Work —
+ *               DEC-153). The free-text `owner` label is still kept in the
+ *               description so nothing the human typed is dropped.
+ *
+ * Idempotent on `meeting-follow-up:<followUpId>`: a retried conversion replays
+ * the SAME task instead of creating a second one, and the task_id writeback is
+ * a no-op-equivalent (same value) on replay.
+ */
+export async function createTaskFromMeetingFollowUp(input: {
+  organizationId: string;
+  meetingId: string;
+  followUpId: string;
+  actorId: string;
+  projectId?: string | null;
+}) {
+  const followUp = await getMeetingFollowUpRecord({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+    followUpId: input.followUpId,
+  });
+  if (!followUp) {
+    throw new MeetingNoteTaskFunnelError('Meeting follow-up not found', 'FOLLOW_UP_NOT_FOUND');
+  }
+
+  const idempotencyKey = `meeting-follow-up:${input.followUpId}`;
+  const sourceType = 'meeting_follow_up';
+  const sourceId = `${input.meetingId}:${input.followUpId}`;
+  const dueDate = parseDeadlineToIso(followUp.dueAt);
+
+  const attempt = () =>
+    withPgTransaction(async (query) => {
+      await query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
+        input.organizationId,
+        idempotencyKey,
+      ]);
+      const replayBefore = await query<{ source_type: string; source_id: string }>(
+        `SELECT source_type, source_id FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
+        [input.organizationId, idempotencyKey]
+      );
+      if (
+        replayBefore.rows[0] &&
+        (replayBefore.rows[0].source_type !== sourceType ||
+          replayBefore.rows[0].source_id !== sourceId)
+      ) {
+        throw new MeetingNoteTaskFunnelError(
+          'Task idempotency key belongs to another source',
+          'TASK_IDEMPOTENCY_COLLISION'
+        );
+      }
+
+      // Tenant-guard the structured owner: only assign to `ownerUserId` if that
+      // user still belongs to THIS org; otherwise fall back to the actor (who
+      // the route already authenticated as a member). Never hand an assignee_id
+      // to a user outside the task's own org, and never leave it NULL.
+      let assigneeId = input.actorId;
+      if (followUp.ownerUserId) {
+        const ownerCheck = await query<{ id: string }>(
+          `SELECT id FROM users WHERE id = $1 AND organization_id = $2`,
+          [followUp.ownerUserId, input.organizationId]
+        );
+        if (ownerCheck.rows[0]?.id) assigneeId = ownerCheck.rows[0].id;
+      }
+
+      const service = new TaskService({ query } as any);
+      const task = await service.createTask(
+        {
+          projectId: input.projectId && isUuid(input.projectId) ? input.projectId : null,
+          title: followUp.title,
+          description: [
+            followUp.owner ? `Owner: ${followUp.owner}` : '',
+            followUp.dueAt ? `Deadline: ${followUp.dueAt}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+          status: 'todo',
+          priority: 'medium',
+          assigneeId,
+          ...(dueDate ? { dueDate } : {}),
+        },
+        input.actorId,
+        { idempotencyKey, sourceType, sourceId }
+      );
+      return { task, replayed: Boolean(replayBefore.rows[0]) };
+    });
+
+  let result: { task: { id: string; title: string; status: string }; replayed: boolean };
+  try {
+    result = await attempt();
+  } catch (error: any) {
+    if (error?.message === 'TASK_IDEMPOTENCY_COLLISION') {
+      throw new MeetingNoteTaskFunnelError(error.message, 'TASK_IDEMPOTENCY_COLLISION');
+    }
+    if (error?.code === '23505') {
+      result = await attempt();
+    } else {
+      throw error;
+    }
+  }
+
+  // W109c: write the task id back onto the action row so the protocol reader
+  // (meetingProtocolService) can join `tasks.status` by `task_id` and surface
+  // the return status on the protocol. Done after commit; idempotent on replay.
+  await setMeetingFollowUpTaskId({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+    followUpId: input.followUpId,
+    taskId: result.task.id,
+  });
+
+  return result;
 }

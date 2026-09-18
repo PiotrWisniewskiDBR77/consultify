@@ -334,6 +334,124 @@ describe('MeetingObjectPage', () => {
     expect(screen.getByText('Recap')).toBeTruthy();
   });
 
+  it('MTG-2b: converts a follow-up record to a task through the funnel endpoint', async () => {
+    // Wiring proof (cost rule "testy wpięcia, nie obecności"): the row button must
+    // POST the EXACT funnel URL — the action→task path that writes `task_id` back
+    // so the protocol shows the return status. Asserting the call argument, not a
+    // local mirror.
+    routerState.pathname = '/meetings/meeting-1/decisions';
+    getMeetingMock.mockResolvedValue({ meeting });
+    listDecisionRecordsMock.mockResolvedValue({ decisions: [] });
+    listFollowUpRecordsMock.mockResolvedValue({
+      followUps: [
+        {
+          id: 'fu-1',
+          organizationId: 'org-1',
+          meetingId: 'meeting-1',
+          title: 'Recap',
+          owner: 'Bob',
+          ownerUserId: null,
+          dueAt: null,
+          status: 'open',
+          sourceKind: 'manual',
+          sourceNoteId: null,
+          sourceIndex: null,
+          taskId: null,
+          agendaItemId: null,
+        },
+      ],
+    });
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes('/agenda')
+        ? { ok: true, json: async () => ({ agendaItems: [] }) }
+        : { ok: true, json: async () => ({ task: { id: 'task-1' }, replayed: false }) }
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    render(<MeetingObjectPage />);
+
+    await screen.findByText('Recap');
+    screen.getByTitle('Convert to task').click();
+    const taskCalls = () =>
+      fetchMock.mock.calls.filter(([url]) => String(url).includes('/follow-up-records/'));
+    await waitFor(() => expect(taskCalls()).toHaveLength(1));
+    expect(taskCalls()[0]).toEqual([
+      '/api/meeting/meeting-1/follow-up-records/fu-1/task',
+      { method: 'POST', credentials: 'include' },
+    ]);
+  });
+
+  it('MTG-2b: hides the convert button once the action is already linked to a task', async () => {
+    routerState.pathname = '/meetings/meeting-1/decisions';
+    getMeetingMock.mockResolvedValue({ meeting });
+    listDecisionRecordsMock.mockResolvedValue({ decisions: [] });
+    listFollowUpRecordsMock.mockResolvedValue({
+      followUps: [
+        {
+          id: 'fu-1',
+          organizationId: 'org-1',
+          meetingId: 'meeting-1',
+          title: 'Recap',
+          owner: 'Bob',
+          ownerUserId: null,
+          dueAt: null,
+          status: 'open',
+          sourceKind: 'manual',
+          sourceNoteId: null,
+          sourceIndex: null,
+          taskId: 'task-1',
+          agendaItemId: null,
+        },
+      ],
+    });
+    render(<MeetingObjectPage />);
+
+    await screen.findByText('Recap');
+    expect(screen.queryByTitle('Convert to task')).toBeNull();
+  });
+
+  it('MTG-2b: promotes a decision record to the unified register (P2)', async () => {
+    routerState.pathname = '/meetings/meeting-1/decisions';
+    getMeetingMock.mockResolvedValue({ meeting });
+    listDecisionRecordsMock.mockResolvedValue({
+      decisions: [
+        {
+          id: 'decision-1',
+          organizationId: 'org-1',
+          meetingId: 'meeting-1',
+          statement: 'Ship v2',
+          rationale: '',
+          decidedBy: null,
+          decidedAt: null,
+          status: 'recorded',
+          sourceKind: 'manual',
+          sourceNoteId: null,
+          sourceIndex: null,
+          createdBy: 'user-1',
+          createdAt: '2026-07-01T10:00:00.000Z',
+          updatedAt: '2026-07-01T10:00:00.000Z',
+        },
+      ],
+    });
+    listFollowUpRecordsMock.mockResolvedValue({ followUps: [] });
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes('/agenda')
+        ? { ok: true, json: async () => ({ agendaItems: [] }) }
+        : { ok: true, json: async () => ({ decision: { id: 'decision-register-1' } }) }
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    render(<MeetingObjectPage />);
+
+    await screen.findByText('Ship v2');
+    screen.getByTitle('Promote to register').click();
+    const promoteCalls = () =>
+      fetchMock.mock.calls.filter(([url]) => String(url).includes('/decision-records/'));
+    await waitFor(() => expect(promoteCalls()).toHaveLength(1));
+    expect(promoteCalls()[0]).toEqual([
+      '/api/meeting/meeting-1/decision-records/decision-1/promote',
+      { method: 'POST', credentials: 'include' },
+    ]);
+  });
+
   it('clicking a section tab navigates instead of only flipping local state', async () => {
     getMeetingMock.mockResolvedValue({ meeting });
     render(<MeetingObjectPage />);

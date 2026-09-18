@@ -39534,16 +39534,19 @@
       "superseded": "Zastąpiona",
       "markRecorded": "Oznacz jako zapisaną",
       "markSuperseded": "Oznacz jako zastąpioną",
+      "promote": "Promuj do rejestru",
       "notifications": {
         "created": "Zapisano decyzję",
         "updated": "Zaktualizowano decyzję",
-        "deleted": "Usunięto decyzję"
+        "deleted": "Usunięto decyzję",
+        "promoted": "Promowano do rejestru"
       },
       "errors": {
         "loadFailed": "Nie udało się załadować decyzji.",
         "createFailed": "Nie udało się zapisać decyzji",
         "updateFailed": "Nie udało się zaktualizować decyzji",
-        "deleteFailed": "Nie udało się usunąć decyzji"
+        "deleteFailed": "Nie udało się usunąć decyzji",
+        "promoteFailed": "Nie udało się promować decyzji"
       },
       "fromMinutes": "Z protokołu — jeszcze niezapisane"
     },
@@ -39568,15 +39571,18 @@
       "titlePlaceholder": "Dalsze działania…",
       "ownerPlaceholder": "Właściciel",
       "add": "Dodaj follow-up",
+      "convertToTask": "Przekształć w zadanie",
       "notifications": {
         "created": "Dodano follow-up",
-        "deleted": "Usunięto follow-up"
+        "deleted": "Usunięto follow-up",
+        "taskCreated": "Utworzono zadanie"
       },
       "errors": {
         "loadFailed": "Nie udało się załadować follow-upów.",
         "createFailed": "Nie udało się dodać follow-upu",
         "updateFailed": "Nie udało się zaktualizować follow-upu",
-        "deleteFailed": "Nie udało się usunąć follow-upu"
+        "deleteFailed": "Nie udało się usunąć follow-upu",
+        "taskCreateFailed": "Nie udało się utworzyć zadania"
       },
       "fromMinutes": "Z protokołu — jeszcze niezapisane"
     },

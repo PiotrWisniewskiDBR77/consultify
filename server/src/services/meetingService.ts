@@ -29,6 +29,13 @@ export interface MeetingDecisionRecord {
   sourceKind: 'manual' | 'note' | 'legacy';
   sourceNoteId: string | null;
   sourceIndex: number | null;
+  // W109c (DEC-607, MTG-2b): protocol decision columns. The protocol READER
+  // (meetingProtocolService) already consumes these; the LIVE writers must
+  // fill them, not just the 20262302 backfill.
+  ownerUserId: string | null;
+  decisionType: string | null;
+  impactText: string | null;
+  rejectedAlternative: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -42,6 +49,11 @@ export interface MeetingFollowUpRecord extends MeetingFollowUp {
   sourceKind: 'manual' | 'note' | 'legacy';
   sourceNoteId: string | null;
   sourceIndex: number | null;
+  // W109c (DEC-607, MTG-2b): `taskId` is written back by the action→task
+  // funnel so the protocol can show the task's return status; `agendaItemId`
+  // hangs the action under its agenda point.
+  taskId: string | null;
+  agendaItemId: string | null;
 }
 
 export interface MeetingRecord {
@@ -605,6 +617,10 @@ type DecisionRecordRow = {
   source_kind: string | null;
   source_note_id: string | null;
   source_index: number | null;
+  owner_user_id: string | null;
+  decision_type: string | null;
+  impact_text: string | null;
+  rejected_alternative: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -617,6 +633,8 @@ type FollowUpRecordRow = FollowUpRow & {
   source_kind: string | null;
   source_note_id: string | null;
   source_index: number | null;
+  task_id: string | null;
+  agenda_item_id: string | null;
 };
 
 function mapDecisionRecord(row: DecisionRecordRow): MeetingDecisionRecord {
@@ -633,6 +651,10 @@ function mapDecisionRecord(row: DecisionRecordRow): MeetingDecisionRecord {
       row.source_kind === 'note' || row.source_kind === 'legacy' ? row.source_kind : 'manual',
     sourceNoteId: row.source_note_id,
     sourceIndex: row.source_index,
+    ownerUserId: row.owner_user_id ?? null,
+    decisionType: row.decision_type ?? null,
+    impactText: row.impact_text ?? null,
+    rejectedAlternative: row.rejected_alternative ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -653,6 +675,8 @@ function mapFollowUpRecord(row: FollowUpRecordRow): MeetingFollowUpRecord {
       row.source_kind === 'note' || row.source_kind === 'legacy' ? row.source_kind : 'manual',
     sourceNoteId: row.source_note_id,
     sourceIndex: row.source_index,
+    taskId: row.task_id ?? null,
+    agendaItemId: row.agenda_item_id ?? null,
   };
 }
 
@@ -688,14 +712,19 @@ export async function createMeetingDecisionRecord(input: {
   rationale?: string;
   decidedBy?: string | null;
   createdBy: string;
+  ownerUserId?: string | null;
+  decisionType?: string | null;
+  impactText?: string | null;
+  rejectedAlternative?: string | null;
 }): Promise<MeetingDecisionRecord> {
   const id = `meeting-decision-${uuidv4()}`;
   const now = new Date().toISOString();
   await dbRun(
     `INSERT INTO meeting_decisions (
        id, organization_id, meeting_id, statement, rationale, decided_by,
-       decided_at, status, source_kind, created_by, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'recorded', 'manual', ?, ?, ?)`,
+       decided_at, status, source_kind, owner_user_id, decision_type,
+       impact_text, rejected_alternative, created_by, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'recorded', 'manual', ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.organizationId,
@@ -704,6 +733,10 @@ export async function createMeetingDecisionRecord(input: {
       String(input.rationale || '').trim(),
       input.decidedBy || null,
       now,
+      input.ownerUserId || null,
+      input.decisionType || null,
+      input.impactText || null,
+      input.rejectedAlternative || null,
       input.createdBy,
       now,
       now,
@@ -721,16 +754,28 @@ export async function updateMeetingDecisionRecord(input: {
   statement?: string;
   rationale?: string;
   status?: 'recorded' | 'superseded';
+  ownerUserId?: string | null;
+  decisionType?: string | null;
+  impactText?: string | null;
+  rejectedAlternative?: string | null;
 }): Promise<MeetingDecisionRecord | null> {
   const existing = await getMeetingDecisionRecord(input);
   if (!existing) return null;
   await dbRun(
-    `UPDATE meeting_decisions SET statement = ?, rationale = ?, status = ?, updated_at = ?
+    `UPDATE meeting_decisions
+     SET statement = ?, rationale = ?, status = ?, owner_user_id = ?, decision_type = ?,
+         impact_text = ?, rejected_alternative = ?, updated_at = ?
      WHERE id = ? AND organization_id = ? AND meeting_id = ?`,
     [
       input.statement?.trim() || existing.statement,
       input.rationale === undefined ? existing.rationale : input.rationale.trim(),
       input.status || existing.status,
+      input.ownerUserId === undefined ? existing.ownerUserId : input.ownerUserId,
+      input.decisionType === undefined ? existing.decisionType : input.decisionType,
+      input.impactText === undefined ? existing.impactText : input.impactText,
+      input.rejectedAlternative === undefined
+        ? existing.rejectedAlternative
+        : input.rejectedAlternative,
       new Date().toISOString(),
       input.decisionId,
       input.organizationId,
@@ -759,7 +804,7 @@ export async function listMeetingFollowUpRecords(input: {
 }): Promise<MeetingFollowUpRecord[]> {
   const rows = await dbAll<FollowUpRecordRow>(
     `SELECT id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
-            status, source_kind, source_note_id, source_index
+            status, source_kind, source_note_id, source_index, task_id, agenda_item_id
      FROM meeting_follow_ups
      WHERE meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)
      ORDER BY created_at ASC, id ASC`,
@@ -775,7 +820,7 @@ export async function getMeetingFollowUpRecord(input: {
 }): Promise<MeetingFollowUpRecord | null> {
   const row = await dbGet<FollowUpRecordRow>(
     `SELECT id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
-            status, source_kind, source_note_id, source_index
+            status, source_kind, source_note_id, source_index, task_id, agenda_item_id
      FROM meeting_follow_ups
      WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)
      LIMIT 1`,
@@ -791,14 +836,15 @@ export async function createMeetingFollowUpRecord(input: {
   owner?: string;
   ownerUserId?: string | null;
   dueAt?: string | null;
+  agendaItemId?: string | null;
 }): Promise<MeetingFollowUpRecord> {
   const id = `meeting-fu-${uuidv4()}`;
   const now = new Date().toISOString();
   await dbRun(
     `INSERT INTO meeting_follow_ups (
        id, meeting_id, organization_id, title, owner, owner_user_id, due_at,
-       status, source_kind, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'open', 'manual', ?, ?)`,
+       agenda_item_id, status, source_kind, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', 'manual', ?, ?)`,
     [
       id,
       input.meetingId,
@@ -807,6 +853,7 @@ export async function createMeetingFollowUpRecord(input: {
       String(input.owner || '').trim(),
       input.ownerUserId || null,
       input.dueAt || null,
+      input.agendaItemId || null,
       now,
       now,
     ]
@@ -824,25 +871,51 @@ export async function updateMeetingFollowUpRecord(input: {
   owner?: string;
   ownerUserId?: string | null;
   dueAt?: string | null;
+  agendaItemId?: string | null;
   status?: FollowUpStatus;
 }): Promise<MeetingFollowUpRecord | null> {
   const existing = await getMeetingFollowUpRecord(input);
   if (!existing) return null;
   await dbRun(
     `UPDATE meeting_follow_ups
-     SET title = ?, owner = ?, owner_user_id = ?, due_at = ?, status = ?, updated_at = ?
+     SET title = ?, owner = ?, owner_user_id = ?, due_at = ?, agenda_item_id = ?,
+         status = ?, updated_at = ?
      WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
     [
       input.title?.trim() || existing.title,
       input.owner === undefined ? existing.owner : input.owner.trim(),
       input.ownerUserId === undefined ? existing.ownerUserId : input.ownerUserId,
       input.dueAt === undefined ? existing.dueAt : input.dueAt,
+      input.agendaItemId === undefined ? existing.agendaItemId : input.agendaItemId,
       input.status || existing.status,
       new Date().toISOString(),
       input.followUpId,
       input.meetingId,
       input.organizationId,
     ]
+  );
+  return getMeetingFollowUpRecord(input);
+}
+
+/**
+ * W109c (DEC-607, MTG-2b): write the Realizacja task id back onto the
+ * follow-up (action) row after a successful action→task conversion, so the
+ * protocol can read `tasks.status` by `task_id` and show the return status.
+ * `task_id` is ONLY ever set through this funnel writeback — the public
+ * follow-up PATCH route deliberately does not accept it.
+ */
+export async function setMeetingFollowUpTaskId(input: {
+  organizationId: string;
+  meetingId: string;
+  followUpId: string;
+  taskId: string;
+}): Promise<MeetingFollowUpRecord | null> {
+  const existing = await getMeetingFollowUpRecord(input);
+  if (!existing) return null;
+  await dbRun(
+    `UPDATE meeting_follow_ups SET task_id = ?, updated_at = ?
+     WHERE id = ? AND meeting_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+    [input.taskId, new Date().toISOString(), input.followUpId, input.meetingId, input.organizationId]
   );
   return getMeetingFollowUpRecord(input);
 }

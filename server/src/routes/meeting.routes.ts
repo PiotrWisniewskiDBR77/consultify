@@ -37,6 +37,7 @@ import {
 import { sendMeetingInvitations } from '../services/meeting/meetingInvitationService.js';
 import {
   createTaskFromMeetingNoteAction,
+  createTaskFromMeetingFollowUp,
   MeetingNoteTaskFunnelError,
 } from '../services/meeting/meetingNoteTaskFunnelService.js';
 import {
@@ -58,6 +59,7 @@ import {
   deleteMeeting,
   ensureMeetingTables,
   getMeeting,
+  getMeetingDecisionRecord,
   listMeetingDecisionRecords,
   listMeetingFollowUpRecords,
   listMeetings,
@@ -66,6 +68,7 @@ import {
   updateMeeting,
   updateMeetingStatus,
 } from '../services/meetingService.js';
+import decisionService from '../services/decisionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
@@ -178,6 +181,43 @@ function canAccessMeeting(
 function denyMeetingAccess(res: Response): Response {
   // Deliberately 404: do not reveal a same-tenant meeting to a non-participant.
   return res.status(404).json({ error: 'Meeting not found' });
+}
+
+// MTG-2b (DEC-607, Wpis 100 AUTHZ + D-98): mutating a meeting is an ORGANIZER
+// action, not a participant action. Before this, every mutating route group
+// (decision-records, follow-up-records, decisions, follow-ups, generate-notes,
+// attachments, occurrence, agenda) gated only on `canAccessMeeting`, which lets
+// ANY attendee write. This is the single guard for all of them — the same rule
+// the `/:id/lifecycle` and protocol approve/errata routes already used inline:
+// an org admin/owner/superadmin, OR the meeting's creator, OR its chair.
+// Callers MUST resolve the meeting first so the status order stays
+// 401 -> 404 (foreign tenant / no access) -> 403 (participant, not organizer)
+// -> 400 (validation) -> mutation.
+type MeetingOrganizerScope = {
+  createdBy?: string | null;
+  chairUserId?: string | null;
+};
+
+function isMeetingOrganizer(req: AuthRequest, meeting: MeetingOrganizerScope): boolean {
+  const callerId = String(req.user?.id || '');
+  return (
+    isMeetingAdmin(req) ||
+    (!!callerId && meeting.createdBy === callerId) ||
+    (!!meeting.chairUserId && meeting.chairUserId === callerId)
+  );
+}
+
+function requireMeetingOrganizer(
+  req: AuthRequest,
+  res: Response,
+  meeting: MeetingOrganizerScope,
+  code = 'MEETING_MUTATION_FORBIDDEN'
+): boolean {
+  if (!isMeetingOrganizer(req, meeting)) {
+    res.status(403).json({ code });
+    return false;
+  }
+  return true;
 }
 
 async function requireActiveMeetingMembership(
@@ -692,10 +732,11 @@ router.post(
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    const statement = String(req.body?.statement || '').trim();
-    if (!statement) return res.status(400).json({ error: 'statement is required' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
+    const statement = String(req.body?.statement || '').trim();
+    if (!statement) return res.status(400).json({ error: 'statement is required' });
     const decision = await createMeetingDecisionRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -703,6 +744,11 @@ router.post(
       rationale: String(req.body?.rationale || ''),
       decidedBy: userId,
       createdBy: userId,
+      ownerUserId: typeof req.body?.ownerUserId === 'string' ? req.body.ownerUserId : null,
+      decisionType: typeof req.body?.decisionType === 'string' ? req.body.decisionType : null,
+      impactText: typeof req.body?.impactText === 'string' ? req.body.impactText : null,
+      rejectedAlternative:
+        typeof req.body?.rejectedAlternative === 'string' ? req.body.rejectedAlternative : null,
     });
     return res.status(201).json({ decision });
   })
@@ -713,6 +759,9 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     if (req.body?.statement !== undefined && !String(req.body.statement || '').trim()) {
       return res.status(400).json({ error: 'statement cannot be empty' });
     }
@@ -720,8 +769,6 @@ router.patch(
     if (status !== undefined && status !== 'recorded' && status !== 'superseded') {
       return res.status(400).json({ error: 'status must be recorded or superseded' });
     }
-    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
-    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
     const decision = await updateMeetingDecisionRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -729,6 +776,22 @@ router.patch(
       statement: typeof req.body?.statement === 'string' ? req.body.statement : undefined,
       rationale: typeof req.body?.rationale === 'string' ? req.body.rationale : undefined,
       status,
+      ownerUserId:
+        req.body?.ownerUserId === null || typeof req.body?.ownerUserId === 'string'
+          ? req.body.ownerUserId
+          : undefined,
+      decisionType:
+        req.body?.decisionType === null || typeof req.body?.decisionType === 'string'
+          ? req.body.decisionType
+          : undefined,
+      impactText:
+        req.body?.impactText === null || typeof req.body?.impactText === 'string'
+          ? req.body.impactText
+          : undefined,
+      rejectedAlternative:
+        req.body?.rejectedAlternative === null || typeof req.body?.rejectedAlternative === 'string'
+          ? req.body.rejectedAlternative
+          : undefined,
     });
     if (!decision) return res.status(404).json({ error: 'Decision not found' });
     return res.json({ decision });
@@ -742,6 +805,7 @@ router.delete(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     const deleted = await deleteMeetingDecisionRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -772,10 +836,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const title = String(req.body?.title || '').trim();
-    if (!title) return res.status(400).json({ error: 'title is required' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
+    const title = String(req.body?.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'title is required' });
     const followUp = await createMeetingFollowUpRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -783,6 +848,7 @@ router.post(
       owner: String(req.body?.owner || ''),
       ownerUserId: typeof req.body?.ownerUserId === 'string' ? req.body.ownerUserId : null,
       dueAt: typeof req.body?.dueAt === 'string' ? req.body.dueAt : null,
+      agendaItemId: typeof req.body?.agendaItemId === 'string' ? req.body.agendaItemId : null,
     });
     return res.status(201).json({ followUp });
   })
@@ -793,6 +859,9 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     if (req.body?.title !== undefined && !String(req.body.title || '').trim()) {
       return res.status(400).json({ error: 'title cannot be empty' });
     }
@@ -800,8 +869,6 @@ router.patch(
     if (status !== undefined && status !== 'open' && status !== 'done') {
       return res.status(400).json({ error: 'status must be open or done' });
     }
-    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
-    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
     const followUp = await updateMeetingFollowUpRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -815,6 +882,10 @@ router.patch(
       dueAt:
         req.body?.dueAt === null || typeof req.body?.dueAt === 'string'
           ? req.body.dueAt
+          : undefined,
+      agendaItemId:
+        req.body?.agendaItemId === null || typeof req.body?.agendaItemId === 'string'
+          ? req.body.agendaItemId
           : undefined,
       status,
     });
@@ -830,6 +901,7 @@ router.delete(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     const deleted = await deleteMeetingFollowUpRecord({
       organizationId: orgId,
       meetingId: meeting!.id,
@@ -847,6 +919,7 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     return res.status(410).json({
       error: 'Direct meeting decision writes are retired; submit governed meeting notes',
       code: 'MEETING_PROPOSAL_REQUIRED',
@@ -861,6 +934,7 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     return res.status(410).json({
       error: 'Direct meeting follow-up writes are retired; submit governed meeting notes',
       code: 'MEETING_PROPOSAL_REQUIRED',
@@ -878,9 +952,118 @@ router.patch(
       meetingId: String(req.params.meetingId),
     });
     if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting!)) return;
     return res.status(410).json({
       error: 'Legacy meeting follow-ups are read-only',
       code: 'MEETING_PROPOSAL_REQUIRED',
+    });
+  })
+);
+
+/**
+ * MTG-2b (DEC-607, Wpis 100/U-52) — "ze spotkania coś wychodzi".
+ *
+ * POST /:id/follow-up-records/:followUpId/task converts a meeting ACTION (a
+ * `meeting_follow_ups` row) into a Realizacja task through the EXISTING
+ * meeting funnel, fixed so it keeps the termin (`due_date`) and the owner
+ * (`assignee_id`), then writes `task_id` back onto the action so the protocol
+ * shows the task's return status. Organizer-only, order 401 -> 404 -> 403 ->
+ * mutation. Idempotent: a retried conversion replays the same task.
+ */
+router.post(
+  '/:id/follow-up-records/:followUpId/task',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_FOLLOW_UP_FORBIDDEN')) return;
+    try {
+      const result = await createTaskFromMeetingFollowUp({
+        organizationId: orgId,
+        meetingId,
+        followUpId: String(req.params.followUpId),
+        actorId: userId,
+        projectId: meeting.projectId,
+      });
+      return res.status(200).json({
+        task: { id: result.task.id, title: result.task.title, status: result.task.status },
+        replayed: result.replayed,
+      });
+    } catch (error: unknown) {
+      if (error instanceof MeetingNoteTaskFunnelError) {
+        const status =
+          error.code === 'FOLLOW_UP_NOT_FOUND'
+            ? 404
+            : error.code === 'TASK_IDEMPOTENCY_COLLISION'
+              ? 409
+              : 400;
+        return res
+          .status(status)
+          .json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
+      }
+      throw error;
+    }
+  })
+);
+
+/**
+ * MTG-2b (DEC-607, Wpis 100/109, P2) — "Promote to register".
+ *
+ * POST /:id/decision-records/:decisionId/promote lifts a meeting decision into
+ * the unified `decisions` register (manual, P2) with
+ * `source_type='meeting_decision'` + `context_type='meeting'` /
+ * `context_id=<meetingId>` — no new migration (columns exist since 295).
+ * Organizer-only, order 401 -> 404 -> 403 -> mutation. Idempotent on
+ * `meeting-decision-promote:<decisionId>`: re-promoting replays the same
+ * register decision instead of duplicating.
+ */
+router.post(
+  '/:id/decision-records/:decisionId/promote',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_DECISION_FORBIDDEN')) return;
+
+    const decisionId = String(req.params.decisionId);
+    const record = await getMeetingDecisionRecord({
+      organizationId: orgId,
+      meetingId,
+      decisionId,
+    });
+    if (!record) return res.status(404).json({ code: 'DECISION_RECORD_NOT_FOUND' });
+
+    const decisionMakerId = record.ownerUserId || record.decidedBy || userId;
+    const description = [
+      record.rationale ? `Rationale: ${record.rationale}` : '',
+      record.impactText ? `Impact: ${record.impactText}` : '',
+      record.rejectedAlternative ? `Rejected alternative: ${record.rejectedAlternative}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const promoted = await decisionService.createDecision({
+      organizationId: orgId,
+      projectId: meeting.projectId || undefined,
+      title: record.statement,
+      description: description || undefined,
+      type: 'OTHER',
+      decisionMakerId,
+      createdBy: userId,
+      idempotencyKey: `meeting-decision-promote:${decisionId}`,
+      sourceType: 'meeting_decision',
+      sourceId: decisionId,
+      contextType: 'meeting',
+      contextId: meetingId,
+    });
+    return res.status(201).json({
+      decision: { id: promoted.id, title: promoted.title, status: promoted.status },
     });
   })
 );
@@ -917,6 +1100,12 @@ router.post(
     const userId = req.user?.id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_NOTE_FORBIDDEN')) return;
+
     const payloadPolicy = validateManualMeetingNotePayload(req.body);
     if (!payloadPolicy.ok) {
       return res.status(400).json({
@@ -929,14 +1118,10 @@ router.post(
       });
     }
 
-    const meetingId = String(req.params.id);
     const transcript = String(req.body?.transcript || '').trim();
     if (!transcript) {
       return res.status(400).json({ error: 'transcript is required' });
     }
-    const meeting = await getMeeting({ organizationId: orgId, meetingId });
-    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
-    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
 
     const language =
       typeof req.body?.language === 'string' && req.body.language.trim()
@@ -1238,6 +1423,9 @@ router.post(
     const userId = req.user?.id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_ATTACHMENT_FORBIDDEN')) return;
     const artifactKind = String(req.body?.artifactKind || '') as MeetingAttachmentKind;
     const artifactId = String(req.body?.artifactId || '').trim();
     if (!['idea', 'note', 'material'].includes(artifactKind) || !artifactId) {
@@ -1245,8 +1433,6 @@ router.post(
         .status(400)
         .json({ error: 'artifactKind and artifactId are required', code: 'INVALID_ATTACHMENT' });
     }
-    const meeting = await getMeeting({ organizationId: orgId, meetingId });
-    if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
     try {
       const attachment = await addMeetingAttachment({
         organizationId: orgId,
@@ -1276,6 +1462,7 @@ router.delete(
     const meetingId = String(req.params.id);
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_ATTACHMENT_FORBIDDEN')) return;
     const deleted = await deleteMeetingAttachment({
       organizationId: orgId,
       meetingId,
@@ -1291,6 +1478,9 @@ async function handleOccurrenceMutation(req: AuthRequest, res: Response, cancel:
   const userId = req.user?.id;
   if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
   const meetingId = String(req.params.id);
+  const meeting = await getMeeting({ organizationId: orgId, meetingId });
+  if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+  if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_OCCURRENCE_FORBIDDEN')) return;
   const recurrenceId = String(req.body?.recurrenceId || '').trim();
   const scope = String(req.body?.scope || '') as MeetingOccurrenceScope;
   if (
@@ -1313,13 +1503,6 @@ async function handleOccurrenceMutation(req: AuthRequest, res: Response, cancel:
     const validation = validateRecurrenceRule(changes.recurrenceRule);
     if (!validation.ok)
       return res.status(400).json({ error: validation.error, code: 'INVALID_RECURRENCE_RULE' });
-  }
-  const meeting = await getMeeting({ organizationId: orgId, meetingId });
-  if (!meeting || !canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
-  if (cancel) {
-    if (!requireMeetingAdmin(req, res)) return;
-  } else if (!isMeetingAdmin(req) && meeting.createdBy !== userId) {
-    return denyMeetingAccess(res);
   }
   try {
     const result = await editMeetingOccurrence({
@@ -1410,6 +1593,7 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
     if (!meeting) return;
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_AGENDA_FORBIDDEN')) return;
 
     const title = String(req.body?.title || '').trim();
     if (!title) return res.status(400).json({ code: 'MEETING_AGENDA_TITLE_REQUIRED' });
@@ -1448,6 +1632,7 @@ router.patch(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
     if (!meeting) return;
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_AGENDA_FORBIDDEN')) return;
 
     const existing = await getMeetingAgendaItem({
       organizationId: orgId,
@@ -1493,6 +1678,7 @@ router.delete(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
     if (!meeting) return;
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_AGENDA_FORBIDDEN')) return;
 
     const existing = await getMeetingAgendaItem({
       organizationId: orgId,
@@ -1512,17 +1698,11 @@ router.patch(
     const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
     if (!meeting) return;
 
-    // MTG-1 v2 (DEC-596): moving the lifecycle is an organizer action, not a
-    // participant action. loadAccessibleMeetingForAgenda already lets any
-    // attendee view the meeting, so gate the transition on chair/creator or an
-    // org OWNER/ADMIN — a plain attendee gets 403, not the 404 hide-path.
-    const callerId = String(req.user?.id || '');
-    const isOrganizer =
-      (!!callerId && meeting.createdBy === callerId) ||
-      (!!meeting.chairUserId && meeting.chairUserId === callerId);
-    if (!isMeetingAdmin(req) && !isOrganizer) {
-      return res.status(403).json({ code: 'MEETING_LIFECYCLE_FORBIDDEN' });
-    }
+    // MTG-1 v2 (DEC-596) + MTG-2b (DEC-607): moving the lifecycle is an
+    // organizer action, not a participant action. loadAccessibleMeetingForAgenda
+    // already lets any attendee view the meeting, so gate the transition on the
+    // shared organizer guard — a plain attendee gets 403, not the 404 hide-path.
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_LIFECYCLE_FORBIDDEN')) return;
 
     const nextState = req.body?.nextState;
     if (!isMeetingLifecycleState(nextState)) {
@@ -1595,12 +1775,7 @@ router.post(
     if (!meeting) return;
 
     const callerId = String(req.user?.id || '');
-    const isOrganizer =
-      (!!callerId && meeting.createdBy === callerId) ||
-      (!!meeting.chairUserId && meeting.chairUserId === callerId);
-    if (!isMeetingAdmin(req) && !isOrganizer) {
-      return res.status(403).json({ code: 'MEETING_PROTOCOL_FORBIDDEN' });
-    }
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_PROTOCOL_FORBIDDEN')) return;
 
     try {
       // W109b: akcept = pierwsza publikacja; składa migawkę v1.0 ŻYWO ze
@@ -1626,12 +1801,7 @@ router.post(
     if (!meeting) return;
 
     const callerId = String(req.user?.id || '');
-    const isOrganizer =
-      (!!callerId && meeting.createdBy === callerId) ||
-      (!!meeting.chairUserId && meeting.chairUserId === callerId);
-    if (!isMeetingAdmin(req) && !isOrganizer) {
-      return res.status(403).json({ code: 'MEETING_PROTOCOL_FORBIDDEN' });
-    }
+    if (!requireMeetingOrganizer(req, res, meeting, 'MEETING_PROTOCOL_FORBIDDEN')) return;
 
     const errataNote = String(req.body?.errataNote || '').trim();
     if (!errataNote) {

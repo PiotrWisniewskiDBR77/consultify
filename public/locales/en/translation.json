@@ -38900,16 +38900,19 @@
       "superseded": "Superseded",
       "markRecorded": "Mark recorded",
       "markSuperseded": "Mark superseded",
+      "promote": "Promote to register",
       "notifications": {
         "created": "Decision recorded",
         "updated": "Decision updated",
-        "deleted": "Decision deleted"
+        "deleted": "Decision deleted",
+        "promoted": "Promoted to register"
       },
       "errors": {
         "loadFailed": "Could not load decisions.",
         "createFailed": "Failed to record decision",
         "updateFailed": "Failed to update decision",
-        "deleteFailed": "Failed to delete decision"
+        "deleteFailed": "Failed to delete decision",
+        "promoteFailed": "Failed to promote decision"
       },
       "fromMinutes": "From the minutes — not yet recorded"
     },
@@ -38934,15 +38937,18 @@
       "titlePlaceholder": "Follow-up…",
       "ownerPlaceholder": "Owner",
       "add": "Add follow-up",
+      "convertToTask": "Convert to task",
       "notifications": {
         "created": "Follow-up added",
-        "deleted": "Follow-up deleted"
+        "deleted": "Follow-up deleted",
+        "taskCreated": "Task created"
       },
       "errors": {
         "loadFailed": "Could not load follow-ups.",
         "createFailed": "Failed to add follow-up",
         "updateFailed": "Failed to update follow-up",
-        "deleteFailed": "Failed to delete follow-up"
+        "deleteFailed": "Failed to delete follow-up",
+        "taskCreateFailed": "Failed to create task"
       },
       "fromMinutes": "From the minutes — not yet recorded"
     },

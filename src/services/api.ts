@@ -105,6 +105,10 @@ export interface MeetingFollowUpRecordDto {
   sourceKind: 'manual' | 'note' | 'legacy';
   sourceNoteId: string | null;
   sourceIndex: number | null;
+  /** MTG-2b (DEC-607): Realizacja task linked by the action→task funnel; null until converted. */
+  taskId: string | null;
+  /** MTG-2b (DEC-607): agenda point this action hangs off (W109c). */
+  agendaItemId: string | null;
 }
 
 // FIX-M-5 (D.4/D.5 owner review): mirrors `AIOperatorService.getMeetingBrief`

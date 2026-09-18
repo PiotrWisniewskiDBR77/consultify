@@ -1084,6 +1084,54 @@ export const MeetingObjectPage: React.FC = () => {
     }
   };
 
+  // MTG-2b (DEC-607, Wpis 100): "ze spotkania coś wychodzi" — convert a meeting
+  // ACTION (a `meeting_follow_ups` row) into a Realizacja task through the server
+  // funnel, which keeps the termin + owner and writes `task_id` back so the
+  // protocol shows the task's return status. Raw fetch like the sibling
+  // note-action-item control (`createTaskFromActionItem`); the readback fills
+  // `taskId`, which hides this button (one task per action).
+  const handleConvertFollowUpToTask = async (followUpId: string) => {
+    if (!meeting) return;
+    setFollowUpActionId(followUpId);
+    try {
+      const response = await fetch(
+        `/api/meeting/${encodeURIComponent(meeting.id)}/follow-up-records/${encodeURIComponent(followUpId)}/task`,
+        { method: 'POST', credentials: 'include' }
+      );
+      if (!response.ok) throw new Error(`HTTP_${response.status}`);
+      await loadFollowUpRecords(meeting.id);
+      toast.success(t('meeting.followUpRecords.notifications.taskCreated', 'Task created'));
+    } catch (error) {
+      console.error('Failed to convert meeting follow-up to task:', error);
+      toast.error(t('meeting.followUpRecords.errors.taskCreateFailed', 'Failed to create task'));
+    } finally {
+      setFollowUpActionId(null);
+    }
+  };
+
+  // MTG-2b (DEC-607, Wpis 100/109, P2): "Promote to register" — lift a meeting
+  // decision into the unified `decisions` register. Idempotent server-side on
+  // `meeting-decision-promote:<decisionId>`, so a re-click replays rather than
+  // duplicates. The register row lives outside this card, so there is nothing to
+  // read back here — the toast is the feedback.
+  const handlePromoteDecision = async (decisionId: string) => {
+    if (!meeting) return;
+    setDecisionActionId(decisionId);
+    try {
+      const response = await fetch(
+        `/api/meeting/${encodeURIComponent(meeting.id)}/decision-records/${encodeURIComponent(decisionId)}/promote`,
+        { method: 'POST', credentials: 'include' }
+      );
+      if (!response.ok) throw new Error(`HTTP_${response.status}`);
+      toast.success(t('meeting.decisionRecords.notifications.promoted', 'Promoted to register'));
+    } catch (error) {
+      console.error('Failed to promote meeting decision:', error);
+      toast.error(t('meeting.decisionRecords.errors.promoteFailed', 'Failed to promote decision'));
+    } finally {
+      setDecisionActionId(null);
+    }
+  };
+
   useEffect(() => {
     void loadMeeting();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1620,6 +1668,17 @@ export const MeetingObjectPage: React.FC = () => {
                                 : t('meeting.decisionRecords.recorded', 'Recorded')
                             }
                           />
+                          {!readMode ? (
+                            <button
+                              type="button"
+                              title={t('meeting.decisionRecords.promote', 'Promote to register')}
+                              onClick={() => void handlePromoteDecision(decision.id)}
+                              disabled={busy}
+                              className="rounded-lg p-1.5 text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                            >
+                              <Flag size={14} />
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             title={
@@ -1771,6 +1830,17 @@ export const MeetingObjectPage: React.FC = () => {
                           }
                         />
                       </button>
+                      {!readMode && !item.taskId ? (
+                        <button
+                          type="button"
+                          title={t('meeting.followUpRecords.convertToTask', 'Convert to task')}
+                          onClick={() => void handleConvertFollowUpToTask(item.id)}
+                          disabled={busy}
+                          className="rounded-lg p-1.5 text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
+                        >
+                          <ArrowRight size={14} />
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         title={t('common.delete', 'Delete')}
