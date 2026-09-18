@@ -39856,6 +39856,7 @@
         "value": "Wartość",
         "relations": "Powiązania",
         "noPrograms": "Żaden program audytowy nie został jeszcze rozpoczęty z tego pakietu.",
+        "relationsLoadFailed": "Nie udało się wczytać powiązanych programów.",
         "status": "Status",
         "version": "Wersja",
         "versionPill": "Wersja",

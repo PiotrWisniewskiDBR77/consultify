@@ -39294,6 +39294,7 @@
         "value": "Value",
         "relations": "Relations",
         "noPrograms": "No audit programs were started from this pack yet.",
+        "relationsLoadFailed": "Could not load the related programs.",
         "status": "Status",
         "version": "Version",
         "versionPill": "Version",

@@ -68,7 +68,9 @@ export interface CriterionDraftRow {
   preserved: PreservedCriterionFields;
 }
 
-function collectCriterionIds(nodes: AuditPackCriterionNode[], acc: Set<string> = new Set()): Set<string> {
+type CriterionIdSet = Set<string>;
+
+function collectCriterionIds(nodes: AuditPackCriterionNode[], acc: CriterionIdSet = new Set()): CriterionIdSet {
   for (const node of nodes ?? []) {
     acc.add(node.id);
     if (node.children?.length) collectCriterionIds(node.children, acc);

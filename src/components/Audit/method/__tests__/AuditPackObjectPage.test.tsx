@@ -362,6 +362,65 @@ describe('AuditPackObjectPage — OP-2 ekran obiektu pakietu', () => {
 
     expect(screen.queryByText('Other pack program')).not.toBeInTheDocument();
   });
+
+  it('pigułka „Criteria N" niesie SPŁASZCZONĄ liczbę kryteriów (3 vs 5 — stała 0 musi dać RED)', async () => {
+    const makeNodes = (n: number): AuditPackCriterionNode[] =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `crit-n-${i}`,
+        parentId: null,
+        ordinal: i + 1,
+        refCode: null,
+        nodeKind: 'criterion' as const,
+        title: `Criterion ${i + 1}`,
+        mandatory: false,
+      }));
+
+    mockedGetPack.mockResolvedValue(makeDetail({ criteria: makeNodes(3) }));
+    const first = renderPage();
+    await screen.findAllByText('Client QMS Procedure');
+    await waitFor(() =>
+      expect(screen.getByTestId('audit-pack-criteria-pill').textContent).toMatch(/3/)
+    );
+    first.unmount();
+
+    mockedGetPack.mockResolvedValue(makeDetail({ criteria: makeNodes(5) }));
+    renderPage();
+    await screen.findAllByText('Client QMS Procedure');
+    await waitFor(() =>
+      expect(screen.getByTestId('audit-pack-criteria-pill').textContent).toMatch(/5/)
+    );
+  });
+
+  it('wiersz „Status" w PROPERTIES istnieje i niesie wartość publicationStatus (draft/published)', async () => {
+    mockedGetPack.mockResolvedValue(makeDetail({ publicationStatus: 'draft' }));
+    const first = renderPage();
+    await screen.findAllByText('Client QMS Procedure');
+    await waitFor(() => expect(propertyValue('Status')).toBe('Draft'));
+    first.unmount();
+
+    mockedGetPack.mockResolvedValue(
+      makeDetail({ publicationStatus: 'published', expertApprovedBy: 'expert-1' })
+    );
+    renderPage();
+    await screen.findAllByText('Client QMS Procedure');
+    await waitFor(() => expect(propertyValue('Status')).toBe('Published'));
+  });
+
+  it('RELATIONS przy błędzie API pokazuje komunikat inline, NIE udaje pustej listy', async () => {
+    mockedGetPack.mockResolvedValue(makeDetail());
+    mockedListPrograms.mockRejectedValue(new Error('NETWORK_DOWN'));
+    renderPage();
+
+    await screen.findAllByText('Client QMS Procedure');
+    fireEvent.click(screen.getByText('Relations'));
+
+    const alert = await screen.findByTestId('audit-pack-relations-error');
+    expect(alert.textContent).toMatch(/Could not load the related programs|NETWORK_DOWN/);
+    // Uczciwy pusty stan („No audit programs…") NIE może się pojawić przy błędzie.
+    expect(
+      screen.queryByText('No audit programs were started from this pack yet.')
+    ).not.toBeInTheDocument();
+  });
 });
 
 /**

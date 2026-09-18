@@ -94,7 +94,6 @@ import {
   evaluateApproveExpertGate,
   evaluatePublishPackGate,
   evaluateStartGate,
-  formatPackCriteriaCount,
 } from '../tabs/AuditLibraryTab';
 import { flattenCriteria, PackCriteriaEditor } from './PackCriteriaEditor';
 
@@ -145,6 +144,7 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [programs, setPrograms] = useState<AuditProgramSummary[]>([]);
+  const [programsError, setProgramsError] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<'approve' | 'publish' | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('overview');
@@ -188,20 +188,28 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
   useEffect(() => {
     if (!pack?.id) {
       setPrograms([]);
+      setProgramsError(null);
       return;
     }
     let cancelled = false;
     listPrograms({})
       .then((result) => {
-        if (!cancelled) setPrograms(result.items.filter((p) => p.packId === pack.id));
+        if (cancelled) return;
+        setPrograms(result.items.filter((p) => p.packId === pack.id));
+        setProgramsError(null);
       })
-      .catch(() => {
-        if (!cancelled) setPrograms([]);
+      .catch((e: any) => {
+        if (cancelled) return;
+        setPrograms([]);
+        setProgramsError(
+          e?.message ||
+            t('audit.pack.viewer.relationsLoadFailed', 'Could not load the related programs.')
+        );
       });
     return () => {
       cancelled = true;
     };
-  }, [pack?.id]);
+  }, [pack?.id, t]);
 
   const runTransition = useCallback(
     async (action: 'approve' | 'publish') => {
@@ -271,6 +279,8 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
       })),
     [pack?.criteria]
   );
+
+  const criteriaCount = criteriaRows.length;
 
   const criteriaColumns = useMemo<TableColumn[]>(
     () => [
@@ -350,7 +360,6 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
   const approveGate = evaluateApproveExpertGate(pack, isPolish, canManagePackLibrary);
   const publishGate = evaluatePublishPackGate(pack, isPolish, canManagePackLibrary);
   const complianceGrade = isComplianceGrade(pack.sourceType, pack.verificationStatus);
-  const criteriaCount = formatPackCriteriaCount(pack);
 
   // JEDEN primary w Menu 1 (SPEC-A §11.2): najbliższe dozwolone przejście stanu.
   // Reszta dozwolonych ląduje w kebabie (`extraOverflowItems` — jedyny prop
@@ -417,7 +426,10 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
         <span className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 font-mono text-[11px] text-c-text-secondary">
           {t('audit.pack.viewer.versionPill', 'Version')} v{pack.version}
         </span>
-        <span className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[11px] tabular-nums text-c-text-secondary">
+        <span
+          data-testid="audit-pack-criteria-pill"
+          className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[11px] tabular-nums text-c-text-secondary"
+        >
           {t('audit.pack.viewer.criteriaPill', 'Criteria')} {criteriaCount}
         </span>
       </div>
@@ -593,13 +605,21 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
       id: 'relations',
       label: t('audit.pack.viewer.relations', 'Relations'),
       badge: programs.length,
-      isEmpty: programs.length === 0,
+      isEmpty: programs.length === 0 && !programsError,
       emptyLabel: t(
         'audit.pack.viewer.noPrograms',
         'No audit programs were started from this pack yet.'
       ),
       defaultOpen: false,
-      children: (
+      children: programsError ? (
+        <p
+          data-testid="audit-pack-relations-error"
+          className="text-xs text-c-danger"
+          role="alert"
+        >
+          {programsError}
+        </p>
+      ) : (
         <ul className="flex flex-col gap-2">
           {programs.map((program) => (
             <li key={program.id} className="flex items-start justify-between gap-2">
