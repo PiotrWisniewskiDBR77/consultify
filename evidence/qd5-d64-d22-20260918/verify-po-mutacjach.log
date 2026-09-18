@@ -1,0 +1,21 @@
+[materialy] cel:  127.0.0.1:6630/consultify_kopia_d5
+[materialy] tryb: verify
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=4 rzeczywiste=4
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=16 rzeczywiste=16
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=2 rzeczywiste=2
+[verify] OK   talie ze slide_count > 0 (koherentne z deck_json)            oczekiwane=2 rzeczywiste=2
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=12 rzeczywiste=12
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=1 rzeczywiste=1
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=7 rzeczywiste=7
+[verify] OK   spotkania (meetings)                                         oczekiwane=3 rzeczywiste=3
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=11 rzeczywiste=11
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=2 rzeczywiste=2
+[verify] OK   serie cykliczne (meetings FREQ=WEEKLY, master)               oczekiwane=1 rzeczywiste=1
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=3 rzeczywiste=3
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=11 rzeczywiste=11
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a — sekcja overdue_sla_breach                 oczekiwane=2 rzeczywiste=2
+[verify] OK   dokumenty z polskim znakiem w tytule (ma być 0)              oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 17 asercji przeszły.

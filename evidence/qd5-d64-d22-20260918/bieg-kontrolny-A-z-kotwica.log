@@ -1,0 +1,82 @@
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[DB Config] DB_TYPE: NOT SET[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_kopia_d5","max":10,"dbTarget":"unset"}
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-09-18 16:04:04:44 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-18 16:04:04:44 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-09-18T21:04:04.871Z"}
+2026-09-18 16:04:04:44 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+2026-09-18 16:04:05:45 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+SCENARIUSZ=z-kotwica | ORG=Northwind Manufacturing Ltd. (468b234c-66c4-54e1-b626-5e0fb3a92f6a) | dziś=2026-09-18T03:15:00.000Z
+PRZETERMINOWANE[przed] kolumn_zmierzone=9 wierszy_niepustych=142 przeterminowane=46
+  tasks.due_date (timestamptz) niepustych=60 przeterminowane=22
+  initiatives.planned_start_date (text) niepustych=11 przeterminowane=5
+  initiatives.planned_end_date (text) niepustych=11 przeterminowane=1
+  initiatives.start_date (timestamptz) niepustych=11 przeterminowane=5
+  initiatives.end_date (timestamptz) niepustych=11 przeterminowane=1
+  initiative_milestones.target_date (date) niepustych=16 przeterminowane=3
+  initiative_milestones.baseline_date (date) niepustych=16 przeterminowane=3
+  meetings.start_at (text) niepustych=3 przeterminowane=3
+  meetings.end_at (text) niepustych=3 przeterminowane=3
+KRYTERIUM_OTWARTE[przed] (tylko encje otwarte, historia wyłączona)
+  OTWARTE[przed] tasks.due_date < dziś AND status NOT IN (done,completed,cancelled) = 18
+  OTWARTE[przed] initiatives.end_date < dziś AND status NOT IN (CLOSED,REJECTED,COMPLETED) = 0
+  OTWARTE[przed] initiative_milestones.target_date < dziś AND status <> COMPLETED = 0
+  OTWARTE[przed] meetings jednorazowe scheduled start_at < dziś = 0
+  OTWARTE[przed] meetings serie scheduled bez wystąpienia w przód (okno 21 dni) = 0
+KRYTERIUM_OTWARTE[przed] SUMA=18
+SPOTKANIA[przed]
+  Weekly PMO Review | status=completed | start=2026-09-02T09:00:00.000Z (ŚR) | rrule=-
+  Steering Committee | status=completed | start=2026-09-04T14:00:00.000Z (PT) | rrule=-
+  Weekly Operations Stand-up | status=scheduled | start=2026-09-09T07:30:00.000Z (ŚR) | rrule=FREQ=WEEKLY;BYDAY=WE
+SERIA[przed] Weekly Operations Stand-up | kotwica=2026-09-09T07:30:00.000Z (ŚR) | następne wystąpienia (21 dni od dziś)=3 | pierwsze=2026-09-23T07:30:00.000Z (ŚR)
+KOTWICA[przed] BRAK wiersza showcase_date_roll
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[ShowcaseRoll] nightly roll complete for 1 org(s)[39m {"rolled":[{"orgId":"468b234c-66c4-54e1-b626-5e0fb3a92f6a","lastRolledOn":"2026-09-08","deltaDays":0,"perTable":{},"skipped":"initialized"}]}
+TICK1 now=2026-09-08T03:15Z (dzień referencyjny zbioru) → deltaDays=0 skipped=initialized
+KOTWICA[po tick1] last_rolled_on=2026-09-08 delta_days=0
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[ShowcaseRoll] org 468b234c-66c4-54e1-b626-5e0fb3a92f6a: rolled +10d (weekly +7d)[39m {"perTable":{"tasks":60,"calendar_events":0,"decisions":0,"initiatives":11,"initiative_milestones":16,"meetings":3,"v8_calendar_items":0,"interview_assignments":0,"report_schedules":0,"okr_vnext_cycles":0,"okr_vnext_key_results":0,"okr_vnext_sets":0,"kpi_recovery_actions":0,"rvn_kpi_recovery_actions":0,"rvn_kpi_corrective_actions":0,"kpi_deviation_actions":0,"kpi_report_schedules":0,"kpi_connectors":0,"kpi_recovery_checkpoints":0,"rvn_kpi_recovery_checkpoints":0,"kpi_recovery_cards":0,"rvn_kpi_deviation_cases":0}}
+2026-09-18 16:04:05:45 [32minfo[39m: [32m[ShowcaseRoll] nightly roll complete for 1 org(s)[39m {"rolled":[{"orgId":"468b234c-66c4-54e1-b626-5e0fb3a92f6a","lastRolledOn":"2026-09-18","deltaDays":10,"perTable":{"tasks":60,"calendar_events":0,"decisions":0,"initiatives":11,"initiative_milestones":16,"meetings":3,"v8_calendar_items":0,"interview_assignments":0,"report_schedules":0,"okr_vnext_cycles":0,"okr_vnext_key_results":0,"okr_vnext_sets":0,"kpi_recovery_actions":0,"rvn_kpi_recovery_actions":0,"rvn_kpi_corrective_actions":0,"kpi_deviation_actions":0,"kpi_report_schedules":0,"kpi_connectors":0,"kpi_recovery_checkpoints":0,"rvn_kpi_recovery_checkpoints":0,"kpi_recovery_cards":0,"rvn_kpi_deviation_cases":0}}]}
+TICK2 now=2026-09-18T03:15Z (nocny bieg, realny dziś) → deltaDays=10 skipped=- perTable={"tasks":60,"initiatives":11,"initiative_milestones":16,"meetings":3}
+KOTWICA[po tick2] last_rolled_on=2026-09-18 delta_days=10
+PRZETERMINOWANE[po] kolumn_zmierzone=9 wierszy_niepustych=142 przeterminowane=39
+  tasks.due_date (timestamptz) niepustych=60 przeterminowane=15
+  initiatives.planned_start_date (text) niepustych=11 przeterminowane=5
+  initiatives.planned_end_date (text) niepustych=11 przeterminowane=1
+  initiatives.start_date (timestamptz) niepustych=11 przeterminowane=5
+  initiatives.end_date (timestamptz) niepustych=11 przeterminowane=1
+  initiative_milestones.target_date (date) niepustych=16 przeterminowane=3
+  initiative_milestones.baseline_date (date) niepustych=16 przeterminowane=3
+  meetings.start_at (text) niepustych=3 przeterminowane=3
+  meetings.end_at (text) niepustych=3 przeterminowane=3
+KRYTERIUM_OTWARTE[po] (tylko encje otwarte, historia wyłączona)
+  OTWARTE[po] tasks.due_date < dziś AND status NOT IN (done,completed,cancelled) = 10
+  OTWARTE[po] initiatives.end_date < dziś AND status NOT IN (CLOSED,REJECTED,COMPLETED) = 0
+  OTWARTE[po] initiative_milestones.target_date < dziś AND status <> COMPLETED = 0
+  OTWARTE[po] meetings jednorazowe scheduled start_at < dziś = 0
+  OTWARTE[po] meetings serie scheduled bez wystąpienia w przód (okno 21 dni) = 0
+KRYTERIUM_OTWARTE[po] SUMA=10
+SPOTKANIA[po]
+  Weekly PMO Review | status=completed | start=2026-09-12T09:00:00.000Z (SO) | rrule=-
+  Steering Committee | status=completed | start=2026-09-14T14:00:00.000Z (PN) | rrule=-
+  Weekly Operations Stand-up | status=scheduled | start=2026-09-16T07:30:00.000Z (ŚR) | rrule=FREQ=WEEKLY;BYDAY=WE
+SERIA[po] Weekly Operations Stand-up | kotwica=2026-09-16T07:30:00.000Z (ŚR) | następne wystąpienia (21 dni od dziś)=3 | pierwsze=2026-09-23T07:30:00.000Z (ŚR)
+PODSUMOWANIE[z-kotwica] wszystkie kolumny: przeterminowane przed=46 po=39 | tylko OTWARTE encje: przed=18 po=10

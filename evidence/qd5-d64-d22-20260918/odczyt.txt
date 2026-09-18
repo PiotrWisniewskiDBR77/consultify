@@ -1,0 +1,127 @@
+QD5 (D-64 + D-22) — ODCZYT DOWODÓW
+Stanowisko D (Qoder), 2026-09-18, gałąź qoder/d-d64-recurrence-20260918
+Baza dowodowa: kontener qoder-d-pg-1, 127.0.0.1:6630, baza consultify_kopia_d5
+(942 migracje + łańcuch siewny demo-en 01→07, tryb SQL-only, bez --api).
+
+────────────────────────────────────────────────────────────────────────────
+1. ZMIANA W SEEDZIE (jedyny zmieniony plik produktu)
+────────────────────────────────────────────────────────────────────────────
+server/scripts/seed/demo-en/06-materialy.ts
+  - nowy typ pól figury spotkania: status / timezone / recurrenceRule / minuta
+    (summary, keyPoints, decisions, actionItems),
+  - 3. spotkanie `weekly-operations-standup` = MASTER serii cyklicznej:
+      title        = "Weekly Operations Stand-up"
+      start_at     = 2026-09-09T07:30:00.000Z (ŚRODA)
+      end_at       = 2026-09-09T07:45:00.000Z
+      status       = scheduled        (bez minuty — jeszcze się nie odbyło)
+      timezone     = Europe/London
+      recurrence_rule = "FREQ=WEEKLY;BYDAY=WE"  (ciało RRULE BEZ prefiksu
+                     "RRULE:" — tak samo jak żywy API, recurrenceEngine.parseRRule
+                     dokłada prefiks sam),
+      uczestnicy   = OWNER (organizer) + sarah.mitchell + michael.grant,
+      agenda       = 3 punkty,
+  - INSERT meetings pisze teraz status + timezone + recurrence_rule,
+  - minuta (meeting_notes) jest wstawiana TYLKO dla spotkania, które się odbyło
+    (`if (meeting.summary)`),
+  - verify(): nowa twarda asercja "serie cykliczne (meetings FREQ=WEEKLY,
+    master)" oczekiwane=1 + asercja liczby notatek liczona z figury
+    (MEETINGS.filter(m => m.summary).length = 2).
+
+Pomiar na realnej bazie:
+  --apply  → utworzono=84 zmieniono=0 pominieto=0 (pełny przebieg paczki D6)
+  --verify → PASS: wszystkie 17 asercji przeszły
+             spotkania=3, uczestnicy=11, notatki=2, serie cykliczne=1,
+             skrzynka OWNER-a=6, sekcja overdue_sla_breach=2
+
+────────────────────────────────────────────────────────────────────────────
+2. MUTACJE (5/5 RED na tej samej asercji, plik przywrócony → GREEN)
+────────────────────────────────────────────────────────────────────────────
+Każda mutacja: sed na seedzie → --reset → --apply → --verify.
+  M1 usunięta linia recurrenceRule z figury          → FAIL serie cykliczne 1≠0
+  M2 status figury 'scheduled' → 'completed'         → FAIL serie cykliczne 1≠0
+  M3 'FREQ=WEEKLY;BYDAY=WE' → 'FREQ=DAILY'           → FAIL serie cykliczne 1≠0
+     (M3 = dowód, że asercja pilnuje DOKŁADNIE tego wzorca, po który sięga
+      predykat SR-1 VARIANT B: "recurrence_rule" ~* 'FREQ=WEEKLY')
+  M4 INSERT: meeting.status ?? 'completed' → 'completed'  → FAIL 1≠0
+  M5 INSERT: meeting.recurrenceRule ?? null → null        → FAIL 1≠0
+Po przywróceniu pliku: --apply utworzono=84, --verify PASS 17/17,
+`diff` pliku z kopią = identyczny.
+Logi: mutacja-M1..M5*.log, apply-po-mutacjach.log, verify-po-mutacjach.log
+
+────────────────────────────────────────────────────────────────────────────
+3. BIEG KONTROLNY SR-1 (REALNY kod produktu, nie fikstura)
+────────────────────────────────────────────────────────────────────────────
+Harness: harness-qd5-roll.ts.txt (kopia /tmp-qd5-roll.ts, uruchamiany z
+server/ jako ESM). Wywołuje REALNE runShowcaseDateRollTick →
+rollShowcaseDates → jedna transakcja na org, z flagami
+ENABLE_SHOWCASE_DATE_ROLL=true i SHOWCASE_ORG_IDS=<org Northwind>
+(468b234c-66c4-54e1-b626-5e0fb3a92f6a) oraz wstrzykniętym zegarem.
+"Dziś" = 2026-09-18T03:15Z (realny dzień biegu), dzień referencyjny zbioru
+demo = 2026-09-08. Delta = 10 dni, delta tygodniowa = round(10/7)*7 = 7.
+
+── SCENARIUSZ B: BEZ KOTWICY (bieg-kontrolny-B-bez-kotwicy.log) ──
+Stan wyjściowy = świeżo zasiany klon demo, tabela showcase_date_roll PUSTA
+(0 wierszy — żaden skrypt siewny jej nie pisze).
+  TICK (nocny, now=2026-09-18T03:15Z) → deltaDays=0 skipped=initialized
+  perTable={} — NIC nie zostało przesunięte.
+  przeterminowane (wszystkie 46 kolumn SR-1): przed=46 po=46
+  kryterium "tylko OTWARTE encje":           przed=18 po=18
+  Wniosek: pierwszy nocny bieg na świeżym klonie wyłącznie INICJALIZUJE
+  kotwicę; zaległość 10 dni nigdy nie zostaje odrobiona.
+
+── SCENARIUSZ A: Z KOTWICĄ (bieg-kontrolny-A-z-kotwica.log) ──
+  TICK1 now=2026-09-08T03:15Z (dzień referencyjny zbioru)
+        → deltaDays=0 skipped=initialized, kotwica last_rolled_on=2026-09-08
+  TICK2 now=2026-09-18T03:15Z (nocny bieg)
+        → deltaDays=10, perTable={tasks:60, initiatives:11,
+          initiative_milestones:16, meetings:3}, kotwica=2026-09-18
+  przeterminowane (wszystkie kolumny): przed=46 po=39
+  kryterium "tylko OTWARTE encje":     przed=18 po=10
+  per kolumna / per kryterium:
+    tasks.due_date — wszystkie wiersze po terminie       22 → 15
+    tasks.due_date — tylko otwarte (bez done/cancelled)  18 → 10
+    initiatives.end_date (otwarte)                        0 →  0
+    initiative_milestones.target_date (nie-COMPLETED)     0 →  0
+    meetings jednorazowe scheduled w przeszłości          0 →  0
+    serie bez wystąpienia w przód (okno 21 dni)           0 →  0
+
+── D-64: WARIANT B ZMIERZONY NA REALNYCH DANYCH (przed → po, delta 10) ──
+  Weekly Operations Stand-up  2026-09-09 (ŚR) → 2026-09-16 (ŚR)  +7 dni
+      = round(10/7)*7 — DZIEŃ TYGODNIA ZACHOWANY (seria cykliczna)
+  Weekly PMO Review           2026-09-02 (ŚR) → 2026-09-12 (SO)  +10 dni
+      = surowa delta — dzień tygodnia ZMIENIONY (jednorazowe, completed)
+  Steering Committee          2026-09-04 (PT) → 2026-09-14 (PN)  +10 dni
+      = surowa delta — dzień tygodnia ZMIENIONY (jednorazowe, completed)
+  To jest dokładnie rozróżnienie, którego D-22/D-64 nie dało się zmierzyć
+  (0 wierszy recurrence_rule w całej kopii dumpu): teraz +7 vs +10 w TYM
+  SAMYM przebiegu, na tych samych 3 wierszach meetings.
+  Rozwinięcie serii silnikiem produktu (materializeInstances, okno 21 dni od
+  dziś): przed=3 wystąpienia, pierwsze 2026-09-23 (ŚR);
+  po=3 wystąpienia, pierwsze 2026-09-23 (ŚR) — kadencja środowa nienaruszona.
+
+────────────────────────────────────────────────────────────────────────────
+4. KRYTERIUM ODBIORU "po nocnym biegu 0 przeterminowanych" — NIEOSIĄGALNE
+────────────────────────────────────────────────────────────────────────────
+Zmierzone 46 → 39 (wszystkie kolumny) i 18 → 10 (tylko otwarte encje).
+Reszta NIE jest zaległością do odrobienia:
+  (a) 10 otwartych zadań po terminie = ZAMIERZONA treść demo: seed sam ją
+      opisuje ("eight tasks and two RAID items are past their due date and
+      three decisions are overdue", 04-realizacja.ts:864) i sam ją asertuje
+      (skrzynka OWNER-a sekcja overdue_sla_breach = 2, asercja verify);
+  (b) historia ma być w przeszłości i SR-1 z założenia jej nie przesuwa
+      (Wpis 38: znaczniki cyklu życia NIGDY): 5 zadań done, 3 kamienie
+      COMPLETED, 1 inicjatywa CLOSED, 2 spotkania completed = 11 wierszy;
+  (c) bez kotwicy (scenariusz B) bieg nie przesuwa NICZEGO: 46 → 46.
+Najbliższe prawdziwe stwierdzenie: po nocnym biegu z kotwicą w dniu
+referencyjnym zbioru każde PLANOWANIE skierowane w przód jest aktualne
+(inicjatywy 0, kamienie 0, spotkania jednorazowe scheduled 0, seria ma
+wystąpienie w przód), a jedyne pozycje po terminie to celowa treść SLA-breach.
+
+────────────────────────────────────────────────────────────────────────────
+5. BRAK ZRZUTÓW UI
+────────────────────────────────────────────────────────────────────────────
+Zmiana jest DANYMI demo (wiersz meetings), nie kodem UI; moduł Spotkania jest
+za flagą VITE_MODULE_MEETINGS (domyślnie OFF), a harness dev-render renderuje
+figury lokalne — zrzut z harnessu pokazałby lustro, nie zasiany wiersz
+(zakaz "test na lustrze"). Dowód jest na poziomie SQL: asercje verify (17/17)
++ pomiar biegu SR-1 powyżej.

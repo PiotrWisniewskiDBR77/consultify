@@ -1,0 +1,216 @@
+/**
+ * QD5 (D-64 + D-22) control run — scratch harness, NOT shipped (evidence copy
+ * lives in evidence/qd5-d64-d22-20260918/).
+ *
+ * Runs the REAL nightly tick (runShowcaseDateRollTick → rollShowcaseDates →
+ * one transaction per org) over the freshly seeded demo-en Northwind copy and
+ * measures planning-date staleness before/after.
+ *
+ * QD5_SCENARIO=z-kotwica   → tick at the dataset reference day (2026-09-08)
+ *                            first, then the nightly tick at real today.
+ * QD5_SCENARIO=bez-kotwicy → only the nightly tick at real today (what a fresh
+ *                            demo clone with no watermark row actually gets).
+ */
+import { all as dbAll } from './src/utils/DbPromise.js';
+import { SHOWCASE_DATE_FIELDS } from './src/services/showcase/showcaseDateRollService.js';
+import { runShowcaseDateRollTick } from './src/services/showcase/showcaseDateRollScheduler.js';
+import { materializeInstances } from './src/services/v8/recurrenceEngine.js';
+
+const TODAY = new Date('2026-09-18T03:15:00Z');
+const DATASET_DAY = new Date('2026-09-08T03:15:00Z');
+const SCENARIO = process.env.QD5_SCENARIO ?? 'z-kotwica';
+const DNI = ['ND', 'PN', 'WT', 'ŚR', 'CZ', 'PT', 'SO'];
+
+async function columnExists(table: string, column: string): Promise<boolean> {
+  const r = await dbAll<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM information_schema.columns
+      WHERE table_schema='public' AND table_name=$1 AND column_name=$2`,
+    [table, column]
+  );
+  return Number(r[0]?.n ?? 0) > 0;
+}
+
+/** Staleness of every column SR-1 shifts: value present AND < real today. */
+async function measure(orgId: string, label: string) {
+  let totalNonNull = 0;
+  let totalOverdue = 0;
+  const lines: string[] = [];
+  for (const t of SHOWCASE_DATE_FIELDS) {
+    if (!(await columnExists(t.table, t.orgColumn ?? 'organization_id'))) continue;
+    for (const c of t.columns) {
+      if (!(await columnExists(t.table, c.column))) continue;
+      const sql =
+        c.kind === 'text'
+          ? `SELECT COUNT(*) FILTER (WHERE "${c.column}" IS NOT NULL)::int AS nn,
+                    COUNT(*) FILTER (WHERE "${c.column}" IS NOT NULL AND "${c.column}" < to_char($2::date,'YYYY-MM-DD'))::int AS od
+               FROM "${t.table}" WHERE "${t.orgColumn}" = $1`
+          : `SELECT COUNT(*) FILTER (WHERE "${c.column}" IS NOT NULL)::int AS nn,
+                    COUNT(*) FILTER (WHERE "${c.column}" IS NOT NULL AND "${c.column}"::timestamp < $2::date::timestamp)::int AS od
+               FROM "${t.table}" WHERE "${t.orgColumn}" = $1`;
+      const r = await dbAll<{ nn: number; od: number }>(sql, [orgId, TODAY.toISOString()]);
+      const nn = Number(r[0]?.nn ?? 0);
+      const od = Number(r[0]?.od ?? 0);
+      totalNonNull += nn;
+      totalOverdue += od;
+      if (nn > 0) lines.push(`  ${t.table}.${c.column} (${c.kind}) niepustych=${nn} przeterminowane=${od}`);
+    }
+  }
+  console.log(
+    `PRZETERMINOWANE[${label}] kolumn_zmierzone=${lines.length} wierszy_niepustych=${totalNonNull} przeterminowane=${totalOverdue}`
+  );
+  for (const l of lines) console.log(l);
+  return { totalOverdue, totalNonNull };
+}
+
+/**
+ * The honest currency test: only FORWARD-LOOKING rows of an OPEN entity count
+ * as stale. History (done/closed/completed) is supposed to be in the past, and
+ * a series is judged by its NEXT expanded occurrence, not its anchor row.
+ */
+async function measureOpen(orgId: string, label: string) {
+  const q = async (nazwa: string, sql: string) => {
+    const r = await dbAll<{ n: number }>(sql, [orgId, TODAY.toISOString()]);
+    console.log(`  OTWARTE[${label}] ${nazwa} = ${Number(r[0]?.n ?? 0)}`);
+    return Number(r[0]?.n ?? 0);
+  };
+  console.log(`KRYTERIUM_OTWARTE[${label}] (tylko encje otwarte, historia wyłączona)`);
+  const tasks = await q(
+    'tasks.due_date < dziś AND status NOT IN (done,completed,cancelled)',
+    `SELECT COUNT(*)::int AS n FROM tasks WHERE organization_id=$1 AND due_date IS NOT NULL
+       AND due_date < $2::timestamptz AND status NOT IN ('done','completed','cancelled')`
+  );
+  const initiatives = await q(
+    'initiatives.end_date < dziś AND status NOT IN (CLOSED,REJECTED,COMPLETED)',
+    `SELECT COUNT(*)::int AS n FROM initiatives WHERE organization_id=$1 AND end_date IS NOT NULL
+       AND end_date < $2::timestamptz AND status NOT IN ('CLOSED','REJECTED','COMPLETED')`
+  );
+  const milestones = await q(
+    'initiative_milestones.target_date < dziś AND status <> COMPLETED',
+    `SELECT COUNT(*)::int AS n FROM initiative_milestones WHERE organization_id=$1 AND target_date IS NOT NULL
+       AND target_date < $2::date AND COALESCE(status,'') <> 'COMPLETED'`
+  );
+  const oneOff = await q(
+    'meetings jednorazowe scheduled start_at < dziś',
+    `SELECT COUNT(*)::int AS n FROM meetings WHERE organization_id=$1 AND recurrence_rule IS NULL
+       AND status='scheduled' AND start_at::timestamp < $2::date::timestamp`
+  );
+  const series = await q(
+    'meetings serie scheduled bez wystąpienia w przód (okno 21 dni)',
+    `SELECT COUNT(*)::int AS n FROM meetings m WHERE m.organization_id=$1 AND m.recurrence_rule IS NOT NULL
+       AND m.recurrence_parent_id IS NULL AND m.status='scheduled'
+       AND NOT EXISTS (
+         SELECT 1 FROM generate_series(0,21) AS g(d)
+          WHERE (m.start_at::timestamp + make_interval(days => g.d))::date >= $2::date
+       )`
+  );
+  const suma = tasks + initiatives + milestones + oneOff + series;
+  console.log(`KRYTERIUM_OTWARTE[${label}] SUMA=${suma}`);
+  return suma;
+}
+
+async function meetingState(orgId: string, label: string) {
+  const r = await dbAll<{ title: string; start_at: string; end_at: string; recurrence_rule: string | null; status: string }>(
+    `SELECT title, start_at, end_at, recurrence_rule, status FROM meetings WHERE organization_id=$1 ORDER BY start_at`,
+    [orgId]
+  );
+  console.log(`SPOTKANIA[${label}]`);
+  for (const m of r) {
+    const dzien = DNI[new Date(m.start_at).getUTCDay()];
+    console.log(
+      `  ${m.title} | status=${m.status} | start=${m.start_at} (${dzien}) | rrule=${m.recurrence_rule ?? '-'}`
+    );
+  }
+}
+
+async function nextOccurrence(orgId: string, label: string) {
+  const masters = await dbAll<{ title: string; start_at: string; end_at: string; recurrence_rule: string }>(
+    `SELECT title, start_at, end_at, recurrence_rule FROM meetings
+      WHERE organization_id=$1 AND recurrence_rule IS NOT NULL AND recurrence_parent_id IS NULL`,
+    [orgId]
+  );
+  for (const m of masters) {
+    const wStart = TODAY.toISOString();
+    const wEnd = new Date(TODAY.getTime() + 21 * 864e5).toISOString();
+    const inst = materializeInstances(
+      m.start_at,
+      m.end_at,
+      { rrule: m.recurrence_rule, exceptions: [] } as never,
+      wStart,
+      wEnd
+    );
+    const pierwsze = inst[0]?.startAt ?? 'BRAK';
+    console.log(
+      `SERIA[${label}] ${m.title} | kotwica=${m.start_at} (${DNI[new Date(m.start_at).getUTCDay()]}) | ` +
+        `następne wystąpienia (21 dni od dziś)=${inst.length} | pierwsze=${pierwsze} ` +
+        `(${pierwsze === 'BRAK' ? '-' : DNI[new Date(pierwsze).getUTCDay()]})`
+    );
+  }
+}
+
+async function watermark(label: string) {
+  const r = await dbAll<{ last_rolled_on: string; delta_days: number }>(
+    `SELECT last_rolled_on::text AS last_rolled_on, delta_days FROM showcase_date_roll`
+  );
+  console.log(
+    `KOTWICA[${label}] ` +
+      (r.length === 0
+        ? 'BRAK wiersza showcase_date_roll'
+        : r.map((x) => `last_rolled_on=${x.last_rolled_on} delta_days=${x.delta_days}`).join('; '))
+  );
+}
+
+async function main() {
+  const orgs = await dbAll<{ id: string; name: string }>(
+    `SELECT id, name FROM organizations WHERE name ILIKE 'Northwind%' LIMIT 1`
+  );
+  const orgId = process.env.QD5_ORG_ID ?? orgs[0]?.id;
+  if (!orgId) throw new Error('no Northwind org');
+  console.log(`SCENARIUSZ=${SCENARIO} | ORG=${orgs[0]?.name} (${orgId}) | dziś=${TODAY.toISOString()}`);
+
+  const przed = await measure(orgId, 'przed');
+  const przedOpen = await measureOpen(orgId, 'przed');
+  await meetingState(orgId, 'przed');
+  await nextOccurrence(orgId, 'przed');
+  await watermark('przed');
+
+  const env = {
+    ...process.env,
+    ENABLE_SHOWCASE_DATE_ROLL: 'true',
+    SHOWCASE_ORG_IDS: orgId,
+  } as NodeJS.ProcessEnv;
+
+  if (SCENARIO === 'z-kotwicą' || SCENARIO === 'z-kotwica') {
+    const tick1 = await runShowcaseDateRollTick({ env, now: () => DATASET_DAY });
+    console.log(
+      `TICK1 now=2026-09-08T03:15Z (dzień referencyjny zbioru) → ` +
+        `deltaDays=${tick1.rolled?.[0]?.deltaDays} skipped=${tick1.rolled?.[0]?.skipped ?? '-'}`
+    );
+    await watermark('po tick1');
+  }
+
+  const tick2 = await runShowcaseDateRollTick({ env, now: () => TODAY });
+  const r2 = tick2.rolled?.[0];
+  console.log(
+    `TICK2 now=2026-09-18T03:15Z (nocny bieg, realny dziś) → deltaDays=${r2?.deltaDays} ` +
+      `skipped=${r2?.skipped ?? '-'} perTable=${JSON.stringify(
+        Object.fromEntries(Object.entries(r2?.perTable ?? {}).filter(([, v]) => Number(v) > 0))
+      )}`
+  );
+  await watermark('po tick2');
+
+  const po = await measure(orgId, 'po');
+  const poOpen = await measureOpen(orgId, 'po');
+  await meetingState(orgId, 'po');
+  await nextOccurrence(orgId, 'po');
+
+  console.log(
+    `PODSUMOWANIE[${SCENARIO}] wszystkie kolumny: przeterminowane przed=${przed.totalOverdue} po=${po.totalOverdue} | ` +
+      `tylko OTWARTE encje: przed=${przedOpen} po=${poOpen}`
+  );
+  process.exit(0);
+}
+
+main().catch((e) => {
+  console.error('FAIL', e);
+  process.exit(1);
+});

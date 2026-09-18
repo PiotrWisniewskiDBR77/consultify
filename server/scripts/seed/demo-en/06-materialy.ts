@@ -18,9 +18,11 @@
  *     `v8_artifact_origin_links` dla wszystkich 7 powyższych (ekran
  *     Materiałów czyta WYŁĄCZNIE rejestr — `artifactRegistryService.ts:3052`
  *     `listArtifactsForUser`/`GET /api/artifacts`),
- *   - 2 spotkania (`meetings` + `meeting_participants` + `meeting_notes`,
+ *   - 3 spotkania (`meetings` + `meeting_participants` + `meeting_notes`,
  *     moduł za flagą `VITE_MODULE_MEETINGS`, domyślnie OFF — dane są
- *     seedowane niezależnie od flagi),
+ *     seedowane niezależnie od flagi): 2 odbyte z minutowanym przebiegiem
+ *     i 1 master serii cyklicznej `FREQ=WEEKLY` (D-64/D-22 — bez serii
+ *     wariant B date-rolla jest na realnych danych niemierzalny),
  *   - 3 wątki czatu (`conversations` + `conversation_messages`, 3–4
  *     wiadomości każdy),
  *   - 6 zadań osobistych OWNER-a (`tasks`, `task_type='personal'`) +
@@ -479,7 +481,7 @@ function buildScrapCostModelSchema(): WorkbookSchema {
 }
 
 // ============================================================================
-// 4) SPOTKANIA — 2 × meetings + meeting_participants + meeting_notes
+// 4) SPOTKANIA — 3 × meetings + meeting_participants + 2 × meeting_notes
 // ============================================================================
 type MeetingParticipant = { slug: string; role: 'organizer' | 'attendee' | 'optional' };
 type Meeting = {
@@ -491,10 +493,17 @@ type Meeting = {
   organizerSlug: string;
   participants: MeetingParticipant[];
   agenda: string[];
-  summary: string;
-  keyPoints: string[];
-  decisions: { decision: string; decidedBy?: string }[];
-  actionItems: { task: string; owner?: string; deadline?: string; priority?: 'low' | 'medium' | 'high' }[];
+  /** `meetings.status` (słownik `meetingService.MeetingStatus`); brak = 'completed'. */
+  status?: 'scheduled' | 'completed';
+  /** Strefa IANA serii; zapisane `start_at`/`end_at` zostają UTC. */
+  timezone?: string;
+  /** Ciało RRULE BEZ prefiksu `RRULE:` — `recurrenceEngine.parseRRule` sam go dokłada. */
+  recurrenceRule?: string;
+  /** Cztery pola poniżej = minuta; brak wszystkich = spotkanie jeszcze się nie odbyło. */
+  summary?: string;
+  keyPoints?: string[];
+  decisions?: { decision: string; decidedBy?: string }[];
+  actionItems?: { task: string; owner?: string; deadline?: string; priority?: 'low' | 'medium' | 'high' }[];
 };
 
 const MEETINGS: Meeting[] = [
@@ -564,6 +573,35 @@ const MEETINGS: Meeting[] = [
     actionItems: [
       { task: 'Register the Energy Efficiency Programme for execution planning', owner: OWNER, deadline: '2026-09-11', priority: 'high' },
       { task: 'Follow up with St Albans Fasteners on corrective action response', owner: 'robert.chen', deadline: '2026-09-14', priority: 'medium' },
+    ],
+  },
+  {
+    // D-64 / D-22: demo calendar had NO recurring meeting at all, so SR-1's
+    // VARIANT B (a weekly row shifts by round(delta/7)*7 and keeps its weekday)
+    // was unmeasurable on real demo data. This is the SERIES MASTER: the product
+    // expands occurrences from the RRULE (window_only — `recurrenceEngine`),
+    // child rows exist only as per-occurrence exceptions, so ONE row is the
+    // whole series. Anchored on the Wednesday after this dataset's reference
+    // day (2026-09-08, patrz PERSONAL_TASKS) and not minuted — it has not
+    // happened yet.
+    slug: 'weekly-operations-standup',
+    title: 'Weekly Operations Stand-up',
+    startAt: '2026-09-09T07:30:00.000Z',
+    endAt: '2026-09-09T07:45:00.000Z',
+    location: 'Leeds — Plant Floor Office / Teams',
+    organizerSlug: OWNER,
+    status: 'scheduled',
+    timezone: 'Europe/London',
+    recurrenceRule: 'FREQ=WEEKLY;BYDAY=WE',
+    participants: [
+      { slug: OWNER, role: 'organizer' },
+      { slug: 'sarah.mitchell', role: 'attendee' },
+      { slug: 'michael.grant', role: 'attendee' },
+    ],
+    agenda: [
+      'Line 1–4 output against the weekly plan',
+      'Open safety and quality escalations',
+      'Maintenance windows for the next seven days',
     ],
   },
 ];
@@ -943,8 +981,8 @@ async function wykonaj(c: PoolClient, commit: boolean): Promise<Licznik> {
       const r = await c.query(
         `INSERT INTO meetings (
            id, organization_id, title, start_at, end_at, location, attendees_json, agenda_json,
-           status, created_by, created_at, updated_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'completed',$9,$10,$10)
+           status, created_by, created_at, updated_at, timezone, recurrence_rule
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12,$13)
          ON CONFLICT (id) DO NOTHING`,
         [
           meetingId,
@@ -955,8 +993,11 @@ async function wykonaj(c: PoolClient, commit: boolean): Promise<Licznik> {
           meeting.location,
           JSON.stringify(attendeeEmails),
           JSON.stringify(meeting.agenda),
+          meeting.status ?? 'completed',
           organizerId,
           now,
+          meeting.timezone ?? null,
+          meeting.recurrenceRule ?? null,
         ]
       );
       if ((r.rowCount ?? 0) > 0) lic.utworz();
@@ -977,31 +1018,35 @@ async function wykonaj(c: PoolClient, commit: boolean): Promise<Licznik> {
         else lic.pomin();
       }
 
-      const noteId = det('meeting-note', meeting.slug);
-      const transcriptHash = createHash('sha256').update(`northwind-demo-2026|${meeting.slug}`).digest('hex');
-      const rn = await c.query(
-        `INSERT INTO meeting_notes (
-           id, organization_id, meeting_id, source, language, transcript_hash, summary,
-           key_points_json, decisions_json, action_items_json, status, created_by, created_at, updated_at
-         ) VALUES ($1,$2,$3,'heuristic','en',$4,$5,$6,$7,$8,'approved',$9,$10,$10)
-         ON CONFLICT (id) DO NOTHING`,
-        [
-          noteId,
-          ORG_ID,
-          meetingId,
-          transcriptHash,
-          meeting.summary,
-          JSON.stringify(meeting.keyPoints),
-          JSON.stringify(meeting.decisions),
-          JSON.stringify(
-            meeting.actionItems.map((a) => ({ ...a, owner: a.owner ? emailOsoby(a.owner) : undefined }))
-          ),
-          organizerId,
-          now,
-        ]
-      );
-      if ((rn.rowCount ?? 0) > 0) lic.utworz();
-      else lic.pomin();
+      // Minuta istnieje TYLKO dla spotkania, które się odbyło — master serii
+      // cyklicznej (`status='scheduled'`) nie ma `summary` i nie dostaje notatki.
+      if (meeting.summary) {
+        const noteId = det('meeting-note', meeting.slug);
+        const transcriptHash = createHash('sha256').update(`northwind-demo-2026|${meeting.slug}`).digest('hex');
+        const rn = await c.query(
+          `INSERT INTO meeting_notes (
+             id, organization_id, meeting_id, source, language, transcript_hash, summary,
+             key_points_json, decisions_json, action_items_json, status, created_by, created_at, updated_at
+           ) VALUES ($1,$2,$3,'heuristic','en',$4,$5,$6,$7,$8,'approved',$9,$10,$10)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            noteId,
+            ORG_ID,
+            meetingId,
+            transcriptHash,
+            meeting.summary,
+            JSON.stringify(meeting.keyPoints ?? []),
+            JSON.stringify(meeting.decisions ?? []),
+            JSON.stringify(
+              (meeting.actionItems ?? []).map((a) => ({ ...a, owner: a.owner ? emailOsoby(a.owner) : undefined }))
+            ),
+            organizerId,
+            now,
+          ]
+        );
+        if ((rn.rowCount ?? 0) > 0) lic.utworz();
+        else lic.pomin();
+      }
     }
 
     // --- 5) Czat --------------------------------------------------------------
@@ -1206,6 +1251,12 @@ async function verify(c: PoolClient): Promise<void> {
     [meetingIds]
   );
   const notatki = await count('SELECT COUNT(*)::int AS n FROM meeting_notes WHERE meeting_id = ANY($1)', [meetingIds]);
+  const seriaCykliczna = await count(
+    `SELECT COUNT(*)::int AS n FROM meetings
+      WHERE id = ANY($1) AND recurrence_rule ~* 'FREQ=WEEKLY'
+        AND recurrence_parent_id IS NULL AND status = 'scheduled'`,
+    [meetingIds]
+  );
   const watki = await count('SELECT COUNT(*)::int AS n FROM conversations WHERE id = ANY($1)', [conversationIds]);
   const wiadomosci = await count(
     'SELECT COUNT(*)::int AS n FROM conversation_messages WHERE conversation_id = ANY($1)',
@@ -1244,6 +1295,7 @@ async function verify(c: PoolClient): Promise<void> {
       { nazwa: 'spotkania (meetings)', oczekiwane: 0, rzeczywiste: spotkania },
       { nazwa: 'uczestnicy spotkań (meeting_participants)', oczekiwane: 0, rzeczywiste: uczestnicy },
       { nazwa: 'notatki ze spotkań (meeting_notes)', oczekiwane: 0, rzeczywiste: notatki },
+      { nazwa: 'serie cykliczne (meetings FREQ=WEEKLY, master)', oczekiwane: 0, rzeczywiste: seriaCykliczna },
       { nazwa: 'wątki czatu (conversations)', oczekiwane: 0, rzeczywiste: watki },
       { nazwa: 'wiadomości czatu (conversation_messages)', oczekiwane: 0, rzeczywiste: wiadomosci },
       { nazwa: 'zadania osobiste OWNER-a (tasks)', oczekiwane: 0, rzeczywiste: zadania },
@@ -1268,7 +1320,14 @@ async function verify(c: PoolClient): Promise<void> {
     { nazwa: 'wpisy w rejestrze artefaktów (v8_output_artifacts+link)', oczekiwane: DOCUMENTS.length + DECKS.length + 1, rzeczywiste: artefakty },
     { nazwa: 'spotkania (meetings)', oczekiwane: MEETINGS.length, rzeczywiste: spotkania },
     { nazwa: 'uczestnicy spotkań (meeting_participants)', oczekiwane: MEETINGS.reduce((n, m) => n + m.participants.length, 0), rzeczywiste: uczestnicy },
-    { nazwa: 'notatki ze spotkań (meeting_notes)', oczekiwane: MEETINGS.length, rzeczywiste: notatki },
+    { nazwa: 'notatki ze spotkań (meeting_notes)', oczekiwane: MEETINGS.filter((m) => m.summary).length, rzeczywiste: notatki },
+    {
+      // D-64: twarda jedynka — bez serii cyklicznej w danych pokazowych wariant B
+      // date-rolla (weekly → round(delta/7)*7) jest na realnych danych niemierzalny.
+      nazwa: 'serie cykliczne (meetings FREQ=WEEKLY, master)',
+      oczekiwane: 1,
+      rzeczywiste: seriaCykliczna,
+    },
     { nazwa: 'wątki czatu (conversations)', oczekiwane: CHAT_THREADS.length, rzeczywiste: watki },
     { nazwa: 'wiadomości czatu (conversation_messages)', oczekiwane: CHAT_THREADS.reduce((n, t) => n + t.messages.length, 0), rzeczywiste: wiadomosci },
     { nazwa: 'zadania osobiste OWNER-a (tasks)', oczekiwane: PERSONAL_TASKS.length, rzeczywiste: zadania },
