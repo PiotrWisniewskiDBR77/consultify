@@ -12,7 +12,11 @@ import {
   windowCoversPeriod,
   UNASSIGNED_ROLE_ID,
 } from '../capacityRoleSheet.js';
-import { findRoleGaps, NoCapacityPressureError, proposeCapacityOptions } from '../capacityOptionsAdvisor.js';
+import {
+  findRoleGaps,
+  NoCapacityPressureError,
+  proposeCapacityOptions,
+} from '../capacityOptionsAdvisor.js';
 import {
   sumRoleLines,
   validateCapacityScenario,
@@ -23,7 +27,9 @@ import { solvePlanScenario } from '../planSolver.js';
 
 const period = (id: string, start: string, end: string) => ({ periodId: id, start, end });
 
-const plan = (roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>): PlanScenario => ({
+const plan = (
+  roleDemand?: Array<{ roleId: string; roleLabel: string; fte: number }>
+): PlanScenario => ({
   scenarioId: 'plan-k5',
   name: 'Plan K5',
   scenarioVersion: 2,
@@ -76,6 +82,47 @@ describe('P15-K5 — arkusz okres x rola', () => {
     expect(week1?.demandSource).toBe('PLAN');
     // Okno konczy sie 13.09, wiec drugi tydzien nie jest nim objety.
     expect(week2?.demand).toBe(0);
+  });
+
+  it('M1 liczy popyt ról z realnych zadań planu przed ręcznym roleDemand', () => {
+    const periods = buildRoleSheet({
+      plan: plan([{ roleId: 'legacy-role', roleLabel: 'Legacy Role', fte: 9 }]),
+      supply,
+      ownerId: 'pmo',
+      taskDemand: {
+        asOf: '2026-09-07T00:00:00.000Z',
+        initiativeIds: ['ini-1'],
+        periods: plan().periods,
+        cells: [
+          {
+            periodId: 'Tydzień 1',
+            roleId: 'controls-engineer',
+            roleLabel: 'Controls Engineer',
+            demandHours: 80,
+            knowledgeState: 'KNOWN',
+            contributions: [
+              {
+                taskId: 'task-80h',
+                userId: 'user-1',
+                hours: 80,
+                startSource: 'created_at',
+                incompleteReasons: [],
+              },
+            ],
+          },
+        ],
+        incompleteTasks: [],
+        knowledgeState: 'KNOWN',
+      },
+    });
+
+    const week1 = periods[0].roles?.find((role) => role.roleId === 'controls-engineer');
+    const legacy = periods[0].roles?.find((role) => role.roleId === 'legacy-role');
+    // MUTACJA: pomiń `taskDemand` w buildRoleSheet -> 2 FTE znika, a legacy-role wraca jako 9 FTE.
+    expect(week1?.demand).toBe(2);
+    expect(week1?.demandSource).toBe('PLAN');
+    expect(legacy?.demand).toBe(0);
+    expect(periods[0].demand.base).toBe(2);
   });
 
   it('(f) podaz roli pochodzi z podazy organizacji (stanowiska), nie ze stalej', () => {
@@ -185,8 +232,12 @@ describe('P15-K5 — arkusz okres x rola', () => {
   });
 
   it('okres tygodniowy liczy sie jako jeden tydzien, dwutygodniowy jako dwa', () => {
-    expect(periodWeeks(period('a', '2026-09-07T00:00:00.000Z', '2026-09-14T00:00:00.000Z'))).toBe(1);
-    expect(periodWeeks(period('b', '2026-09-07T00:00:00.000Z', '2026-09-21T00:00:00.000Z'))).toBe(2);
+    expect(periodWeeks(period('a', '2026-09-07T00:00:00.000Z', '2026-09-14T00:00:00.000Z'))).toBe(
+      1
+    );
+    expect(periodWeeks(period('b', '2026-09-07T00:00:00.000Z', '2026-09-21T00:00:00.000Z'))).toBe(
+      2
+    );
   });
 
   it('okres styczny z koncem okna NIE liczy popytu (przedzial polotwarty)', () => {
@@ -317,9 +368,9 @@ describe('P15-K5 — roleDemand w planie', () => {
     expect(() => validatePlanScenario(plan())).not.toThrow();
   });
   it('ujemne FTE jest odrzucane', () => {
-    expect(() =>
-      validatePlanScenario(plan([{ roleId: 'a', roleLabel: 'A', fte: -1 }]))
-    ).toThrow(/zero or greater/);
+    expect(() => validatePlanScenario(plan([{ roleId: 'a', roleLabel: 'A', fte: -1 }]))).toThrow(
+      /zero or greater/
+    );
   });
   it('powtorzona rola w jednym oknie jest odrzucana', () => {
     expect(() =>

@@ -63,6 +63,7 @@ import {
 import { mutateCapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
 import type { CapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
 import { buildRoleSheet, roleSlug } from '../../domain/initiatives-execution/capacityRoleSheet.js';
+import { readPlanTaskDemand } from '../../services/workload/planTaskDemandService.js';
 import {
   getInitiativeWorkloadProposals,
   getRoleWeeklySupply,
@@ -5163,8 +5164,9 @@ export function createInitiativesExecutionRuntimeRouter(
    * POMIAR 07.09: `CapacityScenarioSurface.createAnalysis` sklejal scenariusz
    * w przegladarce z UNKNOWN na kazdym okresie i zerem rol, wiec karta analizy
    * otwierala sie pusta, a „Luki i presja" pokazywaly 12 luk przy 5 tygodniach.
-   * Teraz liczy SERWER: popyt z okien opublikowanego planu (`roleDemand`, D3'),
-   * podaz ze stanowisk osob organizacji (`users.job_title`, D2').
+   * Teraz liczy SERWER: popyt z realnych zadan planu (M1), a dopiero przy
+   * braku komorek zadaniowych wraca do okien opublikowanego planu (`roleDemand`, D3');
+   * podaz nadal pochodzi ze stanowisk osob organizacji (`users.job_title`, D2').
    */
   router.post(
     '/capacity-scenarios/:scenarioId/compute',
@@ -5209,10 +5211,11 @@ export function createInitiativesExecutionRuntimeRouter(
       const scenarioId = firstParam(req.params.scenarioId);
       const existing = await deps.reader.findCapacityScenario(actor.organizationId, scenarioId);
       const supply = await getRoleWeeklySupply(actor.organizationId, roleSlug);
-      const fallbackDemandFte = await deps.reader.readRequiredCapacityFte(
-        actor.organizationId,
-        plan.scenario.windows.map((window) => window.initiativeId)
-      );
+      const planInitiativeIds = plan.scenario.windows.map((window) => window.initiativeId);
+      const [fallbackDemandFte, taskDemand] = await Promise.all([
+        deps.reader.readRequiredCapacityFte(actor.organizationId, planInitiativeIds),
+        readPlanTaskDemand(actor.organizationId, planInitiativeIds, plan.scenario.periods),
+      ]);
       // Reczne korekty z arkusza wchodza jako `MANUAL` do wejscia przeliczenia,
       // zeby przeliczenie ich NIE ZGUBILO (i zeby nie trzeba bylo dwoch zapisow).
       const previous: CapacityScenario | null = existing

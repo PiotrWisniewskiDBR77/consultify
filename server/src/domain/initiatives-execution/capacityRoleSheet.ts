@@ -18,6 +18,7 @@ import type {
 } from './capacityScenario.js';
 import { sumRoleLines } from './capacityScenario.js';
 import type { PlanScenario } from './planScenario.js';
+import type { PlanTaskDemandResult } from '../../services/workload/planTaskDemandService.js';
 
 export const UNASSIGNED_ROLE_ID = 'bez-stanowiska';
 export const UNASSIGNED_ROLE_LABEL = 'Bez stanowiska';
@@ -49,6 +50,8 @@ export interface RoleSheetInput {
   supply: RoleWeeklySupply[];
   /** `initiatives.required_capacity_fte` — awaryjny popyt BEZ podziału na role. */
   fallbackDemandFte?: Record<string, number>;
+  /** Popyt z realnych zadań planu, liczony per okres i rola. Gdy ma komórki, zastępuje ręczne `roleDemand`. */
+  taskDemand?: PlanTaskDemandResult | null;
   /** Poprzednia wersja analizy: zachowujemy ręczne korekty podaży (`MANUAL`). */
   previous?: CapacityScenario | null;
   ownerId: string;
@@ -87,9 +90,7 @@ export function windowCoversPeriod(
   // Okno punktowe (sam `target`): liczy się okres, który tę chwilę zawiera.
   if (earliest !== null && latest !== null && earliest === latest)
     return period.start <= earliest && period.end > earliest;
-  return (
-    (earliest === null || period.end > earliest) && (latest === null || period.start < latest)
-  );
+  return (earliest === null || period.end > earliest) && (latest === null || period.start < latest);
 }
 
 const round3 = (value: number) => Math.round(value * 1000) / 1000;
@@ -139,15 +140,21 @@ function scalarRange(
  * Zestaw ról = suma ról z popytu planu i ról obsadzonych w organizacji.
  */
 export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
-  const { plan, supply, previous } = input;
+  const { plan, supply, previous, taskDemand } = input;
   const asOf = input.asOf ?? new Date().toISOString();
   const fallback = input.fallbackDemandFte ?? {};
-  const planIsRoleAware = plan.windows.some((window) => (window.roleDemand ?? []).length > 0);
+  const taskCells = new Map(
+    (taskDemand?.cells ?? []).map((cell) => [`${cell.periodId}|${cell.roleId}`, cell])
+  );
+  const hasTaskDemand = taskCells.size > 0;
+  const planIsRoleAware =
+    hasTaskDemand || plan.windows.some((window) => (window.roleDemand ?? []).length > 0);
 
   const labels = new Map<string, string>();
   for (const role of supply) labels.set(role.roleId, role.roleLabel);
   for (const window of plan.windows)
     for (const line of window.roleDemand ?? []) labels.set(line.roleId, line.roleLabel);
+  for (const cell of taskDemand?.cells ?? []) labels.set(cell.roleId, cell.roleLabel);
   const needsUnassigned = plan.windows.some(
     (window) => !(window.roleDemand ?? []).length && (fallback[window.initiativeId] ?? 0) > 0
   );
@@ -171,30 +178,42 @@ export function buildRoleSheet(input: RoleSheetInput): CapacityPeriod[] {
     const roles: CapacityRoleLine[] = roleIds.map((roleId) => {
       const roleLabel = labels.get(roleId) as string;
 
-      // --- POPYT (D3'): suma FTE z okien planu obejmujących ten okres ---
+      // --- POPYT (M1): najpierw realne zadania planu, potem zgodność wstecz z ręcznym `roleDemand`. ---
       let demand: number | null = null;
       let demandSource: CapacityRoleLine['demandSource'] = 'UNKNOWN';
-      let declared = 0;
-      let fallbackTotal = 0;
-      for (const window of covering) {
-        const line = (window.roleDemand ?? []).find((item) => item.roleId === roleId);
-        if (line) {
-          declared += line.fte;
+      const taskCell = taskCells.get(`${period.periodId}|${roleId}`);
+      if (hasTaskDemand) {
+        if (taskCell) {
+          demand =
+            taskCell.demandHours === null ? null : round3(taskCell.demandHours / (40 * weeks));
+          demandSource = taskCell.demandHours === null ? 'UNKNOWN' : 'PLAN';
+        } else {
+          demand = 0;
           demandSource = 'PLAN';
-          continue;
         }
-        if (roleId === UNASSIGNED_ROLE_ID && !(window.roleDemand ?? []).length) {
-          const requiredFte = fallback[window.initiativeId] ?? 0;
-          if (requiredFte > 0) fallbackTotal += requiredFte;
+      } else {
+        let declared = 0;
+        let fallbackTotal = 0;
+        for (const window of covering) {
+          const line = (window.roleDemand ?? []).find((item) => item.roleId === roleId);
+          if (line) {
+            declared += line.fte;
+            demandSource = 'PLAN';
+            continue;
+          }
+          if (roleId === UNASSIGNED_ROLE_ID && !(window.roleDemand ?? []).length) {
+            const requiredFte = fallback[window.initiativeId] ?? 0;
+            if (requiredFte > 0) fallbackTotal += requiredFte;
+          }
         }
-      }
-      if (demandSource === 'PLAN') demand = round3(declared + fallbackTotal);
-      else if (fallbackTotal > 0) {
-        demand = round3(fallbackTotal);
-        demandSource = 'UNKNOWN';
-      } else if (planIsRoleAware) {
-        demand = 0;
-        demandSource = 'PLAN';
+        if (demandSource === 'PLAN') demand = round3(declared + fallbackTotal);
+        else if (fallbackTotal > 0) {
+          demand = round3(fallbackTotal);
+          demandSource = 'UNKNOWN';
+        } else if (planIsRoleAware) {
+          demand = 0;
+          demandSource = 'PLAN';
+        }
       }
 
       // --- PODAŻ (D2'): osoby z tym stanowiskiem × tygodnie okresu ---
