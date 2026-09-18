@@ -44,6 +44,13 @@ import {
   type MeetingOccurrenceScope,
 } from '../services/meeting/meetingOccurrenceService.js';
 import {
+  MeetingProtocolError,
+  approveProtocol,
+  createErrataVersion,
+  getOrGenerateDraftProtocol,
+  previewProtocol,
+} from '../services/meeting/meetingProtocolService.js';
+import {
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
   createMeeting,
@@ -1539,6 +1546,113 @@ router.patch(
         });
       }
       throw error;
+    }
+  })
+);
+
+// MTG-2a (DEC-607, U-52) — protokół spotkania jako dokument archetypu B.
+// GET jest czystym odczytem (dowolny uczestnik z dostępem, draft składany z
+// danych bez zapisu); approve/errata to akcje organizatora (ten sam guard co
+// `/:id/lifecycle`: isMeetingAdmin || twórca/przewodniczący) w kolejności
+// 401 -> 404 (obcy tenant / brak dostępu) -> 403 -> 400 -> mutacja.
+function mapProtocolServiceError(res: Response, error: unknown): Response {
+  if (error instanceof MeetingProtocolError) {
+    const code = error.code;
+    if (code === 'MEETING_NOT_FOUND' || code === 'MEETING_PROTOCOL_NOT_FOUND') {
+      return res.status(404).json({ code });
+    }
+    if (
+      code === 'MEETING_PROTOCOL_ALREADY_APPROVED' ||
+      code === 'MEETING_PROTOCOL_NOT_APPROVED'
+    ) {
+      return res.status(409).json({ code });
+    }
+    return res.status(400).json({ code });
+  }
+  throw error;
+}
+
+router.get(
+  '/:id/protocol',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+    const protocol = await previewProtocol({
+      organizationId: orgId,
+      meetingId: meeting.id,
+    });
+    return res.json({ protocol });
+  })
+);
+
+router.post(
+  '/:id/protocol/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const callerId = String(req.user?.id || '');
+    const isOrganizer =
+      (!!callerId && meeting.createdBy === callerId) ||
+      (!!meeting.chairUserId && meeting.chairUserId === callerId);
+    if (!isMeetingAdmin(req) && !isOrganizer) {
+      return res.status(403).json({ code: 'MEETING_PROTOCOL_FORBIDDEN' });
+    }
+
+    try {
+      // Akcept utrwala draft (jeśli jeszcze nie istniał) i zamraża wersję.
+      await getOrGenerateDraftProtocol({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        actorId: callerId,
+      });
+      const protocol = await approveProtocol({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        actorId: callerId,
+      });
+      return res.json({ protocol });
+    } catch (error) {
+      return mapProtocolServiceError(res, error);
+    }
+  })
+);
+
+router.post(
+  '/:id/protocol/errata',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meeting = await loadAccessibleMeetingForAgenda(req, res, String(req.params.id));
+    if (!meeting) return;
+
+    const callerId = String(req.user?.id || '');
+    const isOrganizer =
+      (!!callerId && meeting.createdBy === callerId) ||
+      (!!meeting.chairUserId && meeting.chairUserId === callerId);
+    if (!isMeetingAdmin(req) && !isOrganizer) {
+      return res.status(403).json({ code: 'MEETING_PROTOCOL_FORBIDDEN' });
+    }
+
+    const errataNote = String(req.body?.errataNote || '').trim();
+    if (!errataNote) {
+      return res.status(400).json({ code: 'MEETING_PROTOCOL_ERRATA_REQUIRED' });
+    }
+
+    try {
+      const protocol = await createErrataVersion({
+        organizationId: orgId,
+        meetingId: meeting.id,
+        actorId: callerId,
+        errataNote,
+      });
+      return res.json({ protocol });
+    } catch (error) {
+      return mapProtocolServiceError(res, error);
     }
   })
 );
