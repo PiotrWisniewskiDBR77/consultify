@@ -1,0 +1,11 @@
+[31m     [31m×[31m OFF (default) reproduces the legacy session shape byte-for-byte — no enriched keys[39m[32m 258[2mms[22m[39m
+     [32m✓[39m ON enriches the identified session with template / respondent / assignee / due / submitted[32m 2[2mms[22m[39m
+     [32m✓[39m ON masks the respondent but not the assignee for an anonymous session (D18-A)[32m 2[2mms[22m[39m
+     [32m✓[39m ON keeps the status filter working on the enriched query[32m 3[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/controllers/__tests__/interviewSessionsFullColumns.pg.test.ts[2m > [22mInterview active sessions full columns (IS-2) — real PostgreSQL[2m > [22mOFF (default) reproduces the legacy session shape byte-for-byte — no enriched keys
+[31m[1mAssertionError[22m: expected [ 'answeredQuestions', …(34) ] to deeply equal [ 'answeredQuestions', …(19) ][39m
+[31m+   "templateName",[39m
+    [90m155|[39m       [32m'templateName'[39m[33m,[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m

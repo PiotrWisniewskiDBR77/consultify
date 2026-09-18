@@ -1,0 +1,4 @@
+ [32m✓[39m src/services/interview/__tests__/interviewSessionsFullColumnsPolicy.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m src/controllers/__tests__/interviewSessionsFullColumns.pg.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 417[2mms[22m[39m
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m

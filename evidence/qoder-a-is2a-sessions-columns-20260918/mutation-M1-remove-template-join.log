@@ -1,0 +1,15 @@
+     [32m✓[39m OFF (default) reproduces the legacy session shape byte-for-byte — no enriched keys[32m 257[2mms[22m[39m
+[31m     [31m×[31m ON enriches the identified session with template / respondent / assignee / due / submitted[39m[32m 8[2mms[22m[39m
+[31m     [31m×[31m ON masks the respondent but not the assignee for an anonymous session (D18-A)[39m[32m 2[2mms[22m[39m
+     [32m✓[39m ON keeps the status filter working on the enriched query[32m 2[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/controllers/__tests__/interviewSessionsFullColumns.pg.test.ts[2m > [22mInterview active sessions full columns (IS-2) — real PostgreSQL[2m > [22mON enriches the identified session with template / respondent / assignee / due / submitted
+[31m[1mAssertionError[22m: expected { …(35) } to match object { templateName: 'Discovery Q3', …(9) }
+[32m-   "templateName": "Discovery Q3",[39m
+[31m+   "templateName": undefined,[39m
+    [90m175|[39m       templateName[33m:[39m [32m'Discovery Q3'[39m[33m,[39m
+[41m[1m FAIL [22m[49m src/controllers/__tests__/interviewSessionsFullColumns.pg.test.ts[2m > [22mInterview active sessions full columns (IS-2) — real PostgreSQL[2m > [22mON masks the respondent but not the assignee for an anonymous session (D18-A)
+[31m[1mAssertionError[22m: expected undefined to be 'Discovery Q3' // Object.is equality[39m
+    [90m203|[39m     [34mexpect[39m(anonymous[33m.[39mtemplateName)[33m.[39m[34mtoBe[39m([32m'Discovery Q3'[39m)[33m;[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m

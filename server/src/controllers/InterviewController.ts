@@ -29,6 +29,7 @@ import {
   isInterviewAnswerApprovalEnvironmentEnabled,
   resolveInterviewAnswerApprovalPolicy,
 } from '../services/interview/interviewAnswerApprovalPolicy.js';
+import { isInterviewSessionsFullColumnsEnabled } from '../services/interview/interviewSessionsFullColumnsPolicy.js';
 import {
   isTruthyFlag,
   isTruthyFlagSql,
@@ -2616,11 +2617,94 @@ async function logInterviewInsightActivity(params: {
 /**
  * Org-scoped interview session reads — shared by legacy GET /interview/sessions|sessions/:id and the V8 read bridge.
  */
+export type InterviewSessionListRow = NonNullable<ReturnType<typeof buildSessionResponse>> & {
+  sessionRuntimeStatus?: string;
+  assignmentStatus?: string;
+  assignmentPriority?: string;
+  assignmentCreatedBy?: string;
+  templateName?: string;
+  templateCategory?: string;
+  respondentId?: string;
+  respondentName?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  assigneeEmail?: string;
+  dueAt?: string;
+  submittedAt?: string;
+  sentBackAt?: string;
+  sentBackReason?: string;
+};
+
+// IS-2 (U-05 / DEC-535): enriched SELECT for the ACTIVE sessions list. 1:1 joins
+// ONLY — template by `s.template_id`, respondent by `s.owner_id`, and the session's
+// OWN assignment by `s.assignment_id` (no LATERAL, no row fan-out; portable across
+// PG and the sqlite test engine). Mirrors the column set `getManagedSessions`
+// already returns so the active tab stops rendering "—"/"Unassigned" for every row.
+const INTERVIEW_SESSIONS_FULL_COLUMNS_SELECT = `
+      SELECT s.*,
+        t.name as template_name,
+        t.category as template_category,
+        COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '') as respondent_name,
+        a.status as assignment_status,
+        a.priority as assignment_priority,
+        a.created_by as assignment_created_by,
+        a.due_at,
+        a.submitted_at,
+        a.sent_back_at,
+        a.sent_back_reason,
+        a.assignee_user_id as assignee_id,
+        COALESCE(assignee_u.first_name, '') || ' ' || COALESCE(assignee_u.last_name, '') as assignee_name,
+        assignee_u.email as assignee_email
+      FROM interview_sessions s
+      LEFT JOIN projects p ON p.id = s.project_id
+      LEFT JOIN interview_library_templates t ON t.id = s.template_id
+      LEFT JOIN users owner_u ON owner_u.id = s.owner_id
+      LEFT JOIN interview_assignments a ON a.id = s.assignment_id
+      LEFT JOIN users assignee_u ON assignee_u.id = a.assignee_user_id
+      WHERE (
+        p.organization_id = ?
+        OR (s.project_id IS NULL AND s.organization_id = ?)
+      )
+    `;
+
+function mapInterviewSessionFullColumnsRow(row: any): InterviewSessionListRow | null {
+  const base = buildSessionResponse(row);
+  if (!base) return null;
+  // D18-A: this org-scoped read carries no viewer id, so anonymize on the session's
+  // OWN `is_anonymous` flag — the same rule loadAcceptedInterviewSessionsForManager
+  // uses. Respondent identity is never exposed for an anonymous session.
+  const isAnon = flagOn(row.is_anonymous);
+  const respondentName = String(row.respondent_name || '').trim();
+  const assigneeName = String(row.assignee_name || '').trim();
+  return {
+    ...base,
+    sessionRuntimeStatus: row.status || undefined,
+    assignmentStatus: normalizeAssignmentStatusForClient(row.assignment_status || undefined) || undefined,
+    assignmentPriority: row.assignment_priority || undefined,
+    assignmentCreatedBy: row.assignment_created_by || undefined,
+    templateName: row.template_name || undefined,
+    templateCategory: row.template_category || undefined,
+    respondentId: isAnon ? undefined : row.owner_id || undefined,
+    respondentName: isAnon ? 'Anonymous respondent' : respondentName || undefined,
+    assigneeId: row.assignee_id || undefined,
+    assigneeName: assigneeName || undefined,
+    assigneeEmail: row.assignee_email || undefined,
+    dueAt: row.due_at || undefined,
+    submittedAt: row.submitted_at || undefined,
+    sentBackAt: row.sent_back_at || undefined,
+    sentBackReason: row.sent_back_reason || undefined,
+  };
+}
+
 export async function loadInterviewSessionsForOrganization(
   organizationId: string,
   status?: unknown
-): Promise<NonNullable<ReturnType<typeof buildSessionResponse>>[]> {
-  let query = `
+): Promise<InterviewSessionListRow[]> {
+  // Fail-closed: OFF (default) = byte-for-byte the legacy `SELECT s.*` shape.
+  const fullColumns = isInterviewSessionsFullColumnsEnabled();
+  let query = fullColumns
+    ? INTERVIEW_SESSIONS_FULL_COLUMNS_SELECT
+    : `
       SELECT s.*
       FROM interview_sessions s
       LEFT JOIN projects p ON p.id = s.project_id
@@ -2642,9 +2726,12 @@ export async function loadInterviewSessionsForOrganization(
   query += ` ORDER BY s.started_at DESC`;
 
   const rows = await queryHelpers.queryAll(query, params);
-  return rows.map((row: any) => buildSessionResponse(row)).filter(Boolean) as NonNullable<
-    ReturnType<typeof buildSessionResponse>
-  >[];
+  if (!fullColumns) {
+    return rows.map((row: any) => buildSessionResponse(row)).filter(Boolean) as InterviewSessionListRow[];
+  }
+  return rows
+    .map((row: any) => mapInterviewSessionFullColumnsRow(row))
+    .filter(Boolean) as InterviewSessionListRow[];
 }
 
 export async function loadInterviewSessionForOrganization(
