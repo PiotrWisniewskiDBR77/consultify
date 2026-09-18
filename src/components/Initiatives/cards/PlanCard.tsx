@@ -344,13 +344,13 @@ export function PlanCard({
             .filter((item) => Boolean(item.plannedStartDate && item.plannedEndDate))
             .map((item) => ({
               id: item.id,
-              type: 'phase' as const,
+              type: 'planned-hint' as const,
               title: nameOf(item.id),
               start: item.plannedStartDate as string,
               end: item.plannedEndDate as string,
               status: lifecycleOf(item.id),
               sourceId: item.id,
-              sourceKind: 'phase' as const,
+              sourceKind: 'planned-hint' as const,
             }))
         : [],
     [planTimelineV2, plannable, scenario.windows.length, initiatives]
@@ -873,6 +873,14 @@ export function PlanCard({
                 ? t('initiatives.planAnalysis.timelineWeeks')
                 : t('initiatives.planAnalysis.timelineMonths')}
             </p>
+            {planTimelineV2 && scenario.windows.length === 0 && fallbackItems.length > 0 && (
+              <p className="mt-1 text-xs text-c-text-muted">
+                {t('initiatives.planAnalysis.plannedHintCaption', {
+                  defaultValue:
+                    'Dashed bars come from initiative dates because this draft has no plan windows yet.',
+                })}
+              </p>
+            )}
           </div>
           <div className="inline-flex overflow-hidden rounded-lg border border-c-border">
             {([1, 3, 6, 12] as const).map((months) => (

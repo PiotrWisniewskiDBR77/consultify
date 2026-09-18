@@ -6,7 +6,7 @@
  * and the task-level Gantt (V1), so the two views never drift. `sourceId` +
  * `sourceKind` let a view write a reschedule back to the right endpoint.
  */
-export type ScheduleItemType = 'task' | 'milestone' | 'phase';
+export type ScheduleItemType = 'task' | 'milestone' | 'phase' | 'planned-hint';
 
 export interface ScheduleItem {
   /** stable id for React keys (e.g. `task:123`) */

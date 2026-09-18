@@ -184,13 +184,12 @@ const withWindows: PlanCardScenario = {
 };
 
 const NAME_COLUMN = '.w-\\[208px\\]';
-const isBar = (el: Element) => {
-  const cls = typeof el.className === 'string' ? el.className : el.getAttribute('class') ?? '';
-  return cls.includes('bg-c-') && !cls.includes('border-dashed');
-};
-
 function barsOf(container: HTMLElement): Element[] {
-  return Array.from(container.querySelectorAll('[title]')).filter(isBar);
+  return Array.from(container.querySelectorAll('[data-gantt-bar-kind]'));
+}
+
+function classOf(el: Element): string {
+  return typeof el.className === 'string' ? el.className : el.getAttribute('class') ?? '';
 }
 
 function renderCard(scenario: PlanCardScenario) {
@@ -218,7 +217,17 @@ describe('D-96 (Wpis 102): szkic bez okien pod flagą ON ląduje na osi z paskam
     expect(screen.getByText('Plan timeline')).toBeTruthy();
 
     // 3 paski = 3 inicjatywy z terminami; czwarta (bez terminu) nie dostaje paska.
-    expect(barsOf(container)).toHaveLength(DATED.length);
+    const bars = barsOf(container);
+    expect(bars).toHaveLength(DATED.length);
+    expect(bars.every((bar) => bar.getAttribute('data-gantt-bar-kind') === 'planned-hint')).toBe(true);
+    expect(bars.every((bar) => classOf(bar).includes('border-dashed'))).toBe(true);
+    expect(bars.every((bar) => classOf(bar).includes('opacity-70'))).toBe(true);
+    expect(screen.getByText('From initiative dates — no plan window yet')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Dashed bars come from initiative dates because this draft has no plan windows yet.'
+      )
+    ).toBeTruthy();
     const nameColumn = container.querySelector(NAME_COLUMN) as HTMLElement;
     expect(nameColumn).not.toBeNull();
     DATED.forEach((row) => {
@@ -242,7 +251,10 @@ describe('D-96 (Wpis 102): szkic bez okien pod flagą ON ląduje na osi z paskam
   it('ON + szkic Z oknami: paski nadal z okien (fallback nie przejmuje)', () => {
     flagState.on = true;
     const { container } = renderCard(withWindows);
-    expect(barsOf(container)).toHaveLength(withWindows.windows.length);
+    const bars = barsOf(container);
+    expect(bars).toHaveLength(withWindows.windows.length);
+    expect(bars.every((bar) => bar.getAttribute('data-gantt-bar-kind') === 'phase')).toBe(true);
+    expect(bars.every((bar) => !classOf(bar).includes('border-dashed'))).toBe(true);
   });
 
   it('OFF + szkic bez okien: centrum = horizon, osi i pasków zastępczych nie ma', () => {

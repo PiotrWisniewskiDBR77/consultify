@@ -16331,7 +16331,8 @@
         "HIGH": "High confidence",
         "MEDIUM": "Medium confidence",
         "LOW": "Low confidence"
-      }
+      },
+      "plannedHintCaption": "Dashed bars come from initiative dates because this draft has no plan windows yet."
     },
     "planCard": {
       "publishedReadOnly": "This plan is published — create a new version (draft) to change it.",
@@ -16998,7 +16999,8 @@
         "frozen": "In execution — frozen",
         "planned": "Planned",
         "dependency": "Dependency",
-        "today": "Today"
+        "today": "Today",
+        "plannedHint": "From initiative dates — no plan window yet"
       }
     }
   },

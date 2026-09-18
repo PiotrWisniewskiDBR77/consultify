@@ -15551,7 +15551,8 @@
         "HIGH": "Wysoka pewność",
         "MEDIUM": "Średnia pewność",
         "LOW": "Niska pewność"
-      }
+      },
+      "plannedHintCaption": "Przerywane paski pochodzą z terminów inicjatywy, bo ten szkic nie ma jeszcze okien planu."
     },
     "planCard": {
       "publishedReadOnly": "Plan opublikowany — utwórz nową wersję (szkic), aby zmienić.",
@@ -16220,7 +16221,8 @@
         "frozen": "W realizacji — zamrożone",
         "planned": "Planowane",
         "dependency": "Zależność",
-        "today": "Dziś"
+        "today": "Dziś",
+        "plannedHint": "Z terminów inicjatywy — brak okna planu"
       }
     }
   },

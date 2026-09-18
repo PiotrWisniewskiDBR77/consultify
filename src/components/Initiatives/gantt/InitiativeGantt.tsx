@@ -94,6 +94,8 @@ const TYPE_BAR: Record<ScheduleItemType, string> = {
   // #5aa3d4 i biel daje tam 2.75:1 (zmierzone pikselowo), a `c-surface` =
   // #0f172a daje 6.46:1; w jasnym `c-surface` = biel, czyli te same 5.48:1.
   phase: 'bg-c-chart-1 text-c-surface hover:opacity-90',
+  'planned-hint':
+    'border border-dashed border-c-chart-1 bg-c-surface-raised text-c-text-muted opacity-70',
 };
 
 /**
@@ -754,7 +756,8 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
      * niezamrozona. Stary warunek `sourceKind === 'task'` blokowal oś planu
      * (PlanCard podaje `'phase'`) i nie mial nic wspolnego z zamrozeniem.
      */
-    const canDrag = planEditable && Boolean(onReschedule) && !frozen;
+    const isPlannedHint = item.type === 'planned-hint';
+    const canDrag = planEditable && Boolean(onReschedule) && !frozen && !isPlannedHint;
     const isCritical = criticalSet.has(item.id);
     const startsBefore = row.s < range.min;
     const endsAfter = row.e > rangeEndMs;
@@ -781,6 +784,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         style={{ height: rowH }}
       >
         <div
+          data-gantt-bar-kind={item.type}
           className={`absolute flex items-center px-1.5 transition-opacity ${
             planMode ? 'rounded-[5px] focus:outline-none' : 'rounded'
           } ${frozen ? EXEC_BAR : TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${ringClass} ${grabClass}`}
@@ -1040,6 +1044,16 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
           <span className="inline-flex items-center gap-1.5">
             <span className="h-[9px] w-[15px] shrink-0 rounded-[2px] bg-c-chart-1" aria-hidden />
             {t('initiatives.gantt.legend.planned', 'Planned')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-[9px] w-[15px] shrink-0 rounded-[2px] border border-dashed border-c-chart-1 bg-c-surface-raised opacity-70"
+              aria-hidden
+            />
+            {t(
+              'initiatives.gantt.legend.plannedHint',
+              'From initiative dates — no plan window yet'
+            )}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span
