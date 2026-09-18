@@ -25,6 +25,15 @@ const empty = query.get('state') === 'empty';
  * sprzed tej zmiany (żaden istniejący zrzut nie zmienia znaczenia).
  */
 const published = query.get('plan') === 'published';
+/**
+ * D-96 (Wpis 102): `&windows=0` = szkic BEZ okien, czyli stan po „New plan"
+ * (`PlanScenarioSurface.tsx` tworzy agregat z `windows: []`). Bez okien oś
+ * rysowała się jako pusty tor — wariant `&windows=0` dowodzi, że pod flagą
+ * `VITE_PLAN_TIMELINE_V2` karta ląduje NA OSI i ma paski z terminów inicjatyw.
+ * Brak parametru = fikstura bez zmian (8 okien), więc istniejące zrzuty
+ * `pl3-*` zachowują znaczenie.
+ */
+const windowless = query.get('windows') === '0';
 const ORG_ID = 'org-dbr77-demo';
 
 /**
@@ -101,7 +110,7 @@ const scenario = {
   windowUnit: 'WEEK',
   timezone: 'Europe/Warsaw',
   periods,
-  windows,
+  windows: windowless ? [] : windows,
   assumptions: [],
   createdBy: 'Piotr Wisniewski',
   updatedBy: 'Piotr Wisniewski',
@@ -150,7 +159,26 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios/plan-us-launch/analysis-proposals')) return json({ items: [proposal] });
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios/plan-us-launch')) return json({ version: 4, scenario });
   if (url.includes('/api/initiatives/runtime-v1/plan-scenarios')) return json({ scenarios: empty ? [] : [{ id: scenario.scenarioId, name: scenario.name, state: scenario.status, version: scenario.scenarioVersion, portfolioRef: { scenarioId: scenario.portfolioScenarioId, scenarioVersion: scenario.portfolioScenarioVersion, name: 'US launch portfolio' }, window: { earliest: windows[0]?.earliest ?? null, latest: windows.at(-1)?.latest ?? null }, updatedAt: '2026-09-14T10:00:00.000Z', timeBasis: { windowUnit: 'WEEK', timezone: scenario.timezone, periods, knowledgeState: 'KNOWN' }, initiativeCount: windows.length, conflicts: 0, author: 'Piotr Wisniewski' }] });
-  if (url.includes('/api/initiatives/runtime-v1/planning/')) return json({ initiatives: [] });
+  if (url.includes('/api/initiatives/runtime-v1/planning/'))
+    return json({
+      /**
+       * D-96 (Wpis 102): szkic bez okien rysuje paski z terminów inicjatyw
+       * dostępnych po stronie klienta (most `plannable-initiatives`), więc ten
+       * wariant musi je mieć — poza nim zostaje pusta lista jak dotąd.
+       */
+      initiatives: windowless
+        ? NORTHWIND.map((row) => ({
+            id: row.id,
+            name: row.name,
+            status: row.exec ? 'APPROVED' : 'PENDING_APPROVAL',
+            conditional: false,
+            projectId: null,
+            plannedStartDate: `${row.start}T00:00:00`,
+            plannedEndDate: `${row.end}T00:00:00`,
+            requiredCapacityFte: 1,
+          }))
+        : [],
+    });
   if (url.includes('/api/initiatives/runtime-v1/capacity-scenarios')) return json({ scenarios: [] });
   if (url.includes('/api/initiatives/lifecycle-transition-proposals')) return json({ proposals: [] });
   if (url.includes('/api/initiatives/runtime-v1/initiatives')) return json({ initiatives: [], nextCursor: null });

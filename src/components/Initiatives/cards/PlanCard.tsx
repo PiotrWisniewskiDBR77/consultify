@@ -233,7 +233,15 @@ export function PlanCard({
 }) {
   const { t, i18n } = useTranslation();
   const planCardLocale = planCardLocaleTag(i18n.language);
-  const [section, setSection] = useState('horizon');
+  /** DEC-608/DEC-615: oś czasu jako jedyne centrum — za flagą, domyślnie OFF. */
+  const planTimelineV2 = isPlanTimelineV2Enabled();
+  /**
+   * D-96 (Wpis 102): pod flagą karta planu ląduje NA OSI (sekcja `dependencies`).
+   * Startowe `horizon` sprawiało, że szkic otwierał się na liście okresów albo
+   * formularzu dat i właściciel czytał to jako „oś się nie renderuje", choć oś
+   * była jeden klik dalej. OFF zostaje przy `horizon` — zachowanie bez zmian.
+   */
+  const [section, setSection] = useState(planTimelineV2 ? 'dependencies' : 'horizon');
   const [generator, setGenerator] = useState(false);
   const [readMode, setReadMode] = useState(false);
   const [candidate, setCandidate] = useState('');
@@ -322,19 +330,46 @@ export function PlanCard({
     end.setUTCMonth(end.getUTCMonth() + horizonMonths);
     return { start: start.toISOString(), end: end.toISOString() };
   }, [horizonMonths]);
+  /**
+   * D-96 (Wpis 102), wariant (i): szkic utworzony przez „New plan" ma `windows: []`
+   * i oś rysowała się wtedy jako pusty tor — człowiek widział „nic". Pod flagą,
+   * gdy okien jeszcze nie ma, paski liczę z terminów inicjatyw już obecnych po
+   * stronie klienta (`plannable`), bez dotykania serwera. Paski zastępcze są
+   * tylko-do-odczytu: nie ma okna, które można by zapisać (brak `onReschedule`).
+   */
+  const fallbackItems = useMemo<ScheduleItem[]>(
+    () =>
+      planTimelineV2 && scenario.windows.length === 0
+        ? (plannable ?? [])
+            .filter((item) => Boolean(item.plannedStartDate && item.plannedEndDate))
+            .map((item) => ({
+              id: item.id,
+              type: 'phase' as const,
+              title: nameOf(item.id),
+              start: item.plannedStartDate as string,
+              end: item.plannedEndDate as string,
+              status: lifecycleOf(item.id),
+              sourceId: item.id,
+              sourceKind: 'phase' as const,
+            }))
+        : [],
+    [planTimelineV2, plannable, scenario.windows.length, initiatives]
+  );
   const ganttItems = useMemo<ScheduleItem[]>(
     () =>
-      scenario.windows.map((window) => ({
-        id: window.initiativeId,
-        type: 'phase',
-        title: nameOf(window.initiativeId),
-        start: window.earliest ?? window.target,
-        end: window.latest ?? window.target,
-        status: lifecycleOf(window.initiativeId),
-        sourceId: window.initiativeId,
-        sourceKind: 'phase',
-      })),
-    [scenario.windows, initiatives]
+      scenario.windows.length
+        ? scenario.windows.map((window) => ({
+            id: window.initiativeId,
+            type: 'phase',
+            title: nameOf(window.initiativeId),
+            start: window.earliest ?? window.target,
+            end: window.latest ?? window.target,
+            status: lifecycleOf(window.initiativeId),
+            sourceId: window.initiativeId,
+            sourceKind: 'phase',
+          }))
+        : fallbackItems,
+    [fallbackItems, scenario.windows, initiatives]
   );
   const ganttDependencies = useMemo(
     () =>
@@ -372,8 +407,6 @@ export function PlanCard({
         .map((window) => window.initiativeId),
     [scenario.windows, initiatives]
   );
-  /** DEC-608/DEC-615: oś czasu jako jedyne centrum — za flagą, domyślnie OFF. */
-  const planTimelineV2 = isPlanTimelineV2Enabled();
   /**
    * DEC-615: kolumna nazw (208 px). Nazwa stoi ZAWSZE w tym samym miejscu, bo
    * wpisana w pasek znikała razem z krótkim oknem — to był główny defekt starej
@@ -381,27 +414,34 @@ export function PlanCard({
    */
   const ganttRowLabels = useMemo<GanttRowLabel[]>(
     () =>
-      scenario.windows.map((window) => {
-        const id = window.initiativeId;
-        const frozen = frozenIds.includes(id);
-        const role = (window.roleDemand ?? [])
-          .map((line) => line.roleLabel)
-          .find((label) => label.trim());
-        return {
-          id,
-          name: nameOf(id),
-          meta: [
-            frozen
-              ? t('initiatives.status.IN_EXECUTION')
-              : t('initiatives.timelineSection.planned'),
-            role,
-          ]
-            .filter(Boolean)
-            .join(' · '),
-          frozen,
-        };
-      }),
-    [frozenIds, scenario.windows, initiatives, t]
+      scenario.windows.length
+        ? scenario.windows.map((window) => {
+            const id = window.initiativeId;
+            const frozen = frozenIds.includes(id);
+            const role = (window.roleDemand ?? [])
+              .map((line) => line.roleLabel)
+              .find((label) => label.trim());
+            return {
+              id,
+              name: nameOf(id),
+              meta: [
+                frozen
+                  ? t('initiatives.status.IN_EXECUTION')
+                  : t('initiatives.timelineSection.planned'),
+                role,
+              ]
+                .filter(Boolean)
+                .join(' · '),
+              frozen,
+            };
+          })
+        : fallbackItems.map((item) => ({
+            id: item.id,
+            name: nameOf(item.id),
+            meta: t('initiatives.timelineSection.planned'),
+            frozen: false,
+          })),
+    [fallbackItems, frozenIds, scenario.windows, initiatives, t]
   );
 
   const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
@@ -861,7 +901,11 @@ export function PlanCard({
           rowLabels={planTimelineV2 ? ganttRowLabels : undefined}
           planStatus={planTimelineV2 ? scenario.status : undefined}
           onNewDraftVersion={planTimelineV2 ? onNewDraftVersion : undefined}
-          onReschedule={planTimelineV2 && editable ? handleGanttReschedule : undefined}
+          onReschedule={
+            planTimelineV2 && editable && scenario.windows.length
+              ? handleGanttReschedule
+              : undefined
+          }
         />
         {!planTimelineV2 && (
           <p className="mt-2 text-xs text-c-text-muted">
