@@ -662,6 +662,7 @@ const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
 const D77NextActionUnblockScreen = React.lazy(() => import('./screens/d77-nextaction-unblock'));
+const D28RelationFallbackScreen = React.lazy(() => import('./screens/d28-relation-fallback'));
 const Rp3InicjatywyAnalizaOffScreen = React.lazy(
   () => import('./screens/rp3-inicjatywy-analiza-off')
 );
@@ -974,6 +975,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'D-77 (DLUG-PO-MVP) — REALNY <InitiativesHub> na danych demo; klik w zablokowany wiersz (In execution) otwiera podgląd, którego rekomendacja readiness musi być po angielsku („Resume execution"), nie polskim literałem. &lang=en|pl &theme=light|dark',
     render: () => <D77NextActionUnblockScreen />,
+  },
+  'd28-relation-fallback': {
+    label:
+      'D-28 (DLUG-PO-MVP, DEC-596) — REALNY <PreviewRelations>: chip relacji bez własnego kindu (label = surowy UUID) musi czytać się po angielsku „Linked record" w EN UI, nie polskim literałem „Powiązany rekord"; drugi chip (kind project) to kontrola „Linked project" (para MTG-1 v2, niezmienna). &lang=en|pl &theme=light|dark',
+    render: () => <D28RelationFallbackScreen />,
   },
   'rp3-inicjatywy-analiza-off': {
     label:

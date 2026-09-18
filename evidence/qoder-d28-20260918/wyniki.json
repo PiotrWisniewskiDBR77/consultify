@@ -1,0 +1,65 @@
+[
+  {
+    "wariant": "en-light",
+    "lang": "en",
+    "theme": "light",
+    "oczekiwany": "Linked record",
+    "maOczekiwany": true,
+    "maPolskiWEn": false,
+    "bledyKonsoli": 0,
+    "bledyStrony": 0,
+    "chipy": [
+      {
+        "text": "Linked record",
+        "title": "Linked record — d585884f-6cd0-4be2-ae04-abaf0c223659"
+      },
+      {
+        "text": "Linked project",
+        "title": "Linked project — Project: annual-rollout"
+      }
+    ],
+    "tekstBloku": "RELATIONS\nLinked record\nLinked project"
+  },
+  {
+    "wariant": "en-dark",
+    "lang": "en",
+    "theme": "dark",
+    "oczekiwany": "Linked record",
+    "maOczekiwany": true,
+    "maPolskiWEn": false,
+    "bledyKonsoli": 0,
+    "bledyStrony": 0,
+    "chipy": [
+      {
+        "text": "Linked record",
+        "title": "Linked record — d585884f-6cd0-4be2-ae04-abaf0c223659"
+      },
+      {
+        "text": "Linked project",
+        "title": "Linked project — Project: annual-rollout"
+      }
+    ],
+    "tekstBloku": "RELATIONS\nLinked record\nLinked project"
+  },
+  {
+    "wariant": "pl-light",
+    "lang": "pl",
+    "theme": "light",
+    "oczekiwany": "Powiązany rekord",
+    "maOczekiwany": true,
+    "maPolskiWEn": false,
+    "bledyKonsoli": 0,
+    "bledyStrony": 0,
+    "chipy": [
+      {
+        "text": "Powiązany rekord",
+        "title": "Powiązany rekord — d585884f-6cd0-4be2-ae04-abaf0c223659"
+      },
+      {
+        "text": "Powiązany projekt",
+        "title": "Powiązany projekt — Project: annual-rollout"
+      }
+    ],
+    "tekstBloku": "POWIĄZANIA\nPowiązany rekord\nPowiązany projekt"
+  }
+]
