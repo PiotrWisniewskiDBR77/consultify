@@ -15,16 +15,27 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryMock, withPgTransactionMock, queryOneMock, queryAllMock, readinessMock, goDecisionMock, capabilityContextMock } =
-  vi.hoisted(() => ({
-    queryMock: vi.fn(),
-    withPgTransactionMock: vi.fn(),
-    queryOneMock: vi.fn(),
-    queryAllMock: vi.fn(),
-    readinessMock: vi.fn(),
-    goDecisionMock: vi.fn(),
-    capabilityContextMock: vi.fn(),
-  }));
+const {
+  queryMock,
+  withPgTransactionMock,
+  queryOneMock,
+  queryAllMock,
+  readinessMock,
+  goDecisionMock,
+  transitionCaseMock,
+  capabilityContextMock,
+  loadExecutionContextMock,
+} = vi.hoisted(() => ({
+  queryMock: vi.fn(),
+  withPgTransactionMock: vi.fn(),
+  queryOneMock: vi.fn(),
+  queryAllMock: vi.fn(),
+  readinessMock: vi.fn(),
+  goDecisionMock: vi.fn(),
+  transitionCaseMock: vi.fn(),
+  capabilityContextMock: vi.fn(),
+  loadExecutionContextMock: vi.fn(),
+}));
 
 vi.mock('../../../utils/queryHelpers.js', () => ({
   getTableColumns: vi.fn().mockResolvedValue([]),
@@ -41,12 +52,16 @@ vi.mock('../initiativeCapabilityMatrix.js', async (importOriginal) => {
 
 vi.mock('../initiativeLifecycleGateDecisionService.js', () => ({
   assertCurrentApprovedInitiativeLifecycleGateDecision: goDecisionMock,
+  resolveInitiativeTransitionCase: transitionCaseMock,
 }));
 vi.mock('../initiativeGateReadinessService.js', () => ({
   getBlockingReadinessItems: readinessMock,
 }));
 vi.mock('../initiativeGateAiConfig.js', () => ({
   isInitiativeGateAiEnabled: vi.fn().mockResolvedValue(false),
+}));
+vi.mock('../../v8/transformationAgentExecutionContextService.js', () => ({
+  loadTransformationAgentExecutionContext: loadExecutionContextMock,
 }));
 
 import { getInitiativeTransitionPreflight } from '../initiativeTransitionPreflightService.js';
@@ -87,6 +102,8 @@ beforeEach(() => {
   queryAllMock.mockReset().mockResolvedValue([]);
   readinessMock.mockReset().mockResolvedValue([]);
   goDecisionMock.mockReset().mockRejectedValue(new Error('no decision'));
+  transitionCaseMock.mockReset().mockResolvedValue('case-1');
+  loadExecutionContextMock.mockReset().mockResolvedValue({ canonicalRunId: 'run-1' });
   capabilityContextMock.mockReset();
   queryMock.mockReset();
   withPgTransactionMock.mockReset().mockImplementation(async (fn) => fn({ query: queryMock }));
@@ -231,5 +248,68 @@ describe('podgląd przejść — gotowość bramki liczona jak u pisarza (warune
     const submit = preflight!.transitions.find((t) => t.gate === 'SUBMIT_FOR_REVIEW')!;
     expect(submit.blockingRule).toBe('INITIATIVE_CARD_INCOMPLETE');
     expect(submit.blockingItems).toEqual([]);
+  });
+});
+
+
+describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO proposal', () => {
+  it('zwraca ready, gdy inicjatywa ma dokładnie jeden aktywny transformation case', async () => {
+    queryOneMock
+      .mockResolvedValueOnce(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }))
+      .mockResolvedValueOnce({ lifecycle_state: 'SCHEDULED' });
+    capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(transitionCaseMock).toHaveBeenCalledWith(expect.anything(), {
+      organizationId: ORG,
+      initiativeId: INI,
+    });
+    expect(preflight!.transitionCase).toEqual({ status: 'ready', transformationCaseId: 'case-1' });
+    expect(loadExecutionContextMock).toHaveBeenCalledWith({
+      transformationCaseId: 'case-1',
+      organizationId: ORG,
+      actorUserId: AUTHOR,
+    });
+  });
+
+  it('zwraca missing zamiast pozwolić UI dojść do POST 409 INITIATIVE_TRANSITION_CASE_REQUIRED', async () => {
+    transitionCaseMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_REQUIRED'));
+    queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
+    capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(preflight!.transitionCase).toEqual({ status: 'missing', transformationCaseId: null });
+  });
+
+
+
+  it('zwraca execution_context_missing, gdy case istnieje, ale POST proposal padłby na brak canonical run identity', async () => {
+    loadExecutionContextMock.mockRejectedValue(new Error('transformation_canonical_run_identity_missing'));
+    queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
+    capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(preflight!.transitionCase).toEqual({ status: 'execution_context_missing', transformationCaseId: null });
+  });
+
+
+
+  it('zwraca source_not_ready, gdy case i run identity istnieją, ale adapter proposal wymaga etapu SCHEDULED', async () => {
+    queryOneMock
+      .mockResolvedValueOnce(draftRow({ status: 'APPROVED', owner_business_id: 'owner-1', scope_in: ['x'] }))
+      .mockResolvedValueOnce({ lifecycle_state: 'APPROVED_BACKLOG' });
+    capabilityContextMock.mockResolvedValue(context(['PROJECT_SPONSOR']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(preflight!.transitionCase).toEqual({ status: 'source_not_ready', transformationCaseId: null });
+  });
+
+  it('zwraca ambiguous przy wielu case, żeby UI zablokowało request z uczciwym powodem', async () => {
+    transitionCaseMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_AMBIGUOUS'));
+    queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
+    capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(preflight!.transitionCase).toEqual({ status: 'ambiguous', transformationCaseId: null });
   });
 });

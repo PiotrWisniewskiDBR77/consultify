@@ -7,7 +7,7 @@ function readAccessFile(){
   const candidates=[
     process.env.PMO1A_DOSTEP_PATH,
     path.resolve(process.cwd(), 'DOSTEP.md'),
-    '/Users/piotrwisniewski/Developer/cto-codex/DOSTEP.md',
+    '/Users/piotrwisniewski/Developer/cto-codex/irina-20260914/DOSTEP.md',
     '/Users/piotrwisniewski/Developer/DOSTEP.md',
   ].filter(Boolean);
   for(const candidate of candidates){
@@ -24,8 +24,9 @@ function readAccessValue(name){
   return match?.[1]?.trim() || '';
 }
 const DB=process.env.PMO1A_REALPG_DATABASE_URL || process.env.DATABASE_URL || readAccessValue('PMO1A_REALPG_DATABASE_URL') || readAccessValue('DATABASE_URL');
-const LOGIN_PASSWORD=process.env.PMO1A_REALPG_LOGIN_PASSWORD || readAccessValue('PMO1A_REALPG_LOGIN_PASSWORD') || readAccessValue('CODEX_LOCAL_PASSWORD') || readAccessValue('LOCAL_TEST_PASSWORD');
+const LOGIN_PASSWORD=process.env.PMO1A_REALPG_LOGIN_PASSWORD || readAccessValue('PMO1A_REALPG_LOGIN_PASSWORD') || readAccessValue('CODEX_LOCAL_PASSWORD') || readAccessValue('LOCAL_TEST_PASSWORD') || readAccessFile().match(/Hasło tymczasowe:\s*`([^`]+)`/)?.[1];
 if(!DB) throw new Error('PMO1A_REALPG_DATABASE_URL or DATABASE_URL must be provided via env or DOSTEP.md');
+if (DB && !['127.0.0.1','localhost','[::1]'].includes(new URL(DB).hostname)) throw new Error('Local copied database required');
 if(!LOGIN_PASSWORD) throw new Error('PMO1A_REALPG_LOGIN_PASSWORD must be provided via env or DOSTEP.md');
 const ORG='468b234c-66c4-54e1-b626-5e0fb3a92f6a';
 const ENERGY='29b45f98-35d5-564c-a88e-ef917c3be2fb';
@@ -59,15 +60,15 @@ async function measure(client, token, label){
   for(const row of rows){
     const pre=await api(token,`/initiatives/${encodeURIComponent(row.id)}/transition-preflight`);
     const pf=pre.body||{};
-    const primary=(pf.transitions||[]).find(t=>t.targetStatus && t.gate!=='REJECT' && t.roleAllowed);
+    const primary=(pf.transitions||[]).find(t=>t.targetStatus && !['REJECT','CANCEL'].includes(t.gate) && t.roleAllowed);
     const target=primary?.targetStatus ? TARGET_BY_STATUS[primary.targetStatus] : null;
     const caseStatus=pf.transitionCase?.status || 'none';
-    const ready=Boolean(target && row.sponsor_id && !primary?.disabled && caseStatus==='ready');
+    const ready=Boolean(target && row.sponsor_id && primary?.conditionSatisfied && caseStatus==='ready' && row.sponsor_id!==JAMES && primary?.proposalAllowed !== false);
     if(ready) summary.ready++;
     summary[`case:${caseStatus}`]=(summary[`case:${caseStatus}`]||0)+1;
-    const reason=!primary?'NO_PRIMARY_OR_UNRECOGNIZED':primary.disabled?`PRIMARY_DISABLED:${primary.disabledRule||primary.blockingRule||primary.disabledReason||'UNKNOWN'}`:!row.sponsor_id?'NO_REVIEWER':caseStatus!=='ready'?`TRANSITION_CASE_${caseStatus.toUpperCase()}`:'READY';
+    const reason=!primary?'NO_PRIMARY_OR_UNRECOGNIZED':!primary.conditionSatisfied?`PRIMARY_DISABLED:${primary.disabledRule||primary.blockingRule||primary.disabledReason||'UNKNOWN'}`:!row.sponsor_id?'NO_REVIEWER':row.sponsor_id===JAMES?'SELF_REVIEW':caseStatus!=='ready'?`TRANSITION_CASE_${caseStatus.toUpperCase()}`:'READY';
     summary[`reason:${reason}`]=(summary[`reason:${reason}`]||0)+1;
-    results.push({id:row.id,title:row.name,status:row.status,sponsor:!!row.sponsor_id,http:pre.status,currentStatus:pf.currentStatus,transitionCaseStatus:caseStatus,primaryTarget:primary?.targetStatus||null,target,primaryDisabled:!!primary?.disabled,ready,reason});
+    results.push({preflight:pf,sponsorId:row.sponsor_id,id:row.id,title:row.name,status:row.status,sponsor:!!row.sponsor_id,http:pre.status,currentStatus:pf.currentStatus,transitionCaseStatus:caseStatus,primaryTarget:primary?.targetStatus||null,target,primaryDisabled:!primary?.conditionSatisfied,ready,reason});
   }
   console.error('MEASURE_DONE', label, JSON.stringify(summary));
   return {label, summary, results};
@@ -77,16 +78,16 @@ async function cleanupSeed(client){
   console.error('CLEANUP_SEED');
   await client.query('BEGIN');
   try{
+    await client.query(`DELETE FROM initiative_lifecycle_gate_decisions WHERE transformation_case_id=$1`,[CASE]).catch(()=>{});
     await client.query(`DELETE FROM v8_agent_proposal_governance_events WHERE proposal_version_id IN (SELECT proposal_version_id FROM v8_agent_proposal_versions WHERE proposal_id LIKE 't01-lifecycle:${CASE}:%')`).catch(()=>{});
     await client.query(`DELETE FROM v8_agent_proposal_scope_reviews WHERE proposal_version_id IN (SELECT proposal_version_id FROM v8_agent_proposal_versions WHERE proposal_id LIKE 't01-lifecycle:${CASE}:%')`);
     await client.query(`DELETE FROM v8_agent_proposal_versions WHERE proposal_id LIKE 't01-lifecycle:${CASE}:%'`);
-    await client.query(`DELETE FROM initiative_lifecycle_gate_decisions WHERE transformation_case_id=$1`,[CASE]).catch(()=>{});
     await client.query(`DELETE FROM transformation_case_artifact_links WHERE transformation_case_id=$1`,[CASE]);
     await client.query(`DELETE FROM transformation_plans WHERE transformation_case_id=$1`,[CASE]);
     await client.query(`DELETE FROM v8_agent_run_identities WHERE canonical_run_id=$1 OR transformation_case_id=$2`,[RUN,CASE]);
     await client.query(`DELETE FROM v8_execution_runs WHERE run_id=$1`,[RUN]);
     await client.query(`DELETE FROM transformation_cases WHERE transformation_case_id=$1`,[CASE]);
-    await client.query(`UPDATE initiatives SET schedule_baseline_id=NULL, baseline_version=0 WHERE id=$1 AND organization_id=$2`,[ENERGY,ORG]);
+    await client.query(`UPDATE initiatives SET status='APPROVED', schedule_baseline_id=NULL, baseline_version=0 WHERE id=$1 AND organization_id=$2`,[ENERGY,ORG]);
     await client.query(`UPDATE ie_aggregate_state SET payload_json=jsonb_set(payload_json, '{lifecycleState}', '"APPROVED_BACKLOG"'::jsonb), version=GREATEST(version,2) WHERE aggregate_type='initiative' AND aggregate_id=$1 AND organization_id=$2`,[ENERGY,ORG]);
     await client.query('COMMIT');
   }catch(e){ await client.query('ROLLBACK'); throw e; }
@@ -136,8 +137,9 @@ async function positiveFlow(client, sarahToken, jamesToken){
     exec=await api(jamesToken,`/initiatives/${ENERGY}/lifecycle-transition-executions`,{method:'POST',body:JSON.stringify({proposalVersionId,reason:'Codex local PMO-1a v4c proof execution'})});
   }
   const after=(await client.query(`SELECT COUNT(*)::int n FROM initiative_status_history WHERE organization_id=$1 AND initiative_id=$2`,[ORG,ENERGY])).rows[0].n;
+  const history=(await client.query(`SELECT * FROM initiative_status_history WHERE organization_id=$1 AND initiative_id=$2 ORDER BY changed_at DESC LIMIT 1`,[ORG,ENERGY])).rows;
   const status=(await client.query(`SELECT status FROM initiatives WHERE id=$1 AND organization_id=$2`,[ENERGY,ORG])).rows[0]?.status;
-  return {initiativeId:ENERGY,before,after,status,proposal,review,exec};
+  return {initiativeId:ENERGY,before,after,status,proposal,review,exec,history};
 }
 
 const client=new Client({connectionString:DB});
@@ -153,8 +155,14 @@ try{
  const withIdentityNotScheduled=await measure(client,jamesToken,'case-with-identity-not-scheduled');
  await seedCase(client,true,true);
  const withIdentityScheduled=await measure(client,jamesToken,'case-with-identity-scheduled');
+ const eligible=await api(sarahToken,`/initiatives/${ENERGY}/transition-preflight`);
+ const selfDenied=await api(jamesToken,`/initiatives/${ENERGY}/lifecycle-transition-proposals`,{method:'POST',body:JSON.stringify({reviewerUserId:JAMES,targetStatus:'EXECUTING',reason:'Local self-review negative proof'})});
+ await client.query('UPDATE initiatives SET sponsor_id=$1 WHERE id=$2 AND organization_id=$3',[SARAH,ENERGY,ORG]);
+ const wrongAuthority=await api(jamesToken,`/initiatives/${ENERGY}/transition-preflight`);
+ const authorityDenied=await api(jamesToken,`/initiatives/${ENERGY}/lifecycle-transition-proposals`,{method:'POST',body:JSON.stringify({reviewerUserId:SARAH,targetStatus:'EXECUTING',reason:'Local authority negative proof'})});
+ await client.query('UPDATE initiatives SET sponsor_id=$1 WHERE id=$2 AND organization_id=$3',[JAMES,ENERGY,ORG]);
  const positive=await positiveFlow(client,sarahToken,jamesToken);
- const out={generatedAt:new Date().toISOString(), before, withoutIdentity, withIdentityNotScheduled, withIdentityScheduled, positive};
- fs.writeFileSync('docs/program/PMO_1A_V4_W224_20260917/measure-v4c-realpg.json', JSON.stringify(out,null,2));
+ const out={generatedAt:new Date().toISOString(), before, withoutIdentity, withIdentityNotScheduled, withIdentityScheduled, eligible, selfDenied, wrongAuthority, authorityDenied, positive};
+ fs.writeFileSync('docs/program/PMO_1A_V4_W224_20260917/measure-v4d-realpg.json', JSON.stringify(out,null,2));
  console.log(JSON.stringify({before:before.summary, withoutIdentity:withoutIdentity.summary, withIdentityNotScheduled:withIdentityNotScheduled.summary, withIdentityScheduled:withIdentityScheduled.summary, positive:{before:positive.before,after:positive.after,status:positive.status,proposal:positive.proposal.status,proposalBody:positive.proposal.body,review:positive.review?.status,reviewBody:positive.review?.body,exec:positive.exec?.status,execBody:positive.exec?.body}},null,2));
 } finally { await client.end(); }

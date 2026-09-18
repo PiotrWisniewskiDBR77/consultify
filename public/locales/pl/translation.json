@@ -12198,7 +12198,8 @@
       "reviewer": "Recenzent",
       "approved": "Zatwierdzono",
       "rejected": "Odrzucono",
-      "selfReviewBlocked": "Wybierz recenzenta innego niż Ty przed wysłaniem tej decyzji."
+      "selfReviewBlocked": "Wybierz recenzenta innego niż Ty przed wysłaniem tej decyzji.",
+      "proposalPreflightBlocked": "Uprawnienia recenzenta, etap źródłowy lub plan bazowy nie pozwalają jeszcze poprosić o tę decyzję."
     },
     "workload": {
       "aria": "Obciążenie inicjatyw",

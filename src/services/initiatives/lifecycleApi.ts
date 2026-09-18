@@ -15,6 +15,8 @@ import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 
 export interface InitiativeTransitionPreflightItem {
   targetStatus: string;
+  proposalAllowed?: boolean;
+  proposalBlockingRule?: string | null;
   gate: string | null;
   requiredRoles: string[];
   roleAllowed: boolean;
@@ -43,6 +45,10 @@ export interface InitiativeTransitionPreflight {
   archived: boolean;
   isAuthor: boolean;
   effectiveRoles: string[];
+  transitionCase?: {
+    status: 'ready' | 'missing' | 'ambiguous' | 'execution_context_missing' | 'source_not_ready';
+    transformationCaseId: string | null;
+  };
   transitions: InitiativeTransitionPreflightItem[];
   flags: InitiativeFlagPreflightItem[];
 }
@@ -96,9 +102,7 @@ export const readInitiativeFailureRule = (error: unknown): string | null => {
   if (rule) return String(rule);
   const code = data && typeof data === 'object' ? (data as { code?: unknown }).code : null;
   const normalizedCode = code ? String(code).toUpperCase() : '';
-  return KODY_ODMOWY_WLASNOSCI.has(normalizedCode)
-    ? 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED'
-    : null;
+  return KODY_ODMOWY_WLASNOSCI.has(normalizedCode) ? 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED' : null;
 };
 
 export async function applyInitiativeTransition(

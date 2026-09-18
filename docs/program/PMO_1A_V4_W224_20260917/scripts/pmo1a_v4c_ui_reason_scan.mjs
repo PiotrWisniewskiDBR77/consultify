@@ -16,7 +16,7 @@ function readAccessFile() {
   const candidates = [
     process.env.PMO1A_DOSTEP_PATH,
     path.resolve(process.cwd(), 'DOSTEP.md'),
-    '/Users/piotrwisniewski/Developer/cto-codex/DOSTEP.md',
+    '/Users/piotrwisniewski/Developer/cto-codex/irina-20260914/DOSTEP.md',
     '/Users/piotrwisniewski/Developer/DOSTEP.md',
   ].filter(Boolean);
   for (const candidate of candidates) {
@@ -32,7 +32,7 @@ function readAccessValue(name) {
   const match = access.match(re);
   return match?.[1]?.trim() || '';
 }
-const loginPassword = process.env.PMO1A_REALPG_LOGIN_PASSWORD || readAccessValue('PMO1A_REALPG_LOGIN_PASSWORD') || readAccessValue('CODEX_LOCAL_PASSWORD') || readAccessValue('LOCAL_TEST_PASSWORD');
+const loginPassword = process.env.PMO1A_REALPG_LOGIN_PASSWORD || readAccessValue('PMO1A_REALPG_LOGIN_PASSWORD') || readAccessValue('CODEX_LOCAL_PASSWORD') || readAccessValue('LOCAL_TEST_PASSWORD') || readAccessFile().match(/Hasło tymczasowe:\s*`([^`]+)`/)?.[1];
 if (!loginPassword) throw new Error('PMO1A_REALPG_LOGIN_PASSWORD must be provided via env or DOSTEP.md');
 
 async function login(email) {
@@ -56,7 +56,7 @@ async function api(token, route) {
 }
 function classify(row, preflight) {
   const transitions = preflight.transitions || [];
-  const primary = transitions.find((transition) => transition.targetStatus && transition.gate !== 'REJECT' && transition.roleAllowed);
+  const primary = transitions.find((transition) => transition.targetStatus && !['REJECT','CANCEL'].includes(transition.gate) && transition.roleAllowed);
   if (!primary) {
     return {
       id: row.id,
@@ -73,10 +73,12 @@ function classify(row, preflight) {
   const target = TARGET_BY_STATUS[primary.targetStatus] || null;
   const caseStatus = preflight.transitionCase?.status || 'none';
   const hasReviewer = Boolean(row.sponsor_id);
-  const proposalReady = Boolean(target && hasReviewer && !primary.disabled && caseStatus === 'ready');
+  const proposalReady = Boolean(target && hasReviewer && primary.conditionSatisfied && caseStatus === 'ready' && row.sponsor_id !== '08c54d75-5260-57b1-9db6-a30aed89a587' && primary.proposalAllowed !== false);
   let reason = '';
   if (!hasReviewer) reason = 'Select a reviewer before requesting a PMO decision.';
-  else if (primary.disabled) reason = primary.disabledRule || primary.blockingRule || primary.disabledReason || 'The PMO preflight condition is not satisfied.';
+  else if (row.sponsor_id === '08c54d75-5260-57b1-9db6-a30aed89a587') reason = 'Choose a reviewer other than yourself before requesting this decision.';
+  else if (primary.proposalAllowed === false) reason = primary.proposalBlockingRule || 'PROPOSAL_BLOCKED';
+  else if (!primary.conditionSatisfied) reason = primary.disabledRule || primary.blockingRule || primary.disabledReason || 'The PMO preflight condition is not satisfied.';
   else if (caseStatus === 'missing') reason = 'The linked transformation case is required before this PMO decision can be requested.';
   else if (caseStatus === 'execution_context_missing') reason = 'The linked transformation case is missing its execution context.';
   else if (caseStatus === 'source_not_ready') reason = 'The linked transformation case is not at the required scheduling stage yet.';
@@ -107,7 +109,7 @@ try {
   const results = [];
   for (const row of rows) {
     const preflight = await api(token, `/initiatives/${encodeURIComponent(row.id)}/transition-preflight`);
-    results.push(classify(row, preflight.body || {}));
+    results.push({...classify(row, preflight.body || {}), sponsorId: row.sponsor_id, preflight: preflight.body});
   }
   const summary = {
     total: results.length,
@@ -117,7 +119,7 @@ try {
     deadButtonWithoutReason: results.filter((row) => row.deadButtonWithoutReason).length,
   };
   const out = { generatedAt: new Date().toISOString(), summary, results };
-  fs.writeFileSync('docs/program/PMO_1A_V4_W224_20260917/measure-v4c-ui-reason-scan.json', JSON.stringify(out, null, 2));
+  fs.writeFileSync('docs/program/PMO_1A_V4_W224_20260917/measure-v4d-ui-reason-scan.json', JSON.stringify(out, null, 2));
   console.log(JSON.stringify(summary, null, 2));
 } finally {
   await db.end();

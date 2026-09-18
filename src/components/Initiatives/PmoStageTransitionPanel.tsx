@@ -104,7 +104,10 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
     primary?.targetStatus === 'ANALYZING' || primary?.targetStatus === 'READY_FOR_DECISION';
 
   useEffect(() => {
-    if (!isAnalysisBoundary || (Number.isFinite(directExpectedVersion) && directExpectedVersion > 0)) {
+    if (
+      !isAnalysisBoundary ||
+      (Number.isFinite(directExpectedVersion) && directExpectedVersion > 0)
+    ) {
       setRuntimeExpectedVersion(null);
       return;
     }
@@ -124,11 +127,21 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
     };
   }, [directExpectedVersion, initiativeId, isAnalysisBoundary]);
 
-  const hasExpectedVersion = Number.isFinite(resolvedExpectedVersion) && Number(resolvedExpectedVersion) > 0;
+  const hasExpectedVersion =
+    Number.isFinite(resolvedExpectedVersion) && Number(resolvedExpectedVersion) > 0;
   const transitionCaseStatus = preflight?.transitionCase?.status ?? 'missing';
-  const reviewerIsCurrentActor = Boolean(currentUserId && reviewerUserId && currentUserId === reviewerUserId);
-  const transitionProposalReady = Boolean(target && transitionCaseStatus === 'ready' && !reviewerIsCurrentActor);
-  const analysisProposalReady = Boolean(isAnalysisBoundary && hasExpectedVersion && !reviewerIsCurrentActor);
+  const reviewerIsCurrentActor = Boolean(
+    currentUserId && reviewerUserId && currentUserId === reviewerUserId
+  );
+  const transitionProposalReady = Boolean(
+    target &&
+    transitionCaseStatus === 'ready' &&
+    !reviewerIsCurrentActor &&
+    primaryTransition?.proposalAllowed !== false
+  );
+  const analysisProposalReady = Boolean(
+    isAnalysisBoundary && hasExpectedVersion && !reviewerIsCurrentActor
+  );
   const proposalBlockedReason = !reviewerUserId
     ? t('initiatives.pmo.requestNeedsReviewer', 'Assign a reviewer first.')
     : reviewerIsCurrentActor
@@ -136,39 +149,45 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
           'initiatives.pmo.selfReviewBlocked',
           'Choose a reviewer other than yourself before requesting this decision.'
         )
-      : primary?.disabled
-        ? primary.disabledReason || t('initiatives.pmo.conditionsNotMet', 'Complete the transition conditions first.')
-      : target && transitionCaseStatus === 'missing'
+      : primaryTransition?.proposalAllowed === false
         ? t(
-            'initiatives.pmo.transitionCaseMissing',
-            'This initiative is not linked to a transformation case yet, so the decision request cannot be created.'
+            'initiatives.pmo.proposalPreflightBlocked',
+            'The reviewer authority, source stage or baseline is not ready for this decision.'
           )
-        : target && transitionCaseStatus === 'ambiguous'
-          ? t(
-              'initiatives.pmo.transitionCaseAmbiguous',
-              'This initiative is linked to more than one transformation case. Resolve the lineage before requesting a decision.'
-            )
-          : target && transitionCaseStatus === 'execution_context_missing'
+        : primary?.disabled
+          ? primary.disabledReason ||
+            t('initiatives.pmo.conditionsNotMet', 'Complete the transition conditions first.')
+          : target && transitionCaseStatus === 'missing'
             ? t(
-                'initiatives.pmo.transitionExecutionContextMissing',
-                'The linked transformation case is missing its canonical execution context, so the decision request cannot be created yet.'
+                'initiatives.pmo.transitionCaseMissing',
+                'This initiative is not linked to a transformation case yet, so the decision request cannot be created.'
               )
-            : target && transitionCaseStatus === 'source_not_ready'
+            : target && transitionCaseStatus === 'ambiguous'
               ? t(
-                  'initiatives.pmo.transitionSourceNotReady',
-                  'The linked transformation case is not at the required scheduling stage yet, so the execution decision cannot be requested.'
+                  'initiatives.pmo.transitionCaseAmbiguous',
+                  'This initiative is linked to more than one transformation case. Resolve the lineage before requesting a decision.'
                 )
-              : primary && !target && !isAnalysisBoundary
+              : target && transitionCaseStatus === 'execution_context_missing'
                 ? t(
-                    'initiatives.pmo.unsupportedTransitionTarget',
-                    'This transition is not supported by the PMO decision request yet.'
+                    'initiatives.pmo.transitionExecutionContextMissing',
+                    'The linked transformation case is missing its canonical execution context, so the decision request cannot be created yet.'
                   )
-                : isAnalysisBoundary && !hasExpectedVersion
+                : target && transitionCaseStatus === 'source_not_ready'
                   ? t(
-                      'initiatives.pmo.versionMissing',
-                      'The canonical version is not available for this initiative yet.'
+                      'initiatives.pmo.transitionSourceNotReady',
+                      'The linked transformation case is not at the required scheduling stage yet, so the execution decision cannot be requested.'
                     )
-                  : '';
+                  : primary && !target && !isAnalysisBoundary
+                    ? t(
+                        'initiatives.pmo.unsupportedTransitionTarget',
+                        'This transition is not supported by the PMO decision request yet.'
+                      )
+                    : isAnalysisBoundary && !hasExpectedVersion
+                      ? t(
+                          'initiatives.pmo.versionMissing',
+                          'The canonical version is not available for this initiative yet.'
+                        )
+                      : '';
   const proposalReady = Boolean(
     primary &&
     reviewerUserId &&
@@ -296,7 +315,10 @@ export const PmoStageTransitionPanel: React.FC<PmoStageTransitionPanelProps> = (
                   : t('initiatives.pmo.requestDecision', 'Request decision')}
               </button>
               {!proposalReady && proposalBlockedReason ? (
-                <p className="text-xs text-c-text-muted" data-testid="pmo-decision-request-blocked-reason">
+                <p
+                  className="text-xs text-c-text-muted"
+                  data-testid="pmo-decision-request-blocked-reason"
+                >
                   {proposalBlockedReason}
                 </p>
               ) : null}

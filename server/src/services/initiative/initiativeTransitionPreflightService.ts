@@ -1,3 +1,4 @@
+import { readEarlyInitiativeProposalReadiness } from '../v8/earlyInitiativeProposalReadiness.js';
 /**
  * Podgląd przejść inicjatywy (DEC-424) — co użytkownik MOŻE zrobić i dlaczego nie może.
  *
@@ -39,9 +40,13 @@ import {
   normalizeStatus,
 } from './initiativeTransitionService.js';
 import { normalizeInitiativeDbStatusForRead } from './initiativeLifecycleCanon.js';
+import { resolveInitiativeTransitionCase } from './initiativeLifecycleGateDecisionService.js';
+import { loadTransformationAgentExecutionContext } from '../v8/transformationAgentExecutionContextService.js';
 
 export interface InitiativeTransitionPreflightItem {
   targetStatus: string;
+  proposalAllowed?: boolean;
+  proposalBlockingRule?: string | null;
   gate: string | null;
   requiredRoles: string[];
   roleAllowed: boolean;
@@ -76,6 +81,11 @@ export interface InitiativeTransitionPreflight {
   archived: boolean;
   isAuthor: boolean;
   effectiveRoles: string[];
+  /** PMO-1a v4: proposal POST needs D-37 lineage; expose it before click. */
+  transitionCase: {
+    status: 'ready' | 'missing' | 'ambiguous' | 'execution_context_missing' | 'source_not_ready';
+    transformationCaseId: string | null;
+  };
   transitions: InitiativeTransitionPreflightItem[];
   flags: InitiativeFlagPreflightItem[];
 }
@@ -95,6 +105,36 @@ export async function getInitiativeTransitionPreflight(input: {
   if (!row) return null;
 
   const currentStatus = normalizeInitiativeDbStatusForRead(String(row.status || ''));
+
+  const transitionCase = await queryHelpers.withPgTransaction(async (tx) => {
+    try {
+      const transformationCaseId = await resolveInitiativeTransitionCase(tx, {
+        organizationId: orgId,
+        initiativeId,
+      });
+      await loadTransformationAgentExecutionContext({
+        transformationCaseId,
+        organizationId: orgId,
+        actorUserId: actorId,
+      });
+      return { status: 'ready' as const, transformationCaseId };
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      if (code === 'INITIATIVE_TRANSITION_CASE_AMBIGUOUS') {
+        return { status: 'ambiguous' as const, transformationCaseId: null };
+      }
+      if (
+        code === 'transformation_execution_context_not_found' ||
+        code === 'transformation_canonical_run_identity_missing' ||
+        code === 'transformation_canonical_run_identity_drift' ||
+        code === 'transformation_agent_identity_missing'
+      ) {
+        return { status: 'execution_context_missing' as const, transformationCaseId: null };
+      }
+      return { status: 'missing' as const, transformationCaseId: null };
+    }
+  });
+
   const accessCtx = await resolveInitiativeCapabilityContext(
     orgId,
     initiativeId,
@@ -118,9 +158,8 @@ export async function getInitiativeTransitionPreflight(input: {
   // przejścia. Bez tego podgląd pokazywałby aktywny przycisk, a pisarz odmawiał
   // po kliknięciu — dokładnie to, czego właściciel zabronił. Liczone raz: wynik
   // zależy od wiersza inicjatywy, nie od celu przejścia.
-  const readinessItems = validNext.length > 0
-    ? await getBlockingReadinessItems(orgId, initiativeId)
-    : [];
+  const readinessItems =
+    validNext.length > 0 ? await getBlockingReadinessItems(orgId, initiativeId) : [];
   const readinessBlocking = readinessItems.map((item) => ({ key: item.key, label: item.label }));
 
   const transitions: InitiativeTransitionPreflightItem[] = [];
@@ -158,7 +197,11 @@ export async function getInitiativeTransitionPreflight(input: {
       // `CURRENT_GO_DECISION` check (`evaluateInitiativeTransitionCondition`,
       // no duplicated logic) on top when ON — the button and the 409 the
       // writer would give cannot disagree again.
-      if (blockingRule === null && definition.gate === GateType.START && isLifecycleGoGateEnabled()) {
+      if (
+        blockingRule === null &&
+        definition.gate === GateType.START &&
+        isLifecycleGoGateEnabled()
+      ) {
         const goFailure = await evaluateInitiativeTransitionCondition(client, {
           orgId,
           initiativeId,
@@ -173,7 +216,8 @@ export async function getInitiativeTransitionPreflight(input: {
       }
     }
     // Ta sama kolejność co u pisarza: najpierw warunek z macierzy, potem gotowość.
-    const blockingItems = blockingRule === null && readinessBlocking.length > 0 ? readinessBlocking : [];
+    const blockingItems =
+      blockingRule === null && readinessBlocking.length > 0 ? readinessBlocking : [];
     if (blockingItems.length > 0) blockingRule = 'GATE_BLOCKED';
 
     transitions.push({
@@ -220,6 +264,58 @@ export async function getInitiativeTransitionPreflight(input: {
     };
   });
 
+  const executionProposalTransition = transitions.find(
+    (transition) => transition.targetStatus === 'IN_EXECUTION'
+  );
+  let checkedTransitionCase: InitiativeTransitionPreflight['transitionCase'] = transitionCase;
+  if (transitionCase.status === 'ready' && executionProposalTransition) {
+    const aggregate = await queryHelpers.queryOne<{ lifecycle_state: string | null }>(
+      `SELECT payload_json->>'lifecycleState' AS lifecycle_state
+         FROM ie_aggregate_state
+        WHERE organization_id=? AND aggregate_type='initiative' AND aggregate_id=?
+        LIMIT 1`,
+      [orgId, initiativeId]
+    );
+    if (String(aggregate?.lifecycle_state || '') !== 'SCHEDULED') {
+      checkedTransitionCase = { status: 'source_not_ready' as const, transformationCaseId: null };
+    }
+  }
+
+  // The proposal POST and this read use the same authority, source and baseline guards.
+  const proposalTargets = {
+    APPROVED_BACKLOG: 'PLANNING',
+    SCHEDULED: 'SCHEDULED',
+    IN_EXECUTION: 'EXECUTING',
+    DELIVERED: 'DONE',
+    EFFECTIVENESS_REVIEWED: 'DONE',
+    CLOSED: 'DONE',
+  } as const;
+  if (checkedTransitionCase.status === 'ready') {
+    for (const transition of transitions) {
+      const targetStatus = proposalTargets[transition.targetStatus as keyof typeof proposalTargets];
+      if (!targetStatus) continue;
+      try {
+        await queryHelpers.withPgTransaction((tx) =>
+          readEarlyInitiativeProposalReadiness(tx, {
+            organizationId: orgId,
+            initiativeId,
+            transformationCaseId: checkedTransitionCase.transformationCaseId!,
+            proposerUserId: actorId,
+            reviewerUserId: String(row.sponsor_id || ''),
+            targetStatus,
+            reason: 'preflight',
+          })
+        );
+        transition.proposalAllowed = true;
+        transition.proposalBlockingRule = null;
+      } catch (error) {
+        transition.proposalAllowed = false;
+        transition.proposalBlockingRule =
+          error instanceof Error ? error.message : 'initiative_lifecycle_proposal_unavailable';
+      }
+    }
+  }
+
   return {
     initiativeId,
     currentStatus,
@@ -227,6 +323,7 @@ export async function getInitiativeTransitionPreflight(input: {
     archived,
     isAuthor,
     effectiveRoles,
+    transitionCase: checkedTransitionCase,
     transitions,
     flags,
   };

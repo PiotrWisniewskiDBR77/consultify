@@ -12986,7 +12986,8 @@
       "reviewer": "Reviewer",
       "approved": "Approved",
       "rejected": "Rejected",
-      "selfReviewBlocked": "Choose a reviewer other than yourself before requesting this decision."
+      "selfReviewBlocked": "Choose a reviewer other than yourself before requesting this decision.",
+      "proposalPreflightBlocked": "The reviewer authority, source stage or baseline is not ready for this decision."
     },
     "workload": {
       "aria": "Initiatives workload",
