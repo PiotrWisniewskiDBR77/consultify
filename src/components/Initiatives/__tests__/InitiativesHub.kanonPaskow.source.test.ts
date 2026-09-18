@@ -42,11 +42,11 @@ const slotFiltrow = (() => {
   return bezKomentarzy(hub.slice(start, koniec));
 })();
 
-describe('Menu 2 · slot filtrów niesie WYŁĄCZNIE filtry', () => {
-  it('zero przycisków akcji i zero banerów w slocie filtrów', () => {
-    // Mutacja: wróć z plakietką „SAMPLE DATA" (`<span data-testid=
-    // "initiatives-sample-data-marker">`) do `rightControls` → RED.
-    expect(slotFiltrow).not.toContain('<button');
+describe('Menu 2 · slot filtrów niesie filtry i akcje rejestru', () => {
+  it('akcja rejestru jest w Menu 2, a banery stanu nadal są poza slotem filtrów', () => {
+    // Mutacja: przenieś `menu2ActionControls` z powrotem do `commandRowRightContent` → RED.
+    expect(slotFiltrow).toContain('menu2ActionControls');
+    expect(hub).toContain('data-testid="initiatives-menu2-kebab"');
     expect(slotFiltrow).not.toContain('sampleData');
     expect(slotFiltrow).not.toContain('initiatives-sample-data-marker');
     expect(slotFiltrow).not.toContain('<Banner');
@@ -119,17 +119,17 @@ describe('Menu 2 · JEDEN primary CTA na zakładkę', () => {
 });
 
 describe('Menu 3 · prawy slot', () => {
-  it('kebab „Więcej" jedzie kanonicznym `commandRowRightContent`, nie środkiem chipów', () => {
+  it('kebab akcji listy nie mieszka już w `commandRowRightContent` ani w chipach Menu 3', () => {
     /*
-     * Mutacja: wstaw kebab z powrotem do `commandRowContent` (i przywróć tam
-     * `justify-between`) → kebab wraca pod chipy, a ten test → RED.
+     * Mutacja: przywróć `initiatives-menu3-kebab` albo podepnij akcję pod
+     * `commandRowRightContent` → RED. DEC-653 przenosi akcje listy do Menu 2.
      */
-    expect(hub).toContain('const commandRowRightContent');
-    expect(hub).toContain('commandRowRightContent={');
+    expect(hub).toContain('commandRowRightContent={undefined}');
     const start = hub.indexOf('const commandRowContent = (');
-    const koniec = hub.indexOf('const commandRowRightContent', start);
+    const koniec = hub.indexOf('commandRowRightContent={', start);
     const blok = bezKomentarzy(hub.slice(start, koniec));
     expect(blok).not.toContain('initiatives-menu3-kebab');
+    expect(blok).not.toContain('initiatives-menu2-kebab');
     expect(blok).not.toContain('MENU_3_RIGHT_CLASS');
     expect(blok).not.toContain('justify-between');
   });
@@ -167,10 +167,7 @@ describe('Menu 3 · pigułki rejestru nie przeciekają do skrzynki [H1f DEC-507]
 
     /* Prawy skraj Menu 3 (kebab „Więcej" = adopcja klasycznej inicjatywy) też
        nie ma sensu nad listą przebiegów raportu. */
-    const startR = hub.indexOf('commandRowRightContent={');
-    const koniecR = hub.indexOf('chips={', startR);
-    const blokR = bezKomentarzy(hub.slice(startR, koniecR));
-    expect(blokR).toContain("activeTab === 'workReport'");
+    expect(hub).toContain('commandRowRightContent={undefined}');
   });
 });
 

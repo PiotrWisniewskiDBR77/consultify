@@ -360,8 +360,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isAdoptingClassic, setIsAdoptingClassic] = useState(false);
   // DEC-420: "Adopt classic initiative" przeniesiony z rzędu Menu 3 do kebaba
   // (pigułka "Więcej") — rząd Menu 3 ograniczony do ≤3 chipów.
-  const [isMenu3KebabOpen, setIsMenu3KebabOpen] = useState(false);
-  const menu3KebabRef = useRef<HTMLDivElement>(null);
+  const [isMenu2ActionKebabOpen, setIsMenu2ActionKebabOpen] = useState(false);
+  const menu2ActionKebabRef = useRef<HTMLDivElement>(null);
   // V3-A02: Persistent dynamic tabs via sessionStorage
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('initiatives');
@@ -1868,14 +1868,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Close the Menu 3 kebab ("Więcej") on outside click / Escape — same pattern
   // as `Menu2PresetDropdown`.
   useEffect(() => {
-    if (!isMenu3KebabOpen) return;
+    if (!isMenu2ActionKebabOpen) return;
     const onClickOutside = (event: MouseEvent) => {
-      if (menu3KebabRef.current && !menu3KebabRef.current.contains(event.target as Node)) {
-        setIsMenu3KebabOpen(false);
+      if (menu2ActionKebabRef.current && !menu2ActionKebabRef.current.contains(event.target as Node)) {
+        setIsMenu2ActionKebabOpen(false);
       }
     };
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsMenu3KebabOpen(false);
+      if (event.key === 'Escape') setIsMenu2ActionKebabOpen(false);
     };
     document.addEventListener('mousedown', onClickOutside);
     document.addEventListener('keydown', onEscape);
@@ -1883,7 +1883,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       document.removeEventListener('mousedown', onClickOutside);
       document.removeEventListener('keydown', onEscape);
     };
-  }, [isMenu3KebabOpen]);
+  }, [isMenu2ActionKebabOpen]);
 
   // Canon §9: Archive initiative (only DONE/CANCELLED → ARCHIVED per backend rule)
   const handleArchiveInitiative = useCallback(
@@ -2965,56 +2965,46 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const commandRowContent = PMO_QUEUES_ENABLED ? pmoCommandRowContent : classicCommandRowContent;
 
   /**
-   * Menu 3 · prawy slot (kanoniczny `commandRowRightContent`). Kanon §A3
-   * dopuszcza tu przyciski AI i przełączniki — „Pokaż panel" dokłada
-   * `StandardModuleBar` sam (`useStandardPanelControls`), więc oba stoją
-   * w JEDNYM miejscu, tym samym co w Mojej Pracy i Materiałach.
+   * Menu 2 · akcje rejestru (DEC-653). Właściciel odrzucił RP3, bo akcje po
+   * prawej stronie listy siedziały w Menu 3. Kebab adopt-classic jest akcją
+   * rejestru, więc mieszka w Menu 2 obok filtrów; Menu 3 zostaje dla chipów.
    */
-  const commandRowRightContent =
-    isInitiativeBridgeEnabled() && !isPilotParticipant ? (
-      <div className={MENU_3_RIGHT_CLASS} ref={menu3KebabRef}>
-        {/* DEC-420: "Adopt classic initiative" — migracja klasycznego
-              rejestru do runtime-v1 (prawdziwa funkcja, `window.prompt` x2 +
-              wywołanie `/api/initiatives/runtime-v1/adoptions/accepted-classic`,
-              patrz `handleAdoptClassicInitiative`), domyślnie ukryta za flagą
-              `VITE_INITIATIVE_BRIDGE` (OFF). Zbyt rzadka, by zajmować stały
-              chip Menu 3 — przeniesiona do kebaba "Więcej", etykieta po
-              polsku (była twardo po angielsku). */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsMenu3KebabOpen((prev) => !prev)}
-            aria-haspopup="menu"
-            aria-expanded={isMenu3KebabOpen}
-            aria-label={t('initiatives.menu3.more', 'More')}
-            className={MENU_3_ACTION_NEUTRAL}
-            data-testid="initiatives-menu3-kebab"
+  const menu2ActionControls =
+    activeTab === 'list' && isInitiativeBridgeEnabled() && !isPilotParticipant ? (
+      <div className="relative shrink-0" ref={menu2ActionKebabRef}>
+        <button
+          type="button"
+          onClick={() => setIsMenu2ActionKebabOpen((prev) => !prev)}
+          aria-haspopup="menu"
+          aria-expanded={isMenu2ActionKebabOpen}
+          aria-label={t('initiatives.menu2.moreActions', 'More actions')}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-c-border-subtle text-c-text transition-colors duration-150 hover:bg-state-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          data-testid="initiatives-menu2-kebab"
+        >
+          <MoreVertical className="h-3.5 w-3.5" />
+        </button>
+        {isMenu2ActionKebabOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-overlay mt-1 min-w-[240px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
           >
-            <MoreVertical className="h-3.5 w-3.5" />
-          </button>
-          {isMenu3KebabOpen && (
-            <div
-              role="menu"
-              className="absolute right-0 top-full z-overlay mt-1 min-w-[240px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
+            <button
+              type="button"
+              role="menuitem"
+              disabled={isAdoptingClassic}
+              onClick={() => {
+                setIsMenu2ActionKebabOpen(false);
+                void handleAdoptClassicInitiative();
+              }}
+              className="flex w-full items-center px-3 py-2 text-left text-xs text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="initiatives-menu2-adopt-classic"
             >
-              <button
-                type="button"
-                role="menuitem"
-                disabled={isAdoptingClassic}
-                onClick={() => {
-                  setIsMenu3KebabOpen(false);
-                  void handleAdoptClassicInitiative();
-                }}
-                className="flex w-full items-center px-3 py-2 text-left text-xs text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
-                data-testid="initiatives-menu3-adopt-classic"
-              >
-                {isAdoptingClassic
-                  ? t('initiatives.bridge.adopting', 'Taking over…')
-                  : t('initiatives.bridge.action', 'Adopt classic initiative')}
-              </button>
-            </div>
-          )}
-        </div>
+              {isAdoptingClassic
+                ? t('initiatives.bridge.adopting', 'Taking over…')
+                : t('initiatives.bridge.action', 'Adopt classic initiative')}
+            </button>
+          </div>
+        )}
       </div>
     ) : null;
 
@@ -3223,6 +3213,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             data-testid="initiatives-lifecycle-dropdown"
           />
           {initiativesFourButtonsEnabled ? fourButtonsScopeToggle : scopeToggle}
+          {menu2ActionControls}
         </>
       )}
       {/* F9: na powierzchniach za flagami (Raport z pracy, Skrzynka) zostaje
@@ -3377,19 +3368,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 ? undefined
                 : commandRowContent
         }
-        /* Menu 3 · prawy skraj — kanoniczny slot. `StandardModuleBar` dokłada
-           tu jeszcze „Pokaż panel" (`useStandardPanelControls`), więc oba
-           przełączniki stoją w tym samym miejscu co w Mojej Pracy. */
-        commandRowRightContent={
-          activeTab === 'plan' ||
-          activeTab === 'capacity' ||
-          activeTab === 'portfolioHealth' ||
-          activeTab === 'workReport'
-            ? undefined
-            : isBulkMode
-              ? undefined
-              : commandRowRightContent
-        }
+        /* Menu 3 zostaje bez akcji rejestru (DEC-653); slot pozostaje pusty. */
+        commandRowRightContent={undefined}
+
         chips={
           activeTab === 'capacity' && INITIATIVES_WORKLOAD_ENABLED
             ? []
