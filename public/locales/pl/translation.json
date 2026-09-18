@@ -10105,6 +10105,7 @@
         "owner": "Właściciel",
         "updatedAt": "Aktualizacja",
         "score": "Wynik",
+        "scoreWithSource": "Wynik — wartość legacy; kanon DRD raportuje osie",
         "confidence": "Pewność",
         "businessUnit": "Jednostka"
       },

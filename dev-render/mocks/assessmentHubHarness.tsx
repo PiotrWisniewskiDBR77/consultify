@@ -348,6 +348,22 @@ export function installAssessmentHubHarness(tab: AssessmentHubTab): void {
           { status: 200, headers: { 'content-type': 'application/json' } }
         );
       }
+      // Dwie sondy infrastrukturowe realnego drzewa providerów (useV8FeatureFlag
+      // i OrgContext) bez backendu zawsze dawały 404 w konsoli zrzutu. Zwracamy
+      // te same wartości, do których aplikacja już degraduje przy błędzie
+      // (flagi wszystkie-fałsz, brak organizacji), żeby zrzut był czysty.
+      if (method === 'GET' && /\/api\/v8\/admin\/flags(\?.*)?$/.test(url)) {
+        return new Response(JSON.stringify({ v8_enabled: false }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (method === 'GET' && /\/api\/organizations\/current(\?.*)?$/.test(url)) {
+        return new Response(JSON.stringify({ organizations: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
       return originalFetch(input, init);
     }) as typeof window.fetch;
   }

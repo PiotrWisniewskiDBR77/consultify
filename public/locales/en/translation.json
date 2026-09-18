@@ -10842,6 +10842,7 @@
         "owner": "Owner",
         "updatedAt": "Updated",
         "score": "Score",
+        "scoreWithSource": "Score — legacy score; DRD canon reports axes",
         "confidence": "Confidence",
         "businessUnit": "Business unit",
         "type": "Type",

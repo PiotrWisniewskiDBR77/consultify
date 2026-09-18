@@ -1060,14 +1060,26 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       width: '150px',
       dataType: 'number',
     };
-    /* D7 / DEC-513: Method Core Output does not carry business unit, an
-       aggregate score or confidence. The previous columns borrowed those
-       values from a legacy assessment joined only by project id and rendered
-       an em dash for canonical sessions without such a twin. That made the
-       Processes list look complete while its own Output supplied none of the
-       values. Keep the underlying compatibility mapping for previews, but do
-       not advertise these three fields as list columns until Method Core has
-       a canonical source for them. */
+    /* DEC-661 (Wpis 155, wariant b) — przywraca JEDNĄ z trzech kolumn zdjętych
+       przez DEC-513: „Wynik" = skalar `overall_score` z legacy `assessments`,
+       dołączany po `project_id` w `methodSessionToAssessment`. Method Core NIE
+       ma kanonicznego rollupu osie→overall (to Fala 2+), więc nagłówek UCZCIWIE
+       niesie etykietę źródła: wartość pochodzi z bliźniaka legacy, a kanon DRD
+       raportuje osie, nie jeden skalar. Brak bliźniaka → „—" (domyślny renderer
+       FilterableTable, `isEmptyCell` → `EMPTY_DASH`), bez własnego `render`.
+       Bez `align` (lewa) celowo: długi nagłówek z etykietą źródła przycina się
+       wtedy od początku („Score — legacy…"), a nie od końca. Confidence i
+       Business unit ZOSTAJĄ zdjęte — DEC-661 przywraca wyłącznie „Wynik". */
+    const scoreCol: TableColumn = {
+      id: 'overallScore',
+      label: t(
+        'assessment.hub.table.scoreWithSource',
+        'Score — legacy score; DRD canon reports axes'
+      ),
+      width: '220px',
+      dataType: 'number',
+      sortable: true,
+    };
     const updatedCol: TableColumn = {
       id: 'updatedAt',
       label: t('assessment.hub.table.updated', 'Updated'),
@@ -1215,6 +1227,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           color: s.bgColor,
         })),
       },
+      // DEC-661: „Wynik" wraca do listy Ocen (wariant b — skalar legacy z
+      // etykietą źródła w nagłówku). Widoczna domyślnie, sortowalna, brak = „—".
+      scoreCol,
       { ...authorCol, label: t('assessment.hub.table.owner', 'Owner') },
       /* Progress remains available through the column picker. Its source is
          canonical session completion and is covered independently. */
