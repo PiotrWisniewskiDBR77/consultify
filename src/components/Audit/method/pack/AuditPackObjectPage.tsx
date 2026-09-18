@@ -271,9 +271,15 @@ export const AuditPackObjectPage: React.FC<AuditPackObjectPageProps> = ({
    */
   const criteriaRows = useMemo<TableRow[]>(
     () =>
-      flattenCriteria(pack?.criteria).map((c) => ({
+      flattenCriteria(pack?.criteria).map((c, index) => ({
         id: c.key,
-        ordinal: c.ordinal,
+        // D-104: „No." = 1-indeksowana pozycja na ekranie, NIE surowy `ordinal`.
+        // Zapis OP-2b (`buildReplacePayload`/`replaceCriteria`) pisze `ordinal`
+        // 0-indeksowany, więc surowa wartość pokazywała „0" w pierwszym wierszu.
+        // Backend zwraca wiersze `ORDER BY ordinal ASC` (`packService.ts:361`),
+        // a `flattenCriteria` zachowuje tę kolejność → `index + 1` to ciągła
+        // numeracja 1..N zgodna z widoczną kolejnością.
+        ordinal: index + 1,
         refCode: c.refCode,
         title: c.title,
         mandatory: c.mandatory,

@@ -21,7 +21,7 @@
  * montuje `NModeShell`/`ArtifactRightPanel`, które korzystają z `returnObjects`
  * — wzór `AuditReportDocumentView.test.tsx`.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import React from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -314,6 +314,33 @@ describe('AuditPackObjectPage — OP-2 ekran obiektu pakietu', () => {
     expect(container.textContent).not.toMatch(/\bnodeKind\b/);
     // READ-ONLY: żadnego pola wejściowego w sekcji kryteriów (edycja = OP-2b).
     expect(container.querySelectorAll('input, textarea').length).toBe(0);
+  });
+
+  it('D-104: kolumna „No." to 1-indeksowana pozycja, NIE surowy 0-indeksowany `ordinal`', async () => {
+    // OP-2b (`buildReplacePayload`) zapisuje `ordinal` 0-indeksowany; backend
+    // zwraca `ORDER BY ordinal ASC` (`packService.ts:361`), a `flattenCriteria`
+    // zachowuje tę kolejność. Ekran musi pokazać 1,2,3 — nie 0,1,2.
+    // Mutacja: `ordinal: index + 1` → `ordinal: c.ordinal` ⇒ pierwszy wiersz „0" ⇒ RED.
+    const zeroIndexed: AuditPackCriterionNode[] = [0, 1, 2].map((i) => ({
+      id: `crit-d104-${i}`,
+      parentId: null,
+      ordinal: i,
+      refCode: null,
+      nodeKind: 'criterion' as const,
+      title: `D104 criterion ${['ALPHA', 'BETA', 'GAMMA'][i]}`,
+      mandatory: false,
+    }));
+    mockedGetPack.mockResolvedValue(makeDetail({ criteria: zeroIndexed }));
+    renderPage();
+    fireEvent.click(await screen.findByText('Criteria'));
+
+    for (let i = 0; i < 3; i += 1) {
+      const title = `D104 criterion ${['ALPHA', 'BETA', 'GAMMA'][i]}`;
+      const row = (await screen.findByText(title)).closest('tr') as HTMLElement;
+      expect(within(row).getByText(String(i + 1))).toBeInTheDocument();
+    }
+    // Surowy 0-indeksowany ordinal NIGDY nie trafia na ekran.
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
   it('RELATIONS pokazują programy audytowe utworzone z TEGO pakietu, a brak danych = uczciwy pusty stan', async () => {

@@ -1,0 +1,12 @@
+THEME=light url=http://localhost:5418/qoder-op2a-pack-object.html?view=object&pack=pack-draft-1&theme=light&lang=en
+  No.column=[1, 2, 3]
+  bledyKonsoli=0
+  OK -> evidence/qoder-d104-ordinal-20260918/criteria-ordinal-light.png
+THEME=dark url=http://localhost:5418/qoder-op2a-pack-object.html?view=object&pack=pack-draft-1&theme=dark&lang=en
+  No.column=[1, 2, 3]
+  bledyKonsoli=0
+  OK -> evidence/qoder-d104-ordinal-20260918/criteria-ordinal-dark.png
+
+SUMMARY bledyKonsoli=0:true No.column=1,2,3:true
+
+NOTE: capture used a TRANSIENT 0-indexed CRITERIA_DRAFT mock (ordinal 0,1,2 = the OP-2b-written shape) to exercise the exact D-104 trigger; the committed harness mock stays 1-indexed. Under the fix the column renders index+1 = 1,2,3 in BOTH mock shapes.
