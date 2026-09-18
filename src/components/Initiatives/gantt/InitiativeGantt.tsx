@@ -95,7 +95,7 @@ const TYPE_BAR: Record<ScheduleItemType, string> = {
   // #0f172a daje 6.46:1; w jasnym `c-surface` = biel, czyli te same 5.48:1.
   phase: 'bg-c-chart-1 text-c-surface hover:opacity-90',
   'planned-hint':
-    'border border-dashed border-c-chart-1 bg-c-surface-raised text-c-text-muted opacity-70',
+    'border border-dashed border-c-chart-1 bg-c-surface-raised text-c-text-muted',
 };
 
 /**
@@ -650,6 +650,8 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
         ...frozenUndated.map((item): GanttRow => ({ kind: 'noWindow', item })),
       ];
 
+  const hasPlannedHintRows = rows.some((row) => row.item.type === 'planned-hint');
+
   // Geometry for dependency connectors: itemId → { rowIndex, sx, ex } (x in %).
   const rowGeom = new Map<string, { row: number; sx: number; ex: number }>();
   rows.forEach((row, idx) => {
@@ -1045,16 +1047,18 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             <span className="h-[9px] w-[15px] shrink-0 rounded-[2px] bg-c-chart-1" aria-hidden />
             {t('initiatives.gantt.legend.planned', 'Planned')}
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="h-[9px] w-[15px] shrink-0 rounded-[2px] border border-dashed border-c-chart-1 bg-c-surface-raised opacity-70"
-              aria-hidden
-            />
-            {t(
-              'initiatives.gantt.legend.plannedHint',
-              'From initiative dates — no plan window yet'
-            )}
-          </span>
+          {hasPlannedHintRows && (
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-[9px] w-[15px] shrink-0 rounded-[2px] border border-dashed border-c-chart-1 bg-c-surface-raised"
+                aria-hidden
+              />
+              {t(
+                'initiatives.gantt.legend.plannedHint',
+                'From initiative dates — no plan window yet'
+              )}
+            </span>
+          )}
           <span className="inline-flex items-center gap-1.5">
             <span
               className="h-[11px] w-[15px] shrink-0 rounded-[2px] border border-dashed border-c-border-strong"

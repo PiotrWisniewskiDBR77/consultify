@@ -39,6 +39,7 @@ const TYPE_DOT: Record<ScheduleItemType, string> = {
   task: 'bg-c-info',
   milestone: 'bg-amber-500',
   phase: 'bg-emerald-500',
+  'planned-hint': 'bg-c-chart-1',
 };
 
 function iso(d: Date): string {

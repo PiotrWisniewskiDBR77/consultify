@@ -192,6 +192,26 @@ function classOf(el: Element): string {
   return typeof el.className === 'string' ? el.className : el.getAttribute('class') ?? '';
 }
 
+function luminance(hex: string): number {
+  const [r, g, b] = hex
+    .replace('#', '')
+    .match(/.{2}/g)!
+    .map((part) => parseInt(part, 16) / 255)
+    .map((channel) =>
+      channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4)
+    );
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const a = luminance(foreground);
+  const b = luminance(background);
+  const lighter = Math.max(a, b);
+  const darker = Math.min(a, b);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+
 function renderCard(scenario: PlanCardScenario) {
   return render(
     <PlanCard
@@ -221,7 +241,10 @@ describe('D-96 (Wpis 102): szkic bez okien pod flagą ON ląduje na osi z paskam
     expect(bars).toHaveLength(DATED.length);
     expect(bars.every((bar) => bar.getAttribute('data-gantt-bar-kind') === 'planned-hint')).toBe(true);
     expect(bars.every((bar) => classOf(bar).includes('border-dashed'))).toBe(true);
-    expect(bars.every((bar) => classOf(bar).includes('opacity-70'))).toBe(true);
+    expect(bars.every((bar) => classOf(bar).includes('text-c-text-muted'))).toBe(true);
+    expect(bars.every((bar) => !classOf(bar).includes('opacity-'))).toBe(true);
+    expect(contrastRatio('#64748b', '#f8fafc')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#8a99b0', '#15213b')).toBeGreaterThanOrEqual(4.5);
     expect(screen.getByText('From initiative dates — no plan window yet')).toBeTruthy();
     expect(
       screen.getByText(
@@ -255,6 +278,7 @@ describe('D-96 (Wpis 102): szkic bez okien pod flagą ON ląduje na osi z paskam
     expect(bars).toHaveLength(withWindows.windows.length);
     expect(bars.every((bar) => bar.getAttribute('data-gantt-bar-kind') === 'phase')).toBe(true);
     expect(bars.every((bar) => !classOf(bar).includes('border-dashed'))).toBe(true);
+    expect(screen.queryByText('From initiative dates — no plan window yet')).toBeNull();
   });
 
   it('OFF + szkic bez okien: centrum = horizon, osi i pasków zastępczych nie ma', () => {
