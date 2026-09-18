@@ -60,8 +60,8 @@ import { useTranslation } from 'react-i18next';
 
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
-import { CoverPreview } from './CoverPreview';
 import { getBlockSettings } from './BlockSettingsRegistry';
+import { CoverPreview } from './CoverPreview';
 import type { BlockConfig } from './ReportEditor';
 
 // ==========================================
@@ -89,6 +89,8 @@ interface BlockComment {
 
 interface BlockCardProps {
   block: BlockConfig;
+  /** RB-3: move block tools into one kebab and keep one generate action. */
+  workspaceNavV2?: boolean;
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<BlockConfig>) => void;
@@ -1143,6 +1145,7 @@ function useUndoRedo(initialValue: string) {
 
 export const BlockCard: React.FC<BlockCardProps> = ({
   block,
+  workspaceNavV2 = false,
   isSelected,
   onSelect,
   onUpdate,
@@ -1167,7 +1170,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 }) => {
   const { t } = useTranslation();
   const hasContent = Boolean(block.content);
-  const [mode, setMode] = useState<BlockMode>(hasContent ? 'preview' : 'configure');
+  const [mode, setMode] = useState<BlockMode>(
+    hasContent || workspaceNavV2 ? 'preview' : 'configure'
+  );
   const [isExpanded, setIsExpanded] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -1530,12 +1535,38 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            className={`p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded transition-opacity ${workspaceNavV2 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+            aria-label={t('reportBuilder.blockCard.moreActions', 'Block actions')}
           >
             <MoreVertical className="w-4 h-4" />
           </button>
           {showMenu && (
             <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.03] py-1 z-20">
+              {workspaceNavV2 ? (
+                <>
+                  {(
+                    [
+                      ['configure', Sliders, t('reportBuilder.blockCard.configure', 'Configure')],
+                      ['ai', Sparkles, 'AI'],
+                      ['comments', MessageCircle, t('reportBuilder.blockCard.comments', 'Comments')],
+                    ] as const
+                  ).map(([nextMode, Icon, label]) => (
+                    <button
+                      key={nextMode}
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMode(nextMode);
+                        setShowMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-c-text hover:bg-c-surface-raised"
+                    >
+                      <Icon className="h-3.5 w-3.5" /> {label}
+                    </button>
+                  ))}
+                  <hr className="my-1 border-c-border-subtle" />
+                </>
+              ) : null}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1601,7 +1632,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       </div>
 
       {/* ===== MODE TABS ===== */}
-      {isExpanded && (
+      {isExpanded && !workspaceNavV2 && (
         <div className="flex items-center border-b border-c-border-subtle bg-c-surface-raised">
           {[
             {
@@ -1906,7 +1937,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 {/* Action buttons */}
                 <div className="flex items-center gap-2">
                   {/* Primary: Regenerate with all instructions */}
-                  {onGenerateBlock && !block.id.startsWith('tmp_') && (
+                  {onGenerateBlock && !block.id.startsWith('tmp_') && !workspaceNavV2 && (
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -2202,7 +2233,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                           )}
                         </p>
                         <div className="flex items-center gap-2 justify-center">
-                          {onGenerateBlock && !block.id.startsWith('tmp_') && (
+                          {onGenerateBlock && !block.id.startsWith('tmp_') && !workspaceNavV2 && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2273,7 +2304,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               <ClipboardCopy className="w-3 h-3" />{' '}
                               {t('reportBuilder.blockCard.copy', 'Copy')}
                             </button>
-                            {onGenerateBlock && (
+                            {onGenerateBlock && !workspaceNavV2 && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

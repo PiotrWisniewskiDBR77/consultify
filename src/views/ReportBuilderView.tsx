@@ -8,22 +8,27 @@
 
 import { AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { NewAssessmentReportModal } from '../components/assessment/modals/NewAssessmentReportModal';
-import { resolveTemplateProvenancePath } from '../components/ReportsAndPresentations/artifactNavigation';
 import {
   getReportBuilderTemplateDetails,
   ReportTemplateResolveClientError,
   resolveReportBuilderTemplate,
 } from '../components/ReportBuilder/libraryTemplateResolveClient';
 import { ReportEditor } from '../components/ReportBuilder/ReportEditor';
+import {
+  parseReportBuilderWorkspaceMode,
+  type ReportBuilderWorkspaceMode,
+} from '../components/ReportBuilder/ReportEditor/reportBuilderWorkspaceMode';
 import { ReportsComposer } from '../components/ReportBuilder/ReportsComposer';
 import SourceSelectStep from '../components/ReportBuilder/steps/SourceSelectStep';
 import { TemplatePickerModal } from '../components/ReportBuilder/TemplatePickerModal';
 import type { ReportSourceType, SourceOption } from '../components/ReportBuilder/useReportBuilder';
+import { resolveTemplateProvenancePath } from '../components/ReportsAndPresentations/artifactNavigation';
 import { Api } from '../services/api';
-import { useTranslation } from 'react-i18next';
+import { isReportBuilderNavV2Enabled } from '../utils/reportBuilderNavV2Flag';
 
 // ==========================================
 // LIBRARY „UŻYJ WZORCA" / „KLONUJ" (report_template, 2026-07-26)
@@ -446,6 +451,10 @@ export const ReportBuilderView: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ reportId?: string }>();
   const [searchParams] = useSearchParams();
+  const workspaceNavV2 = isReportBuilderNavV2Enabled();
+  const requestedWorkspaceMode = workspaceNavV2
+    ? parseReportBuilderWorkspaceMode(searchParams.get('mode'))
+    : null;
   const templateArtifactId = searchParams.get('templateArtifactId');
   const [resolvedTemplateId, setResolvedTemplateId] = useState<string | null>(null);
 
@@ -534,6 +543,15 @@ export const ReportBuilderView: React.FC = () => {
     // Stay in editor after save
   }, []);
 
+  const handleWorkspaceModeChange = useCallback(
+    (mode: ReportBuilderWorkspaceMode) => {
+      const next = new URLSearchParams(searchParams);
+      next.set('mode', mode);
+      navigate({ search: `?${next.toString()}` }, { replace: true });
+    },
+    [navigate, searchParams]
+  );
+
   // Composer view
   if (isComposerTab) {
     return (
@@ -590,6 +608,9 @@ export const ReportBuilderView: React.FC = () => {
         sourceId={initialSourceId || undefined}
         sourceName={initialSourceName || undefined}
         templateId={initialTemplateId || undefined}
+        workspaceNavV2={workspaceNavV2}
+        workspaceMode={requestedWorkspaceMode}
+        onWorkspaceModeChange={handleWorkspaceModeChange}
         onSave={handleEditorSave}
         onClose={handleEditorClose}
       />

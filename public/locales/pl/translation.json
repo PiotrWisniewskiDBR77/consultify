@@ -50113,6 +50113,16 @@
     }
   },
   "reportBuilder": {
+    "nav": {
+      "ariaLabel": "Tryb pracy z raportem",
+      "write": "Edytuj",
+      "review": "Recenzja",
+      "publish": "Publikacja",
+      "view": "Czytaj",
+      "rightPanel": "Szczegóły raportu",
+      "expandRightPanel": "Rozwiń szczegóły raportu",
+      "collapseRightPanel": "Zwiń szczegóły raportu"
+    },
     "templatePicker": {
       "title": "Wybierz szablon raportu",
       "subtitle": "Wybierz szablon, aby utworzyć raport",

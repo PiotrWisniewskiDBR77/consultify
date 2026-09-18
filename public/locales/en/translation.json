@@ -49750,6 +49750,16 @@
     }
   },
   "reportBuilder": {
+    "nav": {
+      "ariaLabel": "Report workspace mode",
+      "write": "Write",
+      "review": "Review",
+      "publish": "Publish",
+      "view": "View",
+      "rightPanel": "Report details",
+      "expandRightPanel": "Expand report details",
+      "collapseRightPanel": "Collapse report details"
+    },
     "templatePicker": {
       "title": "Select Report Template",
       "subtitle": "Choose a template to create your report",

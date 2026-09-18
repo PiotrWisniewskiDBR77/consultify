@@ -40,11 +40,12 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import { PracujZAI } from '@/components/standard/PracujZAI';
-import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { useReportBuilderShellPreferences } from '@/hooks/useReportBuilderShellPreferences';
 import { useAppStore } from '@/store/useAppStore';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 
@@ -67,6 +68,8 @@ import { ChapterNavigation, groupBlocksIntoChapters, hasChapters } from './Chapt
 import { looksLikeCoverJson, parseCoverContent } from './CoverPreview';
 import { EscalationBanner } from './EscalationBanner';
 import { NarrativeEngineMetadata } from './NarrativeEngineMetadata';
+import type { ReportBuilderWorkspaceMode } from './reportBuilderWorkspaceMode';
+import { ReportWorkspaceModeBar } from './ReportWorkspaceModeBar';
 import { ReviewPanel } from './ReviewPanel';
 import { SettingsPanel } from './SettingsPanel';
 import { StaleDataBadge } from './StaleDataBadge';
@@ -184,6 +187,10 @@ interface ReportEditorProps {
   templateId?: string;
   /** When set to 'template', the editor saves a template (not a report). */
   mode?: 'report' | 'template';
+  /** RB-3 global navigation; omitted/disabled preserves the legacy shell. */
+  workspaceNavV2?: boolean;
+  workspaceMode?: ReportBuilderWorkspaceMode | null;
+  onWorkspaceModeChange?: (mode: ReportBuilderWorkspaceMode) => void;
   /** Initial metadata used in template mode. */
   templateMeta?: {
     name?: string;
@@ -416,15 +423,6 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const fontClass =
-    styling.fontFamily === 'inter'
-      ? 'font-sans'
-      : styling.fontFamily === 'roboto'
-        ? 'font-sans'
-        : styling.fontFamily === 'poppins'
-          ? 'font-sans'
-          : 'font-sans';
-
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-c-surface">
       {/* Preview Header */}
@@ -458,72 +456,80 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
 
       {/* Preview Body */}
       <div className="flex-1 overflow-y-auto bg-c-surface-raised print:bg-c-surface">
-        <div
-          className={`max-w-4xl mx-auto my-8 bg-c-surface shadow-xl rounded-lg print:shadow-none print:rounded-none print:my-0 print:max-w-none ${fontClass}`}
-        >
-          {enabledBlocks.map((block, idx) => {
-            const content = block.content || '';
-            const isCover = block.type === 'cover' || block.type === 'cover_page';
-            const hasContent = content.trim().length > 0;
-
-            return (
-              <section
-                key={block.id}
-                className={`${idx > 0 ? 'border-t border-c-border-subtle' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
-                style={{ pageBreakBefore: idx > 0 ? 'always' : undefined }}
-              >
-                {isCover && hasContent ? (
-                  renderCoverPage(content, reportTitle, styling)
-                ) : (
-                  <>
-                    {/* Section title */}
-                    {!isCover && (
-                      <h2
-                        className="text-2xl font-bold mb-6"
-                        style={{ color: styling.primaryColor }}
-                      >
-                        {block.title}
-                      </h2>
-                    )}
-
-                    {/* Section content */}
-                    {hasContent ? (
-                      <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed">
-                        <SmartBlockRenderer
-                          content={content}
-                          blockType={block.type}
-                          renderKind={block.renderKind}
-                          primaryColor={styling.primaryColor}
-                          accentColor={styling.accentColor}
-                          blockSettings={block.blockSettings}
-                        />
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 text-c-text-secondary">
-                        <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                        <p className="text-sm italic">
-                          {t(
-                            'reportBuilder.editor.thisSectionHasNoContentYet',
-                            'This section has no content yet. Click "Generate" in the editor.'
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </section>
-            );
-          })}
-
-          {/* Footer */}
-          {styling.showBranding && (
-            <div className="border-t border-c-border-subtle px-12 py-6 text-center text-xs text-c-text-secondary print:text-c-text-secondary">
-              {t('reportBuilder.editor.createdWith', 'Created with')} Consultify
-            </div>
-          )}
-        </div>
+        <ReportDocumentView blocks={enabledBlocks} reportTitle={reportTitle} styling={styling} />
       </div>
     </div>
+  );
+};
+
+const ReportDocumentView: React.FC<{
+  blocks: BlockConfig[];
+  reportTitle: string;
+  styling: ReportStyling;
+}> = ({ blocks, reportTitle, styling }) => {
+  const { t } = useTranslation();
+  const enabledBlocks = useMemo(
+    () => blocks.filter((block) => block.enabled).sort((a, b) => a.orderIndex - b.orderIndex),
+    [blocks]
+  );
+
+  return (
+    <article
+      data-testid="report-builder-document-view"
+      className="mx-auto my-8 max-w-4xl rounded-lg bg-c-surface font-sans shadow-xl print:my-0 print:max-w-none print:rounded-none print:shadow-none"
+    >
+      {enabledBlocks.map((block, index) => {
+        const content = block.content || '';
+        const isCover = block.type === 'cover' || block.type === 'cover_page';
+        const hasContent = content.trim().length > 0;
+        return (
+          <section
+            key={block.id}
+            className={`${index > 0 ? 'border-t border-c-border-subtle' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
+            style={{ pageBreakBefore: index > 0 ? 'always' : undefined }}
+          >
+            {isCover && hasContent ? (
+              renderCoverPage(content, reportTitle, styling)
+            ) : (
+              <>
+                {!isCover ? (
+                  <h2 className="mb-6 text-2xl font-bold" style={{ color: styling.primaryColor }}>
+                    {block.title}
+                  </h2>
+                ) : null}
+                {hasContent ? (
+                  <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed">
+                    <SmartBlockRenderer
+                      content={content}
+                      blockType={block.type}
+                      renderKind={block.renderKind}
+                      primaryColor={styling.primaryColor}
+                      accentColor={styling.accentColor}
+                      blockSettings={block.blockSettings}
+                    />
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-c-text-secondary">
+                    <Sparkles className="mx-auto mb-2 h-8 w-8 opacity-40" />
+                    <p className="text-sm italic">
+                      {t(
+                        'reportBuilder.editor.thisSectionHasNoContentYet',
+                        'This section has no content yet. Click "Generate" in the editor.'
+                      )}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        );
+      })}
+      {styling.showBranding ? (
+        <div className="border-t border-c-border-subtle px-12 py-6 text-center text-xs text-c-text-secondary print:text-c-text-secondary">
+          {t('reportBuilder.editor.createdWith', 'Created with')} Consultify
+        </div>
+      ) : null}
+    </article>
   );
 };
 
@@ -538,6 +544,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   sourceName: initialSourceName,
   templateId: initialTemplateId,
   mode = 'report',
+  workspaceNavV2 = false,
+  workspaceMode,
+  onWorkspaceModeChange,
   templateMeta,
   onSave,
   onTemplateSaved,
@@ -595,6 +604,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const { preferences: shellPreferences, updatePreferences: updateShellPreferences } =
+    useReportBuilderShellPreferences(workspaceNavV2 && !isTemplateMode);
 
   // Source state
   const [sourceType, setSourceType] = useState<ReportSourceType | null>(initialSourceType || null);
@@ -767,6 +778,21 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const reportStatus = (report?.status || 'DRAFT') as ReportStatus;
   const reportIdForActions = report?.id || reportId || null;
+  const effectiveWorkspaceMode: ReportBuilderWorkspaceMode =
+    workspaceMode ??
+    shellPreferences.lastMode ??
+    (reportStatus === 'APPROVED' || reportStatus === 'SENT_INTERNAL' || reportStatus === 'SENT_EXTERNAL'
+      ? 'publish'
+      : 'write');
+  const handleWorkspaceModeChange = useCallback(
+    (nextMode: ReportBuilderWorkspaceMode) => {
+      updateShellPreferences({ lastMode: nextMode });
+      onWorkspaceModeChange?.(nextMode);
+    },
+    [onWorkspaceModeChange, updateShellPreferences]
+  );
+  const tocExpanded = workspaceNavV2 ? shellPreferences.tocExpanded : showChapterNav;
+  const rightPanelExpanded = workspaceNavV2 ? shellPreferences.rightPanelExpanded : true;
 
   // HP-8 — current user for the approval status bar (canonical store source).
   const approvalUser = useAppStore((s) => s.currentUser);
@@ -2275,6 +2301,88 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     }
   };
 
+  const reportProperties = (
+    <ArtifactPropertiesTable
+      propertyLabel={isPl ? 'Właściwość' : 'Property'}
+      valueLabel={isPl ? 'Wartość' : 'Value'}
+      rows={[
+        { id: 'status', label: 'Status', value: reportStatus || '—' },
+        { id: 'owner', label: isPl ? 'Właściciel' : 'Owner', value: '—' },
+        { id: 'priority', label: isPl ? 'Priorytet' : 'Priority', value: '—' },
+        { id: 'period', label: isPl ? 'Okres' : 'Period', value: '—' },
+        {
+          id: 'source',
+          label: isPl ? 'Źródło' : 'Source',
+          value: sourceName || sourceType || '—',
+        },
+        { id: 'created', label: isPl ? 'Utworzono' : 'Created', value: '—' },
+        {
+          id: 'updated',
+          label: isPl ? 'Zaktualizowano' : 'Updated',
+          value: lastSavedAt || '—',
+        },
+      ]}
+    />
+  );
+  const settingsPanel = (
+    <SettingsPanel
+      intent={intent}
+      styling={styling}
+      sourceType={isTemplateMode ? templateSourceType : sourceType}
+      sourceName={isTemplateMode ? null : sourceName}
+      onIntentChange={(updates) => setIntent((previous) => ({ ...previous, ...updates }))}
+      onStylingChange={(updates) => setStyling((previous) => ({ ...previous, ...updates }))}
+      activeSection={settingsSection}
+      onSectionChange={setSettingsSection}
+      isTemplateMode={isTemplateMode}
+      onApplyPreset={isTemplateMode ? applyPreset : undefined}
+      templateMeta={isTemplateMode ? templateMetaForPanel : undefined}
+      onTemplateMetaChange={isTemplateMode ? handleTemplateMetaChange : undefined}
+      exportPanel={exportPanel}
+      isCollapsed={false}
+      onToggleCollapse={() => undefined}
+      reviewPanel={isTemplateMode ? undefined : reviewPanel}
+      currentVersion={report?.version}
+      versions={versions}
+      isLoadingVersions={isLoadingVersions}
+      onCreateVersion={(summary) => createManualVersion(summary)}
+      onRollbackVersion={rollbackToVersion}
+      onLoadVersions={loadVersions}
+      reportStatus={reportStatus}
+      reportId={reportIdForActions || undefined}
+      lastSavedAt={lastSavedAt}
+      embedded
+    />
+  );
+  const rightPanelSections = [
+    {
+      id: 'actions',
+      label: isPl ? 'Akcje' : 'Actions',
+      defaultOpen: true,
+      children:
+        workspaceNavV2 && effectiveWorkspaceMode === 'review'
+          ? reviewPanel
+          : workspaceNavV2 && effectiveWorkspaceMode === 'publish'
+            ? exportPanel
+            : settingsPanel,
+    },
+    {
+      id: 'properties',
+      label: isPl ? 'Właściwości' : 'Properties',
+      defaultOpen: effectiveWorkspaceMode !== 'review',
+      children: reportProperties,
+    },
+    {
+      id: 'evidence',
+      label: isPl ? 'Źródła i założenia' : 'Sources and assumptions',
+      children: (
+        <p className="text-xs text-c-text-secondary">
+          {sourceName || (isPl ? 'Brak zapisanych źródeł.' : 'No sources recorded.')}
+        </p>
+      ),
+    },
+  ];
+
   // Loading state
   if (isLoading) {
     return (
@@ -2368,8 +2476,19 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {t('reportBuilder.editor.save', 'Save')}
           </button>
 
+          {workspaceNavV2 && !isTemplateMode ? (
+            <button
+              type="button"
+              onClick={() => handleViewExport('web')}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-c-border-strong bg-c-surface px-3.5 text-[13px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              {t('reportBuilder.nav.view', 'View')}
+            </button>
+          ) : null}
+
           {/* 3. View / Export (dropdown: Web, PDF, PPTX, Word) */}
-          {!isTemplateMode && (
+          {!isTemplateMode && !workspaceNavV2 && (
             <div className="relative group">
               <button
                 onClick={() => handleViewExport('web')}
@@ -2455,7 +2574,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </div>
       </header>
 
-      {!isTemplateMode ? (
+      {workspaceNavV2 && !isTemplateMode ? (
+        <ReportWorkspaceModeBar
+          mode={effectiveWorkspaceMode}
+          onChange={handleWorkspaceModeChange}
+        />
+      ) : null}
+
+      {!isTemplateMode && (!workspaceNavV2 || effectiveWorkspaceMode === 'write') ? (
         <div className="shrink-0 px-4 py-2">
           <NModeMenu2
             isPolish={isPl}
@@ -2498,13 +2624,18 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           onReorderBlocks={reorderBlocks}
           onMoveBlockToChapter={moveBlockToChapter}
           isPl={isPl}
-          isVisible={showChapterNav && blocks.length > 3}
-          onToggle={() => setShowChapterNav((prev) => !prev)}
+          isVisible={tocExpanded && blocks.length > 3}
+          onToggle={() =>
+            workspaceNavV2
+              ? updateShellPreferences({ tocExpanded: !tocExpanded })
+              : setShowChapterNav((previous) => !previous)
+          }
           sectionRagMap={ragMap}
         />
 
         {/* Center - Block Canvas */}
         <main className="flex-1 overflow-y-auto p-8">
+          {!workspaceNavV2 || effectiveWorkspaceMode === 'write' ? (
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Source Info */}
             {!isTemplateMode && sourceName && (
@@ -2563,6 +2694,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                           )}
                           <BlockCard
                             block={block}
+                            workspaceNavV2={workspaceNavV2}
                             isSelected={selectedBlockId === block.id}
                             onSelect={() => setSelectedBlockId(block.id)}
                             onUpdate={(updates) => updateBlock(block.id, updates)}
@@ -2626,6 +2758,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   )}
                   <BlockCard
                     block={block}
+                    workspaceNavV2={workspaceNavV2}
                     isSelected={selectedBlockId === block.id}
                     onSelect={() => setSelectedBlockId(block.id)}
                     onUpdate={(updates) => updateBlock(block.id, updates)}
@@ -2699,53 +2832,47 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               </div>
             )}
           </div>
+          ) : (
+            <div data-testid={`report-builder-${effectiveWorkspaceMode}-canvas`}>
+              <ReportDocumentView blocks={blocks} reportTitle={reportTitle} styling={styling} />
+            </div>
+          )}
         </main>
 
         {/* Right Sidebar - Settings */}
-        <ArtifactRightPanel
-          width="var(--ntype-right-panel-width, 320px)"
-          sections={[
-            {
-              id: 'actions',
-              label: isPl ? 'Akcje' : 'Actions',
-              defaultOpen: true,
-              children: <SettingsPanel
-                intent={intent} styling={styling}
-                sourceType={isTemplateMode ? templateSourceType : sourceType}
-                sourceName={isTemplateMode ? null : sourceName}
-                onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
-                onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
-                activeSection={settingsSection} onSectionChange={setSettingsSection}
-                isTemplateMode={isTemplateMode} onApplyPreset={isTemplateMode ? applyPreset : undefined}
-                templateMeta={isTemplateMode ? templateMetaForPanel : undefined}
-                onTemplateMetaChange={isTemplateMode ? handleTemplateMetaChange : undefined}
-                exportPanel={exportPanel} isCollapsed={false} onToggleCollapse={() => undefined}
-                reviewPanel={isTemplateMode ? undefined : reviewPanel}
-                currentVersion={report?.version} versions={versions} isLoadingVersions={isLoadingVersions}
-                onCreateVersion={(summary) => createManualVersion(summary)} onRollbackVersion={rollbackToVersion}
-                onLoadVersions={loadVersions} reportStatus={reportStatus}
-                reportId={reportIdForActions || undefined} lastSavedAt={lastSavedAt}
-                embedded
-              />,
-            },
-            {
-              id: 'properties', label: isPl ? 'Właściwości' : 'Properties', defaultOpen: true,
-              children: <ArtifactPropertiesTable
-                propertyLabel={isPl ? 'Właściwość' : 'Property'} valueLabel={isPl ? 'Wartość' : 'Value'}
-                rows={[
-                  { id: 'status', label: 'Status', value: reportStatus || '—' },
-                  { id: 'owner', label: isPl ? 'Właściciel' : 'Owner', value: '—' },
-                  { id: 'priority', label: isPl ? 'Priorytet' : 'Priority', value: '—' },
-                  { id: 'period', label: isPl ? 'Okres' : 'Period', value: '—' },
-                  { id: 'source', label: isPl ? 'Źródło' : 'Source', value: sourceName || sourceType || '—' },
-                  { id: 'created', label: isPl ? 'Utworzono' : 'Created', value: '—' },
-                  { id: 'updated', label: isPl ? 'Zaktualizowano' : 'Updated', value: lastSavedAt || '—' },
-                ]}
-              />,
-            },
-            { id: 'evidence', label: isPl ? 'Źródła i założenia' : 'Sources and assumptions', children: <p className="text-xs text-c-text-secondary">{sourceName || (isPl ? 'Brak zapisanych źródeł.' : 'No sources recorded.')}</p> },
-          ]}
-        />
+        {workspaceNavV2 && !rightPanelExpanded ? (
+          <aside
+            aria-label={t('reportBuilder.nav.rightPanel', 'Report details')}
+            className="flex w-12 shrink-0 flex-col items-center border-l border-c-border-subtle bg-c-surface py-3"
+            data-testid="report-builder-right-rail"
+          >
+            <button
+              type="button"
+              onClick={() => updateShellPreferences({ rightPanelExpanded: true })}
+              className="rounded-lg p-2 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+              title={t('reportBuilder.nav.expandRightPanel', 'Expand report details')}
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          </aside>
+        ) : (
+          <div className="relative flex shrink-0" data-testid={`report-builder-${effectiveWorkspaceMode}-rail`}>
+            {workspaceNavV2 ? (
+              <button
+                type="button"
+                onClick={() => updateShellPreferences({ rightPanelExpanded: false })}
+                className="absolute left-2 top-2 z-10 rounded-md border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                title={t('reportBuilder.nav.collapseRightPanel', 'Collapse report details')}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+            <ArtifactRightPanel
+              width="var(--ntype-right-panel-width, 320px)"
+              sections={rightPanelSections}
+            />
+          </div>
+        )}
       </div>
 
       {/* Block Palette Modal */}
