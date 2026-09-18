@@ -35,6 +35,8 @@ import {
   Lock,
   RefreshCw,
   RotateCcw,
+  Settings,
+  Users,
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +57,7 @@ import {
   type DrdLevelDecision,
 } from '@/components/assessment/drd/DrdLevelInterviewWorkspace';
 import { StandardTable } from '@/components/standard/StandardTable';
+import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { PracujZAI } from '@/components/standard/PracujZAI';
 import type { PoleDoUzupelnienia, ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import type {
@@ -88,6 +91,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
 import { normalizeAppRole } from '@/utils/roleGuards';
 import { isDrdInterviewV2Enabled } from '@/utils/drdInterviewV2Flag';
+import { isDrdSessionSettingsEnabled } from '@/utils/drdSessionSettingsFlag';
 
 import {
   buildMatrixRowsForAxis,
@@ -473,6 +477,23 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
   );
 };
 
+
+const DrdSettingsField: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+}> = ({ label, value, hint }) => (
+  <div className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">{label}</p>
+    <div className="mt-1 text-xs font-medium text-c-text">{value}</div>
+    {hint ? <p className="mt-1 text-[11px] leading-snug text-c-text-muted">{hint}</p> : null}
+  </div>
+);
+
+const DrdSettingsSectionBody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="grid gap-2">{children}</div>
+);
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -486,6 +507,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   // ask") follows the viewer's language. Was a module-level Polish const.
   const pack = useDrdPack();
   const drdInterviewV2 = isDrdInterviewV2Enabled();
+  const drdSessionSettingsEnabled = isDrdSessionSettingsEnabled();
   // MVP-OWNER-FREEZE (2026-09-05) — czytane NA GÓRZE komponentu, przed
   // jakimkolwiek wczesnym `return` (reguły hooków); używane dopiero przy
   // `canFreeze` niżej.
@@ -1753,6 +1775,211 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const canFreeze =
     session.state === 'in_review' && (state.roles.includes('approver') || isOrganizationOwner);
 
+  const drdSessionSettingsContent = (() => {
+    const lifecycleLabel =
+      session.state === 'frozen' || session.state === 'closed'
+        ? t('assessment.drd.settings.lifecycle.frozen', 'Frozen result — read only')
+        : session.state === 'in_review'
+          ? t('assessment.drd.settings.lifecycle.inReview', 'In review')
+          : t('assessment.drd.settings.lifecycle.working', 'Working session');
+    const editingLabel = !canWrite || isFrozen
+      ? isFrozen
+        ? t(
+            'methodWorkspace.readOnly.frozen',
+            'Read only — the session is frozen; the result no longer changes'
+          )
+        : t('methodWorkspace.info.readOnly', 'Read only')
+      : t('methodWorkspace.info.editAllowed', 'Editing allowed');
+    const projectValue = session.projectId
+      ? session.projectId
+      : t('assessment.drd.settings.project.missing', 'No project selected in this slice');
+    const peopleValue = (state.roles ?? []).length > 0 ? state.roles.join(', ') : t('assessment.drd.settings.people.none', 'No process role visible');
+    const freezeBlockerText = readiness.freezeBlockers.length > 0
+      ? readiness.freezeBlockers.join(' · ')
+      : t('methodWorkspace.info.noFreezeBlockers', 'No freeze blockers.');
+
+    const sections: ArtifactRightPanelSection[] = [
+      {
+        id: 'identity_scope',
+        label: t('assessment.drd.settings.sections.identityScope', 'Identity & scope'),
+        icon: FileText,
+        defaultOpen: true,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.session', 'Session')}
+              value={session.name ?? `DRD ${session.id.slice(0, 8)}`}
+              hint={t('assessment.drd.settings.field.sessionHint', 'Name comes from the method session; this package does not rename sessions.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.project', 'Project')}
+              value={projectValue}
+              hint={t('assessment.drd.settings.field.projectHint', 'Project is read from method_sessions.project_id. Editing belongs to the identity/scope migration package.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.scope', 'Assessment scope')}
+              value={t('assessment.drd.settings.scope.current', '{{count}} DRD areas in the current method pack', { count: pack.units.length })}
+              hint={t('assessment.drd.settings.scope.hint', 'Per-session area exclusions do not exist yet, so the panel does not pretend they can be changed here.')}
+            />
+          </DrdSettingsSectionBody>
+        ),
+      },
+      {
+        id: 'people_roles',
+        label: t('assessment.drd.settings.sections.peopleRoles', 'People & roles'),
+        icon: Users,
+        defaultOpen: false,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.owner', 'Owner user')}
+              value={session.ownerUserId}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.roles', 'My process roles')}
+              value={peopleValue}
+              hint={t('assessment.drd.settings.field.rolesHint', 'The roster endpoint exists, but this slice does not administer people or assign reviewers.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.permission', 'Permission')}
+              value={editingLabel}
+            />
+          </DrdSettingsSectionBody>
+        ),
+      },
+      {
+        id: 'run_plan',
+        label: t('assessment.drd.settings.sections.runPlan', 'Run plan'),
+        icon: Settings,
+        defaultOpen: false,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.lifecycle', 'Lifecycle')}
+              value={lifecycleLabel}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.mode', 'Work mode')}
+              value={mode === 'teresa_led' ? t('methodWorkspace.info.aiAssisted', 'AI assisted') : t('methodWorkspace.info.humanLed', 'human led')}
+              hint={t('assessment.drd.settings.field.modeHint', 'This screen only shows the current runtime mode; it does not persist a second work mode.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.progress', 'Answered areas')}
+              value={t('assessment.drd.settings.progress.value', '{{done}} of {{total}}', { done: readiness.answeredUnits, total: readiness.totalUnits })}
+            />
+          </DrdSettingsSectionBody>
+        ),
+      },
+      {
+        id: 'quality_approvals',
+        label: t('assessment.drd.settings.sections.qualityApprovals', 'Quality & approvals'),
+        icon: Lock,
+        defaultOpen: true,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.freezeBlockers', 'Freeze blockers')}
+              value={freezeBlockerText}
+              hint={t('assessment.drd.settings.field.freezeBlockersHint', 'Freeze reads real blockers and open help requests; the old always-zero review counter is not shown here.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.pendingAi', 'Pending Teresa proposals')}
+              value={String(readiness.pendingProposals)}
+            />
+            <div className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+                {t('assessment.drd.settings.field.governanceActions', 'Governance actions')}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void runtime?.transition('in_review').catch(() => undefined)}
+                  disabled={!canSendToReview}
+                  className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+                >
+                  {t('assessment.drd.http.governance.sendToReview', 'Send for review')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void runtime?.transition('active').catch(() => undefined)}
+                  disabled={!canSendBack}
+                  className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+                >
+                  {t('assessment.drd.http.governance.sendBack', 'Send back to work')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void runtime?.freeze().catch(() => undefined)}
+                  disabled={!canFreeze}
+                  data-testid="freeze-button"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
+                >
+                  <Lock size={12} />
+                  {t('assessment.drd.http.governance.freeze', 'Freeze')}
+                </button>
+              </div>
+            </div>
+          </DrdSettingsSectionBody>
+        ),
+      },
+      {
+        id: 'outputs_sharing',
+        label: t('assessment.drd.settings.sections.outputsSharing', 'Outputs & sharing'),
+        icon: FileText,
+        defaultOpen: false,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.output', 'Frozen Output')}
+              value={state.output?.id ?? t('assessment.drd.settings.output.none', 'Not generated yet')}
+              hint={t('assessment.drd.settings.output.hint', 'Reports are generated from Output after freeze; sharing settings are not persisted in this slice.')}
+            />
+          </DrdSettingsSectionBody>
+        ),
+      },
+      {
+        id: 'history_comparison',
+        label: t('assessment.drd.settings.sections.historyComparison', 'History & comparison'),
+        icon: RotateCcw,
+        defaultOpen: false,
+        children: (
+          <DrdSettingsSectionBody>
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.autosaveRevision', 'Autosave revision')}
+              value={`v${session.version}`}
+              hint={t('assessment.drd.settings.field.autosaveRevisionHint', 'This is the concurrency/autosave token, not a user-facing document version.')}
+            />
+            <DrdSettingsField
+              label={t('assessment.drd.settings.field.source', 'Runtime source')}
+              value={sourceKind}
+            />
+            <details data-testid="drd-session-technical-details" className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2">
+              <summary className="cursor-pointer font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
+                {t('methodWorkspace.info.technicalDetails', 'Technical details')}
+              </summary>
+              <p className="mt-2 font-mono text-[10px] text-c-text-muted">
+                {t('methodWorkspace.info.sessionId', 'Session ID: {{id}}', { id: session.id })}
+              </p>
+              {isFrozen ? <div className="mt-2">{frozenRawView(true)}</div> : null}
+            </details>
+          </DrdSettingsSectionBody>
+        ),
+      },
+    ];
+
+    return (
+      <div data-testid="drd-session-settings-panel" className="ml-auto w-full max-w-[360px]">
+        <ArtifactRightPanel
+          sections={sections}
+          width="100%"
+          ariaLabel={t('assessment.drd.settings.ariaLabel', 'DRD session settings')}
+          renderAs="div"
+        />
+      </div>
+    );
+  })();
+
+
   return (
     <div className="flex h-full flex-col">
       {/* 1.1-Z4 D3 (a/c): both dropped in commit 915cf63a5b alongside the
@@ -2165,7 +2392,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
              miejsce: pod „Szczegóły techniczne" w Ustawieniach. Nigdy jako
              pierwszy ekran. */
           settingsContent={
-            isFrozen ? (
+            drdSessionSettingsEnabled ? (
+              drdSessionSettingsContent
+            ) : isFrozen ? (
               <details data-testid="drd-frozen-technical-details" className="mt-1">
                 <summary className="cursor-pointer font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
                   {t(
@@ -2177,6 +2406,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               </details>
             ) : undefined
           }
+          settingsContentReplacesLegacy={drdSessionSettingsEnabled}
           // 1.1-Z4 D3: `DrdSourceIndicator` now has a permanent home in this
           // screen's own header (added above, next to
           // `AssessmentSaveStateIndicator` — fix for finding (a)/(b)/(c)) —
@@ -2186,34 +2416,36 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           // broke `getByTestId('drd-source-indicator')` (singular) in
           // DrdHttpMethodWorkspaceScreen.test.tsx by producing two matches.
           governanceActions={
-            <>
-              <button
-                type="button"
-                onClick={() => void runtime?.transition('in_review').catch(() => undefined)}
-                disabled={!canSendToReview}
-                className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
-              >
-                {t('assessment.drd.http.governance.sendToReview', 'Send for review')}
-              </button>
-              <button
-                type="button"
-                onClick={() => void runtime?.transition('active').catch(() => undefined)}
-                disabled={!canSendBack}
-                className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
-              >
-                {t('assessment.drd.http.governance.sendBack', 'Send back to work')}
-              </button>
-              <button
-                type="button"
-                onClick={() => void runtime?.freeze().catch(() => undefined)}
-                disabled={!canFreeze}
-                data-testid="freeze-button"
-                className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
-              >
-                <Lock size={12} />
-                {t('assessment.drd.http.governance.freeze', 'Freeze')}
-              </button>
-            </>
+            drdSessionSettingsEnabled ? undefined : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void runtime?.transition('in_review').catch(() => undefined)}
+                  disabled={!canSendToReview}
+                  className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+                >
+                  {t('assessment.drd.http.governance.sendToReview', 'Send for review')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void runtime?.transition('active').catch(() => undefined)}
+                  disabled={!canSendBack}
+                  className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+                >
+                  {t('assessment.drd.http.governance.sendBack', 'Send back to work')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void runtime?.freeze().catch(() => undefined)}
+                  disabled={!canFreeze}
+                  data-testid="freeze-button"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
+                >
+                  <Lock size={12} />
+                  {t('assessment.drd.http.governance.freeze', 'Freeze')}
+                </button>
+              </>
+            )
           }
         />
       </div>

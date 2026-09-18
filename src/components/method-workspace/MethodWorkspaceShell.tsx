@@ -99,6 +99,12 @@ export interface MethodWorkspaceShellProps {
   documentSourceIndicator?: React.ReactNode;
   /** Method-specific controls that belong to document settings, not the working canvas. */
   settingsContent?: React.ReactNode;
+  /**
+   * When true, `settingsContent` replaces the legacy four-column information strip.
+   * The default keeps every existing Method Workspace screen byte-for-byte in the
+   * old settings layout until a method opts into its own governed settings panel.
+   */
+  settingsContentReplacesLegacy?: boolean;
   /** Governed lifecycle actions live with approval settings, never in a permanent footer. */
   governanceActions?: React.ReactNode;
 
@@ -174,6 +180,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   documentSourceLabel,
   documentSourceIndicator,
   settingsContent,
+  settingsContentReplacesLegacy = false,
   governanceActions,
   viewMode: viewModeProp,
   onViewModeChange,
@@ -351,8 +358,16 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         <section
           id="method-workspace-settings"
           data-testid="method-workspace-settings"
-          className="grid shrink-0 gap-3 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary md:grid-cols-4"
+          className={
+            settingsContentReplacesLegacy
+              ? 'shrink-0 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary'
+              : 'grid shrink-0 gap-3 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary md:grid-cols-4'
+          }
         >
+          {settingsContentReplacesLegacy ? (
+            settingsContent
+          ) : (
+            <>
           <div>
             <p className="font-semibold text-c-text">{t('methodWorkspace.info.documentInfo', 'Document information')}</p>
             <p>
@@ -449,6 +464,8 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             <p>{t('methodWorkspace.info.versionHistoryHint', 'Version history is available from the document menu')}</p>
           </div>
           {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}
+            </>
+          )}
         </section>
       )}
 

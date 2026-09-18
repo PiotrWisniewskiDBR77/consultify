@@ -11055,6 +11055,62 @@
         "helpTaskTitle": "Potrzebny dowód: {{area}}, poziom {{level}}",
         "helpTaskDescription": "Rozwiąż otwarte pytanie o dowód dla sesji DRD {{sessionId}}, obszaru {{area}}, poziomu {{level}}.",
         "helpBlocker": "Otwarte prośby o pomoc z dowodem: {{count}}"
+      },
+      "settings": {
+        "lifecycle": {
+          "frozen": "Wynik zamrożony — tylko odczyt",
+          "inReview": "W przeglądzie",
+          "working": "Sesja robocza"
+        },
+        "project": {
+          "missing": "Projekt nie jest wybrany w tej paczce"
+        },
+        "people": {
+          "none": "Brak widocznej roli procesowej"
+        },
+        "sections": {
+          "identityScope": "Tożsamość i zakres",
+          "peopleRoles": "Ludzie i role",
+          "runPlan": "Plan pracy",
+          "qualityApprovals": "Jakość i akceptacje",
+          "outputsSharing": "Wyniki i udostępnianie",
+          "historyComparison": "Historia i porównanie"
+        },
+        "field": {
+          "session": "Sesja",
+          "sessionHint": "Nazwa pochodzi z sesji metody; ta paczka nie zmienia nazw sesji.",
+          "project": "Projekt",
+          "projectHint": "Projekt jest czytany z method_sessions.project_id. Edycja należy do paczki identity/scope.",
+          "scope": "Zakres oceny",
+          "owner": "Właściciel użytkownik",
+          "roles": "Moje role procesowe",
+          "rolesHint": "Endpoint rosteru istnieje, ale ta paczka nie zarządza ludźmi ani recenzentami.",
+          "permission": "Uprawnienie",
+          "lifecycle": "Cykl życia",
+          "mode": "Tryb pracy",
+          "modeHint": "Ten ekran pokazuje bieżący tryb runtime; nie udaje zapisu drugiego trybu pracy.",
+          "progress": "Obszary z odpowiedzią",
+          "freezeBlockers": "Blokery zamrożenia",
+          "freezeBlockersHint": "Zamrożenie czyta realne blokery i otwarte prośby o pomoc; stary licznik zawsze-zero nie jest tu pokazywany.",
+          "pendingAi": "Oczekujące propozycje Teresy",
+          "governanceActions": "Akcje governance",
+          "output": "Zamrożony Output",
+          "autosaveRevision": "Rewizja autozapisu",
+          "autosaveRevisionHint": "To token współbieżności/autozapisu, nie wersja dokumentu dla użytkownika.",
+          "source": "Źródło runtime"
+        },
+        "scope": {
+          "current": "{{count}} obszarów DRD w bieżącym pakiecie metody",
+          "hint": "Wyłączenia obszarów per sesja jeszcze nie istnieją, więc panel nie udaje, że można je tu zmienić."
+        },
+        "progress": {
+          "value": "{{done}} z {{total}}"
+        },
+        "output": {
+          "none": "Jeszcze niewygenerowany",
+          "hint": "Raporty powstają z Outputu po zamrożeniu; ustawienia udostępniania nie są zapisywane w tej paczce."
+        },
+        "ariaLabel": "Ustawienia sesji DRD"
       }
     },
     "glossary": {
@@ -12157,17 +12213,46 @@
   },
   "initiatives": {
     "pmo": {
-      "queues": {"review": "Do przeglądu", "discuss": "Do omówienia", "approve": "Do akceptacji", "blocked": "Zablokowane", "overdue": "Przeterminowane"},
-      "inbox": {"stage": "Decyzja o etapie inicjatywy", "definition": "Przegląd definicji", "analysis": "Przegląd analizy", "portfolio": "Decyzja portfelowa", "schedule": "Decyzja o harmonogramie", "handoff": "Decyzja o przekazaniu", "acceptance": "Decyzja odbiorowa", "reason": "Ten etap inicjatywy wymaga Twojego działania."},
-      "columns": {"stage": "Etap", "responsible": "Odpowiedzialny", "due": "Termin", "nextStep": "Następny krok"},
-      "stageTransition": "Przejście etapu", "transitionSaved": "Przejście etapu zapisane",
-      "conditionsMet": "Wszystkie warunki kontroli serwera są spełnione", "whoApproves": "Kto zatwierdza",
-      "requestDecision": "Poproś o decyzję", "approveTransition": "Zatwierdź przejście",
-      "requestReason": "Prośba o przejście etapu z karty inicjatywy.", "requested": "Poproszono o decyzję",
-      "requestFailed": "Nie udało się poprosić o decyzję", "requestUnavailable": "Najpierw spełnij warunki i przypisz recenzenta",
-      "noTransition": "Na tym etapie nie ma przejścia dostępnego dla Twojej roli.", "decisionLog": "Dziennik decyzji",
-      "logUnavailable": "Nie udało się wczytać niemutowalnego dziennika decyzji.", "noDecisions": "Brak zapisanych decyzji bramkowych.",
-      "reviewer": "Recenzent", "approved": "Zatwierdzono", "rejected": "Odrzucono"
+      "queues": {
+        "review": "Do przeglądu",
+        "discuss": "Do omówienia",
+        "approve": "Do akceptacji",
+        "blocked": "Zablokowane",
+        "overdue": "Przeterminowane"
+      },
+      "inbox": {
+        "stage": "Decyzja o etapie inicjatywy",
+        "definition": "Przegląd definicji",
+        "analysis": "Przegląd analizy",
+        "portfolio": "Decyzja portfelowa",
+        "schedule": "Decyzja o harmonogramie",
+        "handoff": "Decyzja o przekazaniu",
+        "acceptance": "Decyzja odbiorowa",
+        "reason": "Ten etap inicjatywy wymaga Twojego działania."
+      },
+      "columns": {
+        "stage": "Etap",
+        "responsible": "Odpowiedzialny",
+        "due": "Termin",
+        "nextStep": "Następny krok"
+      },
+      "stageTransition": "Przejście etapu",
+      "transitionSaved": "Przejście etapu zapisane",
+      "conditionsMet": "Wszystkie warunki kontroli serwera są spełnione",
+      "whoApproves": "Kto zatwierdza",
+      "requestDecision": "Poproś o decyzję",
+      "approveTransition": "Zatwierdź przejście",
+      "requestReason": "Prośba o przejście etapu z karty inicjatywy.",
+      "requested": "Poproszono o decyzję",
+      "requestFailed": "Nie udało się poprosić o decyzję",
+      "requestUnavailable": "Najpierw spełnij warunki i przypisz recenzenta",
+      "noTransition": "Na tym etapie nie ma przejścia dostępnego dla Twojej roli.",
+      "decisionLog": "Dziennik decyzji",
+      "logUnavailable": "Nie udało się wczytać niemutowalnego dziennika decyzji.",
+      "noDecisions": "Brak zapisanych decyzji bramkowych.",
+      "reviewer": "Recenzent",
+      "approved": "Zatwierdzono",
+      "rejected": "Odrzucono"
     },
     "workload": {
       "aria": "Obciążenie inicjatyw",

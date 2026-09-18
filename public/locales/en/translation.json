@@ -11859,6 +11859,62 @@
         "helpTaskTitle": "Evidence needed: {{area}}, level {{level}}",
         "helpTaskDescription": "Resolve the open evidence question for DRD session {{sessionId}}, area {{area}}, level {{level}}.",
         "helpBlocker": "{{count}} open evidence help request(s)"
+      },
+      "settings": {
+        "lifecycle": {
+          "frozen": "Frozen result — read only",
+          "inReview": "In review",
+          "working": "Working session"
+        },
+        "project": {
+          "missing": "No project selected in this slice"
+        },
+        "people": {
+          "none": "No process role visible"
+        },
+        "sections": {
+          "identityScope": "Identity & scope",
+          "peopleRoles": "People & roles",
+          "runPlan": "Run plan",
+          "qualityApprovals": "Quality & approvals",
+          "outputsSharing": "Outputs & sharing",
+          "historyComparison": "History & comparison"
+        },
+        "field": {
+          "session": "Session",
+          "sessionHint": "Name comes from the method session; this package does not rename sessions.",
+          "project": "Project",
+          "projectHint": "Project is read from method_sessions.project_id. Editing belongs to the identity/scope migration package.",
+          "scope": "Assessment scope",
+          "owner": "Owner user",
+          "roles": "My process roles",
+          "rolesHint": "The roster endpoint exists, but this slice does not administer people or assign reviewers.",
+          "permission": "Permission",
+          "lifecycle": "Lifecycle",
+          "mode": "Work mode",
+          "modeHint": "This screen only shows the current runtime mode; it does not persist a second work mode.",
+          "progress": "Answered areas",
+          "freezeBlockers": "Freeze blockers",
+          "freezeBlockersHint": "Freeze reads real blockers and open help requests; the old always-zero review counter is not shown here.",
+          "pendingAi": "Pending Teresa proposals",
+          "governanceActions": "Governance actions",
+          "output": "Frozen Output",
+          "autosaveRevision": "Autosave revision",
+          "autosaveRevisionHint": "This is the concurrency/autosave token, not a user-facing document version.",
+          "source": "Runtime source"
+        },
+        "scope": {
+          "current": "{{count}} DRD areas in the current method pack",
+          "hint": "Per-session area exclusions do not exist yet, so the panel does not pretend they can be changed here."
+        },
+        "progress": {
+          "value": "{{done}} of {{total}}"
+        },
+        "output": {
+          "none": "Not generated yet",
+          "hint": "Reports are generated from Output after freeze; sharing settings are not persisted in this slice."
+        },
+        "ariaLabel": "DRD session settings"
       }
     },
     "glossary": {
@@ -12945,17 +13001,46 @@
   },
   "initiatives": {
     "pmo": {
-      "queues": {"review": "To review", "discuss": "To discuss", "approve": "To approve", "blocked": "Blocked", "overdue": "Overdue"},
-      "inbox": {"stage": "Initiative stage decision", "definition": "Definition review", "analysis": "Analysis review", "portfolio": "Portfolio decision", "schedule": "Schedule decision", "handoff": "Handoff decision", "acceptance": "Acceptance decision", "reason": "This initiative stage requires your action."},
-      "columns": {"stage": "Stage", "responsible": "Responsible", "due": "Due", "nextStep": "Next step"},
-      "stageTransition": "Stage transition", "transitionSaved": "Stage transition saved",
-      "conditionsMet": "All server preflight conditions are met", "whoApproves": "Who approves",
-      "requestDecision": "Request decision", "approveTransition": "Approve transition",
-      "requestReason": "Stage transition requested from the initiative card.", "requested": "Decision requested",
-      "requestFailed": "Could not request a decision", "requestUnavailable": "Complete the conditions and assign a reviewer first",
-      "noTransition": "No transition is available for your role at this stage.", "decisionLog": "Decision log",
-      "logUnavailable": "The immutable decision log could not be loaded.", "noDecisions": "No recorded gate decisions.",
-      "reviewer": "Reviewer", "approved": "Approved", "rejected": "Rejected"
+      "queues": {
+        "review": "To review",
+        "discuss": "To discuss",
+        "approve": "To approve",
+        "blocked": "Blocked",
+        "overdue": "Overdue"
+      },
+      "inbox": {
+        "stage": "Initiative stage decision",
+        "definition": "Definition review",
+        "analysis": "Analysis review",
+        "portfolio": "Portfolio decision",
+        "schedule": "Schedule decision",
+        "handoff": "Handoff decision",
+        "acceptance": "Acceptance decision",
+        "reason": "This initiative stage requires your action."
+      },
+      "columns": {
+        "stage": "Stage",
+        "responsible": "Responsible",
+        "due": "Due",
+        "nextStep": "Next step"
+      },
+      "stageTransition": "Stage transition",
+      "transitionSaved": "Stage transition saved",
+      "conditionsMet": "All server preflight conditions are met",
+      "whoApproves": "Who approves",
+      "requestDecision": "Request decision",
+      "approveTransition": "Approve transition",
+      "requestReason": "Stage transition requested from the initiative card.",
+      "requested": "Decision requested",
+      "requestFailed": "Could not request a decision",
+      "requestUnavailable": "Complete the conditions and assign a reviewer first",
+      "noTransition": "No transition is available for your role at this stage.",
+      "decisionLog": "Decision log",
+      "logUnavailable": "The immutable decision log could not be loaded.",
+      "noDecisions": "No recorded gate decisions.",
+      "reviewer": "Reviewer",
+      "approved": "Approved",
+      "rejected": "Rejected"
     },
     "workload": {
       "aria": "Initiatives workload",

@@ -102,6 +102,7 @@ function makeSession(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
 
@@ -308,5 +309,50 @@ describe('sanity — MethodCoreApiError is the real class (mock did not replace 
     expect(err.status).toBe(409);
     expect(err.body.currentVersion).toBe(4);
     expect(err.isNetworkError).toBe(false);
+  });
+});
+
+describe('DRD-S — session settings panel behind VITE_DRD_SESSION_SETTINGS', () => {
+  it('keeps the legacy four-column Settings content when the flag is OFF', async () => {
+    vi.stubEnv('VITE_DRD_SESSION_SETTINGS', 'false');
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 7 }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+
+    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Ustawienia|Settings/ }));
+    const settings = await screen.findByTestId('method-workspace-settings');
+    expect(within(settings).queryByTestId('drd-session-settings-panel')).not.toBeInTheDocument();
+    expect(within(settings).getByText(/Wersja sesji v7|Session version v7/)).toBeInTheDocument();
+    expect(within(settings).getByText(/To review|Do przeglądu|Do oceny/)).toBeInTheDocument();
+  });
+
+  it('renders six honest DRD settings sections and hides legacy fake counters when the flag is ON', async () => {
+    vi.stubEnv('VITE_DRD_SESSION_SETTINGS', 'true');
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 7, projectId: 'project-1' }),
+      roles: ['owner', 'lead_assessor'],
+    });
+    hoisted.listEvents.mockResolvedValue([]);
+
+    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Ustawienia|Settings/ }));
+    const panel = await screen.findByTestId('drd-session-settings-panel');
+    for (const label of [
+      /Identity & scope/i,
+      /People & roles/i,
+      /Run plan/i,
+      /Quality & approvals/i,
+      /Outputs & sharing/i,
+      /History & comparison/i,
+    ]) {
+      expect(within(panel).getByText(label)).toBeInTheDocument();
+    }
+    expect(within(panel).getByText('project-1')).toBeInTheDocument();
+    fireEvent.click(within(panel).getByRole('button', { name: /History & comparison/i }));
+    expect(within(panel).getByText(/Autosave revision/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Session version v7/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/To review:/i)).not.toBeInTheDocument();
   });
 });
