@@ -2817,8 +2817,9 @@ export const AppRoutes: React.FC = () => {
           }
         />
         {/* W1 (DEC-573): Rollout has no MVP successor — the legacy pathname redirects to the
-            canonical Execution list (never a 404, never a retired tab). Legacy FullRolloutView +
-            SplitLayout retired; the tab deep link is retired with them. */}
+            canonical Execution list (never a 404, never a retired tab). Legacy FullRolloutView is
+            retired (the shared SplitLayout shell it used lives on for other views); the tab deep
+            link is retired with it. */}
         <Route
           path={ROUTES.ROLLOUT}
           element={
