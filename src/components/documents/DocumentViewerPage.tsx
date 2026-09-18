@@ -234,16 +234,20 @@ export const DocumentViewerPage: React.FC<{ artifactId: string }> = ({ artifactI
     );
   }
 
+  // The three early returns above narrow `state` to the settled variant, so
+  // `state.meta` is non-null here even though the `meta` alias stays nullable.
+  const settledMeta = state.meta;
+
   return (
     <DocumentViewer
       artifactId={artifactId}
-      originRecordId={meta.originRecordId}
-      title={meta.title}
+      originRecordId={settledMeta.originRecordId}
+      title={settledMeta.title}
       statusLabel={statusLabel}
-      ownerName={meta.ownerName}
-      updatedAt={meta.updatedAt ? formatDateTime(meta.updatedAt, i18n.language === 'pl' ? 'pl-PL' : 'en-GB') : null}
+      ownerName={settledMeta.ownerName}
+      updatedAt={settledMeta.updatedAt ? formatDateTime(settledMeta.updatedAt, i18n.language === 'pl' ? 'pl-PL' : 'en-GB') : null}
       onClose={backToList}
-      onEdit={meta.openPath || meta.originRecordId ? openEditor : undefined}
+      onEdit={settledMeta.openPath || settledMeta.originRecordId ? openEditor : undefined}
     />
   );
 };
