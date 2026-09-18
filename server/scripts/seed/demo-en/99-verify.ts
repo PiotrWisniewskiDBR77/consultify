@@ -12,7 +12,7 @@ import { verifyD9 } from './09-dosiew-po-tescie';
 
 import { ORG_ID, ORG_NAZWA, czytajWspolneArgumenty, otworzPool, sprawdzCel, wymaganyUrl } from './00-wspolne';
 
-type Asercja = { nazwa: string; oczekiwane: number; rzeczywiste: number };
+type Asercja = { nazwa: string; oczekiwane: number; rzeczywiste: number; sposob?: '==' | '>=' };
 
 async function main() {
   const opcje = czytajWspolneArgumenty(process.argv.slice(2));
@@ -148,7 +148,7 @@ async function main() {
     if (Number(d9Dosiany.rows[0]?.n ?? 0) > 0) {
       const d9 = await verifyD9(c);
       console.log(`[verify] --- D9 (dosiew po tescie): ${d9.length} kontroli ---`);
-      for (const a of d9) zestaw.push({ nazwa: `D9 · ${a.nazwa}`, oczekiwane: a.ok ? a.rzeczywiste : a.oczekiwane, rzeczywiste: a.rzeczywiste });
+      for (const a of d9) zestaw.push({ nazwa: `D9 · ${a.nazwa}`, oczekiwane: a.oczekiwane, rzeczywiste: a.rzeczywiste, sposob: a.sposob });
     } else {
       console.log('[verify] --- D9 (dosiew po tescie): POMINIETY (etap 09 jeszcze nie uruchomiony) ---');
     }
@@ -164,9 +164,11 @@ async function main() {
 function wypiszIZakoncz(asercje: Asercja[]): void {
   let bledy = 0;
   for (const a of asercje) {
-    const ok = a.oczekiwane === a.rzeczywiste;
+    const ok = a.sposob === '>=' ? a.rzeczywiste >= a.oczekiwane : a.oczekiwane === a.rzeczywiste;
     if (!ok) bledy++;
-    console.log(`[verify] ${ok ? 'OK  ' : 'FAIL'} ${a.nazwa.padEnd(55)} oczekiwane=${a.oczekiwane} rzeczywiste=${a.rzeczywiste}`);
+    console.log(
+      `[verify] ${ok ? 'OK  ' : 'FAIL'} ${a.nazwa.padEnd(55)} ${a.sposob === '>=' ? '>=' : '=='} oczekiwane=${a.oczekiwane} rzeczywiste=${a.rzeczywiste}`
+    );
   }
   if (bledy > 0) {
     console.error(`\n[verify] FAIL: ${bledy} asercji nie przeszło.`);

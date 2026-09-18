@@ -1,0 +1,13 @@
+{
+  "bledyKonsoli": 0,
+  "braki": [],
+  "zadania404": 0,
+  "raport": [
+    "inbox-powloka/light | {\"zakladkaForApproval\":true,\"zakladkiMenu1\":[\"Initiatives\",\"Plan\",\"For approval\"],\"modulInicjatywy\":true,\"wierszyPropozycji\":1,\"tabelDanych\":1,\"polPodgladu\":5,\"inicjatywa\":true,\"autor\":true,\"przejscie\":true,\"domena\":true,\"uzasadnienie\":true,\"akcje\":[\"Approve\",\"Reject with a reason\"],\"tekstWiersza\":\"MES Rollout Line 3Executing → DoneLaura Novak17 Sept 2026Awaiting your decision\"}",
+    "inbox-powloka/dark | {\"zakladkaForApproval\":true,\"zakladkiMenu1\":[\"Initiatives\",\"Plan\",\"For approval\"],\"modulInicjatywy\":true,\"wierszyPropozycji\":1,\"tabelDanych\":1,\"polPodgladu\":5,\"inicjatywa\":true,\"autor\":true,\"przejscie\":true,\"domena\":true,\"uzasadnienie\":true,\"akcje\":[\"Approve\",\"Reject with a reason\"],\"tekstWiersza\":\"MES Rollout Line 3Executing → DoneLaura Novak17 Sept 2026Awaiting your decision\"}",
+    "bledyKonsoli=0",
+    "braki=0",
+    "zadania404=0"
+  ],
+  "sieci404": []
+}

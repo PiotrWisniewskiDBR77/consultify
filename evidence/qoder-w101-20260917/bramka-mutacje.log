@@ -1,0 +1,27 @@
+=== W101 P1 — dowód mutacyjny bramki 99-verify (baza consultify_kopia_d9 @ 127.0.0.1:6631; klon consultify_kopia_d1 + 09-dosiew --apply: utworzono=1 zmieniono=14 pominieto=59)
+
+--- BAZA (bez mutacji), NOWA bramka:
+[verify] PASS: wszystkie 41 asercji przeszły.
+
+--- MUTACJA 1: INSERT drugiej propozycji pending_review do v8_agent_proposal_versions → NOWA bramka:
+[verify] FAIL D9 · BRAK 6 — DEC-612: pending propozycja przejścia etapu == oczekiwane=1 rzeczywiste=2
+[verify] FAIL: 1 asercji nie przeszło.
+
+--- MUTACJA 1, TA SAMA BAZA vs STARA (BASE) bramka — dowód ślepoty:
+[verify] OK   D9 · BRAK 6 — DEC-612: pending propozycja przejścia etapu oczekiwane=2 rzeczywiste=2
+[verify] PASS: wszystkie 41 asercji przeszły.
+
+--- PO DELETE mutacji 1 (i wstawieniu mutacji 2): BRAK 6 znów OK, FAIL tylko językowy:
+[verify] FAIL D9 · D9 — polskie znaki w danych dosianych przez ten etap == oczekiwane=0 rzeczywiste=1
+[verify] FAIL: 1 asercji nie przeszło.
+
+--- MUTACJA 2: polski znak w rvn_kpi_scorecard_items.area_name → NOWA bramka FAIL (jak wyżej); ta sama baza vs BASE bramka (asercja językowa była już '==' w BASE, więc BASE też łapie):
+[verify] FAIL D9 · D9 — polskie znaki w danych dosianych przez ten etap oczekiwane=0 rzeczywiste=1
+[verify] FAIL: 1 asercji nie przeszło.
+
+--- PO COFNIĘCIU OBU MUTACJI, NOWA bramka:
+[verify] PASS: wszystkie 41 asercji przeszły.
+
+--- LICZNIK asercji i sposoby (NOWA bramka, baza bez mutacji):
+asercje ==: 25
+asercje >=: 16

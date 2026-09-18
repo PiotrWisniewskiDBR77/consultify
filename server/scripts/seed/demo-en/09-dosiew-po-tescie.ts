@@ -1122,7 +1122,7 @@ async function reset(c: PoolClient): Promise<void> {
 // ============================================================================
 // VERIFY — piec kontroli, jedna na kazdy brak z RAPORT_DANE §5
 // ============================================================================
-type Asercja = { nazwa: string; prog: string; oczekiwane: number; rzeczywiste: number; ok: boolean };
+type Asercja = { nazwa: string; prog: string; oczekiwane: number; rzeczywiste: number; ok: boolean; sposob: '==' | '>=' };
 
 export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
   const licz = async (sql: string, params: unknown[] = []): Promise<number> => {
@@ -1131,7 +1131,14 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
   };
   const asercje: Asercja[] = [];
   const dodaj = (nazwa: string, prog: string, oczekiwane: number, rzeczywiste: number, gte = true) =>
-    asercje.push({ nazwa, prog, oczekiwane, rzeczywiste, ok: gte ? rzeczywiste >= oczekiwane : rzeczywiste === oczekiwane });
+    asercje.push({
+      nazwa,
+      prog,
+      oczekiwane,
+      rzeczywiste,
+      ok: gte ? rzeczywiste >= oczekiwane : rzeczywiste === oczekiwane,
+      sposob: gte ? '>=' : '==',
+    });
 
   // KONTROLA 1 — profil organizacji (RAPORT §5 poz. 1: „5 pol -> komplet").
   const profil = await c.query<{
@@ -1160,13 +1167,13 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
   };
   // Bramka na PRZYCZYNE D-03: sama niepustosc nie wystarcza — wartosc musi byc
   // w slowniku `INDUSTRIES`, inaczej `<select>` dalej pokaze „—".
-  dodaj('BRAK 1 — industry ze slownika INDUSTRIES', `= '${BRANZA_ZE_SLOWNIKA}'`, 1, p?.industry === BRANZA_ZE_SLOWNIKA ? 1 : 0);
+  dodaj('BRAK 1 — industry ze slownika INDUSTRIES', `= '${BRANZA_ZE_SLOWNIKA}'`, 1, p?.industry === BRANZA_ZE_SLOWNIKA ? 1 : 0, false);
   dodaj('BRAK 1 — industry_code niepusty', '>= 1 znak', 1, (p?.industry_code ?? '').trim().length > 0 ? 1 : 0);
   dodaj('BRAK 1 — strategic_priorities', '>= 3', 3, dlugosc(p?.strategic_priorities ?? null));
   dodaj('BRAK 1 — technology_stack', '>= 3', 3, dlugosc(p?.technology_stack ?? null));
   dodaj('BRAK 1 — primary_markets', '>= 2', 2, dlugosc(p?.primary_markets ?? null));
   dodaj('BRAK 1 — digital_maturity_overall', '> 0 (skala 1-7)', 1, Number(p?.digital_maturity_overall ?? 0) > 0 ? 1 : 0);
-  dodaj('BRAK 1 — profile_completeness (formula frontu, 15 pol)', '= 100 %', 100, Math.round(Number(p?.profile_completeness ?? 0)));
+  dodaj('BRAK 1 — profile_completeness (formula frontu, 15 pol)', '= 100 %', 100, Math.round(Number(p?.profile_completeness ?? 0)), false);
 
   // KONTROLA 2 — przydzialy wywiadu (RAPORT §5 poz. 2: „>= 3, po jednym na status").
   dodaj(
@@ -1301,7 +1308,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
         WHERE organization_id = $1 AND proposal_id LIKE 't01-lifecycle:%'
           AND status IN ('pending_review','partially_approved')`,
       [ORG_ID]
-    )
+    ),
+    false
   );
 
   // KONTROLA 5 — pola pochodne (RAPORT §5 poz. 5: „dla wszystkich istniejacych rekordow").
@@ -1312,7 +1320,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
     await licz(
       'SELECT COUNT(*)::text AS n FROM initiatives WHERE organization_id = $1 AND current_stage IS NOT NULL',
       [ORG_ID]
-    )
+    ),
+    false
   );
   dodaj(
     'BRAK 5 — VARIANCE: inicjatywy z baseline_end_date',
@@ -1321,7 +1330,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
     await licz(
       'SELECT COUNT(*)::text AS n FROM initiatives WHERE organization_id = $1 AND baseline_end_date IS NOT NULL',
       [ORG_ID]
-    )
+    ),
+    false
   );
   dodaj(
     'BRAK 5 — AREA/AXIS: inicjatywy z area i axis',
@@ -1331,7 +1341,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
       `SELECT COUNT(*)::text AS n FROM initiatives
         WHERE organization_id = $1 AND area IS NOT NULL AND axis IS NOT NULL`,
       [ORG_ID]
-    )
+    ),
+    false
   );
   dodaj(
     'BRAK 5 — FORMAT: artefakty z exportFormat',
@@ -1343,7 +1354,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
           AND COALESCE(NULLIF(origin_summary_json,'')::jsonb,'{}'::jsonb) ->> 'exportFormat'
               IN ('docx','pdf','pptx','xlsx')`,
       [ORG_ID]
-    )
+    ),
+    false
   );
   dodaj(
     'BRAK 5 — SOURCE: artefakty z origin_runtime',
@@ -1355,7 +1367,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
         WHERE a.organization_id = $1 AND a.artifact_family <> 'template'
           AND COALESCE(l.origin_runtime,'') <> ''`,
       [ORG_ID]
-    )
+    ),
+    false
   );
   dodaj(
     'BRAK 5 — raport KPI: pozycje z AREA i TYPE',
@@ -1365,7 +1378,8 @@ export async function verifyD9(c: PoolClient): Promise<Asercja[]> {
       `SELECT COUNT(*)::text AS n FROM rvn_kpi_scorecard_items
         WHERE organization_id = $1 AND area_name IS NOT NULL AND indicator_type IS NOT NULL`,
       [ORG_ID]
-    )
+    ),
+    false
   );
 
   // Bramka jezykowa — dane D9 maja byc po angielsku.

@@ -767,6 +767,9 @@ const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
 const W51Dec604ObciazenieScreen = React.lazy(() => import('./screens/w51-dec604-obciazenie'));
 const W51Dec612SkrzynkaScreen = React.lazy(() => import('./screens/w51-dec612-skrzynka'));
+const W101Dec612SkrzynkaPowlokaScreen = React.lazy(
+  () => import('./screens/w101-dec612-skrzynka-powloka')
+);
 const Z27InicjatywySkrzynkaScreen = React.lazy(() => import('./screens/z27-inicjatywy-skrzynka'));
 const Z30InicjatywyObciazenieScreen = React.lazy(
   () => import('./screens/z30-inicjatywy-obciazenie')
@@ -823,6 +826,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'W51 DEC-612 — REALNY <TransitionInboxSurface> „For approval" z DOKŁADNIE jednym wierszem z seeda demo-en (propozycja EXECUTING→DONE, autor Laura Novak ≠ recenzent James Whitfield). Wymaga VITE_TRANSITION_INBOX=true. &lang=en &theme=light|dark',
     render: () => <W51Dec612SkrzynkaScreen />,
+  },
+  'w101-dec612-skrzynka-powloka': {
+    label:
+      'W101 DEC-612 — skrzynka „For approval" w REALNEJ powłoce <InitiativesHub> (zakładka Menu 1 „Do akceptacji"), DOKŁADNIE jeden wiersz z seeda demo-en (EXECUTING→DONE, autor Laura Novak ≠ recenzent James Whitfield). Wymaga VITE_TRANSITION_INBOX=true VITE_INITIATIVES_FOUR_BUTTONS=true. &tab=transitionInbox &lang=en &theme=light|dark',
+    render: () => <W101Dec612SkrzynkaPowlokaScreen />,
   },
   'execution-risk-signal-e0': {
     label:

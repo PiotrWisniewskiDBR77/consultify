@@ -1,0 +1,7 @@
+workload/light | {"osobyWidoczne":9,"legenda":["Below 85%","85–100%","Above 100%"],"pustyStan":false,"procZSeeda":["122%","110%","38%"],"kolumna":true}
+workload/dark | {"osobyWidoczne":9,"legenda":["Below 85%","85–100%","Above 100%"],"pustyStan":false,"procZSeeda":["122%","110%","38%"],"kolumna":true}
+inbox/light | {"wiersze":1,"inicjatywa":true,"autor":true,"przejście":true,"domena":false}
+inbox/dark | {"wiersze":1,"inicjatywa":true,"autor":true,"przejście":true,"domena":false}
+bledyKonsoli=0
+braki=0
+zadania404=0

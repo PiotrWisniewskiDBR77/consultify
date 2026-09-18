@@ -1,0 +1,8 @@
+inbox-powloka/light | {"zakladkaForApproval":true,"zakladkiMenu1":["Initiatives","Plan","For approval"],"modulInicjatywy":true,"wierszyPropozycji":1,"tabelDanych":1,"polPodgladu":5,"inicjatywa":true,"autor":true,"przejscie":true,"domena":true,"uzasadnienie":true,"akcje":["Approve","Reject with a reason"],"tekstWiersza":"MES Rollout Line 3Executing → DoneLaura Novak17 Sept 2026Awaiting your decision"}
+inbox-powloka/dark | {"zakladkaForApproval":true,"zakladkiMenu1":["Initiatives","Plan","For approval"],"modulInicjatywy":true,"wierszyPropozycji":1,"tabelDanych":1,"polPodgladu":5,"inicjatywa":true,"autor":true,"przejscie":true,"domena":true,"uzasadnienie":true,"akcje":["Approve","Reject with a reason"],"tekstWiersza":"MES Rollout Line 3Executing → DoneLaura Novak17 Sept 2026Awaiting your decision"}
+bledyKonsoli=0
+braki=0
+zadania404=0
+INFO (Wpis 101, żeby CTO nie szukał): endpoint workload wymaga na serwerze RUN_DB_TESTS=1 (bez tego dbReady nigdy nie jest true — znany defekt A14 w testModeGates.ts), ENABLE_V8_GLOBAL=true, ENABLE_INITIATIVES_WORKLOAD=true.
+INFO: Run 2 „04 sql zmieniono=29" (kamienie/plan_baselines) — zastane, nie duplikaty seeda.
+INFO: zrzuty skrzynki w REALNEJ powłoce = inbox-powloka-{light,dark}.png (produkcyjny InitiativesHub, InitiativesHub.tsx:2106 — jedyny wołacz TransitionInboxSurface w src/; plik Codexa-1, montowany w harnessie bez edycji). Gołe inbox-*.png z evidence/qoder-w51-20260917/ zostają jako zapis odrzuconego wariantu.
