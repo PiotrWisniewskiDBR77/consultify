@@ -358,6 +358,15 @@ export interface RegisteredInitiativeReadModel {
     problem?: string;
     proposedOutcome?: string | null;
     priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+    priorityScore?: number | null;
+    prioritySource?:
+      | 'PORTFOLIO_ANALYSIS'
+      | 'MANUAL_OVERRIDE'
+      | 'PRIORITY_ORDER'
+      | 'LEGACY_PRIORITY'
+      | 'UNKNOWN'
+      | null;
+    priorityOverrideReason?: string | null;
     projectId: string;
     initiativeOwnerId?: string;
     readiness: 'NOT_EVALUATED';
@@ -1513,6 +1522,12 @@ export interface LegacyInitiativeApiRow {
   lifecycleStage?: string | null;
   lifecycleStageSource?: 'aggregate' | 'mapped' | 'writer' | null;
   priority?: string | null;
+  priorityScore?: number | null;
+  priority_score?: number | null;
+  prioritySource?: string | null;
+  priority_source?: string | null;
+  priorityOverrideReason?: string | null;
+  priority_override_reason?: string | null;
   progress?: number | null;
   estimatedBudget?: number | null;
   plannedStartDate?: string | null;

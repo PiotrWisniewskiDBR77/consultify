@@ -410,6 +410,9 @@ export const toCanonicalInitiativeRegisterItem = (
     archived: projection.lifecycle === 'ARCHIVED',
     displayStatus: projection.lifecycle,
     priority: initiative.priority as PortfolioInitiative['priority'],
+    priorityScore: initiative.priorityScore ?? null,
+    prioritySource: initiative.prioritySource ?? null,
+    priorityOverrideReason: initiative.priorityOverrideReason ?? null,
     progress: undefined as unknown as number,
     budget: undefined as unknown as number,
     projectId: initiative.projectId,
@@ -508,6 +511,15 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
     canonicalLifecyclePresentation: Boolean(row.lifecycleStage),
     priority: (String(row.priority || 'MEDIUM').toUpperCase() ||
       'MEDIUM') as PortfolioInitiative['priority'],
+    priorityScore:
+      typeof (row as any).priorityScore === 'number'
+        ? (row as any).priorityScore
+        : typeof (row as any).priority_score === 'number'
+          ? (row as any).priority_score
+          : null,
+    prioritySource: (row as any).prioritySource ?? (row as any).priority_source ?? null,
+    priorityOverrideReason:
+      (row as any).priorityOverrideReason ?? (row as any).priority_override_reason ?? null,
     progress: typeof row.progress === 'number' ? row.progress : 0,
     budget: typeof row.estimatedBudget === 'number' ? row.estimatedBudget : 0,
     plannedStartDate: row.plannedStartDate || undefined,

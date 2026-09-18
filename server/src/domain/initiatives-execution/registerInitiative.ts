@@ -17,6 +17,15 @@ export interface RegisterInitiativePayload {
   problem: string;
   proposedOutcome: string | null;
   priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  priorityScore?: number | null;
+  prioritySource?:
+    | 'PORTFOLIO_ANALYSIS'
+    | 'MANUAL_OVERRIDE'
+    | 'PRIORITY_ORDER'
+    | 'LEGACY_PRIORITY'
+    | 'UNKNOWN'
+    | null;
+  priorityOverrideReason?: string | null;
   projectId: string;
   visibility: 'PROJECT' | 'ORGANIZATION_RESTRICTED';
   initiativeOwnerId: string;
@@ -30,6 +39,15 @@ export interface RegisteredInitiative {
   problem: string;
   proposedOutcome: string | null;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  priorityScore?: number | null;
+  prioritySource?:
+    | 'PORTFOLIO_ANALYSIS'
+    | 'MANUAL_OVERRIDE'
+    | 'PRIORITY_ORDER'
+    | 'LEGACY_PRIORITY'
+    | 'UNKNOWN'
+    | null;
+  priorityOverrideReason?: string | null;
   projectId: string;
   visibility: RegisterInitiativePayload['visibility'];
   initiativeOwnerId: string;
@@ -44,6 +62,20 @@ export interface RegisteredInitiative {
   };
   governance: { policyId: string; policyVersion: number };
   readiness: 'NOT_EVALUATED';
+}
+
+function priorityScoreFromPriority(priority: RegisterInitiativePayload['priority']): number {
+  switch (priority) {
+    case 'CRITICAL':
+      return 100;
+    case 'HIGH':
+      return 75;
+    case 'LOW':
+      return 25;
+    case 'MEDIUM':
+    default:
+      return 50;
+  }
 }
 
 function required(value: string, field: string): string {
@@ -74,6 +106,12 @@ function validate(payload: RegisterInitiativePayload): RegisterInitiativePayload
     projectId: required(payload.projectId, 'projectId'),
     initiativeOwnerId: required(payload.initiativeOwnerId, 'initiativeOwnerId'),
     priority: payload.priority || 'MEDIUM',
+    priorityScore:
+      typeof payload.priorityScore === 'number' && Number.isFinite(payload.priorityScore)
+        ? Math.max(0, Math.min(100, Math.round(payload.priorityScore)))
+        : priorityScoreFromPriority(payload.priority || 'MEDIUM'),
+    prioritySource: payload.prioritySource || 'LEGACY_PRIORITY',
+    priorityOverrideReason: payload.priorityOverrideReason?.trim() || null,
   };
 }
 
@@ -143,6 +181,9 @@ export async function registerInitiative(
       // could never equal 'HIGH'/'CRITICAL'/'LOW'. The validated payload is the
       // single source of the canonical value (defaulted to 'MEDIUM' in validate()).
       priority: payload.priority || 'MEDIUM',
+      priorityScore: payload.priorityScore ?? priorityScoreFromPriority(payload.priority || 'MEDIUM'),
+      prioritySource: payload.prioritySource || 'LEGACY_PRIORITY',
+      priorityOverrideReason: payload.priorityOverrideReason || null,
       projectId: proposal.projectId,
       visibility: proposal.visibility,
       initiativeOwnerId: proposal.initiativeOwnerId,

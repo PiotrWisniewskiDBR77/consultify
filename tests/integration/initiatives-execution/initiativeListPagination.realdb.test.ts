@@ -67,6 +67,42 @@ describeRealDb('Day 21 initiative list keyset pagination', () => {
       );
     });
     await Promise.all(values);
+    await Promise.all(
+      [
+        ['day21-priority-100', 100, 'PORTFOLIO_ANALYSIS'],
+        ['day21-priority-090', 90, 'MANUAL_OVERRIDE'],
+        ['day21-priority-075', 75, 'PRIORITY_ORDER'],
+      ].map(([aggregateId, priorityScore, prioritySource], index) =>
+        pool.query(
+          `INSERT INTO ie_aggregate_state
+             (organization_id, aggregate_type, aggregate_id, version, payload_json, updated_at)
+           VALUES ($1, 'initiative', $2, 1, $3::jsonb, $4::timestamptz)
+           ON CONFLICT (organization_id, aggregate_type, aggregate_id)
+           DO UPDATE SET payload_json=EXCLUDED.payload_json, updated_at=EXCLUDED.updated_at`,
+          [
+            organizationId,
+            aggregateId,
+            JSON.stringify({
+              initiativeId: aggregateId,
+              lifecycleState: 'REGISTERED_DRAFT',
+              title: aggregateId,
+              problem: 'Priority score proof',
+              proposedOutcome: null,
+              priority: 'HIGH',
+              priorityScore,
+              prioritySource,
+              priorityOverrideReason:
+                prioritySource === 'MANUAL_OVERRIDE' ? 'Board mandated sequencing' : null,
+              projectId: 'day21-list-project',
+              initiativeOwnerId: 'owner-1',
+              visibility: 'PROJECT',
+              readiness: 'NOT_EVALUATED',
+            }),
+            `2025-12-31T23:59:0${index}.000Z`,
+          ]
+        )
+      )
+    );
   });
 
   afterAll(async () => {
@@ -89,6 +125,22 @@ describeRealDb('Day 21 initiative list keyset pagination', () => {
       (item) => item.initiative.initiativeId
     );
     expect(new Set(ids).size).toBe(40);
+  });
+
+  it('orders the runtime list by priority score before updatedAt and exposes score/source', async () => {
+    const response = await request(app).get('/runtime-v1/initiatives?limit=3');
+    expect(response.status).toBe(200);
+    expect(
+      response.body.initiatives.map((item: any) => [
+        item.initiative.initiativeId,
+        item.initiative.priorityScore,
+        item.initiative.prioritySource,
+      ])
+    ).toEqual([
+      ['day21-priority-100', 100, 'PORTFOLIO_ANALYSIS'],
+      ['day21-priority-090', 90, 'MANUAL_OVERRIDE'],
+      ['day21-priority-075', 75, 'PRIORITY_ORDER'],
+    ]);
   });
 
   it('uses the documented default limit of 50', async () => {

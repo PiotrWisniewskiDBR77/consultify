@@ -15,6 +15,25 @@ import {
 } from '../initiativeRegisterProjection';
 
 describe('STAGE-1 / DEC-539 initiative register projection', () => {
+  it('renders DEC-537 priority score with its source in the shared register column', () => {
+    const row = toCanonicalInitiativeRegisterItemFromLegacyRow({
+      id: 'initiative-priority-score',
+      name: 'Priority proof',
+      status: 'APPROVED',
+      priority: 'critical',
+      priorityScore: 100,
+      prioritySource: 'PORTFOLIO_ANALYSIS',
+    });
+    const column = createInitiativeRegisterColumns({ t: (_key, fallback) => fallback }).find(
+      (item) => item.id === 'priorityScore'
+    );
+
+    expect(row.priority).toBe('CRITICAL');
+    expect(row.priorityScore).toBe(100);
+    expect(renderToStaticMarkup(column!.render!(row))).toContain('100');
+    expect(renderToStaticMarkup(column!.render!(row))).toContain('Portfolio Analysis');
+  });
+
   it('renders the persisted lifecycle stage instead of the seven-code compatibility status', () => {
     const row = toCanonicalInitiativeRegisterItemFromLegacyRow({
       id: 'initiative-1',

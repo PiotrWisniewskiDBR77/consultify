@@ -49,7 +49,74 @@ export interface InitiativeReadModel {
   updatedAt: string;
 }
 
+function normalizedPriority(value: unknown): RegisteredInitiative['priority'] {
+  const raw = String(value || '').trim().toUpperCase();
+  return raw === 'CRITICAL' || raw === 'HIGH' || raw === 'MEDIUM' || raw === 'LOW'
+    ? raw
+    : 'MEDIUM';
+}
+
+function scoreFromPriority(priority: unknown): number {
+  switch (normalizedPriority(priority)) {
+    case 'CRITICAL':
+      return 100;
+    case 'HIGH':
+      return 75;
+    case 'LOW':
+      return 25;
+    case 'MEDIUM':
+    default:
+      return 50;
+  }
+}
+
+function scoreFromPriorityOrder(priorityOrder: unknown): number | null {
+  const value = Number(priorityOrder);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (value === 1) return 100;
+  if (value === 2) return 75;
+  if (value === 3) return 50;
+  return Math.max(0, Math.min(100, Math.round(100 - (value - 1) * 25)));
+}
+
+function normalizePriorityScore(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const score = Number(value);
+  if (!Number.isFinite(score)) return null;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function enrichInitiativePriority(
+  initiative: RegisteredInitiative,
+  projection?: {
+    priority_order: number | null;
+    priority_score: number | null;
+    priority_source: string | null;
+    priority_override_reason: string | null;
+  }
+): RegisteredInitiative {
+  const explicitScore = normalizePriorityScore((initiative as any).priorityScore);
+  const projectedScore = normalizePriorityScore(projection?.priority_score);
+  const orderScore = scoreFromPriorityOrder(projection?.priority_order);
+  const score = explicitScore ?? projectedScore ?? orderScore ?? scoreFromPriority(initiative.priority);
+  const projectedSource = String(projection?.priority_source || '').trim().toUpperCase();
+  const source =
+    String((initiative as any).prioritySource || projectedSource || '').trim().toUpperCase() ||
+    (orderScore !== null ? 'PRIORITY_ORDER' : 'LEGACY_PRIORITY');
+  return {
+    ...initiative,
+    priority: normalizedPriority(initiative.priority),
+    priorityScore: score,
+    prioritySource: source as RegisteredInitiative['prioritySource'],
+    priorityOverrideReason:
+      typeof (initiative as any).priorityOverrideReason === 'string'
+        ? (initiative as any).priorityOverrideReason
+        : projection?.priority_override_reason ?? null,
+  };
+}
+
 export interface InitiativeListCursor {
+  priorityScore: number;
   updatedAt: string;
   aggregateId: string;
 }
@@ -2180,28 +2247,73 @@ export class PostgresInitiativeReader {
       version: number;
       payload_json: RegisteredInitiative;
       updated_at: Date | string;
+      priority_order: number | null;
+      priority_score: number | null;
+      priority_source: string | null;
+      priority_override_reason: string | null;
+      sort_priority_score: number;
     }>(
-      `SELECT aggregate_id, version, payload_json, updated_at
-         FROM ie_aggregate_state
-        WHERE organization_id = $1
-          AND aggregate_type = 'initiative'
-          AND ($2::timestamptz IS NULL OR (updated_at, aggregate_id) < ($2::timestamptz, $3::text))
-        ORDER BY updated_at DESC, aggregate_id DESC
-        LIMIT $4`,
-      [organizationId, cursor?.updatedAt ?? null, cursor?.aggregateId ?? null, limit + 1]
+      `SELECT s.aggregate_id, s.version, s.payload_json, s.updated_at,
+              i.priority_order, i.priority_score, i.priority_source, i.priority_override_reason,
+              COALESCE(
+                NULLIF(s.payload_json->>'priorityScore', '')::numeric,
+                i.priority_score,
+                CASE
+                  WHEN i.priority_order = 1 THEN 100
+                  WHEN i.priority_order = 2 THEN 75
+                  WHEN i.priority_order = 3 THEN 50
+                  WHEN i.priority_order > 3 THEN GREATEST(0, LEAST(100, 100 - ((i.priority_order - 1) * 25)))
+                  WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'CRITICAL' THEN 100
+                  WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'HIGH' THEN 75
+                  WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'LOW' THEN 25
+                  ELSE 50
+                END
+              )::integer AS sort_priority_score
+         FROM ie_aggregate_state s
+         LEFT JOIN initiatives i
+           ON i.organization_id = s.organization_id
+          AND i.id = s.aggregate_id
+        WHERE s.organization_id = $1
+          AND s.aggregate_type = 'initiative'
+          AND ($2::integer IS NULL OR (
+            COALESCE(
+              NULLIF(s.payload_json->>'priorityScore', '')::numeric,
+              i.priority_score,
+              CASE
+                WHEN i.priority_order = 1 THEN 100
+                WHEN i.priority_order = 2 THEN 75
+                WHEN i.priority_order = 3 THEN 50
+                WHEN i.priority_order > 3 THEN GREATEST(0, LEAST(100, 100 - ((i.priority_order - 1) * 25)))
+                WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'CRITICAL' THEN 100
+                WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'HIGH' THEN 75
+                WHEN UPPER(COALESCE(s.payload_json->>'priority', i.priority, '')) = 'LOW' THEN 25
+                ELSE 50
+              END
+            )::integer, s.updated_at, s.aggregate_id
+          ) < ($2::integer, $3::timestamptz, $4::text))
+        ORDER BY sort_priority_score DESC, s.updated_at DESC, s.aggregate_id DESC
+        LIMIT $5`,
+      [
+        organizationId,
+        cursor?.priorityScore ?? null,
+        cursor?.updatedAt ?? null,
+        cursor?.aggregateId ?? null,
+        limit + 1,
+      ]
     );
     const pageRows = result.rows.slice(0, limit);
     const last = pageRows.at(-1);
     return {
       initiatives: pageRows.map((row) => ({
         version: row.version,
-        initiative: row.payload_json,
+        initiative: enrichInitiativePriority(row.payload_json, row),
         updatedAt:
           row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
       })),
       nextCursor:
         result.rows.length > limit && last
           ? {
+              priorityScore: last.sort_priority_score,
               updatedAt:
                 last.updated_at instanceof Date
                   ? last.updated_at.toISOString()

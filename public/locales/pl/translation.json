@@ -12245,7 +12245,8 @@
       "requested": "Poproszono o decyzję",
       "requestFailed": "Nie udało się poprosić o decyzję",
       "requestUnavailable": "Najpierw spełnij warunki i przypisz recenzenta",
-      "unsupportedTransitionTarget": "To przejście nie jest jeszcze obsługiwane przez prośbę o decyzję PMO.",      "noTransition": "Na tym etapie nie ma przejścia dostępnego dla Twojej roli.",
+      "unsupportedTransitionTarget": "To przejście nie jest jeszcze obsługiwane przez prośbę o decyzję PMO.",
+      "noTransition": "Na tym etapie nie ma przejścia dostępnego dla Twojej roli.",
       "decisionLog": "Dziennik decyzji",
       "logUnavailable": "Nie udało się wczytać niemutowalnego dziennika decyzji.",
       "noDecisions": "Brak zapisanych decyzji bramkowych.",
@@ -12253,7 +12254,8 @@
       "approved": "Zatwierdzono",
       "rejected": "Odrzucono",
       "selfReviewBlocked": "Wybierz recenzenta innego niż Ty przed wysłaniem tej decyzji.",
-      "proposalPreflightBlocked": "Uprawnienia recenzenta, etap źródłowy lub plan bazowy nie pozwalają jeszcze poprosić o tę decyzję."    },
+      "proposalPreflightBlocked": "Uprawnienia recenzenta, etap źródłowy lub plan bazowy nie pozwalają jeszcze poprosić o tę decyzję."
+    },
     "workload": {
       "aria": "Obciążenie inicjatyw",
       "person": "Członek zespołu",
@@ -57468,5 +57470,7 @@
   },
   "onboardingGuide": {
     "firstRunLink": "Zobacz całą mapę pracy: od kontekstu firmy do wyników"
-  }
+  },
+  "initiatives.columns.priorityScore": "Wynik priorytetu",
+  "initiatives.columns.prioritySourceUnknown": "Nieznane źródło"
 }

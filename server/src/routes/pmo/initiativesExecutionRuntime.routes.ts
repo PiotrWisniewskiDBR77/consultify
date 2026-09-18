@@ -1761,7 +1761,9 @@ function portfolioAnalysisProjectId(analysis: {
 /** Sufit zbiorczego odczytu realizacji (`GET /execution-cases/bulk`). */
 const EXECUTION_CASE_BULK_LIMIT = 100;
 
-function decodeInitiativeCursor(value: unknown): { updatedAt: string; aggregateId: string } | null {
+function decodeInitiativeCursor(
+  value: unknown
+): { priorityScore: number; updatedAt: string; aggregateId: string } | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   try {
     const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as Record<
@@ -1769,19 +1771,29 @@ function decodeInitiativeCursor(value: unknown): { updatedAt: string; aggregateI
       unknown
     >;
     if (
+      typeof decoded.priorityScore !== 'number' ||
+      !Number.isInteger(decoded.priorityScore) ||
+      decoded.priorityScore < 0 ||
+      decoded.priorityScore > 100 ||
       typeof decoded.updatedAt !== 'string' ||
       !Number.isFinite(Date.parse(decoded.updatedAt)) ||
       typeof decoded.aggregateId !== 'string' ||
       !decoded.aggregateId.trim()
     )
       return null;
-    return { updatedAt: decoded.updatedAt, aggregateId: decoded.aggregateId };
+    return {
+      priorityScore: decoded.priorityScore,
+      updatedAt: decoded.updatedAt,
+      aggregateId: decoded.aggregateId,
+    };
   } catch {
     return null;
   }
 }
 
-const encodeInitiativeCursor = (cursor: { updatedAt: string; aggregateId: string } | null) =>
+const encodeInitiativeCursor = (
+  cursor: { priorityScore: number; updatedAt: string; aggregateId: string } | null
+) =>
   cursor === null ? null : Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
 
 export function createInitiativesExecutionRuntimeRouter(

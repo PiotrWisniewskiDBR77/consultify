@@ -22,6 +22,7 @@ import { pmoDueDate, pmoNextStep, pmoResponsible, pmoStageLabel } from './pmoQue
 export const INITIATIVE_REGISTER_COLUMN_IDS = [
   'name',
   'status',
+  'priorityScore',
   'gateName',
   'gateReadiness',
   'owner',
@@ -341,6 +342,35 @@ export const createInitiativeRegisterColumns = (
                         )
                       : getLocalizedStatusLabel(status, statusTr)
           )
+        );
+      },
+    },
+    {
+      id: 'priorityScore',
+      label: tr('initiatives.columns.priorityScore', 'Priority score'),
+      width: '130px',
+      sortable: true,
+      sortAccessor: (raw) => {
+        const value = (raw as InitiativeRegisterRow).priorityScore;
+        return typeof value === 'number' && Number.isFinite(value) ? value : -1;
+      },
+      render: (raw) => {
+        const row = raw as InitiativeRegisterRow;
+        const score = row.priorityScore;
+        const scoreLabel =
+          typeof score === 'number' && Number.isFinite(score) ? String(score) : '—';
+        const source = String(row.prioritySource || '').trim();
+        const sourceLabel = source
+          ? source
+              .toLowerCase()
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (letter) => letter.toUpperCase())
+          : tr('initiatives.columns.prioritySourceUnknown', 'Unknown source');
+        return h(
+          'div',
+          { className: 'min-w-0 text-xs', title: `${scoreLabel} · ${sourceLabel}` },
+          h('span', { className: 'block font-semibold tabular-nums text-c-text' }, scoreLabel),
+          h('span', { className: 'block truncate text-c-text-secondary' }, sourceLabel)
         );
       },
     },

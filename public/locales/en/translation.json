@@ -12995,7 +12995,8 @@
       "requested": "Decision requested",
       "requestFailed": "Could not request a decision",
       "requestUnavailable": "Complete the conditions and assign a reviewer first",
-      "unsupportedTransitionTarget": "This transition is not supported by the PMO decision request yet.",      "noTransition": "No transition is available for your role at this stage.",
+      "unsupportedTransitionTarget": "This transition is not supported by the PMO decision request yet.",
+      "noTransition": "No transition is available for your role at this stage.",
       "decisionLog": "Decision log",
       "logUnavailable": "The immutable decision log could not be loaded.",
       "noDecisions": "No recorded gate decisions.",
@@ -13003,7 +13004,8 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "selfReviewBlocked": "Choose a reviewer other than yourself before requesting this decision.",
-      "proposalPreflightBlocked": "The reviewer authority, source stage or baseline is not ready for this decision."    },
+      "proposalPreflightBlocked": "The reviewer authority, source stage or baseline is not ready for this decision."
+    },
     "workload": {
       "aria": "Initiatives workload",
       "person": "Team member",
@@ -57277,5 +57279,7 @@
   },
   "onboardingGuide": {
     "firstRunLink": "See the full work map: from company context to results"
-  }
+  },
+  "initiatives.columns.priorityScore": "Priority score",
+  "initiatives.columns.prioritySourceUnknown": "Unknown source"
 }

@@ -873,6 +873,9 @@ export interface PortfolioInitiative {
   p11LifecycleState?: string;
   statusReadDrift?: boolean;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  priorityScore?: number | null;
+  prioritySource?: string | null;
+  priorityOverrideReason?: string | null;
   progress: number;
   budget: number;
   expectedRoi?: number;
