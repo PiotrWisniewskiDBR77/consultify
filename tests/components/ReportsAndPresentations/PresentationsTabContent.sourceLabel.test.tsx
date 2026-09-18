@@ -81,8 +81,11 @@ function renderTab(presentations: unknown[]) {
   );
 }
 
-describe('PresentationsTabContent — pole "Źródło" w podglądzie', () => {
-  it('pokazuje nazwę z sourceRefs zamiast surowego ID', () => {
+// D-58: the preview source field renders EN ("Source:", the `rap.columns.source`
+// fallback the react-i18next mock above resolves) per DEC-461; the former Polish
+// "Źródło:" assertions were red on the line. Preview opens via initialArtifactId.
+describe('PresentationsTabContent — preview "Source" field', () => {
+  it('shows the name from sourceRefs instead of the raw ID', () => {
     renderTab([
       makeDeck({
         sourceId: RAW_SOURCE_ID,
@@ -92,11 +95,11 @@ describe('PresentationsTabContent — pole "Źródło" w podglądzie', () => {
       }),
     ]);
 
-    expect(screen.getByText(/Źródło: Ocena Q3 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Source: Ocena Q3 2026/)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(RAW_SOURCE_ID))).not.toBeInTheDocument();
   });
 
-  it('pokazuje "—" (nigdy surowy ID) gdy sourceRefs nie ma dopasowania', () => {
+  it('shows "—" (never the raw ID) when sourceRefs has no match', () => {
     renderTab([
       makeDeck({
         sourceId: RAW_SOURCE_ID,
@@ -104,13 +107,13 @@ describe('PresentationsTabContent — pole "Źródło" w podglądzie', () => {
       }),
     ]);
 
-    expect(screen.getByText(/Źródło: —/)).toBeInTheDocument();
+    expect(screen.getByText(/Source: —/)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(RAW_SOURCE_ID))).not.toBeInTheDocument();
   });
 
-  it('nie pokazuje pigułki Źródło, gdy sourceId jest pusty', () => {
+  it('does not render the Source pill when sourceId is empty', () => {
     renderTab([makeDeck({ sourceId: undefined, sourceRefs: [] })]);
 
-    expect(screen.queryByText(/Źródło:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Source:/)).not.toBeInTheDocument();
   });
 });
