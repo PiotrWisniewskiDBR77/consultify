@@ -20454,6 +20454,7 @@
       "avatarAlt": "Profil",
       "saveNotConfirmedError": "Zapis profilu nie został potwierdzony przez serwer",
       "changesNotConfirmedError": "Zmiany profilu nie zostały potwierdzone przez serwer",
+      "changesNotConfirmedFieldError": "Zmiany profilu nie zostały potwierdzone przez serwer ({{field}})",
       "saveError": "Nie udało się zapisać ustawień profilu"
     },
     "signatures": {

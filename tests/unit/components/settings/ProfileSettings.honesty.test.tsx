@@ -73,6 +73,46 @@ describe('ProfileSettings honest UI', () => {
     expect(onUpdateUser).not.toHaveBeenCalled();
   });
 
+  it('names the mismatched field when the read-back does not confirm it (K-13)', async () => {
+    const onUpdateUser = vi.fn();
+    // displayName persists as '' while the user typed 'Jane D.' → mismatch on displayName
+    vi.mocked(Api.getMe).mockResolvedValue(baseUser);
+
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
+      target: { value: 'Jane D.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Profile changes were not confirmed by the server (Display Name)'
+      );
+    });
+    expect(onUpdateUser).not.toHaveBeenCalled();
+  });
+
+  it('names the specific mismatched field rather than a fixed label (K-13)', async () => {
+    const onUpdateUser = vi.fn();
+    // department persists as '' while the user selected 'Operations' → mismatch on department
+    vi.mocked(Api.getMe).mockResolvedValue(baseUser);
+
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Select department...'), {
+      target: { value: 'Operations' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Profile changes were not confirmed by the server (Department)'
+      );
+    });
+    expect(onUpdateUser).not.toHaveBeenCalled();
+  });
+
   it('shows saved only after getMe returns the persisted profile', async () => {
     const onUpdateUser = vi.fn();
     const persistedUser = { ...baseUser, displayName: 'Jane D.' };

@@ -113,6 +113,27 @@ const PROFILE_CONFIRMATION_FIELDS = [
 
 type ProfileConfirmationField = (typeof PROFILE_CONFIRMATION_FIELDS)[number];
 
+// K-13: label key + EN fallback per confirmed field, so the read-back mismatch
+// can name the field instead of showing a generic "not confirmed" sentence.
+// The fallback is required (not just the key) because the canonical t(key, default)
+// convention keeps the label human-readable even where a bundle is absent.
+// Exhaustive by the Record type — a new PROFILE_CONFIRMATION_FIELDS entry forces a label here.
+const PROFILE_FIELD_LABELS: Record<ProfileConfirmationField, { key: string; en: string }> = {
+  firstName: { key: 'settings.profile.firstName', en: 'First Name' },
+  lastName: { key: 'settings.profile.lastName', en: 'Last Name' },
+  phone: { key: 'auth.phone', en: 'Phone' },
+  companyName: { key: 'settings.profile.company', en: 'Company' },
+  jobTitle: { key: 'settings.profile.jobTitle', en: 'Job Title' },
+  linkedinId: { key: 'settings.profile.linkedinId', en: 'LinkedIn Profile ID' },
+  displayName: { key: 'settings.profile.displayName', en: 'Display Name' },
+  pronouns: { key: 'settings.profile.pronouns', en: 'Pronouns' },
+  department: { key: 'settings.profile.department', en: 'Department' },
+  statusMessage: { key: 'settings.profile.statusMessage', en: 'Status Message' },
+  isOutOfOffice: { key: 'settings.profile.outOfOffice', en: 'Out of Office' },
+  outOfOfficeUntil: { key: 'settings.profile.returnDate', en: 'Return Date' },
+  outOfOfficeMessage: { key: 'settings.profile.outOfOfficeMessage', en: 'Auto-reply Message' },
+};
+
 // Extended form state type
 interface ExtendedFormState {
   firstName: string;
@@ -474,8 +495,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       );
 
       if (mismatchedField) {
+        const fieldLabel = PROFILE_FIELD_LABELS[mismatchedField];
         throw new Error(
-          t('settings.profile.changesNotConfirmedError', 'Profile changes were not confirmed by the server')
+          t(
+            'settings.profile.changesNotConfirmedFieldError',
+            'Profile changes were not confirmed by the server ({{field}})',
+            { field: t(fieldLabel.key, fieldLabel.en) }
+          )
         );
       }
 

@@ -21188,6 +21188,7 @@
       "avatarAlt": "Profile",
       "saveNotConfirmedError": "Profile save was not confirmed by the server",
       "changesNotConfirmedError": "Profile changes were not confirmed by the server",
+      "changesNotConfirmedFieldError": "Profile changes were not confirmed by the server ({{field}})",
       "saveError": "Failed to save profile settings"
     },
     "signatures": {
