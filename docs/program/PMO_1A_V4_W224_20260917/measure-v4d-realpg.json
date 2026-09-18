@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T13:43:12.649Z",
+  "generatedAt": "2026-09-18T15:24:55.024Z",
   "before": {
     "label": "before-seed",
     "summary": {
@@ -8249,7 +8249,7 @@
           "baselineRefs": [
             "schedule-baseline:codex-pmo1a-v4c-baseline:v1"
           ],
-          "proposalVersionId": "1359bd49-2d24-484e-a40f-4d58f6351439",
+          "proposalVersionId": "54494837-24c5-4458-9b7f-3f00ece64650",
           "scopeKey": "initiative_lifecycle:governance_decision_making",
           "sourceDigest": "d3e7dd5160562cb9b09c25068f58e7f97af1d9955eb4cce00479c6badd091f8c"
         }
@@ -8259,7 +8259,7 @@
       "status": 200,
       "body": {
         "data": {
-          "proposalVersionId": "1359bd49-2d24-484e-a40f-4d58f6351439",
+          "proposalVersionId": "54494837-24c5-4458-9b7f-3f00ece64650",
           "status": "approved",
           "approvedScopes": 1,
           "totalScopes": 1
@@ -8269,21 +8269,21 @@
     "exec": {
       "status": 201,
       "body": {
-        "gateDecisionId": "05385dcd-1819-44fc-b23c-6edbadd9227d",
+        "gateDecisionId": "870c570e-5a00-4663-8313-e58ae2da410f",
         "transition": {
           "ok": true,
           "id": "29b45f98-35d5-564c-a88e-ef917c3be2fb",
           "status": "IN_EXECUTION",
           "previousStatus": "APPROVED",
           "gate": "START",
-          "correlationId": "70c24be6-e18d-4434-bf68-0d8c2a174255"
+          "correlationId": "88d1f4ab-ebed-4ebe-8ee6-e1124dc8c18f"
         },
         "idempotentReplay": false
       }
     },
     "history": [
       {
-        "id": "70c24be6-e18d-4434-bf68-0d8c2a174255",
+        "id": "88d1f4ab-ebed-4ebe-8ee6-e1124dc8c18f",
         "initiative_id": "29b45f98-35d5-564c-a88e-ef917c3be2fb",
         "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
         "from_status": "APPROVED",
@@ -8291,8 +8291,8 @@
         "changed_by": "08c54d75-5260-57b1-9db6-a30aed89a587",
         "reason": "Codex local PMO-1a v4c proof execution",
         "gate_type": "START",
-        "created_at": "2026-09-18T13:43:12.564Z",
-        "changed_at": "2026-09-18T18:43:12.525Z"
+        "created_at": "2026-09-18T15:24:54.964Z",
+        "changed_at": "2026-09-18T20:24:54.947Z"
       }
     ]
   }
