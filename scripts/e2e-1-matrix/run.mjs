@@ -18,6 +18,7 @@ import { isDomainMutationRequest } from './network.mjs';
 import { onboardingDoneKey } from './onboarding.mjs';
 import { applyPresentationState } from './presentationState.mjs';
 import { settle as settleAndWait } from './settle.mjs';
+import { makeSettle } from './settleSink.mjs';
 
 const args = process.argv.slice(2);
 const value = (name, fallback) => {
@@ -192,18 +193,12 @@ async function setPresentationState(page, userId) {
   });
 }
 
-async function settle(page, route, sink) {
-  // DEC-590 (Wpis 39): spinner-aware wait lives in settle.mjs. This wrapper only
-  // binds BASE and the console logger so the 7 call sites stay (page, route).
-  // DEC-590 (Wpis 47): the outcome is no longer discarded — it is pushed into the
-  // per-module sink so spinnerGone/elapsedMs reach the variant artifact.
-  const outcome = await settleAndWait(page, route, {
-    base: BASE,
-    log: (message) => console.log(message),
-  });
-  if (Array.isArray(sink)) sink.push(outcome);
-  return outcome;
-}
+// D-09: wrapper extracted to ./settleSink.mjs (makeSettle) so the sink-push
+// wiring is unit-testable without a browser; behavior is unchanged.
+const settle = makeSettle(settleAndWait, {
+  base: BASE,
+  log: (message) => console.log(message),
+});
 
 async function screenshot(page, moduleId, kind, control) {
   const relative = path.join('screenshots', `${slug(`${moduleId}-${kind}-${control}`)}.png`);
