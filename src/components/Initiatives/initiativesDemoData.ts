@@ -791,7 +791,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           : blueprint.progress >= 30
             ? 'PARTIAL'
             : 'NOT_READY',
-      nextAction: isBlocked ? 'Usuń blokadę realizacji' : nextStep.action,
+      nextActionKey: isBlocked ? 'UNBLOCK' : nextStep.actionKey,
+      nextAction: isBlocked ? 'Resume execution' : nextStep.action,
       expectedImpact: blueprint.targetDescription,
       impactConfidence:
         blueprint.progress >= 70 ? 'HIGH' : blueprint.progress >= 30 ? 'MEDIUM' : 'LOW',

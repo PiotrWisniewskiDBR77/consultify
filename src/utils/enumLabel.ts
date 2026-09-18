@@ -113,6 +113,8 @@ export const ENUM_FALLBACKS_EN: Readonly<Record<string, Readonly<Record<string, 
       SCHEDULE: 'Schedule the execution',
       HANDOFF: 'Hand over to execution',
       MONITOR: 'Monitor the execution',
+      /** Zablokowana realizacja (`isBlocked` w demo) — wznów wykonanie. */
+      UNBLOCK: 'Resume execution',
       VERIFY_BENEFITS: 'Verify the benefits',
       PREPARE_CLOSURE: 'Prepare the closure',
       REVIEW_HISTORY: 'Review the history',

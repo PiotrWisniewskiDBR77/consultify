@@ -56532,6 +56532,7 @@
       "SCHEDULE": "Zaplanuj realizację",
       "HANDOFF": "Przekaż do realizacji",
       "MONITOR": "Monitoruj realizację",
+      "UNBLOCK": "Usuń blokadę realizacji",
       "VERIFY_BENEFITS": "Zweryfikuj efekty",
       "PREPARE_CLOSURE": "Przygotuj zamknięcie",
       "REVIEW_HISTORY": "Przejrzyj historię"

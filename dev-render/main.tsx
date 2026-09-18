@@ -658,6 +658,7 @@ const Day236OrganizacjaScreen = React.lazy(() => import('./screens/day236-organi
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
+const D77NextActionUnblockScreen = React.lazy(() => import('./screens/d77-nextaction-unblock'));
 const Rp3InicjatywyAnalizaOffScreen = React.lazy(
   () => import('./screens/rp3-inicjatywy-analiza-off')
 );
@@ -960,6 +961,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'd77-nextaction-unblock': {
+    label:
+      'D-77 (DLUG-PO-MVP) — REALNY <InitiativesHub> na danych demo; klik w zablokowany wiersz (In execution) otwiera podgląd, którego rekomendacja readiness musi być po angielsku („Resume execution"), nie polskim literałem. &lang=en|pl &theme=light|dark',
+    render: () => <D77NextActionUnblockScreen />,
   },
   'rp3-inicjatywy-analiza-off': {
     label:
