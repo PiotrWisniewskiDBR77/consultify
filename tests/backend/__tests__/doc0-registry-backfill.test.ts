@@ -33,9 +33,20 @@ function makeDeps(overrides: Partial<Doc0CliDeps> = {}): { deps: Doc0CliDeps; ca
       calls.push('findArchived');
       return [];
     }),
+    findIrreversibleArchived: vi.fn(async () => {
+      calls.push('findIrreversibleArchived');
+      return [];
+    }),
     backfill: vi.fn(async () => {
       calls.push('backfill');
-      return { dryRun: false, scanned: 119, inserted: 119, failed: 0, skippedUnsupportedType: 0, byFamily: {} };
+      return {
+        dryRun: false,
+        scanned: 119,
+        inserted: 119,
+        failed: 0,
+        skippedUnsupportedType: 0,
+        byFamily: {},
+      };
     }),
     archive: vi.fn(async () => {
       calls.push('archive');
@@ -133,6 +144,7 @@ describe('runCli — kontrakt trybów', () => {
     expect(calls).toContain('findUnlisted');
     expect(calls).toContain('findContentless');
     expect(calls).toContain('findArchived');
+    expect(calls).toContain('findIrreversibleArchived');
     const writes = calls.filter((c) =>
       ['backfill', 'archive', 'restore', 'removeBackfilledRows', 'writeLog'].includes(c)
     );
@@ -177,7 +189,12 @@ describe('runCli — kontrakt trybów', () => {
       backfill: { scanned: 119, inserted: 119, failed: 0, skippedUnsupportedType: 0 },
       archived: 6,
       archiveEntries: [
-        { artifactId: 'art-orphan', organizationId: 'org-1', previousDeliveryState: 'ready', title: 'Orphan' },
+        {
+          artifactId: 'art-orphan',
+          organizationId: 'org-1',
+          previousDeliveryState: 'ready',
+          title: 'Orphan',
+        },
       ],
     };
     const { deps } = makeDeps({
@@ -213,12 +230,28 @@ describe('runCli — kontrakt trybów', () => {
         calls.push('findArchived');
         return dbEntries;
       }),
+      findIrreversibleArchived: vi.fn(async () => {
+        calls.push('findIrreversibleArchived');
+        return [
+          {
+            artifactId: 'deleted',
+            organizationId: 'org-1',
+            previousDeliveryState: 'draft',
+            title: 'Deleted',
+          },
+        ];
+      }),
     });
     const code = await runCli({ mode: 'restore', logPath: DEFAULT_LOG_PATH }, deps);
     expect(code).toBe(0);
     expect(calls).toContain('findArchived');
     expect(deps.restore).toHaveBeenCalledWith(dbEntries);
+    expect(deps.restore).not.toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ artifactId: 'deleted' })])
+    );
     expect(calls).toContain('removeBackfilledRows');
+    const printed = (deps.print as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
+    expect(printed.some((line) => line.includes('irreversibleDeletedContent=1'))).toBe(true);
   });
 
   it('restore ignoruje uszkodzony/pusty log i tak przywraca z bazy (koniec z cichym restored=0)', async () => {

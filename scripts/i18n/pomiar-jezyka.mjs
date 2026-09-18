@@ -93,7 +93,7 @@ const MAPA_SCIEZEK = [
   [/^src\/(components\/(Results|ResultsVNext|Benefits|Conclusions)|components\/(ROIPayback|RadarChart)|views\/(KpiOkrView|FullROIView|ExecutiveSummaryView|ExecutiveView|LeadershipDashboardView))/, '08 Results'],
   [/^src\/(components\/(Finance|Economics)|views\/(EconomicsView|PricingView|PricingLandingPage|AppPricingView))/, '09 Finance'],
   [/^src\/(components\/(DocumentStudio|PresentationStudio|Presentations|Sheets|ReportBuilder|Reports|ReportsAndPresentations|documents)|components\/FullReportDocument|views\/(ReportBuilderView|PublicArtifactView)|views\/reports|views\/docs)/, '10 Materials'],
-  [/^src\/(components\/Audit|views\/(AuditsShowcasePage|DRDAuditReportView|DRDMatrixPreview))/, '11 Audits'],
+  [/^src\/(components\/Audit|views\/(AuditsShowcasePage|DRDMatrixPreview))/, '11 Audits'],
   [/^src\/(components\/Meeting|views\/PublicBookingView)/, '12 Meeting'],
   [/^src\/(components\/(Organization|governance)|components\/OrgSwitcher|views\/(OrganizationView|OrgSetupWizard))/, '13 Organization'],
   [/^src\/(components\/(Admin|SuperAdmin|billing)|views\/(admin|superadmin)|components\/SystemHealth|views\/SystemHealthDashboard)/, '14 Admin Panel'],

@@ -9780,10 +9780,6 @@
     "src/views/ContextBuilder/modules/ChallengeMapModule.tsx"
   ],
   [
-    "reports.generateClientReport",
-    "src/views/DRDAuditReportView.tsx"
-  ],
-  [
     "pages.enterprise.hero.badge",
     "src/views/EnterprisePage.tsx"
   ],

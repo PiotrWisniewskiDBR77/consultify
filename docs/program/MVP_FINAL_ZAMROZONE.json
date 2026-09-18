@@ -2677,7 +2677,6 @@
     "src/utils/criterionWorkspaceV2Flag.ts",
     "src/utils/drdReportFlag.ts",
     "src/views/AuditsShowcasePage.tsx",
-    "src/views/DRDAuditReportView.tsx",
     "src/views/DRDMatrixPreview.tsx"
    ],
    "wzorce": [

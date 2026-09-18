@@ -27,7 +27,6 @@ assessment-initiatives-table	R1	InitiativesTable	dług zastany 2026-09-01 (audyt
 assessment-output-report	R1	AssessmentReportView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentReportView>, którego żaden plik src/ nie renderuje
 assessment-presentation-view	R1	AssessmentPresentationView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentPresentationView>, którego żaden plik src/ nie renderuje
 assessment-reports-table	R1	ReportsTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <ReportsTable>, którego żaden plik src/ nie renderuje
-audyty-drd-report	R1	AuditsHub	dług zastany 2026-09-01 (audyt przyrządu): montuje <AuditsHub>, którego żaden plik src/ nie renderuje
 audyty-warsztat-kryterium	R1	CriterionWorkspaceGate	dług zastany 2026-09-01 (audyt przyrządu): montuje <CriterionWorkspaceGate>, którego żaden plik src/ nie renderuje
 auth-code-entry	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: ta sama kompozycja co auth-login (src/routes/AppRoutes.tsx:844-851), inny initialStep. Dowod jak wyzej.
 auth-forgot-password	R2	AuthLayout+ForgotPasswordView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:1476-1480 (trasa /forgot-password: <AuthLayout><Suspense><ForgotPasswordView /></Suspense></AuthLayout>).

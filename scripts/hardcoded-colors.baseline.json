@@ -1660,7 +1660,6 @@
     "src/views/docs/DocsChangelogView.tsx": 20,
     "src/views/docs/DocsHomeView.tsx": 62,
     "src/views/docs/DocsSecurityView.tsx": 27,
-    "src/views/DRDAuditReportView.tsx": 76,
     "src/views/EnterprisePage.tsx": 31,
     "src/views/ExecutiveSummaryView.tsx": 51,
     "src/views/ExecutiveView.tsx": 83,

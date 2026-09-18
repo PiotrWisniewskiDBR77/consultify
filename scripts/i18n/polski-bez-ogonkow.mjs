@@ -52,7 +52,7 @@ const ZAKRES_MODULOW = [
   ['07 Execution', [/^src\/(components\/(Execution|PMO|Projects|Team)|components\/(Task|Workload|Rollout|FullPilot)[A-Z]|views\/(FullExecutionView|FullPilotView|ProjectIntelligenceView))/]],
   ['08 Results', [/^src\/(components\/(Results|ResultsVNext|Benefits|Conclusions)|components\/(ROIPayback|RadarChart)|views\/(KpiOkrView|FullROIView|ExecutiveSummaryView|ExecutiveView|LeadershipDashboardView))/]],
   ['10 Materials', [/^src\/(components\/(DocumentStudio|PresentationStudio|Presentations|Sheets|ReportBuilder|Reports|ReportsAndPresentations|documents)|components\/FullReportDocument|views\/(ReportBuilderView|PublicArtifactView)|views\/reports|views\/docs)/]],
-  ['11 Audits', [/^src\/(components\/Audit|views\/(AuditsShowcasePage|DRDAuditReportView|DRDMatrixPreview))/]],
+  ['11 Audits', [/^src\/(components\/Audit|views\/(AuditsShowcasePage|DRDMatrixPreview))/]],
   ['12 Meeting', [/^src\/(components\/Meeting|views\/PublicBookingView)/]],
   ['13 Organization', [/^src\/(components\/(Organization|governance)|components\/OrgSwitcher|views\/(OrganizationView|OrgSetupWizard))/]],
 ];

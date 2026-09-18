@@ -2220,34 +2220,19 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
     const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
-    // Verify report exists and belongs to org
-    const report = await ReportBuilderService.getReport(id, organizationId);
-    if (!report) {
+    // U-45 (Wpis 92): the service deletes the content AND closes the list-registry
+    // row for this origin — an inline `DELETE FROM report_builder_reports` here left
+    // `v8_output_artifacts` behind, so Materials → Documents kept showing a row whose
+    // open returned 404 (6 such rows measured on the staging copy).
+    const outcome = await ReportBuilderService.deleteReport(id, organizationId);
+    if (outcome.status === 'not_found') {
       return res.status(404).json({ error: 'Report not found' });
     }
-
-    // Only allow deletion of DRAFT reports
-    if (
-      report.report.status !== 'CONFIGURING' &&
-      report.report.status !== 'DRAFT' &&
-      report.report.status !== 'GENERATED'
-    ) {
+    if (outcome.status === 'not_deletable') {
       return res
         .status(400)
         .json({ error: 'Only configuring, draft, or generated reports can be deleted' });
     }
-
-    // Delete (cascade will handle sections)
-    const { getDatabase } = await import('../database/index.js');
-    const db = getDatabase();
-    await new Promise<void>((resolve, reject) => {
-      db.run('DELETE FROM report_builder_reports WHERE id = ?', [id], (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    logger.info('[ReportBuilder] Report deleted', { reportId: id });
 
     res.json({ success: true });
   } catch (err) {

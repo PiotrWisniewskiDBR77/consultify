@@ -235,7 +235,8 @@ export async function locateDocumentContent(params: {
     });
     return { registry: 'artifact_content', reason: null };
   } catch (error: unknown) {
-    reason = (error as { code?: string })?.code || (error instanceof Error ? error.message : 'error');
+    reason =
+      (error as { code?: string })?.code || (error instanceof Error ? error.message : 'error');
   }
 
   const draft = await dbGet<{ id: string }>(
@@ -356,48 +357,13 @@ export async function archiveContentlessDocumentRows(
       summary.archived += 1;
       continue;
     }
-    // DEC-595: etykieta sieroty w ISTNIEJĄCEJ kolumnie `origin_summary_json`
-    // (zero DDL). Czyta ją `matchesViewFilters` (v8/artifactRegistryService.ts),
-    // żeby para (delivery_state='archived' + doc0Orphan) znikała z listy
-    // dokumentów — sam 'archived' NIE wystarcza, bo archiwum z wyboru użytkownika
-    // pozostaje widoczne (filtr statusu 'archived' w Outputs). `--restore` celowo
-    // NIE usuwa etykiety: przywrócony wiersz ma etykietę, ale delivery_state sprzed
-    // archiwizacji — para filtrująca rozpada się i wiersz wraca na listę.
-    const nowIso = new Date().toISOString();
-    const current = await dbGet<{ origin_summary_json: string | null }>(
-      `SELECT origin_summary_json FROM v8_output_artifacts
-        WHERE artifact_id = ? AND organization_id = ?`,
-      [row.artifactId, row.organizationId],
-      { fallback: true }
-    );
-    let summaryJson: Record<string, unknown> = {};
-    try {
-      const parsed = current?.origin_summary_json ? JSON.parse(current.origin_summary_json) : null;
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        summaryJson = parsed as Record<string, unknown>;
-      }
-    } catch {
-      summaryJson = {};
-    }
-    const stamped = JSON.stringify({
-      ...summaryJson,
-      doc0Orphan: true,
-      doc0OrphanReason: row.reason ?? null,
-      doc0OrphanArchivedAt: nowIso,
-      // Wpis 87 P1: persist the pre-archive state IN THE ROW so `--restore` can
-      // read it back from the database instead of depending on the apply log as
-      // its only source (a second idempotent `--apply` used to overwrite the log
-      // with empty entries, after which `--restore` silently restored 0 and left
-      // the rows archived forever).
-      doc0OrphanPreviousDeliveryState: row.deliveryState,
+    const archived = await archiveDocumentRowAsOrphan({
+      artifactId: row.artifactId,
+      organizationId: row.organizationId,
+      previousDeliveryState: row.deliveryState,
+      reason: row.reason,
     });
-    const result = await dbRun(
-      `UPDATE v8_output_artifacts
-          SET delivery_state = 'archived', origin_summary_json = ?, last_transition_at = ?
-        WHERE artifact_id = ? AND organization_id = ? AND delivery_state <> 'archived'`,
-      [stamped, nowIso, row.artifactId, row.organizationId]
-    );
-    if (result?.success === false) {
+    if (!archived) {
       summary.entries.pop();
       logger.warn(`${LOG_PREFIX} archive failed for ${row.artifactId}`);
       continue;
@@ -416,6 +382,123 @@ export async function archiveContentlessDocumentRows(
       `alreadyArchived=${summary.alreadyArchived} dryRun=${dryRun}`
   );
   return summary;
+}
+
+export interface ArchiveOrphanRowParams {
+  artifactId: string;
+  organizationId: string;
+  /** `delivery_state` sprzed archiwizacji — `restoreArchivedDocumentRows` czyta go z wiersza. */
+  previousDeliveryState: string;
+  /** Powód sieroctwa: kod z `locateDocumentContent` albo źródło usunięcia treści. */
+  reason: string | null;
+}
+
+/**
+ * DEC-595: JEDEN wiersz rejestru listowego bez treści dostaje parę
+ * (`delivery_state='archived'` + etykieta `doc0Orphan` w ISTNIEJĄCEJ kolumnie
+ * `origin_summary_json`, zero DDL). Parę czyta `matchesViewFilters`
+ * (v8/artifactRegistryService.ts:3023-3031) i zdejmuje wiersz z listy Dokumenty —
+ * sam `archived` NIE wystarcza, bo archiwum z wyboru użytkownika zostaje widoczne
+ * (filtr statusu 'archived' w Outputs). `--restore` celowo NIE usuwa etykiety:
+ * przywrócony wiersz ma etykietę, ale `delivery_state` sprzed archiwizacji — para
+ * filtrująca rozpada się i wiersz wraca na listę.
+ *
+ * Zwraca `false`, gdy wiersz jest już zamknięty (`delivery_state='archived'`) albo
+ * gdy UPDATE nie doszedł — wołacz decyduje, czy to odwrócić.
+ */
+export async function archiveDocumentRowAsOrphan(params: ArchiveOrphanRowParams): Promise<boolean> {
+  const nowIso = new Date().toISOString();
+  const current = await dbGet<{ origin_summary_json: string | null; delivery_state: string }>(
+    `SELECT origin_summary_json, delivery_state FROM v8_output_artifacts
+      WHERE artifact_id = ? AND organization_id = ?`,
+    [params.artifactId, params.organizationId],
+    { fallback: true }
+  );
+  if (!current || current.delivery_state === 'archived') return false;
+
+  let summaryJson: Record<string, unknown> = {};
+  try {
+    const parsed = current.origin_summary_json ? JSON.parse(current.origin_summary_json) : null;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      summaryJson = parsed as Record<string, unknown>;
+    }
+  } catch {
+    summaryJson = {};
+  }
+  const stamped = JSON.stringify({
+    ...summaryJson,
+    doc0Orphan: true,
+    doc0OrphanReason: params.reason ?? null,
+    doc0OrphanArchivedAt: nowIso,
+    // Wpis 87 P1: persist the pre-archive state IN THE ROW so `--restore` can
+    // read it back from the database instead of depending on the apply log as
+    // its only source (a second idempotent `--apply` used to overwrite the log
+    // with empty entries, after which `--restore` silently restored 0 and left
+    // the rows archived forever).
+    doc0OrphanPreviousDeliveryState: params.previousDeliveryState,
+  });
+  const result = await dbRun(
+    `UPDATE v8_output_artifacts
+        SET delivery_state = 'archived', origin_summary_json = ?, last_transition_at = ?
+      WHERE artifact_id = ? AND organization_id = ? AND delivery_state <> 'archived'`,
+    [stamped, nowIso, params.artifactId, params.organizationId]
+  );
+  return result?.success !== false;
+}
+
+/**
+ * U-45 (Wpis 92): treść dokumentu została USUNIĘTA w swoim rejestrze treści, więc
+ * wiersz rejestru listowego (`v8_output_artifacts` + `v8_artifact_origin_links`)
+ * nie może zostać AKTYWNĄ sierotą. Dokładnie ten rozjazd zmierzony na kopii
+ * stagingu: 6 wierszy `artifact_family='document'` z `origin_runtime='report'`,
+ * których `origin_record_id` nie istnieje w `report_builder_reports` — lista je
+ * pokazywała, a otwarcie dawało 404, bo `DELETE /api/report-builder/:id` kasował
+ * treść i nie dotykał rejestru.
+ *
+ * Zamknięcie wiersza listy jest niedestrukcyjne (etykieta +
+ * `delivery_state='archived'`), ale treść raportu została usunięta. Dlatego
+ * `REPORT_CONTENT_DELETED` jest raportowany oddzielnie i wykluczony z restore
+ * DEC-595; nie kasujemy grantów, bram recenzji ani rekordów publikacji wiersza.
+ */
+export async function archiveRegistryRowForDeletedContent(params: {
+  organizationId: string;
+  originRuntime: string;
+  originRecordId: string;
+  reason: string;
+}): Promise<{ artifactId: string | null; archived: boolean }> {
+  const link = await dbGet<{ artifact_id: string }>(
+    `SELECT artifact_id FROM v8_artifact_origin_links
+      WHERE organization_id = ? AND origin_runtime = ? AND origin_record_id = ?
+        AND is_primary_origin = 1`,
+    [params.organizationId, params.originRuntime, params.originRecordId],
+    { fallback: true }
+  );
+  const artifactId = String(link?.artifact_id || '').trim();
+  if (!artifactId) return { artifactId: null, archived: false };
+
+  const row = await dbGet<{ delivery_state: string }>(
+    `SELECT delivery_state FROM v8_output_artifacts
+      WHERE artifact_id = ? AND organization_id = ?`,
+    [artifactId, params.organizationId],
+    { fallback: true }
+  );
+  if (!row) return { artifactId, archived: false };
+
+  const archived = await archiveDocumentRowAsOrphan({
+    artifactId,
+    organizationId: params.organizationId,
+    previousDeliveryState: row.delivery_state,
+    reason: params.reason,
+  });
+  if (archived) {
+    logger.info(
+      `${LOG_PREFIX} closed registry row ${artifactId} after content deletion ` +
+        `(${row.delivery_state} → archived, origin=${params.originRuntime}:${
+          params.originRecordId
+        }, reason=${params.reason})`
+    );
+  }
+  return { artifactId, archived };
 }
 
 /** Cofa `archiveContentlessDocumentRows` wiersz po wierszu (stan sprzed archiwizacji). */
@@ -453,6 +536,7 @@ export async function restoreArchivedDocumentRows(
  * Wpis 87 P1: the authoritative source for `--restore` is the DATABASE, not the
  * apply log. Returns every document row currently `delivery_state='archived'`
  * that carries the DOC-0 orphan label stamped by `archiveContentlessDocumentRows`,
+ * excluding `REPORT_CONTENT_DELETED`, whose owner content cannot be restored,
  * with the pre-archive state read back from the row itself
  * (`doc0OrphanPreviousDeliveryState`). A second idempotent `--apply` no longer
  * breaks restore: even if the log were lost, these rows are found and reverted.
@@ -493,6 +577,59 @@ export async function findArchivedDoc0OrphanRows(
       label = {};
     }
     if (label.doc0Orphan !== true) continue;
+    // This reason means the owner content was intentionally deleted. Restoring
+    // its registry row would expose a document whose open path is a 404.
+    if (label.doc0OrphanReason === 'REPORT_CONTENT_DELETED') continue;
+    const previousDeliveryState =
+      typeof label.doc0OrphanPreviousDeliveryState === 'string' &&
+      label.doc0OrphanPreviousDeliveryState.trim() !== ''
+        ? label.doc0OrphanPreviousDeliveryState
+        : 'draft';
+    entries.push({
+      artifactId: row.artifact_id,
+      organizationId: row.organization_id,
+      previousDeliveryState,
+      title: row.title_snapshot,
+    });
+  }
+  return entries;
+}
+
+/** Rows intentionally closed after content deletion; report them, never restore them. */
+export async function findIrreversibleArchivedDoc0Rows(
+  params: { organizationId?: string } = {}
+): Promise<ArchivedDocumentEntry[]> {
+  const scoped = Boolean(params.organizationId);
+  const rows = await dbAll<{
+    artifact_id: string;
+    organization_id: string;
+    title_snapshot: string | null;
+    origin_summary_json: string | null;
+  }>(
+    `SELECT a.artifact_id, a.organization_id, a.title_snapshot, a.origin_summary_json
+       FROM v8_output_artifacts a
+      WHERE a.artifact_family = 'document'
+        AND a.delivery_state = 'archived'
+        ${scoped ? 'AND a.organization_id = ?' : ''}
+      ORDER BY a.created_at ASC`,
+    scoped ? [params.organizationId as string] : [],
+    { fallback: true }
+  );
+
+  const entries: ArchivedDocumentEntry[] = [];
+  for (const row of rows || []) {
+    let label: Record<string, unknown> = {};
+    try {
+      const parsed = row.origin_summary_json ? JSON.parse(row.origin_summary_json) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        label = parsed as Record<string, unknown>;
+      }
+    } catch {
+      label = {};
+    }
+    if (label.doc0Orphan !== true || label.doc0OrphanReason !== 'REPORT_CONTENT_DELETED') {
+      continue;
+    }
     const previousDeliveryState =
       typeof label.doc0OrphanPreviousDeliveryState === 'string' &&
       label.doc0OrphanPreviousDeliveryState.trim() !== ''

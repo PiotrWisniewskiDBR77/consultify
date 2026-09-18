@@ -12,8 +12,9 @@
  *              archivedByDoc0 (wiersze już zarchiwizowane przez ten backfill)
  *   --apply    backfill + archiwizacja sierot (idempotentne), log JSON MERGOWANY (append,
  *              nigdy nadpisany pustym — drugi apply nie kasuje wpisów audytu)
- *   --restore  DB-DRIVEN: czyta z bazy wiersze `delivery_state='archived'` z etykietą
+ *   --restore  DB-DRIVEN: czyta z bazy odwracalne wiersze DEC-595 z etykietą
  *              sieroty DOC-0 i przywraca ich stan sprzed archiwizacji (zapisany w wierszu);
+ *              `REPORT_CONTENT_DELETED` tylko raportuje jako nieodwracalne;
  *              log jest TYLKO audytem, nie źródłem — restore działa nawet bez logu
  *
  * Log (domyślnie `doc0-registry-backfill.log.json`, nadpisywalny `--log <path>`)
@@ -39,6 +40,7 @@ import {
   backfillUnlistedNativeArtifacts,
   findArchivedDoc0OrphanRows,
   findContentlessDocumentRows,
+  findIrreversibleArchivedDoc0Rows,
   findUnlistedNativeArtifacts,
   restoreArchivedDocumentRows,
   type ArchiveSummary,
@@ -116,6 +118,10 @@ export interface Doc0CliDeps {
   findContentless: (params: { organizationId?: string }) => Promise<unknown[]>;
   /** Wpis 87 P1: DB-driven source for --restore and dry-run's archivedByDoc0. */
   findArchived: (params: { organizationId?: string }) => Promise<ArchivedDocumentEntry[]>;
+  /** Deleted owner content cannot be restored; report these rows separately. */
+  findIrreversibleArchived: (params: {
+    organizationId?: string;
+  }) => Promise<ArchivedDocumentEntry[]>;
   backfill: (params: {
     organizationId?: string;
     dryRun?: boolean;
@@ -193,9 +199,10 @@ export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promis
     const unlisted = await deps.findUnlisted(scope);
     const contentless = await deps.findContentless(scope);
     const archived = await deps.findArchived(scope);
+    const irreversible = await deps.findIrreversibleArchived(scope);
     deps.print(
       `dry-run: unlisted=${unlisted.length} contentless=${contentless.length} ` +
-        `archivedByDoc0=${archived.length}` +
+        `archivedByDoc0=${archived.length} irreversibleDeletedContent=${irreversible.length}` +
         (options.organizationId ? ` org=${options.organizationId}` : ' (all orgs)')
     );
     deps.print('dry-run makes ZERO writes; pass --apply to backfill + archive');
@@ -245,10 +252,12 @@ export async function runCli(options: Doc0CliOptions, deps: Doc0CliDeps): Promis
   // (with their pre-archive state stored in the row), so it works even when the log
   // is missing, empty, or stale, and can no longer silently restore 0.
   const entries = await deps.findArchived(scope);
+  const irreversible = await deps.findIrreversibleArchived(scope);
   const restored = await deps.restore(entries);
   const removed = await deps.removeBackfilledRows();
   deps.print(
     `restore: restored=${restored.restored} failed=${restored.failed} :: ` +
+      `irreversibleDeletedContent=${irreversible.length} (reported, not restored) :: ` +
       `removed backfill rows: links=${removed.linksDeleted} artifacts=${removed.artifactsDeleted}`
   );
   return 0;
@@ -259,6 +268,7 @@ export const defaultDeps: Doc0CliDeps = {
   findUnlisted: (params) => findUnlistedNativeArtifacts(params),
   findContentless: (params) => findContentlessDocumentRows(params),
   findArchived: (params) => findArchivedDoc0OrphanRows(params),
+  findIrreversibleArchived: (params) => findIrreversibleArchivedDoc0Rows(params),
   backfill: (params) => backfillUnlistedNativeArtifacts(params),
   archive: (params) => archiveContentlessDocumentRows(params),
   restore: (entries) => restoreArchivedDocumentRows(entries),

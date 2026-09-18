@@ -17,6 +17,7 @@ import {
   backfillUnlistedNativeArtifacts,
   findArchivedDoc0OrphanRows,
   findContentlessDocumentRows,
+  findIrreversibleArchivedDoc0Rows,
   findUnlistedNativeArtifacts,
   listShapeForNativeArtifactType,
   locateDocumentContent,
@@ -46,6 +47,7 @@ const LIST = {
   canvasDocument: 'art-doc0-canvas-document',
   orphan: 'art-doc0-orphan',
   orphanArchived: 'art-doc0-orphan-archived',
+  irreversibleDeleted: 'art-doc0-irreversible-deleted',
 } as const;
 
 const CANVAS_DRAFT = 'wc-doc0-draft';
@@ -238,6 +240,28 @@ async function seed(db: Client): Promise<void> {
     originRuntime: 'report',
     originRecordId: 'missing-report-builder-id-2',
   });
+
+  // A report owner row intentionally closed after its content was deleted. It
+  // is auditable but must never be a DEC-595 restore candidate.
+  await insertListRow(db, {
+    artifactId: LIST.irreversibleDeleted,
+    deliveryState: 'archived',
+    title: 'Doc0 intentionally deleted report',
+  });
+  await db.query(
+    `UPDATE v8_output_artifacts
+        SET origin_summary_json = $1
+      WHERE artifact_id = $2 AND organization_id = $3`,
+    [
+      JSON.stringify({
+        doc0Orphan: true,
+        doc0OrphanReason: 'REPORT_CONTENT_DELETED',
+        doc0OrphanPreviousDeliveryState: 'ready',
+      }),
+      LIST.irreversibleDeleted,
+      ORG,
+    ]
+  );
 }
 
 async function cleanup(db: Client): Promise<void> {
@@ -313,7 +337,9 @@ describe.skipIf(!realPg)('DOC-0 documentRegistryBackfillService (real PostgreSQL
       return result.rows;
     });
     expect(families).toHaveLength(3);
-    expect(families.map((row) => `${row.origin_record_id}:${row.artifact_family}/${row.output_type}`)).toEqual(
+    expect(
+      families.map((row) => `${row.origin_record_id}:${row.artifact_family}/${row.output_type}`)
+    ).toEqual(
       [
         `${WAVE5.deck}:presentation/presentation`,
         `${WAVE5.research}:document/report`,
@@ -450,6 +476,16 @@ describe.skipIf(!realPg)('DOC-0 documentRegistryBackfillService (real PostgreSQL
         organizationId: ORG,
         previousDeliveryState: 'draft',
         title: 'Doc0 orphan',
+      },
+    ]);
+
+    const irreversible = await findIrreversibleArchivedDoc0Rows({ organizationId: ORG });
+    expect(irreversible).toEqual([
+      {
+        artifactId: LIST.irreversibleDeleted,
+        organizationId: ORG,
+        previousDeliveryState: 'ready',
+        title: 'Doc0 intentionally deleted report',
       },
     ]);
 

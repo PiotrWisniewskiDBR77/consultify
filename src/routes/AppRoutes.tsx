@@ -626,10 +626,7 @@ const CriterionWorkspace = lazyWithRetry(
 // wzięły"): usunięto stąd zakładkę „Raporty DRD"/`AuditDrdReportsTab` (jedyne
 // wejście do `/audit-programs/drd-report/:reportId`) razem z tą trasą,
 // `DRDAuditReportRoute` i flagą `isDrdReportEnabled` (`src/utils/drdReportFlag.ts`,
-// usunięta) — kod, nie tylko flaga. `DRDAuditReportView`
-// (src/views/DRDAuditReportView.tsx) zostaje w repo nieużywany (dawny stan
-// sprzed 2026-07-26 — dokumentacja modułu wskazuje, że logicznie należy do
-// Assessment, nie do Audits; do decyzji przy ewentualnym podłączeniu tam).
+// usunięta) — kod, nie tylko flaga.
 const AuditReportDocumentView = lazyWithRetry(
   () => import('@/components/Audit/method/AuditReportDocumentView')
 );
@@ -1890,12 +1887,6 @@ export const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* DEC-417 (06.09): trasa `/audit-programs/drd-report/:reportId`
-            (DRDAuditReportRoute + flaga isDrdReportEnabled) usunięta razem
-            z zakładką „Raporty DRD" w AuditsMethodHub — to był jej jedyny
-            wołacz. Patrz komentarz przy DRDAuditReportView wyżej w tym
-            pliku. */}
 
         {/* NAPRAWA 2 (2026-08-26) — pełny widok treści raportu, SPEC-A Dokument,
             otwierany z listy Raportów (AuditReportsTab). Flag-gated — patrz

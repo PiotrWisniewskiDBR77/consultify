@@ -83,7 +83,6 @@ const Rg1AuditsGenerateOwnerScreen = React.lazy(() => import('./screens/rg1-audi
 // rejestrował — `git log -S"materials-registry" -- dev-render/main.tsx` nie
 // zwraca ŻADNEGO commitu. Dopisuję tylko rejestrację, plik gotowy bez zmian.
 const MaterialsRegistryScreen = React.lazy(() => import('./screens/materials-registry'));
-const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
 const DocumentStudioContextChipScreen = React.lazy(
   () => import('./screens/document-studio-context-chip')
 );
@@ -1291,11 +1290,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DOCUMENT STUDIO — FALA 2 (2026-07-28): „Zrób z tego wzorzec" — Plik→Zrób z tego wzorzec→3-5 pytań doprecyzowujących→createTemplateFromArtifact.',
     render: () => <DocumentStudioSaveAsTemplateScreen />,
-  },
-  'audyty-drd-report': {
-    label:
-      'AUDYTY — zakładka „Raporty": REALNY <AuditsMethodHub ?tab=reports> (/audit-programs) + REALNY DRDAuditReportView (?variant=report, ff_drd_report). Do 2026-09-02 wariant listowy montował niezamontowany w produkcie AuditsHub.',
-    render: () => <AudytyDrdReportScreen />,
   },
   'assessment-quality-review-panel': {
     label:

@@ -13,13 +13,14 @@ import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
-import type { PgTransactionClient } from '../utils/queryHelpers.js';
+import { withPgTransaction, type PgTransactionClient } from '../utils/queryHelpers.js';
 import {
   buildDrdAxesData,
   deriveAssessmentScores,
   type DrdAxisAggregate,
 } from './assessment/drdAxisAggregation.js';
 import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
+import { archiveRegistryRowForDeletedContent } from './documentRegistryBackfillService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
 // ==========================================
@@ -443,7 +444,9 @@ function queryRun(
 ): Promise<{ changes: number; lastID: number }> {
   const pinned = reportBuilderTransaction.current();
   if (pinned)
-    return pinned.query(sql, params).then((result) => ({ changes: result.rowCount ?? 0, lastID: 0 }));
+    return pinned
+      .query(sql, params)
+      .then((result) => ({ changes: result.rowCount ?? 0, lastID: 0 }));
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (this: { changes: number; lastID: number }, err: Error | null) {
       if (err) reject(err);
@@ -2230,6 +2233,72 @@ export async function unarchiveReport(
   return { id: reportId };
 }
 
+export type DeleteReportOutcome =
+  | { status: 'deleted'; reportId: string; registryClosed: boolean }
+  | { status: 'not_found' }
+  | { status: 'not_deletable'; reportStatus: string };
+
+/**
+ * U-45 (Wpis 92): usunięcie TREŚCI raportu musi domknąć wiersz rejestru listowego.
+ *
+ * Dotychczasowy handler `DELETE /api/report-builder/:id` kasował wyłącznie
+ * `report_builder_reports` (sekcje idą kaskadą FK) i nie dotykał
+ * `v8_output_artifacts` / `v8_artifact_origin_links`, więc Materiały → Dokumenty
+ * dalej pokazywały wiersz, którego otwarcie dawało 404. Zmierzone na kopii
+ * stagingu: **6** takich wierszy (`artifact_family='document'`,
+ * `origin_runtime='report'`, brak rekordu treści) — 5 `draft` + 1 `ready`.
+ *
+ * Walidacja jest 1:1 z dotychczasowym handlerem (te same trzy stany, bez
+ * normalizacji wielkości liter), żeby nie zmienić zakresu tego, co da się usunąć.
+ * Zamknięcie rejestru zachowuje ślad audytowy (etykieta `doc0Orphan` +
+ * `delivery_state='archived'`, patrz `archiveRegistryRowForDeletedContent`) i nie
+ * kasuje grantów, bram recenzji ani rekordów publikacji wiersza. Nie podlega ono
+ * restore DEC-595, bo treść raportu została usunięta.
+ */
+export async function deleteReport(
+  reportId: string,
+  organizationId: string
+): Promise<DeleteReportOutcome> {
+  return withPgTransaction((client) =>
+    withReportBuilderClient(client, async () => {
+      const existing = await queryOne<{ id: string; status: string | null }>(
+        `SELECT id, status FROM report_builder_reports
+          WHERE id = ? AND organization_id = ?
+          FOR UPDATE`,
+        [reportId, organizationId]
+      );
+      if (!existing) return { status: 'not_found' } as const;
+
+      const reportStatus = String(existing.status ?? '');
+      if (
+        reportStatus !== 'CONFIGURING' &&
+        reportStatus !== 'DRAFT' &&
+        reportStatus !== 'GENERATED'
+      ) {
+        return { status: 'not_deletable', reportStatus } as const;
+      }
+
+      // One pinned transaction covers both registries. The orphan stamp is
+      // deliberately first: a failing DELETE rolls the stamp back together
+      // with the report operation and preserves the prior list state.
+      const { archived } = await archiveRegistryRowForDeletedContent({
+        organizationId,
+        originRuntime: 'report',
+        originRecordId: reportId,
+        reason: 'REPORT_CONTENT_DELETED',
+      });
+
+      await queryRun(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
+        reportId,
+        organizationId,
+      ]);
+
+      logger.info('[ReportBuilder] Report deleted', { reportId, registryClosed: archived });
+      return { status: 'deleted', reportId, registryClosed: archived } as const;
+    })
+  );
+}
+
 /**
  * Update report metadata (title, description) without changing status
  */
@@ -3659,6 +3728,7 @@ const ReportBuilderService = {
   updateReportConfig,
   archiveReport,
   unarchiveReport,
+  deleteReport,
   duplicateReport,
   getSourceDataForReport,
   // Export functions

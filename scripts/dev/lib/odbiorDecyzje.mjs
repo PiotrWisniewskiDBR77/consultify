@@ -192,7 +192,6 @@ export const NAPRAWIONE_DZIS = [
   { id: 'mw-007-calendar-narrow-viewport', katalog: '16-kanon' },
   { id: 'report-artifact', katalog: '10-materialy', dowod: 'evidence-r3-report-artifact.png' },
   { id: 'audyty-warsztat-kryterium', katalog: '11-audyty', dowod: 'proof-audyty-warsztat-kryterium.png' },
-  { id: 'audyty-drd-report', katalog: '11-audyty', dowod: 'proof-audyty-drd-report-hub.png' },
   { id: 'drd-macierz-oceny', katalog: '05-ocena', dowod: 'proof-drd-macierz-oceny.png' },
   { id: 'assessment-report-contract', katalog: '05-ocena', dowod: 'proof-assessment-report-contract.png' },
   { id: 'assessment-reports-table', katalog: '05-ocena', dowod: 'proof-assessment-reports-table.png' },
