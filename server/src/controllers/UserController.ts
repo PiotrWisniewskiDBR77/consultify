@@ -10,6 +10,8 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
+import { shapeOrgPersonPayload } from '../services/orgPersonPayloadPolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { clearSchemaCache, getTableColumns } from '../utils/dbSchema.js';
@@ -164,15 +166,39 @@ export class UserController {
         return;
       }
 
-      const sql = 'SELECT * FROM users WHERE id = ? AND organization_id = ?';
+      const sql = `
+        SELECT id, email, first_name, last_name, role, avatar_url, status, created_at, organization_id
+          FROM users
+         WHERE id = ? AND organization_id = ?
+      `;
       const user = await queryHelpers.queryOne(sql, [id, orgId]);
 
       if (!user) {
+        const foreignUser = await queryHelpers.queryOne('SELECT id FROM users WHERE id = ?', [id]);
+        if (foreignUser) {
+          res.status(403).json({ error: 'USERS_READ_FORBIDDEN' });
+          return;
+        }
         res.status(404).json({ error: 'User not found' });
         return;
       }
 
-      res.json(user);
+      const shaped = shapeOrgPersonPayload(
+        {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          avatarUrl: user.avatar_url,
+          status: user.status,
+          createdAt: user.created_at,
+          organizationId: user.organization_id,
+        },
+        getRequestAccessRole(req as any)
+      );
+
+      res.json(shaped);
     }
   );
 
