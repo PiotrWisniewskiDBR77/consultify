@@ -43,7 +43,7 @@ describe('K-29 — task attachments drag & drop on the whole card', () => {
   });
 
   it('uploads a small file dropped on a COLLAPSED card (K-29 regression: drop used to fall through to the browser)', async () => {
-    const onUpload = vi.fn(async () => ({ ok: true as const }));
+    const onUpload = vi.fn(async (_files: FileList) => ({ ok: true as const }));
     const onToggleExpand = vi.fn();
     render(
       <AttachmentsSection
@@ -65,7 +65,7 @@ describe('K-29 — task attachments drag & drop on the whole card', () => {
     dropFiles(card, [small]);
 
     await waitFor(() => expect(onUpload).toHaveBeenCalledTimes(1));
-    const passed = onUpload.mock.calls[0][0] as ArrayLike<File>;
+    const passed = onUpload.mock.calls[0][0];
     expect(Array.from(passed).map((f) => f.name)).toEqual(['note.txt']);
     // The card auto-expands so the user sees the result instead of nothing.
     expect(onToggleExpand).toHaveBeenCalledTimes(1);
