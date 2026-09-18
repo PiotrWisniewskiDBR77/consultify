@@ -2861,7 +2861,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <button
                 type="button"
                 onClick={() => updateShellPreferences({ rightPanelExpanded: false })}
-                className="absolute left-2 top-2 z-10 rounded-md border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                className="absolute -left-9 top-2 z-10 rounded-md border border-c-border-subtle bg-c-surface p-1 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                 title={t('reportBuilder.nav.collapseRightPanel', 'Collapse report details')}
               >
                 <ChevronRight className="h-3.5 w-3.5" />

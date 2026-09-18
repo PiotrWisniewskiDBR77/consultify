@@ -1,0 +1,68 @@
+[
+  {
+    "theme": "light",
+    "mode": "write",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-write",
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "mode": "review",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-review",
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "mode": "publish",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-publish",
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "mode": "write",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-write",
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "mode": "review",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-review",
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "mode": "publish",
+    "labels": [
+      "Write",
+      "Review",
+      "Publish"
+    ],
+    "active": "report-builder-mode-publish",
+    "errors": []
+  }
+]

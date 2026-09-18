@@ -659,40 +659,42 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
       {/* ===== COMMENTS ===== */}
       <div>
-        <button
-          onClick={() => setCommentsOpen((v) => !v)}
-          className="w-full flex items-center justify-between py-1 group"
-        >
-          <span className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-            <MessageSquare className="w-3 h-3" />
-            {t('reportBuilder.reviewPanel.comments', 'Comments')}
-            {summary && (
-              <span
-                className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                  openCount > 0 ? 'bg-amber-900/30 text-amber-400' : 'bg-c-text text-c-bg-secondary'
-                }`}
-              >
-                {openCount > 0 ? openCount : summary.total}
-              </span>
-            )}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowAddComment(!showAddComment);
-              }}
-              className="p-0.5 text-blue-500 hover:bg-blue-900/20 rounded"
-            >
-              {showAddComment ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-            </button>
+        <div className="flex w-full items-center py-1">
+          <button
+            type="button"
+            onClick={() => setCommentsOpen((value) => !value)}
+            className="group flex flex-1 items-center justify-between"
+          >
+            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary">
+              <MessageSquare className="h-3 w-3" />
+              {t('reportBuilder.reviewPanel.comments', 'Comments')}
+              {summary ? (
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${
+                    openCount > 0
+                      ? 'bg-amber-900/30 text-amber-400'
+                      : 'bg-c-text text-c-bg-secondary'
+                  }`}
+                >
+                  {openCount > 0 ? openCount : summary.total}
+                </span>
+              ) : null}
+            </span>
             {commentsOpen ? (
-              <ChevronDown className="w-3 h-3 text-c-text-secondary" />
+              <ChevronDown className="h-3 w-3 text-c-text-secondary" />
             ) : (
-              <ChevronRight className="w-3 h-3 text-c-text-secondary" />
+              <ChevronRight className="h-3 w-3 text-c-text-secondary" />
             )}
-          </div>
-        </button>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddComment((value) => !value)}
+            className="ml-1 rounded p-0.5 text-blue-500 hover:bg-blue-900/20"
+            aria-label={t('reportBuilder.reviewPanel.addComment', 'Add comment')}
+          >
+            {showAddComment ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+          </button>
+        </div>
 
         {commentsOpen && (
           <div className="mt-1 space-y-1.5">
