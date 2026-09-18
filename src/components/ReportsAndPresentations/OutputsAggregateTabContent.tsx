@@ -468,7 +468,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'outputKind',
         label: t('rap.outputs.columns.kind', 'Typ'),
-        width: '90px',
+        // OP-1 D-73 v2: with the preview panel open the fit engine compressed
+        // this column below the real badge width. Keep the TYPE badge readable
+        // and force horizontal overflow instead of clipping inside the cell.
+        width: '176px',
+        dataType: 'status',
         filterable: true,
         filterOptions: [
           {
@@ -487,7 +491,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
           return (
-            <span className="text-xs font-medium text-c-text-secondary capitalize">
+            <span className="block whitespace-nowrap text-xs font-medium text-c-text-secondary capitalize">
               {row.kind === 'document'
                 ? t('rap.outputs.kind.document', 'Document')
                 : row.kind === 'presentation'
@@ -512,7 +516,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           label: fileFormatLabel(format, isPolish),
         })),
         render: (rawRow: Record<string, unknown>) => (
-          <span className="text-xs font-medium text-c-text-secondary">
+          <span className="block whitespace-nowrap text-xs font-medium text-c-text-secondary">
             {fileFormatLabel((rawRow as unknown as AggregateRow).fileFormat, isPolish)}
           </span>
         ),
