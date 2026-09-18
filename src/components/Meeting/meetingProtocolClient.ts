@@ -138,15 +138,22 @@ export interface ProtocolContent {
   blocks: ProtocolBlock[];
 }
 
-/** Shape returned by GET /:id/protocol (a pure read — `persisted` tells whether a row exists). */
+/** Shape returned by GET /:id/protocol (a pure read — draft is always live from source, never persisted). */
 export interface ProtocolPreview {
+  /** Always null — a working draft never writes a row (W109b). */
   id: string | null;
+  /** '1.0' before first publish, else the next version after the published one. */
   version: string;
+  /** Working view is always 'draft'; the snapshot lives only in approved rows. */
   status: 'draft' | 'approved';
+  /** Always live from source — never `content_json`. */
   content: ProtocolContent;
+  /** Last PUBLISHED (approved) version, or null before the first publication. */
+  publishedVersion: string | null;
   approvedByName: string | null;
   approvedAt: string | null;
   errataNote: string;
+  /** Always false — a draft does not persist. */
   persisted: boolean;
 }
 

@@ -650,14 +650,16 @@ async function listVersionInfo(
   }));
 }
 
-/** Najnowszy wiersz protokołu (ostatnia wersja) lub null. */
-export async function getLatestProtocol(input: {
+/** Najnowsza OPUBLIKOWANA (approved) wersja protokołu lub null. Draft NIE jest
+ *  utrwalany — widok roboczy składa się żywo ze źródeł (W109b: `content_json`
+ *  przechowuje WYŁĄCZNIE migawkę wersji published). */
+export async function getLatestApprovedProtocol(input: {
   organizationId: string;
   meetingId: string;
 }): Promise<MeetingProtocol | null> {
   const row = await dbGet<MeetingProtocolRow>(
     `SELECT * FROM meeting_protocols
-     WHERE organization_id = ? AND meeting_id = ?
+     WHERE organization_id = ? AND meeting_id = ? AND status = 'approved'
      ORDER BY created_at DESC, id DESC LIMIT 1`,
     [input.organizationId, input.meetingId],
     { fallback: false }
@@ -665,89 +667,128 @@ export async function getLatestProtocol(input: {
   return row ? mapProtocolRow(row, input.organizationId) : null;
 }
 
-export interface ProtocolPreview {
-  id: string | null;
+/** Zamrożona migawka konkretnej OPUBLIKOWANEJ wersji — odczyt bajt-w-bajt z
+ *  `content_json`, BEZ przebudowy ze źródeł (dowód W109b(i): publikacja v1.0 →
+ *  edycja źródła → v1.0 nie zmienia się). */
+export async function getPublishedProtocol(input: {
+  organizationId: string;
+  meetingId: string;
   version: string;
+}): Promise<MeetingProtocol | null> {
+  const row = await dbGet<MeetingProtocolRow>(
+    `SELECT * FROM meeting_protocols
+     WHERE organization_id = ? AND meeting_id = ? AND version = ? AND status = 'approved'
+     LIMIT 1`,
+    [input.organizationId, input.meetingId, input.version],
+    { fallback: false }
+  );
+  return row ? mapProtocolRow(row, input.organizationId) : null;
+}
+
+export interface ProtocolPreview {
+  /** Zawsze null — draft nie jest utrwalany (W109b). */
+  id: string | null;
+  /** "1.0" przed pierwszą publikacją, inaczej next(opublikowana). */
+  version: string;
+  /** Widok roboczy jest ZAWSZE 'draft' (migawka żyje tylko w approved). */
   status: 'draft' | 'approved';
+  /** ZAWSZE żywo ze źródeł — nigdy `content_json`. */
   content: ProtocolContent;
+  /** Ostatnia OPUBLIKOWANA wersja (approved) lub null przed pierwszą publikacją. */
+  publishedVersion: string | null;
   approvedByName: string | null;
   approvedAt: string | null;
   errataNote: string;
+  /** Zawsze false — draft nie zapisuje wiersza. */
   persisted: boolean;
 }
 
 /**
- * Czysty odczyt protokołu do renderu: zwraca utrwaloną wersję, jeśli istnieje,
- * w przeciwnym razie składa ŚWIEŻY draft v1.0 z danych BEZ zapisu (GET nie
- * zaśmieca `meeting_protocols`; draft utrwala dopiero akcept prowadzącego).
+ * Czysty odczyt protokołu do renderu — widok roboczy. W109b: draft składa się
+ * ŻYWO ze źródeł (agenda, decyzje, akcje, uczestnicy) i NIGDY nie zwraca
+ * migawki `content_json`; ta przechowuje wyłącznie wersję OPUBLIKOWANĄ. GET nie
+ * zaśmieca `meeting_protocols`. `publishedVersion` mówi, czy coś już zamrożono
+ * (viewer bramkuje tym „Approve"/erratę, bo `status` jest tu zawsze 'draft').
  */
 export async function previewProtocol(input: {
   organizationId: string;
   meetingId: string;
 }): Promise<ProtocolPreview> {
-  const latest = await getLatestProtocol(input);
-  if (latest) {
-    return {
-      id: latest.id,
-      version: latest.version,
-      status: latest.status,
-      content: latest.content,
-      approvedByName: latest.approvedByName,
-      approvedAt: latest.approvedAt,
-      errataNote: latest.errataNote,
-      persisted: true,
-    };
-  }
+  const published = await getLatestApprovedProtocol(input);
+  const history = await listVersionInfo(input.organizationId, input.meetingId);
+  const draftVersion = published ? nextProtocolVersion(published.version) : '1.0';
   const content = await buildProtocolContent({
     organizationId: input.organizationId,
     meetingId: input.meetingId,
     approverName: null,
-    versions: [],
+    versions: [
+      ...history,
+      { version: draftVersion, status: 'draft', approvedAt: null, approvedBy: null, errata: '' },
+    ],
   });
   return {
     id: null,
-    version: '1.0',
+    version: draftVersion,
     status: 'draft',
     content,
-    approvedByName: null,
-    approvedAt: null,
-    errataNote: '',
+    publishedVersion: published?.version || null,
+    approvedByName: published?.approvedByName || null,
+    approvedAt: published?.approvedAt || null,
+    errataNote: published?.errataNote || '',
     persisted: false,
   };
 }
 
-async function insertProtocol(input: {
+/**
+ * W109b: jedyna ścieżka zapisu `meeting_protocols` — publikacja wersji
+ * ZAMROŻONEJ (approved). Treść składana ŻYWO ze źródeł w momencie publikacji,
+ * potem już nieodtwarzalna (migawka). Draft nigdy nie przechodzi tędy.
+ */
+async function insertApprovedVersion(input: {
   organizationId: string;
   meetingId: string;
+  actorId: string;
   version: string;
-  status: 'draft' | 'approved';
-  content: ProtocolContent;
-  approvedByUserId?: string | null;
-  approvedAt?: string | null;
-  errataNote?: string;
-  createdBy: string;
+  errataNote: string;
 }): Promise<MeetingProtocol> {
-  const id = uuidv4();
   const now = new Date().toISOString();
-  const digest = computeSourceDigest(input.content);
+  const actorName =
+    (await resolveUserNames(input.organizationId, [input.actorId])).get(input.actorId) || null;
+  const history = await listVersionInfo(input.organizationId, input.meetingId);
+  const content = await buildProtocolContent({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+    approverName: actorName,
+    versions: [
+      ...history,
+      {
+        version: input.version,
+        status: 'approved',
+        approvedAt: now,
+        approvedBy: actorName,
+        errata: input.errataNote,
+      },
+    ],
+  });
+  const id = uuidv4();
+  const digest = computeSourceDigest(content);
   await dbRun(
     `INSERT INTO meeting_protocols (
        id, organization_id, meeting_id, version, status, content_json,
        source_digest, approved_by_user_id, approved_at, errata_note,
        created_by, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.organizationId,
       input.meetingId,
       input.version,
-      input.status,
-      JSON.stringify(input.content),
+      JSON.stringify(content),
       digest,
-      input.approvedByUserId || null,
-      input.approvedAt || null,
-      input.errataNote || '',
-      input.createdBy,
+      input.actorId,
+      now,
+      input.errataNote,
+      input.actorId,
       now,
       now,
     ],
@@ -763,99 +804,35 @@ async function insertProtocol(input: {
 }
 
 /**
- * Zwraca najnowszy protokół; jeśli brak — generuje i utrwala DRAFT v1.0 z
- * danych spotkania. Nie nadpisuje istniejącej wersji (idempotentne odczytem).
- */
-export async function getOrGenerateDraftProtocol(input: {
-  organizationId: string;
-  meetingId: string;
-  actorId: string;
-}): Promise<MeetingProtocol> {
-  const existing = await getLatestProtocol({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-  });
-  if (existing) return existing;
-  const versions = await listVersionInfo(input.organizationId, input.meetingId);
-  const content = await buildProtocolContent({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-    approverName: null,
-    versions,
-  });
-  return insertProtocol({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-    version: '1.0',
-    status: 'draft',
-    content,
-    createdBy: input.actorId,
-  });
-}
-
-/**
- * Akcept prowadzącego: draft -> approved, wersja zamrożona. Rzuca
- * MEETING_PROTOCOL_NOT_FOUND / MEETING_PROTOCOL_ALREADY_APPROVED.
+ * Akcept prowadzącego: PIERWSZA publikacja — zamraża v1.0 z żywych źródeł.
+ * Rzuca MEETING_PROTOCOL_ALREADY_APPROVED, gdy opublikowana wersja już istnieje
+ * (kolejne zmiany idą przez createErrataVersion, nie przez ponowny akcept).
  */
 export async function approveProtocol(input: {
   organizationId: string;
   meetingId: string;
   actorId: string;
 }): Promise<MeetingProtocol> {
-  const latest = await getLatestProtocol({
+  const published = await getLatestApprovedProtocol({
     organizationId: input.organizationId,
     meetingId: input.meetingId,
   });
-  if (!latest) throw new MeetingProtocolError('MEETING_PROTOCOL_NOT_FOUND');
-  if (latest.status === 'approved') {
+  if (published) {
     throw new MeetingProtocolError('MEETING_PROTOCOL_ALREADY_APPROVED');
   }
-  const now = new Date().toISOString();
-  const versions = await listVersionInfo(input.organizationId, input.meetingId);
-  const approverName =
-    (await resolveUserNames(input.organizationId, [input.actorId])).get(input.actorId) || null;
-  const content: ProtocolContent = {
-    ...latest.content,
-    blocks: latest.content.blocks.map((b) => {
-      if (b.kind === 'roles') return { ...b, approver: approverName };
-      if (b.kind === 'footer') {
-        return {
-          ...b,
-          versions: versions.map((v) =>
-            v.version === latest.version ? { ...v, status: 'approved' } : v
-          ),
-        };
-      }
-      return b;
-    }),
-  };
-  await dbRun(
-    `UPDATE meeting_protocols SET
-       status = 'approved', approved_by_user_id = ?, approved_at = ?,
-       content_json = ?, updated_at = ?
-     WHERE organization_id = ? AND id = ?`,
-    [
-      input.actorId,
-      now,
-      JSON.stringify(content),
-      now,
-      input.organizationId,
-      latest.id,
-    ],
-    { fallback: false }
-  );
-  const row = await dbGet<MeetingProtocolRow>(
-    `SELECT * FROM meeting_protocols WHERE organization_id = ? AND id = ? LIMIT 1`,
-    [input.organizationId, latest.id],
-    { fallback: false }
-  );
-  if (!row) throw new MeetingProtocolError('MEETING_PROTOCOL_NOT_FOUND');
-  return mapProtocolRow(row, input.organizationId);
+  return insertApprovedVersion({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+    actorId: input.actorId,
+    version: '1.0',
+    errataNote: '',
+  });
 }
 
 /**
- * Edycja zatwierdzonego protokołu: tworzy NOWY wiersz (v1.1, v1.2, …) jako
- * draft z erratą, poprzednia wersja zostaje nietknięta (historia wersji).
+ * Edycja zatwierdzonego protokołu: publikuje NOWĄ zamrożoną wersję (v1.1, v1.2,
+ * …) z erratą, złożoną żywo ze źródeł; poprzednia wersja zostaje nietknięta
+ * (historia wersji). Rzuca MEETING_PROTOCOL_NOT_APPROVED, gdy brak opublikowanej.
  */
 export async function createErrataVersion(input: {
   organizationId: string;
@@ -863,29 +840,18 @@ export async function createErrataVersion(input: {
   actorId: string;
   errataNote: string;
 }): Promise<MeetingProtocol> {
-  const latest = await getLatestProtocol({
+  const published = await getLatestApprovedProtocol({
     organizationId: input.organizationId,
     meetingId: input.meetingId,
   });
-  if (!latest) throw new MeetingProtocolError('MEETING_PROTOCOL_NOT_FOUND');
-  if (latest.status !== 'approved') {
+  if (!published) {
     throw new MeetingProtocolError('MEETING_PROTOCOL_NOT_APPROVED');
   }
-  const version = nextProtocolVersion(latest.version);
-  const versions = await listVersionInfo(input.organizationId, input.meetingId);
-  const content = await buildProtocolContent({
+  return insertApprovedVersion({
     organizationId: input.organizationId,
     meetingId: input.meetingId,
-    approverName: null,
-    versions: [...versions, { version, status: 'draft', approvedAt: null, approvedBy: null, errata: input.errataNote }],
-  });
-  return insertProtocol({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-    version,
-    status: 'draft',
-    content,
+    actorId: input.actorId,
+    version: nextProtocolVersion(published.version),
     errataNote: input.errataNote,
-    createdBy: input.actorId,
   });
 }

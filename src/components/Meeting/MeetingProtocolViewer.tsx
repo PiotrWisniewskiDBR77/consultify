@@ -159,8 +159,14 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
   }, [load]);
 
   const blocks: ProtocolBlock[] = preview?.content.blocks ?? [];
-  const status = preview?.status ?? 'draft';
   const version = preview?.version ?? '1.0';
+  /**
+   * W109b: the working view is ALWAYS a live draft, so `status` is always
+   * 'draft' here. Whether anything has been frozen lives in `publishedVersion`
+   * — that (not `status`) gates the Approve primary and the errata panel.
+   */
+  const publishedVersion = preview?.publishedVersion ?? null;
+  const isPublished = publishedVersion != null;
   const meta = blockOf(blocks, 'meta');
   const roles = blockOf(blocks, 'roles');
   const attendance = blockOf(blocks, 'attendance');
@@ -452,15 +458,14 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
   );
 
   const versions = footer?.versions ?? [];
-  const statusLabel =
-    status === 'approved'
-      ? tr('statusApproved', 'Approved') + ` v${version}`
-      : tr('statusDraft', 'Draft') + ` v${version}`;
+  const statusLabel = isPublished
+    ? tr('statusApproved', 'Approved') + ` v${publishedVersion}`
+    : tr('statusDraft', 'Draft') + ` v${version}`;
 
   const rightPanel = useMemo(
     () => ({
       actions:
-        status === 'approved' && canManage
+        isPublished && canManage
           ? {
               label: tr('actionsPanel', 'Actions'),
               actionIds: ['protocol-errata'],
@@ -493,8 +498,8 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
           : {
               pominieta: true as const,
               reason:
-                status === 'draft'
-                  ? 'MTG-2a: the only action on a draft is Approve, which is the header primary (SPEC-N §2.6 anti-duplication).'
+                !isPublished
+                  ? 'MTG-2a: the only action on an unpublished protocol is Approve, which is the header primary (SPEC-N §2.6 anti-duplication).'
                   : 'MTG-2a: read-only for a caller without manage rights — the approve/errata routes enforce the organizer guard.',
             },
       properties: {
@@ -506,6 +511,12 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
             rows={[
               { id: 'status', label: tr('status', 'Status'), value: statusLabel },
               { id: 'version', label: tr('versionProp', 'Version'), value: version, mono: true },
+              {
+                id: 'published',
+                label: tr('published', 'Published'),
+                value: publishedVersion || tr('none', 'None'),
+                mono: true,
+              },
               { id: 'scribe', label: tr('scribe', 'Scribe'), value: roles?.scribe || '—' },
               {
                 id: 'approver',
@@ -569,7 +580,8 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
       },
     }),
     [
-      status,
+      isPublished,
+      publishedVersion,
       canManage,
       errataNote,
       busy,
@@ -600,10 +612,10 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
         saveState: 'saved',
         onClose,
         statusLabel,
-        statusTone: status === 'approved' ? 'approved' : 'draft',
+        statusTone: isPublished ? 'approved' : 'draft',
       }}
       primaryAction={
-        status === 'draft' && canManage && !errorCode
+        !isPublished && canManage && !errorCode
           ? {
               id: 'approve-protocol',
               label: { en: tr('approve', 'Approve'), pl: tr('approve', 'Approve') },
@@ -630,7 +642,7 @@ export function MeetingProtocolViewer(props: MeetingProtocolViewerProps) {
       toolbar={
         <NModeToolbar
           isPolish={isPolish}
-          activeSectionLabel={isPolish ? 'Protokół' : 'Protocol'}
+          activeSectionLabel={tr('open', 'Protocol')}
         />
       }
       panelAriaLabel={tr('panelAriaLabel', 'Protocol details')}

@@ -35,8 +35,8 @@ import {
   approveProtocol,
   buildProtocolContent,
   createErrataVersion,
-  getLatestProtocol,
-  getOrGenerateDraftProtocol,
+  getLatestApprovedProtocol,
+  getPublishedProtocol,
   nextProtocolVersion,
   previewProtocol,
   type ProtocolBlock,
@@ -74,6 +74,8 @@ const DECISION_1 = 'decision-mtg2-1';
 const FOLLOWUP_1 = 'followup-mtg2-1';
 const TASK_1 = 'task-mtg2-1';
 const NOTE_1 = 'note-mtg2-1';
+const MEETING_LIVE = 'meeting-mtg2-live';
+const DECISION_LIVE = 'decision-mtg2-live';
 
 let adminPool: pg.Pool | null = null;
 let sharedPool: pg.Pool | null = null;
@@ -316,6 +318,25 @@ beforeAll(async () => {
     ]
   );
 
+  // Izolowane spotkanie do dowodu W109b (B9): publikacja v1.0 -> edycja źródła ->
+  // migawka v1.0 bez zmian, widok roboczy żywy, errata -> v1.1. Własna decyzja,
+  // żeby mutacja źródła nie dotykała MEETING_FULL (losowa kolejność testów).
+  await q(
+    `INSERT INTO meetings (id, organization_id, title, start_at, end_at, created_by,
+        chair_user_id, lifecycle_state)
+     VALUES ($1,$2,'Live Source Meeting','2026-09-26T09:00:00Z','2026-09-26T10:00:00Z',$3,
+        $3,'minutes_to_approve')
+     ON CONFLICT (id) DO NOTHING`,
+    [MEETING_LIVE, ORG, CHAIR]
+  );
+  await q(
+    `INSERT INTO meeting_decisions
+       (id, organization_id, meeting_id, statement, rationale, decided_by, decided_at, status, created_by)
+     VALUES ($1,$2,$3,'Adopt the original plan','Baseline','Constance Chair','2026-09-26T09:30:00Z','recorded',$4)
+     ON CONFLICT (id) DO NOTHING`,
+    [DECISION_LIVE, ORG, MEETING_LIVE, CHAIR]
+  );
+
   // Czyste protokoły z poprzednich przebiegów (żeby wersjonowanie było deterministyczne).
   await q(`DELETE FROM meeting_protocols WHERE organization_id = $1`, [ORG]);
 
@@ -464,27 +485,26 @@ describe('MTG-2a protocol (real PG)', () => {
   guard('B7 previewProtocol does NOT persist a row for a fresh meeting', async () => {
     // MEETING_EMPTY (nie MEETING_FULL) — niezależne od B8, które utrwala wersje
     // na MEETING_FULL; kolejność testów jest losowa (config `order: 'random'`).
-    const before = await getLatestProtocol({ organizationId: ORG, meetingId: MEETING_EMPTY });
+    const before = await getLatestApprovedProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_EMPTY,
+    });
     expect(before).toBeNull();
     const preview = await previewProtocol({ organizationId: ORG, meetingId: MEETING_EMPTY });
     expect(preview.persisted).toBe(false);
     expect(preview.status).toBe('draft');
     expect(preview.version).toBe('1.0');
-    const after = await getLatestProtocol({ organizationId: ORG, meetingId: MEETING_EMPTY });
+    expect(preview.publishedVersion).toBeNull();
+    const after = await getLatestApprovedProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_EMPTY,
+    });
     expect(after).toBeNull();
   });
 
-  guard('B8 versioning: approve freezes v1.0, errata creates v1.1 and leaves v1.0 untouched', async () => {
-    // draft v1.0
-    const draft = await getOrGenerateDraftProtocol({
-      organizationId: ORG,
-      meetingId: MEETING_FULL,
-      actorId: CHAIR,
-    });
-    expect(draft.version).toBe('1.0');
-    expect(draft.status).toBe('draft');
-
-    // approve -> v1.0 approved, approver w rolach
+  guard('B8 versioning: approve publishes v1.0, errata publishes v1.1 and leaves v1.0 untouched', async () => {
+    // W109b: akcept = PIERWSZA publikacja (migawka v1.0 z żywych źródeł), bez
+    // osobnego wiersza draft. draft roboczy nigdy nie jest utrwalany.
     const approved = await approveProtocol({
       organizationId: ORG,
       meetingId: MEETING_FULL,
@@ -498,7 +518,12 @@ describe('MTG-2a protocol (real PG)', () => {
     const frozenDigest = approved.sourceDigest;
     const frozenContent = JSON.stringify(approved.content.blocks);
 
-    // errata -> v1.1 draft; v1.0 nietknięta
+    // Ponowny akcept tej samej publikacji = konflikt (nie nadpisuje v1.0).
+    await expect(
+      approveProtocol({ organizationId: ORG, meetingId: MEETING_FULL, actorId: CHAIR })
+    ).rejects.toThrow(/ALREADY_APPROVED/);
+
+    // errata -> v1.1 OPUBLIKOWANA (zamrożona); v1.0 nietknięta.
     const errata = await createErrataVersion({
       organizationId: ORG,
       meetingId: MEETING_FULL,
@@ -506,10 +531,10 @@ describe('MTG-2a protocol (real PG)', () => {
       errataNote: 'Corrected the owner of action one.',
     });
     expect(errata.version).toBe('1.1');
-    expect(errata.status).toBe('draft');
+    expect(errata.status).toBe('approved');
     expect(errata.errataNote).toBe('Corrected the owner of action one.');
 
-    // v1.0 wciąż approved, bajt-identyczna
+    // v1.0 wciąż approved, bajt-identyczna z chwilą akceptu.
     const rows = await sharedPool!.query(
       `SELECT version, status, content_json, source_digest FROM meeting_protocols
        WHERE organization_id=$1 AND meeting_id=$2 ORDER BY version`,
@@ -518,13 +543,77 @@ describe('MTG-2a protocol (real PG)', () => {
     const v10 = rows.rows.find((r) => r.version === '1.0');
     const v11 = rows.rows.find((r) => r.version === '1.1');
     expect(v10?.status).toBe('approved');
-    expect(v11?.status).toBe('draft');
-    // v1.0 zamrożona: ten sam skrót źródła i ta sama liczba bloków co w chwili akceptu.
+    expect(v11?.status).toBe('approved');
     expect(v10?.source_digest).toBe(frozenDigest);
     expect(JSON.parse(v10!.content_json).blocks.length).toBe(approved.content.blocks.length);
     expect(JSON.stringify(JSON.parse(v10!.content_json).blocks)).toBe(frozenContent);
     expect(nextProtocolVersion('1.0')).toBe('1.1');
     expect(nextProtocolVersion('1.9')).toBe('1.10');
+  });
+
+  guard('B9 W109b: published v1.0 is a frozen snapshot; the working view reads LIVE source', async () => {
+    // (1) publikacja v1.0 z żywych źródeł.
+    const published = await approveProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_LIVE,
+      actorId: CHAIR,
+    });
+    expect(published.version).toBe('1.0');
+    const snapshotV10 = await getPublishedProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_LIVE,
+      version: '1.0',
+    });
+    expect(snapshotV10).not.toBeNull();
+    const frozenJson = JSON.stringify(snapshotV10!.content);
+    const statementOf = (blocks: ProtocolBlock[]): string | null => {
+      const dec = blocks.find((b) => b.kind === 'decisions');
+      return dec?.kind === 'decisions' && dec.items[0] ? dec.items[0].statement : null;
+    };
+    expect(statementOf(snapshotV10!.content.blocks)).toBe('Adopt the original plan');
+
+    // (2) edycja ŹRÓDŁA po publikacji.
+    await sharedPool!.query(
+      `UPDATE meeting_decisions SET statement = $1 WHERE id = $2`,
+      ['Adopt the REVISED plan', DECISION_LIVE]
+    );
+
+    // (i) migawka v1.0 bez zmian — bajt w bajt, stara treść.
+    const stillFrozen = await getPublishedProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_LIVE,
+      version: '1.0',
+    });
+    expect(JSON.stringify(stillFrozen!.content)).toBe(frozenJson);
+    expect(statementOf(stillFrozen!.content.blocks)).toBe('Adopt the original plan');
+
+    // (ii) widok roboczy czyta ŹRÓDŁO — pokazuje NOWĄ treść.
+    // MUTACJA: gdyby previewProtocol zwracał content_json zamiast składać żywo,
+    // ta asercja (i `version`/`publishedVersion` niżej) byłaby RED.
+    const working = await previewProtocol({ organizationId: ORG, meetingId: MEETING_LIVE });
+    expect(statementOf(working.content.blocks)).toBe('Adopt the REVISED plan');
+    expect(working.persisted).toBe(false);
+    expect(working.status).toBe('draft');
+    expect(working.publishedVersion).toBe('1.0');
+    expect(working.version).toBe('1.1');
+
+    // (iii) ponowna publikacja tworzy v1.1 (zamrożona, NOWA treść); v1.0 nietknięta.
+    const v11 = await createErrataVersion({
+      organizationId: ORG,
+      meetingId: MEETING_LIVE,
+      actorId: CHAIR,
+      errataNote: 'Revised the decision after the meeting.',
+    });
+    expect(v11.version).toBe('1.1');
+    expect(v11.status).toBe('approved');
+    expect(statementOf(v11.content.blocks)).toBe('Adopt the REVISED plan');
+    const v10After = await getPublishedProtocol({
+      organizationId: ORG,
+      meetingId: MEETING_LIVE,
+      version: '1.0',
+    });
+    expect(JSON.stringify(v10After!.content)).toBe(frozenJson);
+    expect(statementOf(v10After!.content.blocks)).toBe('Adopt the original plan');
   });
 
   // ---- (C) realne dane z kopii dumpu ----

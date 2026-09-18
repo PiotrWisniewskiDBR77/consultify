@@ -39116,6 +39116,7 @@
       "value": "Value",
       "status": "Status",
       "versionProp": "Version",
+      "published": "Published",
       "approvedAt": "Approved",
       "generated": "Generated",
       "history": "Version history",

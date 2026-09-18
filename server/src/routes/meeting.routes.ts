@@ -47,7 +47,6 @@ import {
   MeetingProtocolError,
   approveProtocol,
   createErrataVersion,
-  getOrGenerateDraftProtocol,
   previewProtocol,
 } from '../services/meeting/meetingProtocolService.js';
 import {
@@ -1604,12 +1603,8 @@ router.post(
     }
 
     try {
-      // Akcept utrwala draft (jeśli jeszcze nie istniał) i zamraża wersję.
-      await getOrGenerateDraftProtocol({
-        organizationId: orgId,
-        meetingId: meeting.id,
-        actorId: callerId,
-      });
+      // W109b: akcept = pierwsza publikacja; składa migawkę v1.0 ŻYWO ze
+      // źródeł i zamraża ją. Draft nie jest utrwalany osobnym wierszem.
       const protocol = await approveProtocol({
         organizationId: orgId,
         meetingId: meeting.id,
