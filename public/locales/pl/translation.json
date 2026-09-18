@@ -9856,7 +9856,8 @@
       "value": "Wartość",
       "moreActions": "Więcej akcji",
       "aiReview": "Ocena AI",
-      "aiReviewedAt": "Oceniono"
+      "aiReviewedAt": "Oceniono",
+      "aiNoSignals": "Brak wykrytych problemów jakości"
     },
     "assignmentPreview": {
       "progress": "Postęp",

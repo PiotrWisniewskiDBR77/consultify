@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   AI_SCORE_THRESHOLD_GOOD,
   AI_SCORE_THRESHOLD_NEEDS_ATTENTION,
+  fromAssessmentAiReview,
   fromInterviewAiReview,
+  fromMaterialsAiReview,
+  fromScoreAiReview,
   mapRubricScoreTo100,
   verdictFromScore,
 } from '../aiReviewSummary';
@@ -96,4 +99,36 @@ describe('aiReviewSummary adapter (AIR-1a, DEC-566/569)', () => {
       expect(s.rubricVersion).toBe('v2.1');
     });
   });
+
+  describe('AIR-1b shared adapters', () => {
+    it('normalizes assessment review as a 0-100 source', () => {
+      const s = fromAssessmentAiReview({ overallScore: 82, sourceId: 'assessment-1', reviewedAt: '2026-09-18T09:00:00Z' });
+      expect(s.sourceModule).toBe('assessment');
+      expect(s.sourceId).toBe('assessment-1');
+      expect(s.score0to100).toBe(82);
+      expect(s.verdict).toBe('good');
+    });
+
+    it('can map legacy assessment 1-5 score before using the shared thresholds', () => {
+      const s = fromAssessmentAiReview({ overallScore: 3, scale: '1-5', sourceId: 'assessment-2' });
+      expect(s.sourceModule).toBe('assessment');
+      expect(s.score0to100).toBe(50);
+      expect(s.verdict).toBe('needs_attention');
+    });
+
+    it('normalizes materials review and clamps the score', () => {
+      const s = fromMaterialsAiReview({ qualityScore: 120, sourceId: 'material-1' });
+      expect(s.sourceModule).toBe('materials');
+      expect(s.score0to100).toBe(100);
+      expect(s.verdict).toBe('good');
+    });
+
+    it('keeps empty shared review fail-closed for any module', () => {
+      const s = fromScoreAiReview({ score0to100: undefined, sourceModule: 'materials', sourceId: 'material-2' });
+      expect(s.score0to100).toBeNull();
+      expect(s.verdict).toBe('empty');
+      expect(s.signals).toEqual([]);
+    });
+  });
+
 });

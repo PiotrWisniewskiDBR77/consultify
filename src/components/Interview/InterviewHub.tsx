@@ -123,6 +123,7 @@ import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isSt2CandidateCardEnabled } from '@/utils/st2CandidateCardFlag';
 import { isInterviewAiScoreEnabled } from '@/utils/interviewAiScoreFlag';
+import { AiReviewBadge } from '@/components/shared/aiReview';
 import { fromInterviewAiReview, type AiReviewSummary } from '@/services/aiReview/aiReviewSummary';
 import { formatListDate, formatListDateTime, localeListy } from '@/utils/listDateFormat';
 import { InterviewCandidateInbox } from './InterviewCandidateInbox';
@@ -6844,31 +6845,18 @@ Return ONLY the answer text (no markdown fences).`;
                   );
                 }
                 const summary = fromInterviewAiReview(row.aiReview, row.aiReviewedAt, row.id);
-                const pct = summary.score0to100;
-                if (pct === null) {
-                  return <span className="text-xs text-c-text-muted">—</span>;
-                }
-                const tone =
-                  pct >= 80 ? 'text-c-success' : pct >= 50 ? 'text-c-warning' : 'text-c-danger';
-                const verdictLabel = t(`interview.hub.aiVerdict.${summary.verdict}`);
-                const pillClass =
-                  summary.verdict === 'blocked'
-                    ? 'border-c-danger/30 bg-c-danger/10 text-c-danger'
-                    : summary.verdict === 'needs_attention'
-                      ? 'border-c-warning/30 bg-c-warning/10 text-c-warning'
-                      : 'border-c-success/30 bg-c-success/10 text-c-success';
                 return (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                    <span className={`inline-flex items-center gap-1 ${tone}`}>
-                      <Gauge size={12} />
-                      {pct}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none ${pillClass}`}
-                    >
-                      {verdictLabel}
-                    </span>
-                  </span>
+                  <AiReviewBadge
+                    summary={summary}
+                    showEmpty
+                    labels={{
+                      good: t('interview.hub.aiVerdict.good'),
+                      needs_attention: t('interview.hub.aiVerdict.needs_attention'),
+                      blocked: t('interview.hub.aiVerdict.blocked'),
+                      empty: t('interview.hub.aiVerdict.empty'),
+                      timeout: t('interview.hub.aiVerdict.timeout'),
+                    }}
+                  />
                 );
               },
             } as StandardTableColumn,

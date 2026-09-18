@@ -10,7 +10,7 @@ export interface AiReviewSummary {
   score0to100: number | null;
   verdict: 'good' | 'needs_attention' | 'blocked' | 'empty' | 'timeout';
   reviewedAt: string | null;
-  sourceModule: 'interview';
+  sourceModule: 'interview' | 'assessment' | 'materials';
   sourceId: string;
   rubricVersion?: string;
   signals: AiReviewSignal[];
@@ -29,6 +29,68 @@ export function verdictFromScore(score0to100: number | null): AiReviewSummary['v
   if (score0to100 >= AI_SCORE_THRESHOLD_GOOD) return 'good';
   if (score0to100 >= AI_SCORE_THRESHOLD_NEEDS_ATTENTION) return 'needs_attention';
   return 'blocked';
+}
+
+export function fromScoreAiReview(input: {
+  score0to100: number | null | undefined;
+  reviewedAt?: string | null;
+  sourceModule: AiReviewSummary['sourceModule'];
+  sourceId: string;
+  rubricVersion?: string;
+  signals?: AiReviewSignal[];
+}): AiReviewSummary {
+  const rawScore = input.score0to100;
+  const score0to100 =
+    typeof rawScore === 'number' && Number.isFinite(rawScore)
+      ? Math.round(Math.max(0, Math.min(100, rawScore)))
+      : null;
+
+  return {
+    score0to100,
+    verdict: verdictFromScore(score0to100),
+    reviewedAt: input.reviewedAt ?? null,
+    sourceModule: input.sourceModule,
+    sourceId: input.sourceId,
+    rubricVersion: input.rubricVersion,
+    signals: input.signals || [],
+  };
+}
+
+export function fromAssessmentAiReview(input: {
+  overallScore?: number | null;
+  scale?: '0-100' | '1-5';
+  reviewedAt?: string | null;
+  sourceId: string;
+  signals?: AiReviewSignal[];
+}): AiReviewSummary {
+  const score0to100 =
+    input.scale === '1-5'
+      ? mapRubricScoreTo100(input.overallScore)
+      : typeof input.overallScore === 'number'
+        ? input.overallScore
+        : null;
+  return fromScoreAiReview({
+    score0to100,
+    reviewedAt: input.reviewedAt,
+    sourceModule: 'assessment',
+    sourceId: input.sourceId,
+    signals: input.signals,
+  });
+}
+
+export function fromMaterialsAiReview(input: {
+  qualityScore?: number | null;
+  reviewedAt?: string | null;
+  sourceId: string;
+  signals?: AiReviewSignal[];
+}): AiReviewSummary {
+  return fromScoreAiReview({
+    score0to100: input.qualityScore,
+    reviewedAt: input.reviewedAt,
+    sourceModule: 'materials',
+    sourceId: input.sourceId,
+    signals: input.signals,
+  });
 }
 
 function severityFromWeakVerdict(

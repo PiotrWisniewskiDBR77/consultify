@@ -18,6 +18,7 @@ import {
   type ArtifactPropertyRow,
 } from '@/components/standard/ArtifactPropertiesTable';
 import { statusChipTone } from '@/components/ui/primitives/chips';
+import { AiReviewPanelSection } from '@/components/shared/aiReview';
 import type { AiReviewSummary } from '@/services/aiReview/aiReviewSummary';
 import { formatListDate } from '@/utils/listDateFormat';
 import { interviewActionMeta } from './interviewActionMatrix';
@@ -184,72 +185,19 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
         />
       </PreviewDetailsSection>
 
-      {aiReviewSummary && aiReviewSummary.score0to100 !== null && (
-        <div
-          data-testid="ai-review-block"
-          className="rounded-lg border border-c-border-subtle bg-[var(--c-surface)] p-3 space-y-2"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-c-text flex items-center gap-1.5">
-              <Sparkles size={13} className="text-c-info" />
-              {t('interview.sessionPreview.aiReview')}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className={`text-sm font-bold ${
-                  aiReviewSummary.score0to100 >= 80
-                    ? 'text-c-success'
-                    : aiReviewSummary.score0to100 >= 50
-                      ? 'text-c-warning'
-                      : 'text-c-danger'
-                }`}
-              >
-                {aiReviewSummary.score0to100}
-              </span>
-              <span
-                className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none ${
-                  aiReviewSummary.verdict === 'blocked'
-                    ? 'border-c-danger/30 bg-c-danger/10 text-c-danger'
-                    : aiReviewSummary.verdict === 'needs_attention'
-                      ? 'border-c-warning/30 bg-c-warning/10 text-c-warning'
-                      : 'border-c-success/30 bg-c-success/10 text-c-success'
-                }`}
-              >
-                {t(`interview.hub.aiVerdict.${aiReviewSummary.verdict}`)}
-              </span>
-            </span>
-          </div>
-
-          {aiReviewSummary.reviewedAt && (
-            <div className="text-[11px] text-c-text-muted">
-              {t('interview.sessionPreview.aiReviewedAt')}:{' '}
-              {formatListDate(aiReviewSummary.reviewedAt)}
-            </div>
-          )}
-
-          {aiReviewSummary.signals.length > 0 && (
-            <ul className="space-y-1 mt-1">
-              {aiReviewSummary.signals.slice(0, 5).map((sig, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[11px] text-c-text-secondary">
-                  <span
-                    className={`mt-0.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${
-                      sig.severity === 'critical'
-                        ? 'bg-c-danger'
-                        : sig.severity === 'warning'
-                          ? 'bg-c-warning'
-                          : 'bg-c-info'
-                    }`}
-                  />
-                  <span>
-                    <span className="font-medium">{sig.label}</span>
-                    {sig.message ? ` — ${sig.message}` : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      <AiReviewPanelSection
+        summary={aiReviewSummary}
+        labels={{
+          title: t('interview.sessionPreview.aiReview'),
+          reviewedAt: t('interview.sessionPreview.aiReviewedAt'),
+          noSignals: t('interview.sessionPreview.aiNoSignals'),
+          good: t('interview.hub.aiVerdict.good'),
+          needs_attention: t('interview.hub.aiVerdict.needs_attention'),
+          blocked: t('interview.hub.aiVerdict.blocked'),
+          empty: t('interview.hub.aiVerdict.empty'),
+          timeout: t('interview.hub.aiVerdict.timeout'),
+        }}
+      />
     </div>
   );
 };

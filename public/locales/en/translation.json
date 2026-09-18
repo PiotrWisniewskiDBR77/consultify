@@ -10662,7 +10662,8 @@
       "value": "Value",
       "moreActions": "More actions",
       "aiReview": "AI Review",
-      "aiReviewedAt": "Reviewed"
+      "aiReviewedAt": "Reviewed",
+      "aiNoSignals": "No quality concerns detected"
     },
     "assignmentPreview": {
       "progress": "Progress",
