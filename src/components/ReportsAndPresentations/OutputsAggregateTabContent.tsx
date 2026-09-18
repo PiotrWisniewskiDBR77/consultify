@@ -101,6 +101,19 @@ const REVIEW_STATE_LABEL_KEYS: Record<string, string> = {
   archived: 'rap.outputs.review.archived',
 };
 
+// U-44 (DOC-0): the SOURCE column read "—" for every document because the
+// document rows never carried `sourceType` (only the presentation branch set
+// it — see useRapData.ts mapRegistryItemToUnified). Once the runtime is
+// carried, `report`/`native_artifact`/`assessment_report` are raw engine codes,
+// so map them to the same human product names the sidebar uses. A value outside
+// this map (e.g. a presentation's `tool`/`assessment`/`finance`) still falls
+// through to formatLabel — unchanged.
+const SOURCE_RUNTIME_LABEL_KEYS: Record<string, string> = {
+  report: 'rap.outputs.source.runtime.report',
+  native_artifact: 'rap.outputs.source.runtime.native_artifact',
+  assessment_report: 'rap.outputs.source.runtime.assessment_report',
+};
+
 function formatVisibilityLabel(
   value: string | null | undefined,
   t: (key: string, fallback?: string) => string
@@ -142,7 +155,8 @@ function formatSourceSummary(
 ): string {
   const parts: string[] = [];
   if (row.sourceType) {
-    parts.push(formatLabel(row.sourceType));
+    const key = SOURCE_RUNTIME_LABEL_KEYS[row.sourceType];
+    parts.push(key ? t(key, formatLabel(row.sourceType)) : formatLabel(row.sourceType));
   }
   if (row.sourceInitiativeId) {
     parts.push(t('rap.outputs.source.initiativeLinked', 'Initiative linked'));

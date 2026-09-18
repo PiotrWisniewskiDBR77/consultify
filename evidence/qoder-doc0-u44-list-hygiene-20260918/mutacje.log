@@ -1,0 +1,21 @@
+# Dowód mutacyjny — DOC-0 / U-44 (2026-09-18T15:11:43.947Z)
+# delta: src/components/ReportsAndPresentations/__tests__/materialsListHygiene.u44.test.tsx · oczekiwane testy: 13
+
+CONTROL: GREEN 13 testów
+
+M1 [public/locales/en/translation.json] — rap.columns.title EN z powrotem „Presentation" (zła etykieta kolumny tytułu)
+  RED (2 czerwonych z 11 uruchomionych) · restored=tak
+
+M2 [src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx] — formatSourceSummary bez SOURCE_RUNTIME_LABEL_KEYS (surowy kod silnika w SOURCE)
+  RED (5 czerwonych z 8 uruchomionych) · restored=tak
+
+M3 [src/components/ReportsAndPresentations/useRapData.ts] — gałąź dokumentowa useRapData nie niesie sourceType (SOURCE znowu „—")
+  RED (3 czerwonych z 10 uruchomionych) · restored=tak
+
+M4 [public/locales/pl/translation.json] — usunięty PL klucz rap.outputs.source.runtime.native_artifact (złamany parytet EN/PL)
+  RED (2 czerwonych z 11 uruchomionych) · restored=tak
+
+M5 [src/components/ReportsAndPresentations/PresentationsTabContent.tsx] — PresentationsTabContent:514 z powrotem pożycza rap.columns.title jako zamienny tytuł
+  RED (1 czerwonych z 12 uruchomionych) · restored=tak
+
+# SUMA: RED=5 GREEN=0 SKIP=0 BROKEN=0 (oczekiwane: RED=5, reszta 0)

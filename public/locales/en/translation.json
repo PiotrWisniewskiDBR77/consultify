@@ -36801,7 +36801,7 @@
     },
     "columns": {
       "name": "Name",
-      "title": "Presentation",
+      "title": "Title",
       "type": "Type",
       "category": "Category",
       "scope": "Scope",
@@ -36895,6 +36895,7 @@
       "updatedAt": "Last updated",
       "open": "Preview",
       "source": "Source",
+      "untitledPresentation": "Presentation",
       "ai": {
         "improve": "Suggest improvements",
         "summary": "Summarize sections"
@@ -37080,7 +37081,12 @@
       },
       "filters": {},
       "source": {
-        "initiativeLinked": "Initiative linked"
+        "initiativeLinked": "Initiative linked",
+        "runtime": {
+          "report": "Report Builder",
+          "native_artifact": "Document Studio",
+          "assessment_report": "Assessment"
+        }
       },
       "breadcrumb": {
         "library": "Library"

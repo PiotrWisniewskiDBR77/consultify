@@ -511,7 +511,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           rekord={
             previewItem ? (
               <StandardPreview
-                title={previewItem.title || t('rap.columns.title', 'Presentation')}
+                title={previewItem.title || t('rap.preview.untitledPresentation', 'Presentation')}
                 onClose={() => setSelectedId(null)}
                 onOpenFull={() => openPresentation(previewItem)}
                 meta={previewMeta ? { pills: previewMeta } : undefined}

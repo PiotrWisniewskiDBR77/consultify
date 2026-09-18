@@ -37048,6 +37048,7 @@
       "aiSummarize": "Podsumuj raport",
       "open": "Podgląd",
       "source": "Źródło",
+      "untitledPresentation": "Prezentacja",
       "useTemplate": "Użyj tego wzorca",
       "openFull": "Otwórz pełny",
       "slides": "slajdów",
@@ -37285,7 +37286,12 @@
       },
       "filters": {},
       "source": {
-        "initiativeLinked": "Powiązany z inicjatywą"
+        "initiativeLinked": "Powiązany z inicjatywą",
+        "runtime": {
+          "report": "Kreator raportów",
+          "native_artifact": "Studio Dokumentów",
+          "assessment_report": "Ocena"
+        }
       },
       "breadcrumb": {
         "library": "Biblioteka"

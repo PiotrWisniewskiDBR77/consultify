@@ -542,6 +542,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       owner: r.owner,
       updatedAt: r.updatedAt,
       reportType: r.reportType,
+      sourceType: r.sourceType,
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: r.exportFormats,
       fileFormat: r.fileFormat || 'Unknown',

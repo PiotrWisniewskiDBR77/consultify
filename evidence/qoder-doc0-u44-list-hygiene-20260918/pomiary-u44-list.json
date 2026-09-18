@@ -1,0 +1,102 @@
+[
+  {
+    "theme": "light",
+    "url": "http://127.0.0.1:5420/doc0-document-flow.html?lang=en&theme=light&ff_doc0_document_viewer=1&tab=all&case=list",
+    "shot": "doc0-u44-list-en-light-1440x900.png",
+    "bledyKonsoli": 0,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "badResponses": [],
+    "headers": [
+      "",
+      "Title",
+      "Type",
+      "Format",
+      "Status",
+      "Owner",
+      "Visibility",
+      "source",
+      "Review",
+      "Exports",
+      "Date",
+      ""
+    ],
+    "firstRowCells": [
+      "",
+      "Draft — Q4 operating notes",
+      "Document",
+      "DOCX",
+      "Draft",
+      "Daniel Osei",
+      "Organization",
+      "Document Studio",
+      "Draft",
+      "DOCX",
+      "Sep 10, 2026",
+      ""
+    ],
+    "titleHeader": {
+      "color": "rgb(100, 116, 139)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "fontSize": "11px",
+      "fontWeight": "600"
+    },
+    "sourceCell": {
+      "color": "rgb(15, 23, 42)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "fontSize": "16px",
+      "fontWeight": "400"
+    },
+    "contrastTitle": 4.56
+  },
+  {
+    "theme": "dark",
+    "url": "http://127.0.0.1:5420/doc0-document-flow.html?lang=en&theme=dark&ff_doc0_document_viewer=1&tab=all&case=list",
+    "shot": "doc0-u44-list-en-dark-1440x900.png",
+    "bledyKonsoli": 0,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "badResponses": [],
+    "headers": [
+      "",
+      "Title",
+      "Type",
+      "Format",
+      "Status",
+      "Owner",
+      "Visibility",
+      "source",
+      "Review",
+      "Exports",
+      "Date",
+      ""
+    ],
+    "firstRowCells": [
+      "",
+      "Draft — Q4 operating notes",
+      "Document",
+      "DOCX",
+      "Draft",
+      "Daniel Osei",
+      "Organization",
+      "Document Studio",
+      "Draft",
+      "DOCX",
+      "Sep 10, 2026",
+      ""
+    ],
+    "titleHeader": {
+      "color": "rgb(148, 163, 184)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "fontSize": "11px",
+      "fontWeight": "600"
+    },
+    "sourceCell": {
+      "color": "rgb(244, 247, 251)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "fontSize": "16px",
+      "fontWeight": "400"
+    },
+    "contrastTitle": 7.45
+  }
+]
