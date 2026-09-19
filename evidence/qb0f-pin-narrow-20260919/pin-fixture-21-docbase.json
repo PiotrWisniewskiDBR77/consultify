@@ -1,0 +1,396 @@
+[
+  {
+    "artifactId": "a1154710-2607-4a8e-be06-2d74fa1606c6",
+    "titleSnapshot": "DRD Full Diagnostic Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.291Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "ASSESSMENT_DRD",
+        "canonicalTemplateId": "tpl-drd-full-diagnostic-v2",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "5da66163-3b8c-4561-924a-04fa79e30fdc",
+    "titleSnapshot": "Interview Summary Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.300Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "interview_summary",
+        "canonicalTemplateId": "tpl-interview-summary",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "ade6002f-99fc-4d08-ac9d-c822aaec0c9e",
+    "titleSnapshot": "Interview Detailed Analysis",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.307Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "interview_detailed",
+        "canonicalTemplateId": "tpl-interview-detailed",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "9831879d-beee-4f93-a658-053ae739674d",
+    "titleSnapshot": "Tool Evaluation Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.312Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "tool_evaluation",
+        "canonicalTemplateId": "tpl-tool-evaluation",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "26a4384b-e81e-456a-88f2-4fc3ec57d9c6",
+    "titleSnapshot": "Tool Comparison Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.321Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "tool_comparison",
+        "canonicalTemplateId": "tpl-tool-comparison",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "fb503c90-1eb5-47c6-afad-be485ff4c79b",
+    "titleSnapshot": "DRD Board Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.331Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "ASSESSMENT_DRD",
+        "canonicalTemplateId": "tpl-drd-board-report-v2",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "be8f94d1-2195-4cd0-8157-8304b4118fe6",
+    "titleSnapshot": "Assessment Report (Default)",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.345Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "custom",
+        "canonicalTemplateId": "tpl-assessment-default",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "52e3e254-417f-46d9-9564-8123103d9c18",
+    "titleSnapshot": "Strategic Review & Executive Brief",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.349Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "STRATEGIC_REVIEW",
+        "canonicalTemplateId": "tpl-strategic-review-exec",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "29e251c0-a7ae-4c76-a18a-82b556e5ec02",
+    "titleSnapshot": "Transformation Roadmap & Portfolio Review",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.352Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "PORTFOLIO_REVIEW",
+        "canonicalTemplateId": "tpl-transformation-roadmap",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "b6109ae3-c1b2-4d08-8e00-b086b20b1694",
+    "titleSnapshot": "Steering Committee / Program Update",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.364Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "STEERING_COMMITTEE",
+        "canonicalTemplateId": "tpl-steering-committee",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "77a359fa-50ba-43a0-936b-d7c6d610426c",
+    "titleSnapshot": "Tool Workshop Summary",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.374Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "TOOL_WORKSHOP",
+        "canonicalTemplateId": "tpl-tool-workshop-summary",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "cbc21a5e-a375-49fd-a9fc-8f70c8b20f5b",
+    "titleSnapshot": "Assessment Summary Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.437Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "ASSESSMENT_SUMMARY",
+        "canonicalTemplateId": "tpl-assessment-summary-v2",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "fe661fd8-462b-4893-acb2-7df98854a6f0",
+    "titleSnapshot": "Financial Analysis Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.476Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "FINANCIAL_ANALYSIS",
+        "canonicalTemplateId": "tpl-financial-analysis-export",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "49a5b64c-ebe3-4358-acc0-24224e473bd2",
+    "titleSnapshot": "Final Transformation Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.543Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "custom",
+        "canonicalTemplateId": "tpl-final-transformation-report",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "558a5cbb-92f8-4dfe-aaba-b295579bcd09",
+    "titleSnapshot": "Program — three-axis report (time, tasks, value)",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.633Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "custom",
+        "canonicalTemplateId": "tpl-program-3axis",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "ea163afb-8b51-4855-b32c-1a7712ff86ef",
+    "titleSnapshot": "Finance — report financial section",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.639Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "custom",
+        "canonicalTemplateId": "tpl-finance-section",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "bd80dee5-8567-4dd4-bf90-a34f86f471b9",
+    "titleSnapshot": "KPI Review Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.669Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "RESULTS_KPI_REPORT",
+        "canonicalTemplateId": "tpl-results-kpi-report-default",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "dba84ebb-0592-4527-98c5-c3cbb3e2c16c",
+    "titleSnapshot": "Sponsor One-Pager",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.674Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "SPONSOR_ONEPAGER",
+        "canonicalTemplateId": "tpl-pm-sponsor-onepager",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "83f89a1a-1986-4bb7-99f0-93b9592e8a97",
+    "titleSnapshot": "Steering Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.679Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "STEERING",
+        "canonicalTemplateId": "tpl-pm-steering",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "a85d44ee-ffc2-43e7-8111-a1a813cd2dbc",
+    "titleSnapshot": "PMO Weekly",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.686Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "PMO_WEEKLY",
+        "canonicalTemplateId": "tpl-pm-weekly",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "template-1-docbase-b65e1077df2d3c5102c39a6ac26a5cbb",
+    "titleSnapshot": "[System] Client final report (EN)",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-16 19:59:01.141268+00",
+    "originSummary": {
+      "template": {
+        "system": true,
+        "family": "DOC-BASE",
+        "status": "approved"
+      }
+    }
+  }
+]
