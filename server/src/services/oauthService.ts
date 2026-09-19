@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
+import { seedOrganizationBaseArtifacts } from './organizationBaseArtifactService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -369,6 +370,12 @@ class OAuthService {
        VALUES (?, ?, 'active', 'free', NOW(), NOW())`,
       [orgId, `${userInfo.firstName || userInfo.displayName || 'User'}'s Organization`]
     );
+    try {
+      await seedOrganizationBaseArtifacts(orgId);
+    } catch (seedError) {
+      await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+      throw seedError;
+    }
 
     // Create user
     await dbRun(

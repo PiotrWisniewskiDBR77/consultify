@@ -18,6 +18,7 @@ import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { ORG_TYPES, TRIAL_DURATION_DAYS } from './access/AccessTypes.js';
 import { DEMO_TRIAL_EVENT_TYPES, recordDemoTrialEvent } from './demoTrialTelemetryService.js';
+import { organizationBaseArtifactSeedSql } from './organizationBaseArtifactService.js';
 
 // ==========================================
 // TYPES
@@ -255,6 +256,10 @@ export async function createOrganization(
       sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
                  VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
       params: [memberId, orgId, userId, 'OWNER', now],
+    },
+    {
+      sql: organizationBaseArtifactSeedSql(),
+      params: [orgId],
     },
   ]);
 
