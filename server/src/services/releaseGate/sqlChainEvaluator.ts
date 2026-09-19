@@ -15,7 +15,9 @@
  * to run once at startup, but it is NOT a per-request operation — readiness computes it during
  * boot, stores the receipt, and endpoints serve that receipt.
  */
+import crypto from 'crypto';
 import fs from 'fs';
+import path from 'path';
 
 import {
   POSTCONDITION_ATTESTATIONS,
@@ -59,11 +61,56 @@ export interface SqlChainEvaluation {
   detail: string;
 }
 
+type WarnFn = (message?: unknown, ...optionalParams: unknown[]) => void;
+
 export interface SqlChainEvaluatorDeps {
   db: AttestationQueryable;
   migrationsDir: string;
   /** override for tests; defaults to the real attestation */
   attest?: (db: AttestationQueryable) => Promise<AttestationResult>;
+  /** override for tests; defaults to console.warn */
+  warn?: WarnFn;
+}
+
+const RUNNABLE_MIGRATION_EXTENSIONS_RE = /\.(sql|js|ts)$/;
+const SKIPPED_LEDGER_CHECKSUM_RE = /^skipped:([0-9a-f]{64})$/;
+
+function addHistoricalMigrationFiles(
+  migrationsDir: string,
+  checksums: Map<string, { full: string; short: string }>
+): void {
+  const historicalDir = path.join(migrationsDir, 'never-ran');
+  if (!fs.existsSync(historicalDir)) return;
+  for (const entry of fs.readdirSync(historicalDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !RUNNABLE_MIGRATION_EXTENSIONS_RE.test(entry.name)) continue;
+    const rel = `never-ran/${entry.name}`;
+    const content = fs.readFileSync(path.join(historicalDir, entry.name), 'utf-8');
+    const checksum = {
+      full: crypto.createHash('sha256').update(content).digest('hex'),
+      short: fileChecksum(content),
+    };
+    checksums.set(rel, checksum);
+    // Older schema_migrations rows used the basename because the file used to
+    // live at server/migrations/<name>. Once archived under never-ran/, it is
+    // still historical ledger evidence and still checksum-verifiable.
+    if (!checksums.has(entry.name)) checksums.set(entry.name, checksum);
+  }
+}
+
+function warnSkippedLedgerDrift(
+  filename: string,
+  stored: string | null,
+  current: string | undefined,
+  warn: WarnFn
+): void {
+  if (!stored || !current) return;
+  const match = SKIPPED_LEDGER_CHECKSUM_RE.exec(stored);
+  if (!match) return;
+  if (match[1] === current) return;
+  warn(
+    `[sqlChainEvaluator] skipped migration checksum drift: ${filename} ledger checksum ${stored} ` +
+      `does not match current file sha256 ${current}`
+  );
 }
 
 function summarize(e: Omit<SqlChainEvaluation, 'detail' | 'state'>): { state: SqlChainState; detail: string } {
@@ -128,8 +175,7 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
       });
     }
 
-    const crypto = await import('crypto');
-    const path = await import('path');
+    const warn = deps.warn ?? console.warn;
     const onDisk = fs
       .readdirSync(deps.migrationsDir)
       .filter((f) => /\.(sql|js|ts)$/.test(f));
@@ -144,6 +190,7 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
         short: fileChecksum(content),
       });
     }
+    addHistoricalMigrationFiles(deps.migrationsDir, currentChecksums);
 
     const tpExists = await deps.db.query(
       `SELECT to_regclass('public.tp_migration_history') IS NOT NULL AS present`
@@ -178,12 +225,16 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
     const acc = { ...empty, ledgerPresent: true };
 
     const requiredSet = new Set(required);
+    const ledgerRelevantSet = new Set([...required, ...currentChecksums.keys()]);
     for (const [filename, row] of applied) {
       // Historical ledgers can retain rows for files that no longer exist or are now explicitly
       // excluded from the Postgres chain. They are audit history, not a missing required step.
-      if (!requiredSet.has(filename)) continue;
+      if (!ledgerRelevantSet.has(filename)) continue;
       if (row.status === 'failed') acc.failed.push(filename);
-      else if (row.status === 'skipped') acc.skipped.push(filename);
+      else if (row.status === 'skipped') {
+        warnSkippedLedgerDrift(filename, row.checksum, currentChecksums.get(filename)?.full, warn);
+        acc.skipped.push(filename);
+      }
     }
 
     for (const filename of required) {
