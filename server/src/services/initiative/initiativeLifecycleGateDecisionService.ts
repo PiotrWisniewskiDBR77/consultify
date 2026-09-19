@@ -269,20 +269,28 @@ export async function listInitiativeLifecycleGateDecisions(
   return result.rows.map((row) => ({ ...fromRow(row), humanActorName: row.human_actor_name }));
 }
 
+export interface InitiativeTransitionCaseResolution {
+  transformationCaseId: string;
+  planningState: 'ready' | 'plan_missing';
+}
+
 /** Tenant-scoped SSOT for proposal lineage; the browser must never guess this id. */
-export async function resolveInitiativeTransitionCase(
+export async function resolveInitiativeTransitionCaseState(
   client: PgTransactionClient,
   input: { organizationId: string; initiativeId: string }
-): Promise<string> {
+): Promise<InitiativeTransitionCaseResolution> {
   const organizationId = required(input.organizationId, 'organizationId');
   const initiativeId = required(input.initiativeId, 'initiativeId');
-  const result = await client.query<{ transformation_case_id: string }>(
-    `SELECT DISTINCT c.transformation_case_id
+  const result = await client.query<{
+    transformation_case_id: string;
+    active_plan_id: string | null;
+  }>(
+    `SELECT DISTINCT c.transformation_case_id, p.plan_id AS active_plan_id
        FROM transformation_case_artifact_links l
        JOIN transformation_cases c
          ON c.transformation_case_id=l.transformation_case_id
         AND c.organization_id=l.organization_id
-       JOIN transformation_plans p
+       LEFT JOIN transformation_plans p
          ON p.plan_id=c.active_plan_id
         AND p.transformation_case_id=c.transformation_case_id
         AND p.organization_id=c.organization_id
@@ -294,7 +302,18 @@ export async function resolveInitiativeTransitionCase(
   );
   if (result.rows.length === 0) throw new Error('INITIATIVE_TRANSITION_CASE_REQUIRED');
   if (result.rows.length > 1) throw new Error('INITIATIVE_TRANSITION_CASE_AMBIGUOUS');
-  return result.rows[0].transformation_case_id;
+  const row = result.rows[0];
+  return {
+    transformationCaseId: row.transformation_case_id,
+    planningState: row.active_plan_id ? 'ready' : 'plan_missing',
+  };
+}
+
+export async function resolveInitiativeTransitionCase(
+  client: PgTransactionClient,
+  input: { organizationId: string; initiativeId: string }
+): Promise<string> {
+  return (await resolveInitiativeTransitionCaseState(client, input)).transformationCaseId;
 }
 
 export function buildInitiativeLifecycleGateDecisionInputDigest(

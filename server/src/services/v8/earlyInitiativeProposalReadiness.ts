@@ -53,7 +53,7 @@ export async function readEarlyInitiativeProposalReadiness(
                 i.planned_start_date,i.planned_end_date,i.schedule_baseline_id,i.baseline_version,
                 agg.payload_json->>'lifecycleState' AS lifecycle_state
            FROM transformation_cases c
-           JOIN transformation_plans p ON p.plan_id=c.active_plan_id
+           LEFT JOIN transformation_plans p ON p.plan_id=c.active_plan_id
             AND p.transformation_case_id=c.transformation_case_id AND p.organization_id=c.organization_id
            JOIN transformation_case_artifact_links l ON l.transformation_case_id=c.transformation_case_id
             AND l.organization_id=c.organization_id AND l.artifact_type='initiative' AND l.artifact_id=?
@@ -67,7 +67,7 @@ export async function readEarlyInitiativeProposalReadiness(
             AND EXISTS (SELECT 1 FROM project_members reviewer_pm
                          WHERE reviewer_pm.project_id=c.project_id AND reviewer_pm.user_id=?
                            AND UPPER(reviewer_pm.project_role) IN ('PROJECT_SPONSOR','STEERING_COMMITTEE'))
-          FOR SHARE OF c,p,l,i`,
+          FOR SHARE OF c,l,i`,
       [
         input.initiativeId,
         input.transformationCaseId,
@@ -79,6 +79,7 @@ export async function readEarlyInitiativeProposalReadiness(
     )
   ).rows[0];
   if (!current) throw new Error('initiative_lifecycle_authority_required');
+  if (current.plan_version == null) throw new Error('initiative_transition_plan_missing');
   if (!matchesExpectedStage(current, expectedStatus))
     throw new Error('initiative_lifecycle_expected_status_drift');
   const milestoneRows =

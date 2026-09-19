@@ -46,7 +46,7 @@ export interface InitiativeTransitionPreflight {
   isAuthor: boolean;
   effectiveRoles: string[];
   transitionCase?: {
-    status: 'ready' | 'missing' | 'ambiguous' | 'execution_context_missing' | 'source_not_ready';
+    status: 'ready' | 'missing' | 'ambiguous' | 'plan_missing' | 'execution_context_missing' | 'source_not_ready';
     transformationCaseId: string | null;
   };
   transitions: InitiativeTransitionPreflightItem[];

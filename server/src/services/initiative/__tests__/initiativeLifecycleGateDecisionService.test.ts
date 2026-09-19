@@ -10,6 +10,7 @@ import {
   readCurrentInitiativeLifecycleGateDecision,
   recordInitiativeLifecycleGateDecision,
   resolveInitiativeTransitionCase,
+  resolveInitiativeTransitionCaseState,
   type RecordInitiativeLifecycleGateDecisionInput,
 } from '../initiativeLifecycleGateDecisionService.js';
 
@@ -91,7 +92,7 @@ describe('initiativeLifecycleGateDecisionService', () => {
 
   it('resolves exactly one active tenant-scoped transformation case', async () => {
     const query = vi.fn().mockResolvedValue({
-      rows: [{ transformation_case_id: 'case-1' }],
+      rows: [{ transformation_case_id: 'case-1', active_plan_id: 'plan-1' }],
       rowCount: 1,
     });
     await expect(
@@ -100,10 +101,36 @@ describe('initiativeLifecycleGateDecisionService', () => {
         initiativeId: 'initiative-1',
       })
     ).resolves.toBe('case-1');
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('l.organization_id=?'), [
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('LEFT JOIN transformation_plans'), [
       'org-1',
       'initiative-1',
     ]);
+  });
+
+
+  it('D-37 resolves a linked active case even when active_plan_id has no matching plan', async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (!sql.includes('LEFT JOIN transformation_plans')) return { rows: [], rowCount: 0 };
+      return {
+        rows: [{ transformation_case_id: 'case-without-plan', active_plan_id: null }],
+        rowCount: 1,
+      };
+    });
+    await expect(
+      resolveInitiativeTransitionCase(clientWith(query), {
+        organizationId: 'org-1',
+        initiativeId: 'initiative-1',
+      })
+    ).resolves.toBe('case-without-plan');
+    await expect(
+      resolveInitiativeTransitionCaseState(clientWith(query), {
+        organizationId: 'org-1',
+        initiativeId: 'initiative-1',
+      })
+    ).resolves.toEqual({
+      transformationCaseId: 'case-without-plan',
+      planningState: 'plan_missing',
+    });
   });
 
   it('fails closed when transition case lineage is missing or ambiguous', async () => {
