@@ -14,6 +14,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import AccessCodeService from '../services/accessCodeService.js';
+import { seedOrganizationBaseArtifacts } from '../services/organizationBaseArtifactService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -194,6 +195,13 @@ router.put(
     );
     if (!orgResult.success) {
       throw new Error(orgResult.error || 'Failed to create organization');
+    }
+
+    try {
+      await seedOrganizationBaseArtifacts(orgId);
+    } catch (seedError) {
+      await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+      throw seedError;
     }
 
     // Create user
