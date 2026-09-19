@@ -15,7 +15,8 @@
  * renderuje `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
 import React, { useId, useState } from 'react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceExportImportFlag } from '@/hooks/useFinanceExportImportFlag';
