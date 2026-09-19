@@ -393,6 +393,38 @@ export interface AuditOutputSummary {
   contentHash: string | null;
 }
 
+export interface AuditReportBuilderSection {
+  id: string;
+  reportId: string;
+  sectionKey: string;
+  sectionType: string;
+  title: string;
+  orderIndex: number;
+  enabled: boolean;
+  required: boolean;
+  length: 'short' | 'medium' | 'long';
+  language: 'business';
+  generatedContent: string;
+  editedContent?: string;
+  contentFormat: 'markdown';
+  sourceDataSnapshot?: string;
+  generatedAt?: string | null;
+}
+
+export interface AuditReportBuilderDocument {
+  report: {
+    id: string;
+    sourceType: 'AUDIT_REPORT' | string;
+    sourceId: string;
+    title: string;
+    reportType: string;
+    status?: string | null;
+    generatedAt?: string | null;
+    version?: number | null;
+  };
+  sections: AuditReportBuilderSection[];
+}
+
 export interface AuditReportSummary {
   id: string;
   programId: string;
@@ -418,6 +450,8 @@ export interface AuditReportSummary {
    * budują `AuditReportSummary` ręcznie bez tego pola — w realnej odpowiedzi API jest zawsze.
    */
   payload?: Record<string, unknown>;
+  /** DEC-651/A2: kanoniczny dokument adaptera Report Builder; `payload` zostaje dla kompatybilnosci. */
+  reportBuilderDocument?: AuditReportBuilderDocument;
 }
 
 /** Wynik `POST /audits/reports/:id/conclusion` — wniosek zapisany w warstwie Wniosków. */

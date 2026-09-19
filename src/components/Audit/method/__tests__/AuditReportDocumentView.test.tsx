@@ -159,6 +159,54 @@ const presentation: AuditReportDocument = {
   ],
 };
 
+
+const builderDocument = {
+  report: {
+    id: 'rep-1',
+    sourceType: 'AUDIT_REPORT',
+    sourceId: 'out-1',
+    title: 'A2C_REPORT_TITLE',
+    reportType: 'audit_report',
+    status: 'draft',
+    generatedAt: '2026-08-20T00:00:00Z',
+    version: 1,
+  },
+  sections: [
+    {
+      id: 'rep-1:executive_summary',
+      reportId: 'rep-1',
+      sectionKey: 'executive_summary',
+      sectionType: 'content',
+      title: 'A2C_SECTION_1',
+      orderIndex: 0,
+      enabled: true,
+      required: true,
+      length: 'medium',
+      language: 'business',
+      generatedContent: 'A2C_BUILDER_AUDIT_SUMMARY',
+      contentFormat: 'markdown',
+      sourceDataSnapshot: 'A2C_BUILDER_AUDIT_SUMMARY',
+      generatedAt: '2026-08-20T00:00:00Z',
+    },
+    {
+      id: 'rep-1:traceability_matrix',
+      reportId: 'rep-1',
+      sectionKey: 'traceability_matrix',
+      sectionType: 'content',
+      title: 'A2C_SECTION_2',
+      orderIndex: 1,
+      enabled: true,
+      required: false,
+      length: 'medium',
+      language: 'business',
+      generatedContent: 'A2C_BUILDER_TRACEABILITY',
+      contentFormat: 'markdown',
+      sourceDataSnapshot: 'A2C_BUILDER_TRACEABILITY',
+      generatedAt: '2026-08-20T00:00:00Z',
+    },
+  ],
+} satisfies NonNullable<AuditReportSummary['reportBuilderDocument']>;
+
 const report: AuditReportSummary = {
   id: 'rep-1',
   programId: 'prog-1',
@@ -210,6 +258,27 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
 
   afterAll(async () => {
     await i18n.changeLanguage(INITIAL_LANGUAGE);
+  });
+
+  it('uzywa adaptera A2C zamiast starej tresci raportu', async () => {
+    stubReads();
+    mockedGetReport.mockResolvedValue({
+      ...report,
+      reportBuilderDocument: builderDocument,
+      payload: {
+        ...fullPayload,
+        sections: [
+          { id: 'executive_summary', title: 'A2C_LEGACY_SECTION', kind: 'text', content: 'A2C_LEGACY_AUDIT_SUMMARY' },
+        ],
+      } as unknown as Record<string, unknown>,
+    });
+
+    render(<AuditReportDocumentView reportId="rep-1" />);
+
+    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+    expect(screen.getByText('A2C_BUILDER_AUDIT_SUMMARY')).toBeInTheDocument();
+    expect(screen.queryByText('A2C_LEGACY_AUDIT_SUMMARY')).not.toBeInTheDocument();
+    expect(mockedGetReportPresentation).not.toHaveBeenCalled();
   });
 
   it('renders report.payload by default — title, executive summary text — and does NOT call /presentation', async () => {
