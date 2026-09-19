@@ -99,6 +99,7 @@ import {
   ModuleTab,
   OpenDocument,
   REPORT_STATUSES,
+  type StatusOption,
   StatusDropdown,
   TableColumn,
   ViewMode,
@@ -607,6 +608,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
   const isPolish = !!i18n.language?.startsWith('pl');
+  const getStatusOptionLabel = useCallback(
+    (option: StatusOption): string =>
+      String(
+        t(option.labelKey, {
+          lng: isPolish ? 'pl' : 'en',
+          defaultValue: (isPolish ? option.labelPL : option.label) ?? option.id,
+        })
+      ),
+    [isPolish, t]
+  );
 
   // #69: org users, for resolving createdBy → display name in the Author column
   // (wzór: DiscoveryToolsHub.tsx, commit 94403b4f57).
@@ -1141,7 +1152,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           dataType: 'status',
           filterOptions: Object.values(REPORT_STATUSES).map((s) => ({
             value: s.id,
-            label: s.label,
+            label: getStatusOptionLabel(s),
             color: s.bgColor,
           })),
           render: (row) => {
@@ -1223,7 +1234,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         dataType: 'status',
         filterOptions: Object.values(ASSESSMENT_STATUSES).map((s) => ({
           value: s.id,
-          label: s.label,
+          label: getStatusOptionLabel(s),
           color: s.bgColor,
         })),
       },
@@ -1236,7 +1247,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       { ...progressCol, defaultVisible: false },
       { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Update') },
     ];
-  }, [activeTab, t, getAuthorLabel, getReportContextLabel]);
+  }, [activeTab, t, getAuthorLabel, getReportContextLabel, getStatusOptionLabel]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -1900,11 +1911,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         const filterTooltip = t(
           'assessment.hub.statusFilterTooltip',
           'Filter the list by status "{{status}}".',
-          { status: isPolish ? opt.labelPL : opt.label }
+          { status: getStatusOptionLabel(opt) }
         );
         return {
           id: `status-${opt.id}`,
-          label: isPolish ? opt.labelPL : opt.label,
+          label: getStatusOptionLabel(opt),
           badge: formatPresentationBadge(presentation, countCopy),
           active: statusFilter === opt.id,
           icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
@@ -1912,7 +1923,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           title: reason ? `${filterTooltip} (${fullReasonSentence})` : filterTooltip,
         };
       }),
-    [activeTab, isPolish, outputsCount, statusChipOptions, statusCounts, statusFilter, t]
+    [
+      activeTab,
+      getStatusOptionLabel,
+      outputsCount,
+      statusChipOptions,
+      statusCounts,
+      statusFilter,
+      t,
+    ]
   );
 
   const hubMenu3InfoChips = useMemo(
