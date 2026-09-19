@@ -12,7 +12,7 @@
  * unexplained checksum drift.
  */
 import crypto from 'crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import { tmpdir } from 'os';
 
@@ -275,6 +275,38 @@ describe('shared evaluator — one implementation, not a test copy', () => {
       expect(e.state).toBe('pending');
       expect(e.pending).toEqual([filename]);
       expect(isSqlChainAcceptable(e)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+
+  it('treats never-ran files as historical ledger rows and warns on skipped checksum drift', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'sql-chain-never-ran-skipped-'));
+    const historicalDir = path.join(dir, 'never-ran');
+    mkdirSync(historicalDir);
+    const filename = '665_v6_interview_templates_foundation.sql';
+    const content = 'CREATE TABLE d138_never_ran_probe(id text primary key);\n';
+    writeFileSync(path.join(historicalDir, filename), content);
+    const warn = vi.fn();
+    const db = {
+      query: vi.fn(async (text: string) => {
+        if (text.includes("to_regclass('public.schema_migrations')")) return { rows: [{ present: true }] };
+        if (text.includes('FROM schema_migrations')) {
+          return { rows: [{ filename, status: 'skipped', checksum: `skipped:${crypto.createHash('sha256').update('OLD').digest('hex')}` }] };
+        }
+        if (text.includes("to_regclass('public.tp_migration_history')")) return { rows: [{ present: false }] };
+        throw new Error(`unexpected query: ${text}`);
+      }),
+    };
+
+    try {
+      const e = await evaluateSqlChain({ db: db as any, migrationsDir: dir, warn });
+      expect(e.state).toBe('skipped');
+      expect(e.skipped).toEqual([filename]);
+      expect(e.pending).toEqual([]);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('skipped migration checksum drift'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(filename));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

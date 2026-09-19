@@ -13,7 +13,7 @@
  */
 import crypto from 'crypto';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   BENIGN_ALREADY_APPLIED_PG_CODES,
@@ -75,6 +75,23 @@ describe('a checksum is TRUSTED only in the shape this runner writes', () => {
     expect(() =>
       assertLedgerRowIsTrusted(row('a.sql', 'skipped', `skipped:${sha('a')}`))
     ).not.toThrow();
+  });
+
+  it('keeps a matching skipped checksum quiet when current file bytes are known', () => {
+    const warn = vi.fn();
+    expect(() =>
+      assertLedgerRowIsTrusted(row('a.sql', 'skipped', `skipped:${sha('a')}`), sha('a'), warn)
+    ).not.toThrow();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('warns when a skipped checksum no longer matches the current file bytes', () => {
+    const warn = vi.fn();
+    expect(() =>
+      assertLedgerRowIsTrusted(row('a.sql', 'skipped', `skipped:${sha('OLD')}`), sha('NEW'), warn)
+    ).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('a.sql'));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(sha('NEW')));
   });
 
   it.each([
