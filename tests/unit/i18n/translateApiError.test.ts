@@ -115,12 +115,15 @@ describe('normalizeApiErrorMessage — warstwa globalna J17', () => {
     setApiErrorTranslator(null);
   });
 
-  it('NIEZNANY kod nie jest ruszany — stare angielskie komunikaty zostają', async () => {
+  it('NIEZNANY kod UPPER_SNAKE daje zdanie generyczne (Wpis 231 pkt 2); brak kodu — stary komunikat zostaje', async () => {
     const { normalizeApiErrorMessage, setApiErrorTranslator } = await import('@/utils/apiError');
     setApiErrorTranslator(null);
 
     expect(
       normalizeApiErrorMessage({ error: { message: 'Email already exists', code: 'DUPLICATE_EMAIL' } })
-    ).toBe('Email already exists');
+    ).toBe('Something went wrong. Please try again.');
+    expect(normalizeApiErrorMessage({ error: { message: 'Email already exists' } })).toBe(
+      'Email already exists'
+    );
   });
 });

@@ -4,14 +4,17 @@ import { createApiError, normalizeApiError, normalizeApiErrorMessage } from '@/u
 
 describe('apiError utils', () => {
   it('normalizes object error payloads without leaking object stringification', () => {
-    expect(
-      normalizeApiErrorMessage({
-        error: {
-          message: 'Email already exists',
-          code: 'DUPLICATE_EMAIL',
-        },
-      })
-    ).toBe('Email already exists');
+    const payload = {
+      error: {
+        message: 'Email already exists',
+        code: 'DUPLICATE_EMAIL',
+      },
+    };
+    // Warstwa normalizacji: zdanie z serwera, nigdy "[object Object]".
+    expect(normalizeApiError(payload).message).toBe('Email already exists');
+    // Warstwa komunikatu (Wpis 231 pkt 2): nieznany kod UPPER_SNAKE renderuje
+    // zdanie generyczne — surowy message serwera nie jest już kontraktem UI.
+    expect(normalizeApiErrorMessage(payload)).toBe('Something went wrong. Please try again.');
   });
 
   it('flattens validation details with object entries into readable field messages', () => {
@@ -53,7 +56,9 @@ describe('apiError utils', () => {
     ) as Error & { code?: string; status?: number; details?: unknown; data?: unknown };
 
     expect(error).toBeInstanceOf(Error);
-    expect(error.message).toBe('tokens: Budget exhausted');
+    // Wpis 231 pkt 2: LIMIT_REACHED nie ma wpisu w API_ERROR_FALLBACKS_EN, więc
+    // komunikat jest generyczny; metadane (code/status/details) zostają nienaruszone.
+    expect(error.message).toBe('Something went wrong. Please try again.');
     expect(error.code).toBe('LIMIT_REACHED');
     expect(error.status).toBe(429);
     expect(error.details).toEqual({ tokens: [{ reason: 'Budget exhausted' }] });

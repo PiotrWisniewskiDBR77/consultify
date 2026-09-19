@@ -1,4 +1,4 @@
-import { API_ERROR_FALLBACKS_EN } from './apiErrorFallbacks';
+import { API_ERROR_FALLBACKS_EN, API_ERROR_GENERIC_EN } from './apiErrorFallbacks';
 
 /**
  * J17 — tłumacz komunikatów błędu dla kodu, który NIE ma własnego `t`.
@@ -19,18 +19,39 @@ export function setApiErrorTranslator(translator: ApiErrorTranslator | null): vo
 
 /**
  * Zdanie dla ZNANEGO kodu błędu, albo `null` gdy kodu nie znamy.
- *
- * Świadomie NIE dotykamy nieznanych kodów: zamiana ich na generyczne zdanie
- * zabrałaby użyteczne, angielskie komunikaty starszych tras (np.
- * `DUPLICATE_EMAIL` → „Email already exists"). Ta gałąź celuje dokładnie
- * w 222 miejsca z pomiaru K5pl, gdzie serwer wysyłał kod ORAZ polskie zdanie,
- * a front renderował zdanie.
  */
 function translateKnownCode(code: string | undefined): string | null {
   if (!code) return null;
   const fallback = API_ERROR_FALLBACKS_EN[code];
   if (!fallback) return null;
   return apiErrorTranslator ? apiErrorTranslator(`errors.${code}`, fallback) : fallback;
+}
+
+/**
+ * Wpis 231 pkt 2 (DEC-690) — kod serwera w konwencji UPPER_SNAKE, którego NIE MA
+ * w `API_ERROR_FALLBACKS_EN`, dostaje zdanie GENERYCZNE z i18n
+ * (`errors.generic.unknownCode`), nigdy surowego `message` z odpowiedzi: to była
+ * klasa defektu MUTE (222 miejsca z pomiaru K5pl) — serwer wysyłał kod ORAZ
+ * polskie zdanie, a front renderował zdanie. Kontrakt `apiErrorFallbacks.ts`
+ * („nieznany kod dostaje API_ERROR_GENERIC, nigdy zdania z serwera") obowiązuje
+ * od teraz także tu. Kody spoza konwencji (np. `lowercase`, `HTTP-404`) i payloady
+ * BEZ kodu zachowują dotychczasowe zachowanie: surowy `message` bywa użytecznym
+ * angielskim zdaniem starszych tras. Ratchet D-141
+ * (`tests/unit/i18n/serverErrorCodeRatchet.test.mjs`) pilnuje, by nowy kod serwera
+ * nie powiększał listy wyjątków — docelowo każdy kod dostaje własne zdanie
+ * w rejestrze i gałąź generyczna obsługuje wyłącznie prawdziwie nieznane kody.
+ */
+const UNKNOWN_CODE_RE = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/;
+
+function localizeByCode(code: string | undefined, rawMessage: string): string {
+  const known = translateKnownCode(code);
+  if (known) return known;
+  if (code && UNKNOWN_CODE_RE.test(code)) {
+    return apiErrorTranslator
+      ? apiErrorTranslator('errors.generic.unknownCode', API_ERROR_GENERIC_EN)
+      : API_ERROR_GENERIC_EN;
+  }
+  return rawMessage;
 }
 
 export interface NormalizedApiError {
@@ -165,14 +186,14 @@ export function normalizeApiError(input: unknown, fallback = 'Request failed'): 
 
 export function normalizeApiErrorMessage(input: unknown, fallback = 'Request failed'): string {
   const normalized = normalizeApiError(input, fallback);
-  return translateKnownCode(normalized.code) ?? normalized.message;
+  return localizeByCode(normalized.code, normalized.message);
 }
 
 export function createApiError(input: unknown, fallback = 'Request failed'): Error {
   const normalized = normalizeApiError(input, fallback);
   // J17: `message` jest tym, co renderują ekrany łapiące ten błąd, więc musi
   // być w języku interfejsu, a nie w języku, w którym router napisał zdanie.
-  const error = new Error(translateKnownCode(normalized.code) ?? normalized.message) as Error & {
+  const error = new Error(localizeByCode(normalized.code, normalized.message)) as Error & {
     code?: string;
     status?: number;
     details?: unknown;

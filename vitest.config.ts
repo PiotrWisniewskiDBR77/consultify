@@ -229,6 +229,10 @@ export default defineConfig({
     include: [
       'src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // D-141 (Wpis 231 pkt 2): the order pins the ratchet filename as
+      // `tests/unit/i18n/serverErrorCodeRatchet.test.mjs`; without this glob a
+      // .mjs under tests/unit is uncollectable (same gap as scripts/i18n below).
+      'tests/unit/**/*.{test,spec}.mjs',
       'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // H6.6: these real vitest dirs were never in `include`, so vitest could
       // not collect them regardless of invocation. `tests/component` (singular,
