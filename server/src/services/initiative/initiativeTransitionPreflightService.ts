@@ -40,7 +40,7 @@ import {
   normalizeStatus,
 } from './initiativeTransitionService.js';
 import { normalizeInitiativeDbStatusForRead } from './initiativeLifecycleCanon.js';
-import { resolveInitiativeTransitionCase } from './initiativeLifecycleGateDecisionService.js';
+import { resolveInitiativeTransitionCaseState } from './initiativeLifecycleGateDecisionService.js';
 import { loadTransformationAgentExecutionContext } from '../v8/transformationAgentExecutionContextService.js';
 
 export interface InitiativeTransitionPreflightItem {
@@ -83,7 +83,13 @@ export interface InitiativeTransitionPreflight {
   effectiveRoles: string[];
   /** PMO-1a v4: proposal POST needs D-37 lineage; expose it before click. */
   transitionCase: {
-    status: 'ready' | 'missing' | 'ambiguous' | 'execution_context_missing' | 'source_not_ready';
+    status:
+      | 'ready'
+      | 'missing'
+      | 'ambiguous'
+      | 'plan_missing'
+      | 'execution_context_missing'
+      | 'source_not_ready';
     transformationCaseId: string | null;
   };
   transitions: InitiativeTransitionPreflightItem[];
@@ -108,16 +114,25 @@ export async function getInitiativeTransitionPreflight(input: {
 
   const transitionCase = await queryHelpers.withPgTransaction(async (tx) => {
     try {
-      const transformationCaseId = await resolveInitiativeTransitionCase(tx, {
+      const transitionCaseState = await resolveInitiativeTransitionCaseState(tx, {
         organizationId: orgId,
         initiativeId,
       });
+      if (transitionCaseState.planningState === 'plan_missing') {
+        return {
+          status: 'plan_missing' as const,
+          transformationCaseId: transitionCaseState.transformationCaseId,
+        };
+      }
       await loadTransformationAgentExecutionContext({
-        transformationCaseId,
+        transformationCaseId: transitionCaseState.transformationCaseId,
         organizationId: orgId,
         actorUserId: actorId,
       });
-      return { status: 'ready' as const, transformationCaseId };
+      return {
+        status: 'ready' as const,
+        transformationCaseId: transitionCaseState.transformationCaseId,
+      };
     } catch (error) {
       const code = error instanceof Error ? error.message : '';
       if (code === 'INITIATIVE_TRANSITION_CASE_AMBIGUOUS') {

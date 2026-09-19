@@ -23,6 +23,7 @@ const {
   readinessMock,
   goDecisionMock,
   transitionCaseMock,
+  transitionCaseStateMock,
   capabilityContextMock,
   loadExecutionContextMock,
 } = vi.hoisted(() => ({
@@ -33,6 +34,7 @@ const {
   readinessMock: vi.fn(),
   goDecisionMock: vi.fn(),
   transitionCaseMock: vi.fn(),
+  transitionCaseStateMock: vi.fn(),
   capabilityContextMock: vi.fn(),
   loadExecutionContextMock: vi.fn(),
 }));
@@ -53,6 +55,7 @@ vi.mock('../initiativeCapabilityMatrix.js', async (importOriginal) => {
 vi.mock('../initiativeLifecycleGateDecisionService.js', () => ({
   assertCurrentApprovedInitiativeLifecycleGateDecision: goDecisionMock,
   resolveInitiativeTransitionCase: transitionCaseMock,
+  resolveInitiativeTransitionCaseState: transitionCaseStateMock,
 }));
 vi.mock('../initiativeGateReadinessService.js', () => ({
   getBlockingReadinessItems: readinessMock,
@@ -103,6 +106,9 @@ beforeEach(() => {
   readinessMock.mockReset().mockResolvedValue([]);
   goDecisionMock.mockReset().mockRejectedValue(new Error('no decision'));
   transitionCaseMock.mockReset().mockResolvedValue('case-1');
+  transitionCaseStateMock
+    .mockReset()
+    .mockResolvedValue({ transformationCaseId: 'case-1', planningState: 'ready' });
   loadExecutionContextMock.mockReset().mockResolvedValue({ canonicalRunId: 'run-1' });
   capabilityContextMock.mockReset();
   queryMock.mockReset();
@@ -260,7 +266,7 @@ describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO pr
     capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
     const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
 
-    expect(transitionCaseMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(transitionCaseStateMock).toHaveBeenCalledWith(expect.anything(), {
       organizationId: ORG,
       initiativeId: INI,
     });
@@ -273,7 +279,7 @@ describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO pr
   });
 
   it('zwraca missing zamiast pozwolić UI dojść do POST 409 INITIATIVE_TRANSITION_CASE_REQUIRED', async () => {
-    transitionCaseMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_REQUIRED'));
+    transitionCaseStateMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_REQUIRED'));
     queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
     capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
     const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
@@ -282,6 +288,21 @@ describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO pr
   });
 
 
+  it('D-37 zwraca plan_missing z id sprawy, gdy transformation case istnieje bez aktywnego planu', async () => {
+    transitionCaseStateMock.mockResolvedValueOnce({
+      transformationCaseId: 'case-without-plan',
+      planningState: 'plan_missing',
+    });
+    queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
+    capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
+    const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
+
+    expect(preflight!.transitionCase).toEqual({
+      status: 'plan_missing',
+      transformationCaseId: 'case-without-plan',
+    });
+    expect(loadExecutionContextMock).not.toHaveBeenCalled();
+  });
 
   it('zwraca execution_context_missing, gdy case istnieje, ale POST proposal padłby na brak canonical run identity', async () => {
     loadExecutionContextMock.mockRejectedValue(new Error('transformation_canonical_run_identity_missing'));
@@ -291,7 +312,6 @@ describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO pr
 
     expect(preflight!.transitionCase).toEqual({ status: 'execution_context_missing', transformationCaseId: null });
   });
-
 
 
   it('zwraca source_not_ready, gdy case i run identity istnieją, ale adapter proposal wymaga etapu SCHEDULED', async () => {
@@ -305,7 +325,7 @@ describe('podgląd przejść — D-37 lineage widoczne przed kliknięciem PMO pr
   });
 
   it('zwraca ambiguous przy wielu case, żeby UI zablokowało request z uczciwym powodem', async () => {
-    transitionCaseMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_AMBIGUOUS'));
+    transitionCaseStateMock.mockRejectedValue(new Error('INITIATIVE_TRANSITION_CASE_AMBIGUOUS'));
     queryOneMock.mockResolvedValue(draftRow({ owner_business_id: 'owner-1', scope_in: ['x'] }));
     capabilityContextMock.mockResolvedValue(context(['CONSULTANT']));
     const preflight = await getInitiativeTransitionPreflight({ orgId: ORG, initiativeId: INI, actorId: AUTHOR });
