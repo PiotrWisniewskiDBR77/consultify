@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { getDatabase } from '../../database/Database.js';
+import { attestTablePlatformPresentWithoutHistory } from '../releaseGate/tablePlatformPresentWithoutHistory.js';
 import logger from '../../utils/Logger.js';
 import {
   RUNTIME_MIGRATION_ALLOWLIST as RUNTIME_MIGRATION_ALLOWLIST_FILES,
@@ -225,6 +226,51 @@ const SAME_PREFIX_ORDER: Record<string, number> = {
   '20260809_case_workspace_migration_readiness.sql': 10, // no FK into any other case_workspace table
 };
 
+
+/**
+ * Reconciles reviewed Table Platform migrations whose postcondition is already
+ * present in the database, but whose TP ledger row is missing. This is narrower
+ * than making old seed SQL idempotent: the historical bytes stay immutable, and
+ * only explicitly attested filenames can receive a ledger row without replaying
+ * DDL/DML that would collide with existing rows.
+ */
+export async function reconcileTablePlatformLedgerFromAttestedPresence(
+  db: MigrationLedgerDb,
+  files: string[],
+  migrationsDir: string
+): Promise<number> {
+  const tpRows = await db.query<{ filename: string; checksum: string | null }>(
+    `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
+  );
+  const tpApplied = new Set(tpRows.rows.map((row) => row.filename));
+  let reconciled = 0;
+
+  for (const file of files) {
+    if (tpApplied.has(file)) continue;
+    if (!(await attestTablePlatformPresentWithoutHistory(db, file))) continue;
+
+    const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+    const shortChecksum = fileChecksum(content);
+    await db.query(
+      `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
+      [file, shortChecksum]
+    );
+    const readback = await db.query<{ checksum: string | null }>(
+      `SELECT checksum FROM ${MIGRATION_TABLE} WHERE filename = $1`,
+      [file]
+    );
+    if (readback.rows.length !== 1 || readback.rows[0]?.checksum !== shortChecksum) {
+      throw new MigrationLedgerReconciliationError(
+        `TP ledger readback mismatch for '${file}' after attested-presence reconciliation`
+      );
+    }
+    tpApplied.add(file);
+    reconciled++;
+  }
+
+  return reconciled;
+}
+
 export function compareMigrationFilenames(a: string, b: string): number {
   const prefixA = a.split('_')[0];
   const prefixB = b.split('_')[0];
@@ -379,6 +425,7 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
   const appliedChecksums = new Map(appliedResult.rows.map((r) => [r.filename, r.checksum]));
 
   await reconcileTablePlatformLedgerFromCanonical(db, files, migrationsDir);
+  await reconcileTablePlatformLedgerFromAttestedPresence(db, files, migrationsDir);
   const reconciledResult = await db.query<{ filename: string; checksum: string | null }>(
     `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
   );
