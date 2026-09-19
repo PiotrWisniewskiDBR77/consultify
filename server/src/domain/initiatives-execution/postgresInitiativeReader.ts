@@ -1,5 +1,9 @@
 import type { Pool } from 'pg';
 
+import {
+  INITIATIVE_STAGE_TO_STATUS,
+  resolveInitiativeLifecycleStage,
+} from '../../constants/initiativeLifecycleStages.js';
 import type { CapacityScenario } from './capacityScenario.js';
 import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js';
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
@@ -212,6 +216,24 @@ export interface PendingDefinitionRemediationReadModel {
   options: string[];
 }
 
+/**
+ * D-45: the engine writes the lifecycle stage under `payload_json.lifecycleState`
+ * (DEC-539 SSOT), while the old work-report read looked only at `payload_json.status`
+ * — empty for seeded Northwind aggregates — so the client PDF printed "UNKNOWN"
+ * for every row. Resolve either vocabulary through the one mapping table.
+ */
+export function resolveWorkReportInitiativeStatus(
+  payload: Record<string, unknown> | null | undefined
+): string {
+  const raw = payload ?? {};
+  const stage = resolveInitiativeLifecycleStage(
+    String(raw.lifecycleState ?? '').trim() || String(raw.status ?? '').trim()
+  );
+  if (stage) return INITIATIVE_STAGE_TO_STATUS[stage];
+  const legacy = String(raw.status ?? '').trim();
+  return legacy || 'UNKNOWN';
+}
+
 export class PostgresInitiativeReader {
   constructor(private readonly pool: Pool) {}
 
@@ -332,11 +354,11 @@ export class PostgresInitiativeReader {
       ),
     ]);
     const generatedAt = new Date().toISOString();
-    const initiatives = initiativesResult.rows.map((row) => ({
+    const scoped = initiativesResult.rows.map((row) => ({
       id: row.aggregate_id,
       version: row.version,
       title: String(row.payload_json.title || row.payload_json.name || row.aggregate_id),
-      status: String(row.payload_json.status || 'UNKNOWN'),
+      status: resolveWorkReportInitiativeStatus(row.payload_json),
       projectId: row.payload_json.projectId ? String(row.payload_json.projectId) : null,
       ownerId:
         row.payload_json.initiativeOwnerId || row.payload_json.ownerId
@@ -344,6 +366,37 @@ export class PostgresInitiativeReader {
           : null,
       updatedAt:
         row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+    }));
+    const unique = (values: Array<string | null>) => [...new Set(values.filter(Boolean))] as string[];
+    const [projectRows, ownerRows] = await Promise.all([
+      unique(scoped.map((item) => item.projectId)).length
+        ? this.pool.query<{ id: string; name: string }>(
+            `SELECT id, COALESCE(NULLIF(TRIM(name), ''), id) AS name
+               FROM projects
+              WHERE organization_id=$1 AND id=ANY($2::text[])`,
+            [organizationId, unique(scoped.map((item) => item.projectId))]
+          )
+        : Promise.resolve({ rows: [] as Array<{ id: string; name: string }> }),
+      unique(scoped.map((item) => item.ownerId)).length
+        ? this.pool.query<{ id: string; name: string }>(
+            `SELECT id,
+                    COALESCE(
+                      NULLIF(TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')), ''),
+                      email,
+                      id
+                    ) AS name
+               FROM users
+              WHERE organization_id=$1 AND id=ANY($2::text[])`,
+            [organizationId, unique(scoped.map((item) => item.ownerId))]
+          )
+        : Promise.resolve({ rows: [] as Array<{ id: string; name: string }> }),
+    ]);
+    const projectNames = new Map(projectRows.rows.map((row) => [row.id, row.name]));
+    const ownerNames = new Map(ownerRows.rows.map((row) => [row.id, row.name]));
+    const initiatives = scoped.map((item) => ({
+      ...item,
+      projectName: item.projectId ? (projectNames.get(item.projectId) ?? null) : null,
+      ownerName: item.ownerId ? (ownerNames.get(item.ownerId) ?? null) : null,
     }));
     const byStatus = initiatives.reduce<Record<string, number>>((counts, item) => {
       counts[item.status] = (counts[item.status] ?? 0) + 1;

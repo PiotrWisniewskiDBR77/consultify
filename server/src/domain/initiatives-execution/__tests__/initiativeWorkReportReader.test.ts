@@ -17,9 +17,29 @@ const DECISION_SQL_MARKERS = [
 
 describe('initiative work report reader', () => {
   it('reads decisions from the relational table and groups open debt by decision maker', async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce({
+    // D-45: the reader now issues TWO extra batched, tenant-scoped name lookups
+    // (projects, users) after the aggregate/decisions pair, so a positional stub
+    // stops answering. Route by SQL instead of by call order.
+    const query = vi.fn(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM projects')) {
+        return { rows: (params[1] as string[]).map((id) => ({ id, name: 'Plant Program' })) };
+      }
+      if (sql.includes('FROM users')) {
+        return { rows: (params[1] as string[]).map((id) => ({ id, name: 'Lena Meyer' })) };
+      }
+      if (sql.includes('FROM decisions')) {
+        return {
+          rows: [
+            {
+              id: 'decision-1',
+              deadline: new Date('2020-01-01T00:00:00.000Z'),
+              decision_maker_id: 'manager-1',
+              authority_name: 'Manager One',
+            },
+          ],
+        };
+      }
+      return {
         rows: [
           {
             aggregate_id: 'initiative-1',
@@ -33,17 +53,8 @@ describe('initiative work report reader', () => {
             updated_at: '2026-09-14T10:00:00.000Z',
           },
         ],
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'decision-1',
-            deadline: new Date('2020-01-01T00:00:00.000Z'),
-            decision_maker_id: 'manager-1',
-            authority_name: 'Manager One',
-          },
-        ],
-      });
+      };
+    });
     const reader = new PostgresInitiativeReader({ query } as never);
 
     const result = await reader.buildInitiativeWorkReport('org-1', {
@@ -52,14 +63,28 @@ describe('initiative work report reader', () => {
       projectIds: ['project-1'],
     });
 
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(4);
+    // Every single query stays tenant-scoped — including the two name lookups.
     expect(query.mock.calls.every((call) => call[1][0] === 'org-1')).toBe(true);
-    expect(query.mock.calls.every((call) => call[1][1][0] === 'project-1')).toBe(true);
+    const scopedCalls = query.mock.calls.filter(
+      (call) => !(call[0] as string).includes('FROM projects') && !(call[0] as string).includes('FROM users')
+    );
+    expect(scopedCalls.every((call) => call[1][1][0] === 'project-1')).toBe(true);
     // Initiatives still come from the aggregate store; decisions from `decisions`.
     expect(query.mock.calls[0][0]).toContain("aggregate_type='initiative'");
     const decisionSql = query.mock.calls[1][0] as string;
     for (const marker of DECISION_SQL_MARKERS) expect(decisionSql).toContain(marker);
     expect(decisionSql).not.toContain('ie_aggregate_state');
+    // D-45: names resolved once per batch, keyed by id list, tenant-scoped.
+    const projectCall = query.mock.calls.find((call) => (call[0] as string).includes('FROM projects'))!;
+    const ownerCall = query.mock.calls.find((call) => (call[0] as string).includes('FROM users'))!;
+    expect(projectCall[1][1]).toEqual(['project-1']);
+    expect(ownerCall[1][1]).toEqual(['owner-1']);
+    expect(result.content.initiatives[0]).toMatchObject({
+      status: 'IN_EXECUTION',
+      projectName: 'Plant Program',
+      ownerName: 'Lena Meyer',
+    });
 
     expect(result.content.summary).toMatchObject({
       initiatives: 1,

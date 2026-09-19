@@ -32,6 +32,9 @@ export interface InitiativeWorkReportContent {
     status: string;
     projectId: string | null;
     ownerId: string | null;
+    /** D-45: human names resolved at capture time; absent in pre-fix snapshots. */
+    projectName?: string | null;
+    ownerName?: string | null;
     updatedAt: string;
   }>;
   decisionDebtors: Array<{
@@ -85,6 +88,12 @@ const statusLabel = (status: unknown) =>
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+
+export type WorkReportInitiativeItem = InitiativeWorkReportContent['initiatives'][number];
+
+/** D-45: the client-facing line carries WORDS and NAMES, never raw codes/uuids. */
+export const workReportInitiativeLine = (item: WorkReportInitiativeItem) =>
+  `${statusLabel(item.status)} · project ${item.projectName ?? item.projectId ?? 'unassigned'} · owner ${item.ownerName ?? item.ownerId ?? 'unassigned'}`;
 
 /** UI date format (date-only) so the PDF matches the on-screen tables. */
 const formatDate = (value: string | null | undefined, fallback = 'not set') => {
@@ -234,9 +243,7 @@ export async function renderInitiativeWorkReportPdf(
         .font(PDF_FONT.regular)
         .fontSize(9)
         .fillColor('#475569')
-        .text(
-          `${item.status} · project ${item.projectId ?? 'unassigned'} · owner ${item.ownerId ?? 'unassigned'}`
-        );
+        .text(workReportInitiativeLine(item));
     }
   }
 
