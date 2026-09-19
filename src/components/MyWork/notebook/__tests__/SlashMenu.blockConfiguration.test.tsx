@@ -52,7 +52,7 @@ afterEach(() => {
 describe('Notebook block-specific configuration', () => {
   it('shows only callout configuration and persists the selected semantic variant', () => {
     editor = new Editor({
-      extensions: [StarterKit, CalloutNode],
+      extensions: [StarterKit as any, CalloutNode],
       content: {
         type: 'doc',
         content: [
@@ -73,7 +73,7 @@ describe('Notebook block-specific configuration', () => {
 
   it('configures the default open state of a Toggle block', () => {
     editor = new Editor({
-      extensions: [StarterKit, DetailsNode, DetailsSummaryNode, DetailsContentNode],
+      extensions: [StarterKit as any, DetailsNode, DetailsSummaryNode, DetailsContentNode],
       content: {
         type: 'doc',
         content: [
@@ -97,11 +97,11 @@ describe('Notebook block-specific configuration', () => {
   it('extends the current table from contextual row and column actions', () => {
     editor = new Editor({
       extensions: [
-        StarterKit,
-        Table.configure({ resizable: false }),
-        TableRow,
-        TableHeader,
-        TableCell,
+        StarterKit as any,
+        Table.configure({ resizable: false }) as any,
+        TableRow as any,
+        TableHeader as any,
+        TableCell as any,
       ],
       // §27-exempt: Tiptap doc-model HTML fixture seeding the notebook's embedded table block
       // extension (editor content, not an app list screen) — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §2.
