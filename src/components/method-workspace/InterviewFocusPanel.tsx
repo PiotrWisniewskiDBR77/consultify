@@ -8,12 +8,12 @@
  * write into the SAME `answerText`/`answerState` — there is no separate save
  * path per channel (A5 spec, cross-cutting requirement).
  */
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
+import type { EvidenceListItem, MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
 import type { InterviewFocusQuestion } from './types';
 import { AnswerStateControl } from './AnswerStateControl';
 import { answerStateCardClass, answerStateDotClass } from './answerStateColors';
@@ -35,6 +35,7 @@ export interface InterviewFocusPanelProps {
   onAnswerStateChange: (questionId: string, state: InterviewFocusQuestion['answerState'], justification?: string) => void;
   onResolutionAction: (questionId: string, action: ResolutionAction) => void;
   onEvidenceDrop: (questionId: string, files: FileList) => void;
+  onEvidenceRemove?: (questionId: string, evidence: EvidenceListItem) => void;
   onBack: () => void;
   onSave: () => void;
   onNext: () => void;
@@ -70,6 +71,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   onAnswerStateChange,
   onResolutionAction,
   onEvidenceDrop,
+  onEvidenceRemove,
   onBack,
   onSave,
   onNext,
@@ -354,17 +356,18 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               data-testid="evidence-list"
               className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
             >
-              <div className="grid grid-cols-[1fr_auto_auto] gap-3 text-[11px] font-medium uppercase tracking-wide text-c-text-secondary">
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 text-[11px] font-medium uppercase tracking-wide text-c-text-secondary">
                 <span>{t('methodWorkspace.focus.evidenceColName', 'Name')}</span>
                 <span>{t('methodWorkspace.focus.evidenceColDate', 'Date')}</span>
                 <span>{t('methodWorkspace.focus.evidenceColBy', 'By')}</span>
+                <span className="sr-only">{t('methodWorkspace.focus.evidenceColActions', 'Actions')}</span>
               </div>
               <ul className="mt-1 space-y-1">
                 {(q.evidenceItems ?? []).map((item) => (
                   <li
                     key={item.eventId}
                     data-testid="evidence-list-row"
-                    className="grid grid-cols-[1fr_auto_auto] gap-3 text-xs text-c-text"
+                    className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 text-xs text-c-text"
                   >
                     <span className="truncate" title={item.name}>
                       {item.name}
@@ -379,6 +382,17 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                     <span className="shrink-0 text-c-text-secondary">
                       {item.actorUserId ?? t('methodWorkspace.focus.evidenceActorSystem', 'system')}
                     </span>
+                    {onEvidenceRemove && !readOnly && (
+                      <button
+                        type="button"
+                        data-testid="evidence-remove-button"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-muted hover:bg-c-surface hover:text-c-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        aria-label={t('methodWorkspace.focus.removeEvidence', 'Remove evidence {{name}}', { name: item.name })}
+                        onClick={() => onEvidenceRemove(q.question.questionId, item)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

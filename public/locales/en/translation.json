@@ -55036,7 +55036,9 @@
       "chooseReason": "Choose a reason…",
       "confirm": "Confirm",
       "evidenceStrengthLabel": "Evidence strength",
-      "previousStep": "Previous step"
+      "previousStep": "Previous step",
+      "evidenceColActions": "Actions",
+      "removeEvidence": "Remove evidence {{name}}"
     },
     "skipReason": {
       "outsideOperatingModel": "outside the operating model",

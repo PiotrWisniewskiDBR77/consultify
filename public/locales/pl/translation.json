@@ -55406,7 +55406,9 @@
       "chooseReason": "Wybierz powód…",
       "confirm": "Potwierdź",
       "evidenceStrengthLabel": "Siła dowodu",
-      "previousStep": "Poprzedni krok"
+      "previousStep": "Poprzedni krok",
+      "evidenceColActions": "Akcje",
+      "removeEvidence": "Usuń dowód {{name}}"
     },
     "skipReason": {
       "outsideOperatingModel": "poza modelem operacyjnym",

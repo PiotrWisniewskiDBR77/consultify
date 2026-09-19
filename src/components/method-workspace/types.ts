@@ -116,6 +116,7 @@ export interface InterviewFocusQuestion {
  */
 export interface EvidenceListItem {
   readonly eventId: string;
+  readonly evidenceId: string;
   readonly name: string;
   readonly occurredAt: string;
   readonly actorUserId: string | null;

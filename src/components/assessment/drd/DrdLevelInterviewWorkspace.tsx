@@ -6,6 +6,7 @@ import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import type { MethodEvent, MethodLevel, MethodQuestion } from '@/method-core/contracts';
 import type { DRDArea, DRDAxis } from '@/services/drdStructure';
 import { nazwaWJezyku } from './drdNazwa';
+import { evidenceEventsFor } from './drdWorkspaceViewModel';
 
 export type DrdLevelDecision = 'yes' | 'no' | 'help';
 
@@ -110,8 +111,8 @@ export function DrdLevelInterviewWorkspace({
   const level = levels.find((item) => item.level === selectedLevel) ?? levels[0];
   const levelQuestions = questions.filter((question) => question.level === level?.level);
   const primaryQuestion = levelQuestions[0];
-  const evidenceCount = events.filter(
-    (event) => event.type === 'EVIDENCE_ATTACHED' && event.unitId === area.id && event.level === level?.level
+  const evidenceCount = evidenceEventsFor(events, area.id).filter(
+    (event) => event.level === level?.level
   ).length;
   const levelDecision = decisions.get(level?.level ?? -1) ?? null;
   const firstNo = [...decisions.entries()].find(([, state]) => state === 'no')?.[0] ?? null;

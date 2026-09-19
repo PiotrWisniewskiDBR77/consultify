@@ -58,6 +58,7 @@ import { StandardTable } from '@/components/standard/StandardTable';
 import { PracujZAI } from '@/components/standard/PracujZAI';
 import type { PoleDoUzupelnienia, ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import type {
+  EvidenceListItem,
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
   ResolutionAction,
@@ -997,6 +998,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         evidenceType: 'document',
         strength: 'E2',
         linkedQuestionIds: [questionId],
+      });
+    },
+    [runtime, canWrite, activeArea.id, focusLevelFallback]
+  );
+
+  const handleEvidenceRemove = useCallback(
+    async (_questionId: string, evidence: EvidenceListItem) => {
+      if (!runtime || !canWrite) return;
+      await runtime.removeEvidence({
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        evidenceId: evidence.evidenceId,
+        removedEventId: evidence.eventId,
       });
     },
     [runtime, canWrite, activeArea.id, focusLevelFallback]
@@ -2025,6 +2039,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onAnswerStateChange: (qid, s, j) => void handleAnswerStateChange(qid, s, j),
             onResolutionAction: (qid, action) => void handleResolutionAction(qid, action),
             onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
+            onEvidenceRemove: (qid, evidence) => void handleEvidenceRemove(qid, evidence),
             onBack: handleBack,
             onSave: () => void saveNow(),
             onNext: handleNext,
