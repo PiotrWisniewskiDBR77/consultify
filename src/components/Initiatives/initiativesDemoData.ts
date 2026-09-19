@@ -1013,8 +1013,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             status:
               blueprint.status === InitiativeStatus.IN_EXECUTION
                 ? 'ESCALATED'
-                : blueprint.status === InitiativeStatus.CLOSED ||
-                    blueprint.status === InitiativeStatus.CLOSED
+                : blueprint.status === InitiativeStatus.CLOSED
                   ? 'APPROVED'
                   : 'PENDING',
             priority: blueprint.priority === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
