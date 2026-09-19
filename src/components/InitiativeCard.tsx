@@ -57,40 +57,34 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   // Helpers for Status Colors
   const getStatusColor = (status: InitiativeStatus) => {
     switch (status) {
+      case InitiativeStatus.PROPOSED:
+        return 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20';
       case InitiativeStatus.DRAFT:
         return 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20';
       case InitiativeStatus.PENDING_APPROVAL:
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case InitiativeStatus.PENDING_APPROVAL:
-        return 'bg-primary-500/10 text-primary-400 border-primary-500/20';
       case InitiativeStatus.APPROVED:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case InitiativeStatus.IN_EXECUTION:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case InitiativeStatus.IN_EXECUTION:
-        return 'bg-danger-500/10 text-danger-400 border-danger-500/20';
       case InitiativeStatus.CLOSED:
         return 'bg-green-500/10 text-green-400 border-green-500/20';
       case InitiativeStatus.REJECTED:
         return 'bg-slate-300/10 text-slate-600 dark:text-slate-500 border-slate-300 dark:border-navy-700/20';
-      case InitiativeStatus.CLOSED:
-        return 'bg-slate-200/10 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-navy-700/20';
       default:
         return 'bg-slate-500/10 text-slate-600 dark:text-slate-500';
     }
   };
 
   const getStatusLabel = (status: InitiativeStatus) => {
-    const labels: Record<string, string> = {
+    const labels: Record<InitiativeStatus, string> = {
+      [InitiativeStatus.PROPOSED]: 'Proposed',
       [InitiativeStatus.DRAFT]: 'Draft',
-      [InitiativeStatus.PENDING_APPROVAL]: 'Planning',
       [InitiativeStatus.PENDING_APPROVAL]: 'In Review',
       [InitiativeStatus.APPROVED]: 'Approved',
       [InitiativeStatus.IN_EXECUTION]: 'Executing',
-      [InitiativeStatus.IN_EXECUTION]: 'Blocked',
-      [InitiativeStatus.CLOSED]: 'Done',
-      [InitiativeStatus.REJECTED]: 'Cancelled',
-      [InitiativeStatus.CLOSED]: 'Archived',
+      [InitiativeStatus.CLOSED]: 'Closed',
+      [InitiativeStatus.REJECTED]: 'Rejected',
     };
     return labels[status] || status;
   };
