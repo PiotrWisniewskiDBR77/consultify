@@ -1152,7 +1152,7 @@ export const ExecutionResourcesSurface = ({
                       label: t('execution.resources.utilizationPill', 'Utilisation {{value}} %', {
                         value: row.utilizationPercent,
                       }),
-                      tone: row.utilizationPercent > 105 ? 'warn' : 'success',
+                      tone: row.utilizationPercent > 105 ? 'warning' : 'success',
                     },
                     {
                       label:
