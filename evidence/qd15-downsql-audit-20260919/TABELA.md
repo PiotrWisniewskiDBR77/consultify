@@ -19,7 +19,7 @@ Staging i demo nietknięte — zero zapisów poza tym kontenerem.
 | cykli, w których schemat wrócił semantycznie do baseline (SEM=TAK) | **9 z 13** |
 | cykli z `pg_dump -s` diff = 0 linii | **5 z 13** |
 | cykli, w których DOWN realnie zmienił schemat (DOWNeff=TAK) | 11 z 13 |
-| **defektów produktu znalezionych przez audyt** | **3** (D-129, D-130, D-131) |
+| **defektów produktu znalezionych przez audyt** | **3** (D-133, D-134, D-135) |
 | odtwarzalność: dwa niezależne świeże restore'y, diff wyników | **0 różnic** |
 
 ## Tabela wyników (audyt pełny, `wyniki-runC-FINAL.txt`)
@@ -82,7 +82,7 @@ Rozróżnienie działa w praktyce: `20262301/20262300/20262285/20262284` mają
 
 ## Trzy defekty (atrybucja co do linii katalogu)
 
-### 1. `20262282` — down kasuje obiekt cudzej migracji i nie odtwarza go (D-129)
+### 1. `20262282` — down kasuje obiekt cudzej migracji i nie odtwarza go (D-133, Codex-2 B16)
 
 `dDelta=13`: to **ten** cykl wprowadził cały rozjazd SEM, który potem widnieje przy
 20262281/20262280/20262273/20262272 (`dDelta=0`, czyli nie dokładały nic nowego).
@@ -114,7 +114,7 @@ ale jest bezwarunkowy i tabela jest żywym ledgerem materializacji notatek.
 (`izolacja-20262282_meeting_note_materializations.sql.txt`) ten sam cykl daje
 `dS=13`, `dD=25`, `SEM=NIE` — identycznie jak w pełnym audycie.
 
-### 2. `20262271` — UP nie da się ponownie zastosować na dzisiejszym stagingu (D-130)
+### 2. `20262271` — UP nie da się ponownie zastosować na dzisiejszym stagingu (D-134, Qoder B QB0e)
 
 `up1=1`, `up2=1`, ledger `status=failed`; `dDelta=7` (utracona tabela
 `template_1_20262271_backup` z 4 kolumnami, PK i indeksem — bo UP się wycofał).
@@ -141,7 +141,7 @@ zostaje `failed`, a bramka `release-migration-gate.ts` liczy `sql_ledger_no_fail
 tylko dla plików z `requiredSet`, więc `failed` na 20262271 **zatrzymałby bramkę**
 (plik jest w drzewie i jest wykonywalny).
 
-### 3. `20262280` — down jest fail-closed i na dzisiejszym stagingu przerywa się (D-131)
+### 3. `20262280` — down jest fail-closed i na dzisiejszym stagingu przerywa się (D-135, bez naprawy — DEC-683: fail-closed zamierzony)
 
 `down RC=3`, komunikat: `ERROR: 20262280 rollback conflict in
 public.organization_context_snapshots.snapshot_json: 1 rows changed or missing after
@@ -170,8 +170,15 @@ utraconej przebudowy dla 1 organizacji).
 
 | migracja | stan | DLUG |
 |---|---|---|
-| `20262260_initiatives_lifecycle_stage.sql` | pliku nie ma | **D-128** (nowy wiersz, dopisany) |
+| `20262260_initiatives_lifecycle_stage.sql` | pliku nie ma | **D-132** (nowy wiersz, dopisany; Codex-1 z D-114) |
 | `20262286_m1_plan_task_role_demand.sql` | pliku nie ma | **D-114 — znany, NIE duplikowany** |
+
+Numeracja wg **DEC-683** (Wpis 209, 19.09): numery nadane przeze mnie w v1/v2
+kolidowały z numerami CTO, więc cztery wiersze QD15 dostały nowe numery —
+`D-128→D-132`, `D-129→D-133`, `D-130→D-134`, `D-131→D-135`. Przypisania:
+D-132 = Codex-1 (z D-114), D-133 = Codex-2 B16, D-134 = Qoder B QB0e,
+D-135 = bez naprawy (fail-closed zamierzony). Żadnego z tych czterech nie
+naprawia stanowisko D.
 
 ## Mutacje przyrządu (dowód, że miary potrafią być czerwone)
 
