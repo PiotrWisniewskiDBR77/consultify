@@ -214,6 +214,8 @@ export interface ReportBuilderState {
 
 export function useReportBuilder() {
   const { t } = useTranslation();
+  const appErrorT = (key: string, defaultValue?: string) =>
+    t(key, defaultValue === undefined ? undefined : { defaultValue });
 
   const [state, setState] = useState<ReportBuilderState>({
     currentStep: 0,
@@ -245,7 +247,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return [];
       }
@@ -293,7 +295,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -326,7 +328,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -365,7 +367,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -408,7 +410,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -434,7 +436,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return false;
       }
@@ -472,7 +474,7 @@ export function useReportBuilder() {
           ...prev,
           isGenerating: false,
           generationProgress: 0,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return false;
       }
@@ -512,7 +514,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -545,7 +547,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return false;
       }
@@ -570,7 +572,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -593,7 +595,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -616,7 +618,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -639,7 +641,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -662,7 +664,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
       return false;
     }
@@ -687,7 +689,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -717,7 +719,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: getAppErrorLine(t, err),
+        error: getAppErrorLine(appErrorT, err),
       }));
     }
   }, []);
@@ -737,7 +739,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -774,7 +776,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -800,7 +802,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -822,7 +824,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return false;
       }
@@ -869,7 +871,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return [];
       }
@@ -900,7 +902,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -944,7 +946,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -987,7 +989,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -1010,7 +1012,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return false;
       }
@@ -1046,7 +1048,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return null;
       }
@@ -1078,7 +1080,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: getAppErrorLine(t, err),
+          error: getAppErrorLine(appErrorT, err),
         }));
         return 0;
       }
