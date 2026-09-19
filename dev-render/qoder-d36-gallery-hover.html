@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D-36 Template Gallery hover row — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      D-36 (QA16) evidence harness — separate entry point on purpose: the shared
+      `dev-render/index.html` → `main.tsx` registry statically imports screens
+      that do not exist at this worktree's base commit. This entry mounts ONLY
+      the REAL `TemplatesGalleryView` with inline `TemplateItem[]` fixtures and
+      bypasses the shared registry entirely.
+
+      `TemplatesGalleryView` is a pure presentational component (templates +
+      callbacks), so no fake server is needed. The container is pinned to the
+      width the debt measured in the real hub (tile ≈ 427px under
+      `lg:grid-cols-3`), so the hover action-row overflow reproduces faithfully.
+
+      Params: ?lang=en&theme=light|dark
+    -->
+    <div id="dev-render-root" style="min-height: 100vh; width: 100vw"></div>
+    <script type="module" src="/qoder-d36-gallery-hover-main.tsx"></script>
+  </body>
+</html>

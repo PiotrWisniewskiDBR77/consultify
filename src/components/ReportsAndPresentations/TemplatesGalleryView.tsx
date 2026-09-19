@@ -273,7 +273,7 @@ const TemplateTile: React.FC<{
 
       {/* akcja główna na hover/fokus — NIE w kebabie */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[152px] flex-col items-center justify-center gap-2 bg-c-surface/95 px-3 opacity-0 backdrop-blur-[3px] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-        <div className="flex w-full flex-nowrap items-center justify-center gap-1.5">
+        <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
           <button
             type="button"
             data-testid={`template-gallery-build-${item.id}`}
