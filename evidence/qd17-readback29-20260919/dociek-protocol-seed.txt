@@ -1,0 +1,48 @@
+PROTOCOL HTTP 200
+klucze protocol: id,version,status,content,publishedVersion,approvedByName,approvedAt,errataNote,persisted
+bloki: {
+ "id": null,
+ "version": "1.0",
+ "status": "draft",
+ "content": {
+  "meetingId": "c0f1e001-7a11-4f01-9c01-0f0a1b2c3e01",
+  "generatedAt": "2026-09-19T11:59:02.273Z",
+  "blocks": [
+   {
+    "kind": "meta",
+    "title": "Northwind 2027 portfolio review",
+    "startAt": "2026-09-22T11:00:00.000Z",
+    "endAt": "2026-09-22T12:30:00.000Z",
+    "timezone": null,
+    "location": "Rotherham - Boardroom 1",
+    "meetingType": null,
+    "lifecycleState": "scheduled"
+   },
+   {
+    "kind": "footer",
+    "nextOccurrence": null,
+    "versions": [
+     {
+      "version": "1.0",
+      "status": "draft",
+      "approvedAt": null,
+      "approvedBy": null,
+      "errata": ""
+     }
+    ]
+   }
+  ]
+ },
+ "publishedVersion": null,
+ "approvedByName": null,
+ "approvedAt": null,
+ "errataNote": "",
+ "persisted": false
+}
+
+MEETINGS HTTP 200 n= 5
+- 2e124a9f-30cd-5ea8-bf77-49441a1861bf | Weekly PMO Review | recurrenceRule= null | seriesId= null | status= completed
+- eed798b1-9368-50ab-9847-6c3385749d74 | Steering Committee | recurrenceRule= null | seriesId= null | status= completed
+- c0f1e001-7a11-4f01-9c01-0f0a1b2c3e01 | Northwind 2027 portfolio review | recurrenceRule= null | seriesId= null | status= scheduled
+- c0f1e002-7a11-4f01-9c01-0f0a1b2c3e02 | Interview: operations leadership - Line 3 | recurrenceRule= null | seriesId= null | status= scheduled
+- c0f1e003-7a11-4f01-9c01-0f0a1b2c3e03 | CSRD assurance readiness check-in | recurrenceRule= null | seriesId= null | status= scheduled

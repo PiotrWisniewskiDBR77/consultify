@@ -1,0 +1,3 @@
+/execution?tab=resources  ->  /execution?tab=list
+/execution?tab=summary  ->  /execution?tab=list
+/execution?tab=rollout&subview=risk#kotwica  ->  /execution?tab=list#kotwica

@@ -1,0 +1,319 @@
+# QD17 READBACK-29 — instrument B: przeglądarka (EN, 1440×900) na żywym stagingu
+# login HTTP=200 token=true rola=ADMIN orgAktywna=468b234c-66c4-54e1-b626-5e0fb3a92f6a (Northwind=468b234c-66c4-54e1-b626-5e0fb3a92f6a)
+# ZERO zapisów: tylko nawigacja + odczyt DOM; switch-organization NIE wywołane.
+
+### 01-interview  /interview
+    paczka: interview (IS-2a, IS-3a/b, AIR-1a/1b, D-44, D-21, K-16, U-79)
+    url-po-nawigacji: /interview
+    title: Interview — Consultify  lang=en  wierszy-tabeli=3  zakladek=6  wierszy-zakladek=1 (najszerszy=6)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=30  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Type","Name","Status","Progress","Days to due","Assignee"]
+    zakladki: [{"label":"Inbox","w":87},{"label":"Sessions","w":110},{"label":"Assigned","w":112},{"label":"Templates","w":119},{"label":"Insights","w":103},{"label":"Initiatives","w":114}]
+    zrzut: zrzuty/01-interview.png
+
+### 02-assessment  /assessment
+    paczka: assessment K-22 (kolumna Wynik) + drd K-24a/D-29
+    url-po-nawigacji: /assessment?tab=library
+    title: Consultify  lang=en  wierszy-tabeli=5  zakladek=5  wierszy-zakladek=1 (najszerszy=5)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=24  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Methodology","Area","Status","Actions"]
+    zakladki: [{"label":"Library","w":97},{"label":"Processes","w":120},{"label":"Insights","w":103},{"label":"Reports","w":102},{"label":"Initiatives","w":114}]
+    zrzut: zrzuty/02-assessment.png
+
+### 03-assessment-outputs  /assessment?tab=outputs
+    paczka: OP-1 output badges with preview
+    url-po-nawigacji: /assessment?tab=outputs
+    title: Consultify  lang=en  wierszy-tabeli=12  zakladek=5  wierszy-zakladek=1 (najszerszy=5)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=27  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Type","Scope","Module","Version","Frozen at"]
+    zakladki: [{"label":"Library","w":97},{"label":"Processes","w":120},{"label":"Insights","w":103},{"label":"Reports","w":102},{"label":"Initiatives","w":114}]
+    zrzut: zrzuty/03-assessment-outputs.png
+
+### 04-audits  /audit-programs
+    paczka: audits OP-2a/OP-2b, D-91 licznik kryteriów
+    url-po-nawigacji: /audit-programs?tab=library
+    title: Consultify  lang=en  wierszy-tabeli=3  zakladek=5  wierszy-zakladek=1 (najszerszy=5)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=21  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Title","Source","Version","Source type","Verification","Publication status","Criteria","Updated"]
+    zakladki: [{"label":"Library","w":97},{"label":"Sessions","w":110},{"label":"Conclusions","w":133},{"label":"Reports","w":102},{"label":"Initiatives","w":114}]
+    zrzut: zrzuty/04-audits.png
+
+### 05-initiatives  /initiatives
+    paczka: initiatives H1c, ST-3, D-77, DEC-537, A7-M1, D-20, menu2 a0a5d965
+    url-po-nawigacji: /initiatives
+    title: Consultify  lang=en  wierszy-tabeli=22  zakladek=3  wierszy-zakladek=1 (najszerszy=3)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=30  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Initiative","Status","Priority score","Next gate","Owner","Area / Axis","Next action","Planned window","Updated"]
+    zakladki: [{"label":"Initiatives","w":114},{"label":"Plan","w":79},{"label":"Load","w":83}]
+    zrzut: zrzuty/05-initiatives.png
+
+### 06-initiatives-1280  /initiatives  @1280px
+    paczka: menu2 D-20/D-112 — Menu 2 w jednym wierszu od 1280px
+    url-po-nawigacji: /initiatives
+    title: Consultify  lang=en  wierszy-tabeli=22  zakladek=3  wierszy-zakladek=1 (najszerszy=3)
+    poziomy-przewijanie: scrollWidth=1280 clientWidth=1280 przesciecie-poziome=false
+    xhr-razem=30  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Initiative","Status","Priority score","Next gate","Owner","Area / Axis","Next action","Planned window","Updated"]
+    zakladki: [{"label":"Initiatives","w":42},{"label":"Plan","w":42},{"label":"Load","w":42}]
+    zrzut: zrzuty/06-initiatives-1280.png
+
+### 07-initiative-object  /initiatives/cf84cf02-2e86-4458-8743-2a787a5527b1
+    paczka: initiatives H1c phase pill + PMO U-35/v4d preflight
+    url-po-nawigacji: /initiatives/cf84cf02-2e86-4458-8743-2a787a5527b1
+    title: Consultify  lang=en  wierszy-tabeli=0  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=18  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: []
+    zakladki: []
+    zrzut: zrzuty/07-initiative-object.png
+
+### 08-projects  /projects
+    paczka: projects PJ-1 deep link + PROJECT-1-P2 switcher
+    url-po-nawigacji: /projects
+    title: Consultify  lang=en  wierszy-tabeli=3  zakladek=2  wierszy-zakladek=1 (najszerszy=2)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=21  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb","Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Project","Status","Program","Members","Initiatives","Created"]
+    zakladki: [{"label":"Projects","w":81},{"label":"Programs","w":91}]
+    zrzut: zrzuty/08-projects.png
+
+### 09-project-object  /projects/6174636d-c4f2-552d-9a5a-d2695738f9bc
+    paczka: PJ-1 ekran obiektu projektu (U-57 scoped tasks)
+    url-po-nawigacji: /projects/6174636d-c4f2-552d-9a5a-d2695738f9bc
+    title: Consultify  lang=en  wierszy-tabeli=9  zakladek=3  wierszy-zakladek=1 (najszerszy=3)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=20  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb","Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Name","Status","Updated"]
+    zakladki: [{"label":"Initiatives","w":90},{"label":"Tasks","w":65},{"label":"Documents","w":102}]
+    zrzut: zrzuty/09-project-object.png
+
+### 10-execution  /execution
+    paczka: execution D-55 owner fallback, R-E3A/R-E3B work risk boundary
+    url-po-nawigacji: /execution?tab=list&view=table
+    title: Consultify  lang=en  wierszy-tabeli=4  zakladek=4  wierszy-zakladek=1 (najszerszy=4)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=35  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Initiative / Case","Lifecycle","Handoff","Risk","Execution phase","Owner","Progress","Baseline finish","Forecast finish","Variance"]
+    zakladki: [{"label":"Execution bank","w":153},{"label":"Work","w":85},{"label":"Risk management","w":169},{"label":"Reports","w":102}]
+    zrzut: zrzuty/10-execution.png
+
+### 11-execution-resources-retired  /execution/resources
+    paczka: execution 566f256c — retired deep link → canonical list
+    url-po-nawigacji: /execution/resources?tab=list&view=table
+    title: Consultify  lang=en  wierszy-tabeli=4  zakladek=4  wierszy-zakladek=1 (najszerszy=4)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=35  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Initiative / Case","Lifecycle","Handoff","Risk","Execution phase","Owner","Progress","Baseline finish","Forecast finish","Variance"]
+    zakladki: [{"label":"Execution bank","w":153},{"label":"Work","w":85},{"label":"Risk management","w":169},{"label":"Reports","w":102}]
+    zrzut: zrzuty/11-execution-resources-retired.png
+
+### 12-rollout-retired  /rollout
+    paczka: execution — retired ROLLOUT → canonical list
+    url-po-nawigacji: /execution?tab=list
+    title: Consultify  lang=en  wierszy-tabeli=4  zakladek=4  wierszy-zakladek=1 (najszerszy=4)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=35  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Initiative / Case","Lifecycle","Handoff","Risk","Execution phase","Owner","Progress","Baseline finish","Forecast finish","Variance"]
+    zakladki: [{"label":"Execution bank","w":153},{"label":"Work","w":85},{"label":"Risk management","w":169},{"label":"Reports","w":102}]
+    zrzut: zrzuty/12-rollout-retired.png
+
+### 13-meetings  /meetings
+    paczka: meetings MTG-2a/2b/2c + lifecycle authz 7aec15cbed
+    url-po-nawigacji: /meetings
+    title: Consultify  lang=en  wierszy-tabeli=5  zakladek=1  wierszy-zakladek=1 (najszerszy=1)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=19  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Meeting","When","Attendees","Status","Follow-ups"]
+    zakladki: [{"label":"Meetings","w":112}]
+    zrzut: zrzuty/13-meetings.png
+
+### 14-meeting-protocol  /meetings/c0f1e001-7a11-4f01-9c01-0f0a1b2c3e01/protocol
+    paczka: MTG-2a v2 protokół + etykieta SOURCE per blok
+    url-po-nawigacji: /meetings/c0f1e001-7a11-4f01-9c01-0f0a1b2c3e01/protocol
+    title: Consultify  lang=en  wierszy-tabeli=7  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=19  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Property","Value"]
+    zakladki: []
+    zrzut: zrzuty/14-meeting-protocol.png
+
+### 15-presentations  /presentations
+    paczka: materials U-44/D-87, RD-2 v2 deck shell, filtr źródła w menu 2
+    url-po-nawigacji: /presentations
+    title: Consultify  lang=en  wierszy-tabeli=8  zakladek=5  wierszy-zakladek=1 (najszerszy=5)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=27  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Title","Source","Owner","Status","Mode","Date","Slides"]
+    zakladki: [{"label":"All","w":67},{"label":"Documents","w":126},{"label":"Presentations","w":142},{"label":"Sheets","w":96},{"label":"Template Library","w":163}]
+    zrzut: zrzuty/15-presentations.png
+
+### 16-my-work  /my-work
+    paczka: my-work K-26 cykle statusów, K-27 inline edit, K-29 drag&drop
+    url-po-nawigacji: /my-work
+    title: My Work — Consultify  lang=en  wierszy-tabeli=31  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=25  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=2 -> ["Odpowiedź na Twój feedback","Status Twojego zgłoszenia: W realizacji"]
+    naglowki-tabeli: ["Title","Status","Urgency","Type","Section","Source","Received","SLA"]
+    zakladki: []
+    zrzut: zrzuty/16-my-work.png
+
+### 17-discovery-tools  /discovery-tools
+    paczka: tools K-09 fail Dynamic SWOT draft timeout
+    url-po-nawigacji: /discovery-tools
+    title: Discovery Tools — Consultify  lang=en  wierszy-tabeli=36  zakladek=5  wierszy-zakladek=1 (najszerszy=5)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=27  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: ["Tool","Category","Tags","License","Status"]
+    zakladki: [{"label":"Library","w":97},{"label":"Sessions","w":110},{"label":"Insights","w":103},{"label":"Reports","w":102},{"label":"Initiatives","w":114}]
+    zrzut: zrzuty/17-discovery-tools.png
+
+### 18-settings-profile  /settings/profile
+    paczka: settings K-13 komunikat mismatch nazywa pole
+    url-po-nawigacji: /settings/profile
+    title: Settings — Consultify  lang=en  wierszy-tabeli=0  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=18  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb","Settings sections","Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: []
+    zakladki: []
+    zrzut: zrzuty/18-settings-profile.png
+
+### 19-chat  /chat
+    paczka: AIR-1b shared display + 64401abc WorkCanvasDocumentPanel
+    url-po-nawigacji: /chat
+    title: AI Chat — Consultify  lang=en  wierszy-tabeli=0  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=22  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: []
+    zakladki: []
+    zrzut: zrzuty/19-chat.png
+
+### 20-admin-people  /admin/people
+    paczka: sidebar K-18 role gate + D-28 shared relation fallback
+    url-po-nawigacji: /admin/team/members
+    title: Consultify  lang=en  wierszy-tabeli=18  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=20  xhr-4xx5xx=0
+    bledy-konsoli=1 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb","Admin Panel navigation","Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=2 -> ["Piotr Wiśniewski","Role for Piotr Wiśniewski"]
+    naglowki-tabeli: ["Member","Email","Role","Status"]
+    zakladki: []
+    zrzut: zrzuty/20-admin-people.png
+
+### 21-documents-deeplink  /documents/00000000-0000-4000-8000-000000000000
+    paczka: DOC-0 D-102 honest deep-link failure (oczekiwany czytelny komunikat, nie pusty ekran)
+    url-po-nawigacji: /documents/00000000-0000-4000-8000-000000000000
+    title: Consultify  lang=en  wierszy-tabeli=0  zakladek=0  wierszy-zakladek=0 (najszerszy=0)
+    poziomy-przewijanie: scrollWidth=1440 clientWidth=1440 przesciecie-poziome=false
+    xhr-razem=21  xhr-4xx5xx=3 -> 404 GET /api/artifacts/00000000-0000-4000-8000-000000000000 | 404 GET /api/artifacts/00000000-0000-4000-8000-000000000000/action-target | 404 GET /api/documents/00000000-0000-4000-8000-000000000000
+    bledy-konsoli=4 -> Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https:/ || Failed to load resource: the server responded with a status of 404 () || Failed to load resource: the server responded with a status of 404 () || Failed to load resource: the server responded with a status of 404 ()
+    bledy-strony=0
+    nav-aria-label(D-43)=["Breadcrumb"] przeciek-i18next=0
+    surowe-klucze-i18n=0
+    literaly-PL=0
+    naglowki-tabeli: []
+    zakladki: []
+    zrzut: zrzuty/21-documents-deeplink.png
+

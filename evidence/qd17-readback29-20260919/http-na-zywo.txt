@@ -1,0 +1,38 @@
+# QD17 READBACK-29 — instrument A: HTTP GET na żywym stagingu
+# baza=https://staging.consultify.ai  konto=irina (ADMIN, org aktywna=Northwind — BEZ switch-organization, zero zapisów)
+# login HTTP=200
+[A0-health] GET /api/health -> HTTP 200  gitSha=75bb013df6048074ca8d2b63b6d8bd884da03066 db=connected redis=connected
+[A1a-teams-control] GET /api/teams -> HTTP 200  n=4
+[A1b-teams-legacy-members] GET /api/teams/00000000-0000-4000-8000-000000000000/members -> HTTP 404  oczekiwane 404 (ścieżka tylko legacy)
+[A2a-meeting-list] GET /api/meeting -> HTTP 200  n=5
+[A2b-meeting-protocol] GET /api/meeting/c0f1e001-7a11-4f01-9c01-0f0a1b2c3e01/protocol -> HTTP 200  klucze=protocol
+[A2c-meeting-protocol-live] GET /api/meeting/2e124a9f-30cd-5ea8-bf77-49441a1861bf/protocol -> HTTP 200  klucze=protocol
+[A3a-mywork-tasks] GET /api/my-work/tasks -> HTTP 200  n=8
+[A3b-mywork-personal] GET /api/my-work/personal-tasks -> HTTP 200  n=32
+[A4a-project-members] GET /api/project-members/6174636d-c4f2-552d-9a5a-d2695738f9bc -> HTTP 200  n=6 wierszy-z-polem-email=6
+[A4b-project-roles] GET /api/project-members/6174636d-c4f2-552d-9a5a-d2695738f9bc/roles/available -> HTTP 200  n=6
+[A5a-initiatives] GET /api/initiatives -> HTTP 200  n=22
+[A5b-initiative-detail] GET /api/initiatives/df360918-b4bd-4b60-bb76-01af1b358aa6 -> HTTP 200  tytul=Resolve Warehouse Cutover Date Discrepan polskie-znaki-w-odpowiedzi=0
+[A5c-capacity-org] GET /api/initiatives/capacity -> HTTP 200  klucze=activeCount,suggestedCount,overload
+[A5d-capacity-initiative] GET /api/initiatives/df360918-b4bd-4b60-bb76-01af1b358aa6/capacity -> HTTP 200  klucze=initiativeId,resources,summary,alerts
+# UWAGA PMO-1b: jedyna trasa SLA to POST /api/initiatives/stage-sla/tick (mutująca) — NIE wywołana (zero zapisów).
+[A6a-runtime-initiatives] GET /api/initiatives/runtime-v1/initiatives -> HTTP 200  n=8 wierszy-z-priorityScore=8 score=[100,75,75,75,75,75,50,50] prioritySource=LEGACY_PRIORITY
+[A6b-capacity-roles] GET /api/initiatives/runtime-v1/capacity-roles -> HTTP 200  n=0
+[A6c-capacity-scenarios] GET /api/initiatives/runtime-v1/capacity-scenarios -> HTTP 200  n=0
+[A6d-plan-scenarios] GET /api/initiatives/runtime-v1/plan-scenarios -> HTTP 200  n=0
+[A6e-plannable] GET /api/initiatives/runtime-v1/planning/plannable-initiatives -> HTTP 200  n=5
+[A7a-audit-reports] GET /api/audits/reports -> HTTP 200  n=2 z-reportBuilderDocument=2
+[A7b-audit-report-detail] GET /api/audits/reports/arep_0252f985-eb45-4ce6-b518-89e69024b5e1 -> HTTP 200  klucze=success,data,report,sections,reportBuilderDocument data.klucze=id,programId,organizationId,outputId,version,reportKind,title,status,payload,contentHash
+[A7c-mgmt-reports-history] GET /api/management-reports/history -> HTTP 200  n=3
+[A7d-mgmt-report-detail] GET /api/management-reports/679fe933-0d88-454b-a039-bf84828a85b3 -> HTTP 200  klucze=success,report,sections,reportBuilderDocument
+[A8a-decks] GET /api/presentations/decks -> HTTP 200  n=9
+[A8b-deck-detail] GET /api/presentations/decks/bdda8ecff1f844c4a06e32cdb1f4deb6 -> HTTP 200  klucze=success,data artifactLifecycle=false
+[A8c-deck-versions] GET /api/presentations/decks/bdda8ecff1f844c4a06e32cdb1f4deb6/versions -> HTTP 200  n=1
+[A8d-workcanvas-drafts] GET /api/work-canvas/drafts -> HTTP 200  n=0
+[A8e-public-artifact-brak-tokena] GET /api/public/artifacts/00000000-0000-4000-8000-000000000000 -> HTTP 404  kontrola: trasa zamontowana (404/403 = brak tokena, nie brak trasy)
+[A9-interview-sessions] GET /api/interview/sessions -> HTTP 200  n=7 INTERVIEW_SESSIONS_FULL_COLUMNS=ON (sessionRuntimeStatus obecny) klucze-wiersza=id,organizationId,projectId,name,ownerId,status,templateVersion,progress,totalQuestions,answeredQuestions,summaryFacts,summaryGaps,summaryConstraints,summaryPainPoints,runtimeModeDefault,startedAt,completedAt,lastActivityAt,sessionRuntimeStatus,respondentId,respondentName
+[A10-locale-en] GET /locales/en/translation.json -> HTTP 200  bajty=2420178
+[A10-locale-pl] GET /locales/pl/translation.json -> HTTP 200  bajty=2533797
+
+# gitSha na żywo = 75bb013df6048074ca8d2b63b6d8bd884da03066
+# koniec — wszystkie wywołania to GET (zero zapisów)

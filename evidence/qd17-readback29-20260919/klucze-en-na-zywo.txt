@@ -1,0 +1,104 @@
+DEPLOYED_EN=/locales/en/translation.json  HTTP=200  spłaszczonych-ścieżek=44580
+DEPLOYED_PL=/locales/pl/translation.json  HTTP=200  spłaszczonych-ścieżek=44771
+commitow=33  kluczy-dodanych=311  obecnych-na-zywo=311  brak=0  bez-pary-PL=0
+
+9835c599f7 | feat(drd): K-24a read-only evidence list on the interview focus panel
+  dodanych=4 obecnych=4 brak=0 bez-pary-PL=0
+
+ed4acaa655 | fix(layout): D-43 breadcrumb nav aria-label no longer leaks an i18next error (QA12)
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+b176f887cb | fix(assessment): K-22 restore "Wynik" column to Assessments list (DEC-661 variant b)
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+99c2310305 | fix(shared): D-28 generic relation fallback is i18n-resolved, PL literal gone from EN UI (DEC-596)
+  dodanych=2 obecnych=2 brak=0 bez-pary-PL=0
+
+0c2d498776 | fix(settings): K-13 profile save mismatch message names the field
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+ac99596145 | fix(my-work): block illegal Kanban status cycles [K-26]
+  dodanych=4 obecnych=4 brak=0 bez-pary-PL=0 drift-wartosci=1
+  DRIFT: statusFailedTransitionRule: wdrożona="Not saved "{{title}}" → {{column}}: {{reason}}" | w-commicie="Not saved \"{{title}}\" → {{column}}: {{reason}}"
+
+db111c1c19 | feat(interview): IS-3b executive summary prose v2
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+64401abcb4 | feat(reports): version and publish report documents
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+2932701583 | fix(drd): show help evidence status
+  dodanych=4 obecnych=4 brak=0 bez-pary-PL=0
+
+9c97159c95 | feat(initiatives): DEC-537 priority score projection
+  dodanych=5 obecnych=5 brak=0 bez-pary-PL=0
+
+7e64cb3cdd | fix(initiatives): D-77 — blocked initiative readiness recommendation i18n-resolved, PL literal gone from code
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+ab9563a4b2 | fix(documents): D-102 honest deep-link failures + D-103 shell-pillar proof
+  dodanych=4 obecnych=4 brak=0 bez-pary-PL=0
+
+390b04a43c | [ODMROZENIE 11_MATERIALS DEC-640] RD-2 v2 i18n artifact deck shell
+  dodanych=37 obecnych=37 brak=0 bez-pary-PL=0 drift-wartosci=1
+  DRIFT: unsupportedTransitionTarget: wdrożona="This transition is not supported by the PMO decision request yet." | w-commicie="This transition is not supported by the PMO decision request yet.",      "noTransition": "No transition is available for your role at this stage."
+
+1437a7e2c3 | feat(projects): add global project context switcher [PROJECT-1-P2]
+  dodanych=5 obecnych=5 brak=0 bez-pary-PL=0
+
+654cf90efa | fix(conclusions): U-29 audit-source readout shows labels, not raw keys (source chip + evidence types)
+  dodanych=10 obecnych=10 brak=0 bez-pary-PL=0
+
+f4a3891204 | feat(meetings): MTG-2a v2 — protocol labels SOURCE per decisions/actions block (register vs approved note)
+  dodanych=3 obecnych=3 brak=0 bez-pary-PL=0
+
+be3caa0e47 | feat(meetings): MTG-2b single-source decisions/actions, action→task funnel, 7-group authz
+  dodanych=10 obecnych=10 brak=0 bez-pary-PL=0
+
+1fcd583f54 | feat(meetings): MTG-2a protocol W109b lifecycle + wiring tests + evidence
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+ae49603426 | wip: MTG-2a — praca w toku, kredyty Qodera wyczerpane (18.09 23:29 CDT); snapshot bezpieczeństwa CTO-Qoder (--no-verify: hooki wymagają bramki, którą stanowisko przejdzie przy finalnym commicie)
+  dodanych=51 obecnych=51 brak=0 bez-pary-PL=0
+
+779941824c | Add shared AIR-1b AI review display
+  dodanych=2 obecnych=2 brak=0 bez-pary-PL=0
+
+10fe88a6ed | feat(interview): AIR-1a AI score column + verdict pill + preview block (DEC-566/569)
+  dodanych=8 obecnych=8 brak=0 bez-pary-PL=0
+
+3e6dde878f | fix(initiatives): restore and share PMO proposal preflight [U-35]
+  dodanych=2 obecnych=2 brak=0 bez-pary-PL=0
+
+07e8a7f4a2 | Fix PMO decision self-review preflight v4d
+  dodanych=36 obecnych=36 brak=0 bez-pary-PL=0
+
+b2db437539 | fix(materials): U-44 documents-list hygiene — TITLE header + SOURCE column
+  dodanych=6 obecnych=6 brak=0 bez-pary-PL=0
+
+c1213d39ad | feat(audits): OP-2b criteria editing on the pack object screen
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+cbf54e9a35 | wip: OP-2b — praca w toku, kredyty Qodera wyczerpane (18.09 23:29 CDT); snapshot bezpieczeństwa CTO-Qoder (--no-verify: hooki wymagają bramki, którą stanowisko przejdzie przy finalnym commicie)
+  dodanych=23 obecnych=23 brak=0 bez-pary-PL=0
+
+ffc37c8c9f | Fix Gantt v3 planned hint bars
+  dodanych=3 obecnych=3 brak=0 bez-pary-PL=0
+
+48b1d5f65a | feat(gantt): drag plan bars with single CAS write on pointerup (PL3 etap 2)
+  dodanych=4 obecnych=4 brak=0 bez-pary-PL=0
+
+879ed081cc | feat(documents): DOC-0 etap 2a — standalone /documents/:artifactId behind VITE_DOC0_DOCUMENT_VIEWER (DEC-593, Wpis 106/117)
+  dodanych=8 obecnych=8 brak=0 bez-pary-PL=0
+
+854d3a7e63 | feat(audits): OP-2a audit pack object screen behind VITE_AUDIT_PACKAGE_VIEWER
+  dodanych=57 obecnych=57 brak=0 bez-pary-PL=0
+
+9a2f6234d8 | fix(initiatives): H1c — phase pill shows the lifecycle phase, not the module name
+  dodanych=6 obecnych=6 brak=0 bez-pary-PL=0
+
+e16aefc970 | feat(materials): move template source filter to menu 2
+  dodanych=1 obecnych=1 brak=0 bez-pary-PL=0
+
+2c5070ed84 | feat(report-builder): add flagged Write Review Publish shell
+  dodanych=8 obecnych=8 brak=0 bez-pary-PL=0
