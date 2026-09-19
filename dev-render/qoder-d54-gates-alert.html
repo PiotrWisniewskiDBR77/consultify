@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D-54 Gates Alert Contrast — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      D-54 evidence harness — separate entry point on purpose (the shared
+      `dev-render/index.html` → `main.tsx` registry statically imports screens
+      that do not exist at this worktree's base commit). Mounts the REAL
+      `AuditsMethodHub` (Processes tab) with only the lifecycle endpoint
+      failing, so the "Could not load next-stage gates." alert renders in the
+      real shell and its contrast can be pixel-measured.
+
+      Params: ?lang=en&theme=light|dark&tab=processes&gates=fail
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/qoder-d54-gates-alert-main.tsx"></script>
+  </body>
+</html>

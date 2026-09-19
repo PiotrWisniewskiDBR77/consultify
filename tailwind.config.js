@@ -106,6 +106,11 @@ export default {
           success: cTok('success'),
           warning: cTok('warning'),
           danger: cTok('danger'),
+          // D-54: `--c-danger` measures 4,45–4,46:1 on tinted light backgrounds
+          // (#f8fafc / --c-bg) — under AA 4,5:1. Narrow token per the
+          // --c-danger-table pattern (values + measurements in src/index.css);
+          // use for danger text that sits on a tinted surface, not in tables.
+          'danger-on-surface': cTok('danger-on-surface'),
           info: cTok('info'),
           // AI — kolor SYSTEMOWY sztucznej inteligencji (standard n-Type §4.6):
           // przycisk AI w nagłówku, „Analizuj z AI", ikony AI przy polach, panel

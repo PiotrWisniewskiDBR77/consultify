@@ -267,6 +267,19 @@
     --c-text-muted-table-rgb: 71 85 105;
     --c-danger-table: #c1042f; /* danger-600 (istniejąca skala) — 5,3–6,0:1 na zmierzonych tłach komórek */
     --c-danger-table-rgb: 193 4 47;
+
+    /* D-54 (debt after MVP, measured 2026-09-18): the comment above claims
+     * --c-danger is calibrated for plain --c-surface/--c-bg. Measured WCAG 2.1
+     * says otherwise in the LIGHT theme: #e80538 gives 4,45:1 on a slate-50
+     * panel (#f8fafc), 4,46:1 on --c-bg (#fafaf9) and only 4,66:1 on pure
+     * --c-surface (#ffffff) — i.e. it dips under the 4,5:1 AA threshold on
+     * every tinted background. Raising --c-danger itself is out of scope (694
+     * `text-c-danger` call sites in src/), so this is a narrow token per the
+     * --c-danger-table / --c-focus-solid-on-tint pattern, consumed only where
+     * danger text sits on a tinted surface. danger-600 from the existing
+     * scale: 6,03:1 on #f8fafc, 6,05:1 on --c-bg, 6,31:1 on --c-surface. */
+    --c-danger-on-surface: #c1042f;
+    --c-danger-on-surface-rgb: 193 4 47;
   }
 
   .dark {
@@ -435,6 +448,14 @@
     --c-text-muted-table-rgb: 138 153 176;
     --c-danger-table: #f06f5e; /* jaśniejszy niż --c-danger (dark) — 4,9–5,3:1 na zmierzonych tłach komórek */
     --c-danger-table-rgb: 240 111 94;
+
+    /* D-54 dark counterpart (see :root). Bare --c-danger (#ed5565) clears AA
+     * on the dark page backgrounds but only just on a raised panel: 5,18:1 on
+     * --c-surface #0f172a, 5,53:1 on --c-bg #0a0f1e, 4,64:1 on
+     * --c-surface-raised #15213b. The value below (same as --c-danger-table)
+     * measures 6,07:1 / 6,49:1 / 5,44:1 on those three. */
+    --c-danger-on-surface: #f06f5e;
+    --c-danger-on-surface-rgb: 240 111 94;
   }
 }
 

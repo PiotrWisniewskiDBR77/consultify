@@ -90,6 +90,11 @@ try {
 
 const STATE = new URLSearchParams(window.location.search).get('state') || 'default';
 
+// D-54 contrast evidence: `?gates=fail` rejects ONLY the next-stage gates
+// endpoint, so the rest of the Processes tab still renders and the failure
+// message stays visible in the real shell (`?state=error` kills the whole hub).
+const GATES_FAIL = new URLSearchParams(window.location.search).get('gates') === 'fail';
+
 // ---------------------------------------------------------------------------
 // LIBRARY — 5 pakietów, jeden na każdą klasyfikację (kanon prawny: pakiet
 // niezweryfikowany nie może wyglądać jak norma — to jest zrzut, który to
@@ -1000,6 +1005,7 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
   }
   const lifecycle = path.match(/^\/audits\/programs\/([^/]+)\/lifecycle$/);
   if (lifecycle) {
+    if (GATES_FAIL) serverUnavailable();
     return envelope(MOCK_LIFECYCLE[decodeURIComponent(lifecycle[1])] ?? DEFAULT_LIFECYCLE);
   }
   const programDetail = path.match(/^\/audits\/programs\/([^/]+)$/);

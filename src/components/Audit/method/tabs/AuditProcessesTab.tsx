@@ -439,7 +439,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const lifecycleGateContent = (() => {
     if (lifecycleError) {
       return (
-        <div className="text-xs text-c-danger" role="alert">
+        <div className="text-xs text-c-danger-on-surface" role="alert">
           {lifecycleError}
         </div>
       );
