@@ -69,9 +69,9 @@ function respondWithServiceError(res: Response, err: unknown): void {
   // wycieku wnętrza (docs/standards/ERROR_HANDLING_STANDARD.md §1/§3): log
   // the real detail server-side, never forward err.message to the client.
   logger.error('[ArtifactApprovals] Unexpected service error', { err });
-  res
-    .status(500)
-    .json({ error: 'Wystąpił błąd serwera', code: 'ARTIFACT_APPROVALS_UNEXPECTED_FAILED' });
+  // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+  // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
+  res.status(500).json({ code: 'ARTIFACT_APPROVALS_UNEXPECTED_FAILED' });
 }
 
 function requireOrgId(req: AuthRequest, res: Response): string | null {
