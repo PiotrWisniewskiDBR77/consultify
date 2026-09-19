@@ -29,6 +29,11 @@ interface DashboardOverviewProps {
   refreshTrigger: number;
 }
 
+const ON_TRACK_INITIATIVE_STATUSES: readonly InitiativeStatus[] = [
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.CLOSED,
+];
+
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onStartModule1,
   session,
@@ -58,7 +63,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     const initiatives = safeSession.initiatives || [];
     const totalInit = initiatives.length;
     const completedInit = initiatives.filter(
-      (i) => i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.CLOSED
+      (i) => i.status === InitiativeStatus.CLOSED
     ).length;
     const executionScore = totalInit > 0 ? (completedInit / totalInit) * 20 : 0;
 
@@ -75,14 +80,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   // Initiative Summary
   const initiativeStats = useMemo(() => {
     const inits = safeSession.initiatives || [];
-    const onTrack = inits.filter((i) =>
-      [InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED, InitiativeStatus.CLOSED].includes(
-        i.status as InitiativeStatus
-      )
-    ).length;
+    const onTrack = inits.filter((i) => ON_TRACK_INITIATIVE_STATUSES.includes(i.status)).length;
     const atRisk = inits.filter(
-      (i) =>
-        i.priority === 'High' && [InitiativeStatus.IN_EXECUTION].includes(i.status as InitiativeStatus)
+      (i) => i.priority === 'High' && i.status === InitiativeStatus.IN_EXECUTION
     ).length;
     const delayed = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
     const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length;
