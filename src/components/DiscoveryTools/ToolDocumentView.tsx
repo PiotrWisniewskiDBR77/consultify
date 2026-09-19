@@ -2522,7 +2522,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           onTitleChange: setSessionName,
           titleReadOnly: true,
           artifactId: toolSessionId || toolType,
-          artifactType: 'tool-document',
+          artifactType: 'tool_session',
           onSave: handleSave,
           saving,
           saveState,
