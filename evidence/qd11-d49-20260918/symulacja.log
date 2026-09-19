@@ -1,0 +1,158 @@
+Border style is 2.
+==================== RESET (sprzątanie po ewentualnym poprzednim biegu) ======
+psql:/tmp/symulacja.sql:13: NOTICE:  table "d49_cleanup_backup" does not exist, skipping
+DROP TABLE
+==================== FAZA A — STAN PRZED (oczekiwane: 2 / 1 / 3 / 4) =========
+--- A1. śmieciowe odpowiedzi (oczekiwane 2):
++---------------------+
+| junk_answers_before |
++---------------------+
+|                   2 |
++---------------------+
+(1 row)
+
+--- A2. snapshot CTO smoke (oczekiwane 1):
++--------------+
+| smoke_before |
++--------------+
+|            1 |
++--------------+
+(1 row)
+
+--- A3. wszystkie snapshoty NW (oczekiwane 3):
++---------------------------+
+| nw_snapshots_total_before |
++---------------------------+
+|                         3 |
++---------------------------+
+(1 row)
+
+--- A4. legit (nie-śmieci) odpowiedzi w sesji 13c932b0 (oczekiwane 4):
++----------------------+
+| legit_answers_before |
++----------------------+
+|                    4 |
++----------------------+
+(1 row)
+
+==================== FAZA A — URUCHOMIENIE 1 runbooka ==========================
+BEGIN
+CREATE TABLE
+INSERT 0 2
+INSERT 0 1
+UPDATE 1
+UPDATE 1
+DELETE 1
+COMMIT
+--- A5. śmieciowe odpowiedzi PO (oczekiwane 0):
++--------------------+
+| junk_answers_after |
++--------------------+
+|                  0 |
++--------------------+
+(1 row)
+
+--- A6. snapshot CTO smoke PO (oczekiwane 0):
++-------------+
+| smoke_after |
++-------------+
+|           0 |
++-------------+
+(1 row)
+
+--- A7. wszystkie snapshoty NW PO (oczekiwane 2):
++--------------------------+
+| nw_snapshots_total_after |
++--------------------------+
+|                        2 |
++--------------------------+
+(1 row)
+
+--- A8. wiersze w backupie (oczekiwane 3 = 2 odpowiedzi + 1 snapshot):
++-------------+
+| backup_rows |
++-------------+
+|           3 |
++-------------+
+(1 row)
+
+--- A9. przepisane odpowiedzi = propozycja EN (oczekiwane 2 wiersze z nowym tekstem):
++--------------------------------------+----------------------------------------------------+
+|                  id                  |                     new_answer                     |
++--------------------------------------+----------------------------------------------------+
+| 233ae4ce-7069-4578-899c-f20fc0fcbb9d | The goods-in to putaway handoff and the pick-relea |
+| e563ed82-c572-4829-8206-158f3d2f5a96 | Shift leads keep a manual spreadsheet of fast-movi |
++--------------------------------------+----------------------------------------------------+
+(2 rows)
+
+==================== FAZA A — URUCHOMIENIE 2 (idempotencja) ====================
+BEGIN
+psql:/tmp/d49-cleanup.sql:45: NOTICE:  relation "d49_cleanup_backup" already exists, skipping
+CREATE TABLE
+INSERT 0 0
+INSERT 0 0
+UPDATE 0
+UPDATE 0
+DELETE 0
+COMMIT
+--- A10. śmieciowe odpowiedzi (oczekiwane 0):
++-------------------+
+| junk_answers_run2 |
++-------------------+
+|                 0 |
++-------------------+
+(1 row)
+
+--- A11. snapshot CTO smoke (oczekiwane 0):
++------------+
+| smoke_run2 |
++------------+
+|          0 |
++------------+
+(1 row)
+
+--- A12. backup NIE rośnie (oczekiwane 3):
++------------------+
+| backup_rows_run2 |
++------------------+
+|                3 |
++------------------+
+(1 row)
+
+--- A13. snapshoty NW nadal 2 (oczekiwane 2):
++-------------------+
+| nw_snapshots_run2 |
++-------------------+
+|                 2 |
++-------------------+
+(1 row)
+
+==================== FAZA B — KOLATERAL (oczekiwane: nietknięty) ==============
+--- B1. 2 legit snapshoty NW obecne z oryginalnymi tytułami/statusami:
++--------------------------------------+-------------------------------------------------+-----------+
+|                  id                  |                      title                      |  status   |
++--------------------------------------+-------------------------------------------------+-----------+
+| c3771f1b-e831-4a61-9b06-d5c4e34b0a98 | Northwind 2027 — weekly execution pack, week 36 | PUBLISHED |
+| ea011375-29bd-4323-a488-3eef420ff381 | Northwind 2027 — programme health summary       | DRAFT     |
++--------------------------------------+-------------------------------------------------+-----------+
+(2 rows)
+
+--- B2. 4 legit odpowiedzi w sesji 13c932b0 niezmienione (oczekiwane 4):
++---------------------+
+| legit_answers_after |
++---------------------+
+|                   4 |
++---------------------+
+(1 row)
+
+==================== FAZA C — PORZĄDKI ======================================
+DROP TABLE
+--- C1. backup table zdropowana (oczekiwane: brak):
++-------------------------+
+| backup_table_after_drop |
++-------------------------+
+|                         |
++-------------------------+
+(1 row)
+
+==================== KONIEC SYMULACJI =======================================
