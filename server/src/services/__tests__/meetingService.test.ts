@@ -88,6 +88,8 @@ async function ensureHandoffSpineTablesForTest() {
       meeting_id TEXT NOT NULL,
       transcript_hash TEXT NOT NULL,
       summary TEXT NOT NULL DEFAULT '',
+      decisions_json TEXT NOT NULL DEFAULT '[]',
+      action_items_json TEXT NOT NULL DEFAULT '[]',
       status TEXT NOT NULL DEFAULT 'proposed',
       proposal_id TEXT,
       created_by TEXT NOT NULL
@@ -175,6 +177,59 @@ describe('meetingService', () => {
     await makeMeeting({ title: 'B' });
     const list = await listMeetings({ organizationId: ORG });
     expect(list).toHaveLength(2);
+  });
+
+  it('adapts only the approved governed note into legacy meeting outputs', async () => {
+    const created = await makeMeeting();
+    const now = new Date().toISOString();
+    await runAsync(`UPDATE meetings SET decisions_json = ? WHERE id = ?`, [
+      JSON.stringify(['legacy decision']),
+      created.id,
+    ]);
+    await runAsync(
+      `INSERT INTO meeting_follow_ups
+         (id, meeting_id, title, owner, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'open', ?, ?)`,
+      ['legacy-follow-up', created.id, 'Legacy action', 'Legacy owner', now, now]
+    );
+
+    const withoutApproval = await getMeeting({ organizationId: ORG, meetingId: created.id });
+    expect(withoutApproval?.decisions).toEqual([]);
+    expect(withoutApproval?.followUps).toEqual([]);
+
+    await runAsync(
+      `INSERT INTO meeting_notes
+         (id, organization_id, meeting_id, transcript_hash, status, decisions_json, action_items_json, created_by)
+       VALUES (?, ?, ?, ?, 'approved', ?, ?, ?)`,
+      [
+        'approved-note-1',
+        ORG,
+        created.id,
+        'approved-hash',
+        JSON.stringify([{ decision: 'Ship governed pilot' }]),
+        JSON.stringify([{ task: 'Prepare rollout', owner: 'Alice' }]),
+        USER,
+      ]
+    );
+    await runAsync(`UPDATE meetings SET approved_minutes_note_id = ? WHERE id = ?`, [
+      'approved-note-1',
+      created.id,
+    ]);
+
+    const adapted = await getMeeting({ organizationId: ORG, meetingId: created.id });
+    expect(adapted?.decisions).toEqual(['Ship governed pilot']);
+    expect(adapted?.followUps).toEqual([
+      {
+        id: 'approved-note-1:action:0',
+        title: 'Prepare rollout',
+        owner: 'Alice',
+        status: 'open',
+      },
+    ]);
+    expect((await listMeetings({ organizationId: ORG }))[0]).toMatchObject({
+      decisions: ['Ship governed pilot'],
+      followUps: [{ title: 'Prepare rollout', owner: 'Alice' }],
+    });
   });
 
   it('updates core fields and leaves untouched fields intact', async () => {

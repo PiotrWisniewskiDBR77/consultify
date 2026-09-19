@@ -123,6 +123,13 @@ type MeetingRow = {
   approved_minutes_at?: string | null;
 };
 
+type ApprovedNoteOutputRow = {
+  meeting_id: string;
+  note_id: string;
+  decisions_json: string | null;
+  action_items_json: string | null;
+};
+
 type FollowUpRow = {
   id: string;
   meeting_id: string;
@@ -143,6 +150,67 @@ function safeJsonArray(raw: unknown): string[] {
   } catch {
     return [];
   }
+}
+
+function governedDecisionLabels(raw: unknown): string[] {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) =>
+        typeof item === 'string' ? item.trim() : String(item?.decision || '').trim()
+      )
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function governedFollowUps(noteId: string, raw: unknown): MeetingFollowUp[] {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item, index) => ({
+        id: `${noteId}:action:${index}`,
+        title: typeof item === 'string' ? item.trim() : String(item?.task || '').trim(),
+        owner: typeof item === 'object' && item ? String(item.owner || '').trim() : '',
+        status: 'open' as const,
+      }))
+      .filter((item) => item.title);
+  } catch {
+    return [];
+  }
+}
+
+async function getApprovedNoteOutputs(
+  organizationId: string,
+  meetingIds: string[]
+): Promise<Record<string, { decisions: string[]; followUps: MeetingFollowUp[] }>> {
+  if (meetingIds.length === 0) return {};
+  const placeholders = meetingIds.map(() => '?').join(', ');
+  const rows = await dbAll<ApprovedNoteOutputRow>(
+    `SELECT m.id AS meeting_id, n.id AS note_id, n.decisions_json, n.action_items_json
+       FROM meetings m
+       JOIN meeting_notes n
+         ON n.id = m.approved_minutes_note_id
+        AND n.organization_id = m.organization_id
+        AND n.meeting_id = m.id
+        AND n.status = 'approved'
+      WHERE m.organization_id = ? AND m.id IN (${placeholders})`,
+    [organizationId, ...meetingIds]
+  );
+  return Object.fromEntries(
+    (rows || []).map((row) => [
+      row.meeting_id,
+      {
+        decisions: governedDecisionLabels(row.decisions_json),
+        followUps: governedFollowUps(row.note_id, row.action_items_json),
+      },
+    ])
+  );
 }
 
 function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecord {
@@ -169,7 +237,7 @@ function mapMeeting(row: MeetingRow, followUps: MeetingFollowUp[]): MeetingRecor
     attendees: safeJsonArray(row.attendees_json),
     preRead: safeJsonArray(row.pre_read_json),
     agenda: safeJsonArray(row.agenda_json),
-    decisions: safeJsonArray(row.decisions_json),
+    decisions: [],
     followUps,
     status: row.status === 'completed' ? 'completed' : 'scheduled',
     // Migration 20262301 backfills with the same rule; a NULL/absent column
@@ -204,6 +272,9 @@ export async function ensureMeetingTables(): Promise<void> {
       pre_read_json TEXT DEFAULT '[]',
       agenda_json TEXT DEFAULT '[]',
       decisions_json TEXT DEFAULT '[]',
+      approved_minutes_note_id TEXT,
+      approved_minutes_artifact_id TEXT,
+      approved_minutes_at TEXT,
       status TEXT DEFAULT 'scheduled',
       created_by TEXT NOT NULL,
       created_at TEXT DEFAULT (datetime('now')),
@@ -227,31 +298,6 @@ export async function ensureMeetingTables(): Promise<void> {
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_meeting_follow_ups_meeting ON meeting_follow_ups(meeting_id)`
   );
-}
-
-async function getFollowUpsForMeetings(
-  meetingIds: string[]
-): Promise<Record<string, MeetingFollowUp[]>> {
-  if (meetingIds.length === 0) return {};
-  const placeholders = meetingIds.map(() => '?').join(', ');
-  const rows = await dbAll<FollowUpRow>(
-    `SELECT id, meeting_id, title, owner, status
-     FROM meeting_follow_ups
-     WHERE meeting_id IN (${placeholders})
-     ORDER BY created_at ASC`,
-    meetingIds
-  );
-  const out: Record<string, MeetingFollowUp[]> = {};
-  for (const row of rows || []) {
-    if (!out[row.meeting_id]) out[row.meeting_id] = [];
-    out[row.meeting_id].push({
-      id: row.id,
-      title: row.title,
-      owner: row.owner || '',
-      status: row.status === 'done' ? 'done' : 'open',
-    });
-  }
-  return out;
 }
 
 export async function listMeetings(input: {
@@ -312,8 +358,16 @@ export async function listMeetings(input: {
       row.attachment_count = attachments.get(row.id) || 0;
     }
   }
-  const followUps = await getFollowUpsForMeetings(meetingIds);
-  return (rows || []).map((row) => mapMeeting(row, followUps[row.id] || []));
+  // U-52: `/meeting` remains a compatibility read adapter, but its outputs
+  // come only from the human-approved governed note. Legacy JSON/follow-up
+  // rows are deliberately not a fallback: without an approved note the
+  // honest canonical result is empty.
+  const outputs = await getApprovedNoteOutputs(input.organizationId, meetingIds);
+  return (rows || []).map((row) => {
+    const meeting = mapMeeting(row, outputs[row.id]?.followUps || []);
+    meeting.decisions = outputs[row.id]?.decisions || [];
+    return meeting;
+  });
 }
 
 export async function getMeeting(input: {
@@ -345,8 +399,10 @@ export async function getMeeting(input: {
   }
   row.participant_count = counts?.participant_count || 0;
   row.attachment_count = counts?.attachment_count || 0;
-  const followUps = await getFollowUpsForMeetings([row.id]);
-  return mapMeeting(row, followUps[row.id] || []);
+  const outputs = await getApprovedNoteOutputs(input.organizationId, [row.id]);
+  const meeting = mapMeeting(row, outputs[row.id]?.followUps || []);
+  meeting.decisions = outputs[row.id]?.decisions || [];
+  return meeting;
 }
 
 export async function createMeeting(input: {
