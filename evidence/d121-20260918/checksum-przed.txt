@@ -1,0 +1,12 @@
+ ORG_COUNT=13
+
+ DETAIL interview_evidence real_excl_touched=64
+
+ DETAIL interview_questions real=128
+
+ DETAIL interview_sessions real=26
+
+ TOTAL_INCL_TOUCHED=220
+
+ CHECKSUM=a48f9b543698b339468a8759f30f7de0
+

@@ -1,0 +1,5 @@
+BEGIN
+DELETE 0
+psql:evidence/d121-20260918/d121-delete.sql:74: NOTICE:  D121_PROVEN: 2 targets gone, collateral intact (ie_nw=17, ie_session=3, iq_real=128, is_real=26)
+DO
+COMMIT

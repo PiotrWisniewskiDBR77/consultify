@@ -1,0 +1,6 @@
+
+ CASCADE_AFFECTED_ROWS=0
+
+ FK_FROM_IE name=interview_evidence_question_id_fkey col=question_id -> interview_questions on_delete=n
+ FK_FROM_IE name=interview_evidence_session_id_fkey col=session_id -> interview_sessions on_delete=c
+

@@ -1,0 +1,10 @@
+       ?column?        
+-----------------------
+ ie_total=64
+ ie_northwind=17
+ ie_session_13c932b0=3
+ ie_orphan_null_q=0
+ iq_real=128
+ is_real=26
+(6 rows)
+
