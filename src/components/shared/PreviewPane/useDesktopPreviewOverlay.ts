@@ -58,7 +58,7 @@ export interface UseDesktopPreviewOverlayResult {
   /** Attach to the flex row that holds the table + the panel; must carry
    * `position: relative` (e.g. Tailwind `relative`) for the overlay to
    * anchor to its right edge instead of escaping to a further ancestor. */
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   /** `true` below the threshold (and not on mobile, which already has its
    * own full-screen drawer) — wrap the panel in the overlay classes. */
   overlayMode: boolean;
