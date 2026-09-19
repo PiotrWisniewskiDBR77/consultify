@@ -353,6 +353,14 @@ function pominSciezkeRaw(rel) {
   return false;
 }
 
+// D-116: JEDNO źródło wykluczeń dla obu trybów bramki. Pełny skan pomija pliki
+// przez `pominSciezkeRaw` (patrz listujPliki), więc tryb szybki (--staged) musi
+// stosować tę SAMĄ funkcję — inaczej fixture w `__tests__/` liczy się w
+// pre-commit, a nie liczy w pełnym skanie i bazy się rozjeżdżają.
+function czyDotknieteZrodlo(rel) {
+  return /^(src|server\/src)\/.*\.(ts|tsx)$/.test(rel) && !pominSciezke(rel);
+}
+
 function listujPliki(dir, filtr, wynik = []) {
   let wpisy;
   try {
@@ -1409,7 +1417,7 @@ async function trybSzybki(baselinePath) {
     return trybPelny(baselinePath, bazowy);
   }
 
-  const dotknieteSrc = dotkniete.filter((f) => /^(src|server\/src)\/.*\.(ts|tsx)$/.test(f));
+  const dotknieteSrc = dotkniete.filter(czyDotknieteZrodlo);
   if (dotknieteSrc.length === 0) {
     console.log('BRAMKA JĘZYKOWA (szybki tryb): OK — brak dotkniętych plików źródłowych .ts/.tsx.');
     return 0;
@@ -1644,4 +1652,7 @@ export {
   bezSlownikowDwujezycznych,
   analizujPromptyZawartosc,
   jestPlikiemPromptowym,
+  // D-116 — jedno źródło wykluczeń dla pełnego skanu i trybu --staged.
+  pominSciezke,
+  czyDotknieteZrodlo,
 };
