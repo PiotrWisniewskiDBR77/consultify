@@ -443,19 +443,13 @@ router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction
 
 /**
  * GET /api/public/report/:token/pptx
- * Download PPTX of a shared report (requires authentication).
+ * Download PPTX of a shared report (public token gates access; no bearer required).
  */
 router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tokenParam = req.params.token;
     const linkToken = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
     const { password: pwd } = req.query;
-
-    // Verify authentication
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required for PPTX download' });
-    }
 
     const result = await ReportBuilderService.getPublicLinkByToken(linkToken);
     if (!result) {
