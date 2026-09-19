@@ -593,6 +593,7 @@
   },
   "layout": {
     "breadcrumb": {
+      "aria": "Breadcrumb",
       "module": {
         "audits": "Audits",
         "organization": "Organization",

@@ -593,6 +593,7 @@
   },
   "layout": {
     "breadcrumb": {
+      "aria": "Okruszki nawigacyjne",
       "module": {
         "audits": "Audyty",
         "organization": "Organizacja",
