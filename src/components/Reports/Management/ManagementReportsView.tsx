@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   CalendarClock,
   FileBarChart2,
+  FileText,
   History,
   Loader2,
   Plus,
@@ -17,7 +18,7 @@ import {
   Sparkles,
   Wand2,
 } from 'lucide-react';
-import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
@@ -33,6 +34,7 @@ import {
   ManagementReportScope,
   ManagementReportStatus,
   ManagementReportType,
+  type ReportBuilderDocumentSection,
 } from '../../../types';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
@@ -60,6 +62,30 @@ interface ManagementReportsViewProps {
   className?: string;
 }
 
+interface ManagementReportResponsePayload {
+  report?: ManagementReport;
+  reportBuilderDocument?: ManagementReport['reportBuilderDocument'];
+}
+
+function withReportBuilderDocument(payload: ManagementReportResponsePayload): ManagementReport | null {
+  if (!payload.report) return null;
+  return {
+    ...payload.report,
+    reportBuilderDocument: payload.reportBuilderDocument ?? payload.report.reportBuilderDocument,
+  };
+}
+
+function ReportBuilderDocumentSectionBlock({ section }: { section: ReportBuilderDocumentSection }) {
+  return (
+    <article className="space-y-3" data-testid={`management-report-builder-section-${section.sectionKey}`}>
+      <h2 className="text-lg font-semibold text-c-text">{section.title}</h2>
+      <pre className="whitespace-pre-wrap rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 text-sm leading-6 text-c-text-secondary">
+        {section.editedContent || section.generatedContent}
+      </pre>
+    </article>
+  );
+}
+
 export const ManagementReportCard: React.FC<{
   report: ManagementReport;
   onBack: () => void;
@@ -69,12 +95,32 @@ export const ManagementReportCard: React.FC<{
   children: React.ReactNode;
 }> = ({ report, onBack, onExportPDF, onExportPPTX, onShare, children }) => {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('report');
-  const sections: StandardSekcjaDef[] = MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
-    ...item,
-    component: children,
-    aiContract: { none: true as const, reason: item.aiReason },
-  }));
+  const builderSections = report.reportBuilderDocument?.sections ?? [];
+  const initialSection = builderSections[0]?.sectionKey ?? 'report';
+  const [activeSection, setActiveSection] = useState(initialSection);
+  useEffect(() => {
+    setActiveSection(initialSection);
+  }, [initialSection, report.id]);
+  const sections: StandardSekcjaDef[] = useMemo(() => {
+    if (builderSections.length > 0) {
+      return builderSections.map((section) => ({
+        id: section.sectionKey,
+        label: { pl: section.title, en: section.title },
+        icon: FileText,
+        iconName: 'FileText',
+        component: <ReportBuilderDocumentSectionBlock section={section} />,
+        aiContract: {
+          none: true as const,
+          reason: MANAGEMENT_REPORT_CARD_CONTRACT[0]?.aiReason ?? '',
+        },
+      }));
+    }
+    return MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
+      ...item,
+      component: children,
+      aiContract: { none: true as const, reason: item.aiReason },
+    }));
+  }, [builderSections, children]);
   // Słownik enumów module-scope (wzór J7b): wartość bazy NIGDY nie trafia na
   // ekran surowa, a etykieta ma angielski default — konto EN nie zobaczy polskiego.
   const reportTypeLabel: Record<string, string> = {
@@ -236,8 +282,9 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         aiEnhancement: true,
       });
 
-      if (response.data?.report) {
-        setCurrentReport(response.data.report);
+      const report = withReportBuilderDocument(response.data || {});
+      if (report) {
+        setCurrentReport(report);
         setViewMode('preview');
         toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
 
@@ -323,8 +370,9 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
   const handleViewReport = async (reportId: string) => {
     try {
       const response = await Api.get(`/api/management-reports/${reportId}`);
-      if (response.data?.report) {
-        setCurrentReport(response.data.report);
+      const report = withReportBuilderDocument(response.data || {});
+      if (report) {
+        setCurrentReport(report);
         setViewMode('preview');
       }
     } catch (error) {
