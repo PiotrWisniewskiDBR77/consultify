@@ -474,6 +474,45 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
   );
 };
 
+type DrdRecoveredFocus = { axisId: number; unitId: string; level: number };
+
+function drdFocusStorageKey(sessionId: string): string {
+  return `drd-method-workspace.focus:${sessionId}`;
+}
+
+function normalizeDrdRecoveredFocus(raw: unknown): DrdRecoveredFocus | null {
+  const value = raw as Partial<DrdRecoveredFocus> | null | undefined;
+  const axisId = Number(value?.axisId);
+  const unitId = String(value?.unitId ?? '');
+  const level = Number(value?.level);
+  const axis = DRD_STRUCTURE.find((item) => item.id === axisId);
+  const unit = axis?.areas.find((item) => item.id === unitId);
+  if (!axis || !unit) return null;
+  const hasLevel = unit.levels.some((item) => item.level === level);
+  if (!hasLevel) return null;
+  return { axisId: axis.id, unitId: unit.id, level };
+}
+
+function readDrdRecoveredFocus(sessionId: string | undefined, storage: Storage): DrdRecoveredFocus | null {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = normalizeDrdRecoveredFocus({
+      axisId: params.get('axis'),
+      unitId: params.get('area') ?? params.get('unit'),
+      level: params.get('level'),
+    });
+    if (fromUrl) return fromUrl;
+  }
+
+  if (!sessionId) return null;
+  try {
+    const raw = storage.getItem(drdFocusStorageKey(sessionId));
+    return raw ? normalizeDrdRecoveredFocus(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -516,10 +555,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    */
   const frozenViewModeAppliedRef = useRef(false);
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
-  const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
-  const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
+  const initialRecoveredFocusRef = useRef<DrdRecoveredFocus | null>(
+    readDrdRecoveredFocus(demoSessionId, storage)
+  );
+  const [activeAxisId, setActiveAxisId] = useState<number>(
+    initialRecoveredFocusRef.current?.axisId ?? DRD_STRUCTURE[0].id
+  );
+  const [activeUnitId, setActiveUnitId] = useState<string>(
+    initialRecoveredFocusRef.current?.unitId ?? DRD_STRUCTURE[0].areas[0].id
+  );
   const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(
-    null
+    initialRecoveredFocusRef.current
+      ? { unitId: initialRecoveredFocusRef.current.unitId, level: initialRecoveredFocusRef.current.level }
+      : null
   );
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
   /**
@@ -538,7 +586,22 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * ani o linijkę — `resolveOpenLevels` liczy dokładnie to samo, co dotąd;
    * zmienia się tylko to, KTÓRY poziom pokazujemy człowiekowi.
    */
-  const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(null);
+  const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(
+    initialRecoveredFocusRef.current
+      ? { unitId: initialRecoveredFocusRef.current.unitId, level: initialRecoveredFocusRef.current.level }
+      : null
+  );
+  const recoveredFocusAppliedRef = useRef(false);
+  useEffect(() => {
+    if (recoveredFocusAppliedRef.current) return;
+    const recovered = readDrdRecoveredFocus(demoSessionId, storage);
+    if (!recovered) return;
+    recoveredFocusAppliedRef.current = true;
+    setActiveAxisId(recovered.axisId);
+    setActiveUnitId(recovered.unitId);
+    setMatrixSelection({ unitId: recovered.unitId, level: recovered.level });
+    setPinnedFocus({ unitId: recovered.unitId, level: recovered.level });
+  }, [demoSessionId, storage]);
   /**
    * Stan odpowiedzi wybrany ręcznie w TEJ sesji przeglądarki (P-P04) oraz
    * ostatnia lista zdarzeń — oba jako refy, bo debounce autozapisu trzyma
@@ -757,6 +820,27 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     (q) => q.unitId === activeArea.id && q.level === focusLevelFallback
   );
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
+  useEffect(() => {
+    const sessionId = state?.session?.id ?? demoSessionId;
+    if (!sessionId) return;
+    const focus = { axisId: activeAxis.id, unitId: activeArea.id, level: focusLevelFallback };
+    try {
+      storage.setItem(drdFocusStorageKey(sessionId), JSON.stringify(focus));
+    } catch {
+      // ignore storage failures; URL recovery below still preserves refresh behavior
+    }
+    if (typeof window === 'undefined') return;
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set('axis', String(focus.axisId));
+    nextParams.set('area', focus.unitId);
+    nextParams.set('level', String(focus.level));
+    const nextSearch = nextParams.toString();
+    const currentSearch = window.location.search.replace(/^\?/, '');
+    if (nextSearch !== currentSearch) {
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}?${nextSearch}`);
+    }
+  }, [activeArea.id, activeAxis.id, demoSessionId, focusLevelFallback, state?.session?.id, storage]);
+
   const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
   const evidenceItemsForUnit = evidenceItemsFor(events, activeArea.id);
 

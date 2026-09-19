@@ -5,7 +5,7 @@
  * text autosave. Current implementation lets the later draft restore
  * `partial` roughly 800 ms after Save & next level.
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -98,7 +98,9 @@ function session() {
 }
 
 beforeEach(() => {
+  cleanup();
   vi.clearAllMocks();
+  window.history.replaceState(null, '', '/');
 });
 
 describe('K-02 — DRD-2b autosave/manual-save ordering', () => {
@@ -221,6 +223,24 @@ describe('K-02 — DRD-2b autosave/manual-save ordering', () => {
     expect(hoisted.apiPost.mock.calls[0][1].idempotencyKey).toBe(
       hoisted.apiPost.mock.calls[1][1].idempotencyKey
     );
+  });
+
+  it('restores the DRD interview focus level from session recovery storage after reload', async () => {
+    hoisted.createSession.mockResolvedValue({ session: session(), idempotentReplay: false });
+    hoisted.getSession.mockResolvedValue({ session: session(), roles: ['owner', 'lead_assessor'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.appendEvent.mockResolvedValue({ id: 'evt-1', type: 'ANSWER_CONFIRMED' });
+    const persisted = storage();
+    persisted.setItem(
+      'drd-method-workspace.focus:sess-k02',
+      JSON.stringify({ axisId: 1, unitId: '1A', level: 2 })
+    );
+
+    render(<DrdHttpMethodWorkspaceScreen storage={persisted} demoSessionId="sess-k02" />);
+
+    await screen.findByTestId('drd-level-interview-v2');
+    expect(await screen.findByRole('heading', { name: /Level 2/i })).toBeInTheDocument();
+    expect(persisted.getItem('drd-method-workspace.focus:sess-k02')).toContain('\"level\":2');
   });
 
   it('persists Help again after a different decision invalidates the failed task retry', async () => {
