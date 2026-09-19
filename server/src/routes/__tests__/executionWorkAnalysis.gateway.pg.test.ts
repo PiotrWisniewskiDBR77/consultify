@@ -24,10 +24,17 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
   const executionCase = randomUUID();
   const task = randomUUID();
   const ownerOnlyTask = randomUUID();
+  const mismatchOrg = randomUUID();
+  const mismatchOwner = randomUUID();
+  const mismatchProject = randomUUID();
+  const mismatchInitiative = randomUUID();
+  const mismatchExecutionCase = randomUUID();
+  const mismatchTask = randomUUID();
   let db: Client;
   let app: express.Express;
   let authorization: string;
   let memberAuthorization: string;
+  let mismatchAuthorization: string;
 
   beforeAll(async () => {
     await assertRealPostgresTestEnvironment();
@@ -67,8 +74,32 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
         JSON.stringify({ executionCaseId: executionCase, title: 'Blocked commissioning', status: 'BLOCKED', assigneeId: owner, dueAt: '2026-09-01T12:00:00.000Z', priority: 'HIGH' }),
       ]
     );
+    await db.query(`INSERT INTO organizations(id,name,status) VALUES($1,'D-31 mismatch proof','active')`, [mismatchOrg]);
+    await db.query(`INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'OWNER','active')`, [mismatchOwner, mismatchOrg, `${mismatchOwner}@example.test`]);
+    await db.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER','ACTIVE')`, [`membership-${mismatchOwner}`, mismatchOrg, mismatchOwner]);
+    await db.query(`INSERT INTO projects(id,organization_id,name,status,owner_id) VALUES($1,$2,'D-31 project','active',$3)`, [mismatchProject, mismatchOrg, mismatchOwner]);
+    await db.query(`INSERT INTO initiatives(id,organization_id,project_id,name,status,owner_execution_id) VALUES($1,$2,$3,'D-31 initiative','IN_EXECUTION',$4)`, [mismatchInitiative, mismatchOrg, mismatchProject, mismatchOwner]);
+    await db.query(
+      `INSERT INTO tasks(id,organization_id,project_id,initiative_id,title,status,due_date,assignee_id)
+       VALUES($1,$2,$3,$4,'D-31 mismatched task','TODO','2026-11-03',$5)`,
+      [mismatchTask, mismatchOrg, mismatchProject, ` ${mismatchInitiative.toUpperCase()} `, mismatchOwner]
+    );
+    await db.query(
+      `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json)
+       VALUES
+       ($1,'initiative',$2,1,$3::jsonb),
+       ($1,'execution_case',$4,1,$5::jsonb)`,
+      [
+        mismatchOrg,
+        mismatchInitiative,
+        JSON.stringify({ initiativeId: mismatchInitiative, projectId: mismatchProject, lifecycleState: 'IN_EXECUTION' }),
+        mismatchExecutionCase,
+        JSON.stringify({ initiativeId: mismatchInitiative, state: 'ACTIVE' }),
+      ]
+    );
     authorization = `Bearer ${jwt.sign({ id: owner, userId: owner, organizationId: org, organization_id: org, role: 'OWNER' }, config.JWT_SECRET, { algorithm: 'HS256', expiresIn: '10m' })}`;
     memberAuthorization = `Bearer ${jwt.sign({ id: member, userId: member, organizationId: org, organization_id: org, role: 'USER' }, config.JWT_SECRET, { algorithm: 'HS256', expiresIn: '10m' })}`;
+    mismatchAuthorization = `Bearer ${jwt.sign({ id: mismatchOwner, userId: mismatchOwner, organizationId: mismatchOrg, organization_id: mismatchOrg, role: 'OWNER' }, config.JWT_SECRET, { algorithm: 'HS256', expiresIn: '10m' })}`;
     app = express();
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
@@ -76,6 +107,14 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
 
   afterAll(async () => {
     if (db) {
+      await db.query(`DELETE FROM execution_report_snapshots WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM ie_aggregate_state WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM tasks WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM initiatives WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM projects WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM organization_members WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM users WHERE organization_id=$1`, [mismatchOrg]);
+      await db.query(`DELETE FROM organizations WHERE id=$1`, [mismatchOrg]);
       await db.query(`DELETE FROM manager_action_audit_log WHERE organization_id=$1`, [org]);
       await db.query(`DELETE FROM execution_report_snapshots WHERE organization_id=$1`, [org]);
       await db.query(`DELETE FROM ie_aggregate_state WHERE organization_id=$1`, [org]);
@@ -164,6 +203,22 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
     expect(persisted.rows[0].count).toBe(1);
     expect(new Date(persisted.rows[0].asOf).toISOString()).toBe(left.body.asOf);
     expect(JSON.parse(persisted.rows[0].payload)).toEqual(left.body.payload);
+  });
+
+  it('refuses a false-empty snapshot when source task ids differ only in text format', async () => {
+    const response = await call('/api/execution-reports/work-analysis/generate', {
+      method: 'POST',
+      body: JSON.stringify({ weekOf: '2026-11-02' }),
+      authorization: mismatchAuthorization,
+    });
+
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.code).toBe('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
+    const persisted = await db.query(
+      `SELECT count(*)::int count FROM execution_report_snapshots WHERE organization_id=$1`,
+      [mismatchOrg]
+    );
+    expect(persisted.rows[0].count).toBe(0);
   });
 
   it('executes resource change through managerActionExecutionService route and writes its audit', async () => {
