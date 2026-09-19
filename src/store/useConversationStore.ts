@@ -46,6 +46,15 @@ const _lastFetchConversationAt: Record<string, number> = {};
 const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
 const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
 
+type ConversationAiProviderErrorCode =
+  | 'AI_RATE_LIMIT'
+  | 'AI_UNAVAILABLE'
+  | 'AI_CONFIG'
+  | 'AI_TIMEOUT'
+  | 'AI_STREAM_INTERRUPTED'
+  | 'AI_EMPTY'
+  | 'AI_ERROR';
+
 function readMissingConversationIds(): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
@@ -378,6 +387,11 @@ export interface ConversationMessage {
      * Useful for debugging stream failures without polluting message content.
      */
     error?: string;
+    /** Provider-error copy rendered by MessageRenderer from canonical code + admin-only diagnostic. */
+    aiProviderError?: {
+      code: ConversationAiProviderErrorCode;
+      adminDiagnostic?: string;
+    };
     /**
      * B2 (deliverables light): chat-generated deliverable reference (deck/doc).
      * Persisted server-side with the final generation note, so the ArtifactChip
