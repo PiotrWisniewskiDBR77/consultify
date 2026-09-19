@@ -68,7 +68,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   // Active initiatives (not done, not archived)
   const activeInitiatives = useMemo(() => {
     return (safeSession.initiatives || []).filter(
-      (i) => i.status !== InitiativeStatus.CLOSED && i.status !== InitiativeStatus.CLOSED
+      (i) => i.status !== InitiativeStatus.CLOSED
     );
   }, [safeSession]);
 
@@ -216,9 +216,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                           initiative.status === InitiativeStatus.IN_EXECUTION ||
                           initiative.status === InitiativeStatus.PENDING_APPROVAL
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : initiative.status === InitiativeStatus.IN_EXECUTION
-                              ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
-                              : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                            : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                         }`}
                       >
                         {initiative.status}
