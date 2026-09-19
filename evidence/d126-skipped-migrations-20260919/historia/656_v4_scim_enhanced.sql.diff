@@ -1,0 +1,25 @@
+--- evidence/d126-skipped-migrations-20260919/historia/656_v4_scim_enhanced.sql.ledger.sql	2026-09-19 03:16:45
++++ server/migrations/never-ran/656_v4_scim_enhanced.sql	2026-09-17 07:32:52
+@@ -6,6 +6,22 @@
+ 
+ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_scim_external_id ON users(scim_external_id) WHERE scim_external_id IS NOT NULL;
+ 
++CREATE TABLE IF NOT EXISTS scim_group_mappings (
++  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
++  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
++  external_group_id TEXT NOT NULL,
++  external_group_name TEXT NOT NULL,
++  internal_role TEXT NOT NULL,
++  custom_role_id TEXT,
++  is_active INTEGER DEFAULT 1,
++  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
++  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
++  UNIQUE(organization_id, external_group_id)
++);
++
++CREATE INDEX IF NOT EXISTS idx_scim_group_mappings_org ON scim_group_mappings(organization_id);
++CREATE INDEX IF NOT EXISTS idx_scim_group_mappings_external ON scim_group_mappings(external_group_id);
++
+ ALTER TABLE scim_group_mappings ADD COLUMN IF NOT EXISTS auto_sync BOOLEAN DEFAULT TRUE;
+ ALTER TABLE scim_group_mappings ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
+ ALTER TABLE scim_group_mappings ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0;

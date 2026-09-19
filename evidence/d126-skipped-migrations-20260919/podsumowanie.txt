@@ -1,0 +1,21 @@
+# D-126 — podsumowanie (2026-09-19T08:17:40.149Z)
+baza: staging, PostgreSQL 18.4 (Debian 18.4-1.pgdg12+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+plikow_zbadanych: 7
+wierszy_ledgera_znalezionych: 7
+checksum: 604_tools_missing_known_tools_library.sql|skipped|applied_at=2026-03-16T17:31:35.837Z|ledger=skipped:7f86f077fe1ce56465be6fa6dcb3e35c005db1e45dced9b81392f1ca1f71cd27|obecna=60ff5e4c90ff0c58848da9a75e40ece512da6a18cd9abc4290b60eb173412c12|ROZJECHANY
+checksum: 617_generic_assessment_reports_pathc_patch.sql|skipped|applied_at=2026-03-16T17:31:36.111Z|ledger=skipped:fbf3b0413d2f5363ccb06807ae5fde01fe16b9ac7bc6a3e477be10c2a647baea|obecna=e36740a34a26dd1b20c8c676d9e05ac3a2d7792ffc2dc08e0dccd250807c0b9a|ROZJECHANY
+checksum: 618_tools_missing_12_consulting_tools.sql|skipped|applied_at=2026-03-16T17:31:36.473Z|ledger=skipped:45d14ffc47f500da56f079bbf04e2aae228ae6181198b06441c5257f04034d59|obecna=37150a444611d34133315ad5dad80d0d397c6ada5d020f14bd33b796fb091b8d|ROZJECHANY
+checksum: 625_v4_task_hierarchy_unified.sql|skipped|applied_at=2026-03-16T17:31:36.810Z|ledger=skipped:6d82190103fc00c57dc61e89b4b5099b7abb18e0087098d5d21ff6089643f4a1|obecna=cffe9118cf1fcc31682b9f8e642fdfe31777a9220121d8a98105795473547a07|ROZJECHANY
+checksum: 656_v4_scim_enhanced.sql|skipped|applied_at=2026-03-16T17:31:37.078Z|ledger=skipped:cf5aec4e30dda698a16219cf05f161b6761571a1cee40712eb46d74f513a5b75|obecna=1db8422dc439c2c13f9e2f99cdf3d0b53fde805f8b6c8902d8933d37b97eb856|ROZJECHANY
+checksum: 665_v6_interview_templates_foundation.sql|skipped|applied_at=2026-03-16T17:31:37.421Z|ledger=skipped:0c73014f92644c8ce05f05be8a88ec867b4500a7224254efb49a427aee4a80a0|obecna=717e253022d143bfcadcff801adf93cf7f390138e35eaa8f8c9cfcda308d3506|ROZJECHANY
+checksum: 666_v6_interview_runtime_answers.sql|skipped|applied_at=2026-03-16T17:31:37.877Z|ledger=skipped:fcbb8bfcf86bc7f0e8b5133724b9f1ca1df3a8c4181902b5beaf27a14f1b650a|obecna=e9e25c42aa9241d043d1356544027dc2767b413558858d5a39573611786e9ac6|ROZJECHANY
+TABLE istnieje 5/5
+INDEX istnieje 9/11
+COLUMN istnieje 59/62
+DML (nie weryfikowane obiektowo): 23
+BRAKOW_lacznie: 5
+BRAK: 656_v4_scim_enhanced.sql:3 COLUMN users.scim_external_id
+BRAK: 656_v4_scim_enhanced.sql:4 COLUMN users.scim_provisioned
+BRAK: 656_v4_scim_enhanced.sql:5 COLUMN users.scim_last_sync_at
+BRAK: 656_v4_scim_enhanced.sql:7 INDEX idx_users_scim_external_id
+BRAK: 656_v4_scim_enhanced.sql:41 INDEX idx_scim_conflicts_org

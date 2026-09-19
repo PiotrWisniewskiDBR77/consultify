@@ -1,0 +1,89 @@
+plik|linia|typ|obiekt|istnieje_na_stagingu
+604_tools_missing_known_tools_library.sql|12|COLUMN|tools.tool_type|TAK
+604_tools_missing_known_tools_library.sql|15|COLUMN|tools.library_category|TAK
+604_tools_missing_known_tools_library.sql|18|COLUMN|tools.library_content_translations|TAK
+604_tools_missing_known_tools_library.sql|21|COLUMN|tools.tags_json|TAK
+604_tools_missing_known_tools_library.sql|29|DML|INSERT INTO tools|n/d(DML)
+604_tools_missing_known_tools_library.sql|324|DML|INSERT INTO kb_categories|n/d(DML)
+604_tools_missing_known_tools_library.sql|328|DML|INSERT INTO kb_category_translations|n/d(DML)
+604_tools_missing_known_tools_library.sql|336|DML|INSERT INTO kb_articles|n/d(DML)
+604_tools_missing_known_tools_library.sql|354|DML|INSERT INTO kb_article_translations|n/d(DML)
+617_generic_assessment_reports_pathc_patch.sql|8|COLUMN|generic_assessment_reports.original_name|TAK
+617_generic_assessment_reports_pathc_patch.sql|9|COLUMN|generic_assessment_reports.mime_type|TAK
+617_generic_assessment_reports_pathc_patch.sql|10|COLUMN|generic_assessment_reports.upload_status|TAK
+617_generic_assessment_reports_pathc_patch.sql|13|COLUMN|generic_assessment_reports.text_content|TAK
+617_generic_assessment_reports_pathc_patch.sql|14|COLUMN|generic_assessment_reports.metadata_json|TAK
+617_generic_assessment_reports_pathc_patch.sql|17|COLUMN|generic_assessment_reports.file_type|TAK
+617_generic_assessment_reports_pathc_patch.sql|18|COLUMN|generic_assessment_reports.processing_status|TAK
+617_generic_assessment_reports_pathc_patch.sql|19|COLUMN|generic_assessment_reports.processing_error|TAK
+617_generic_assessment_reports_pathc_patch.sql|20|COLUMN|generic_assessment_reports.ocr_text|TAK
+617_generic_assessment_reports_pathc_patch.sql|21|COLUMN|generic_assessment_reports.ai_key_findings|TAK
+617_generic_assessment_reports_pathc_patch.sql|22|COLUMN|generic_assessment_reports.linked_initiatives|TAK
+617_generic_assessment_reports_pathc_patch.sql|25|COLUMN|generic_assessment_reports.created_at|TAK
+617_generic_assessment_reports_pathc_patch.sql|26|COLUMN|generic_assessment_reports.updated_at|TAK
+618_tools_missing_12_consulting_tools.sql|11|COLUMN|tools.tool_type|TAK
+618_tools_missing_12_consulting_tools.sql|14|COLUMN|tools.library_category|TAK
+618_tools_missing_12_consulting_tools.sql|17|COLUMN|tools.library_content_translations|TAK
+618_tools_missing_12_consulting_tools.sql|20|COLUMN|tools.tags_json|TAK
+618_tools_missing_12_consulting_tools.sql|28|DML|INSERT INTO tools|n/d(DML)
+618_tools_missing_12_consulting_tools.sql|583|DML|INSERT INTO kb_categories|n/d(DML)
+618_tools_missing_12_consulting_tools.sql|587|DML|INSERT INTO kb_category_translations|n/d(DML)
+618_tools_missing_12_consulting_tools.sql|595|DML|INSERT INTO kb_articles|n/d(DML)
+618_tools_missing_12_consulting_tools.sql|619|DML|INSERT INTO kb_article_translations|n/d(DML)
+625_v4_task_hierarchy_unified.sql|8|COLUMN|initiatives.program_id|TAK
+625_v4_task_hierarchy_unified.sql|9|INDEX|idx_initiatives_program|TAK
+625_v4_task_hierarchy_unified.sql|12|COLUMN|tasks.list_id|TAK
+625_v4_task_hierarchy_unified.sql|14|DML|UPDATE tasks|n/d(DML)
+625_v4_task_hierarchy_unified.sql|15|INDEX|idx_tasks_list|TAK
+656_v4_scim_enhanced.sql|3|COLUMN|users.scim_external_id|NIE
+656_v4_scim_enhanced.sql|4|COLUMN|users.scim_provisioned|NIE
+656_v4_scim_enhanced.sql|5|COLUMN|users.scim_last_sync_at|NIE
+656_v4_scim_enhanced.sql|7|INDEX|idx_users_scim_external_id|NIE
+656_v4_scim_enhanced.sql|9|COLUMN|scim_group_mappings.auto_sync|TAK
+656_v4_scim_enhanced.sql|10|COLUMN|scim_group_mappings.last_synced_at|TAK
+656_v4_scim_enhanced.sql|11|COLUMN|scim_group_mappings.member_count|TAK
+656_v4_scim_enhanced.sql|13|TABLE|scim_conflict_log|TAK
+656_v4_scim_enhanced.sql|25|INDEX|idx_scim_conflicts_org|NIE
+665_v6_interview_templates_foundation.sql|8|COLUMN|interview_library_templates.template_scope|TAK
+665_v6_interview_templates_foundation.sql|11|COLUMN|interview_library_templates.audience|TAK
+665_v6_interview_templates_foundation.sql|14|COLUMN|interview_library_templates.estimated_time_minutes|TAK
+665_v6_interview_templates_foundation.sql|17|COLUMN|interview_library_templates.runtime_mode_default|TAK
+665_v6_interview_templates_foundation.sql|20|COLUMN|interview_library_templates.source_template_id|TAK
+665_v6_interview_templates_foundation.sql|23|COLUMN|interview_library_template_questions.expected_answer_shape|TAK
+665_v6_interview_templates_foundation.sql|26|COLUMN|interview_library_template_questions.allow_voice|TAK
+665_v6_interview_templates_foundation.sql|29|COLUMN|interview_library_template_questions.allow_file_upload|TAK
+665_v6_interview_templates_foundation.sql|32|COLUMN|interview_library_template_questions.allow_url|TAK
+665_v6_interview_templates_foundation.sql|35|COLUMN|interview_library_template_questions.allow_context_note|TAK
+665_v6_interview_templates_foundation.sql|38|DML|UPDATE interview_library_templates|n/d(DML)
+665_v6_interview_templates_foundation.sql|46|DML|UPDATE interview_library_templates|n/d(DML)
+665_v6_interview_templates_foundation.sql|58|DML|UPDATE interview_library_templates|n/d(DML)
+665_v6_interview_templates_foundation.sql|71|DML|UPDATE interview_library_templates|n/d(DML)
+665_v6_interview_templates_foundation.sql|76|DML|UPDATE interview_library_template_questions|n/d(DML)
+665_v6_interview_templates_foundation.sql|86|DML|UPDATE interview_library_template_questions|n/d(DML)
+666_v6_interview_runtime_answers.sql|7|COLUMN|interview_questions.answer_type|TAK
+666_v6_interview_runtime_answers.sql|10|COLUMN|interview_questions.is_required|TAK
+666_v6_interview_runtime_answers.sql|13|COLUMN|interview_sessions.runtime_mode_default|TAK
+666_v6_interview_runtime_answers.sql|16|COLUMN|interview_questions.expected_answer_shape|TAK
+666_v6_interview_runtime_answers.sql|19|COLUMN|interview_questions.allow_voice|TAK
+666_v6_interview_runtime_answers.sql|22|COLUMN|interview_questions.allow_file_upload|TAK
+666_v6_interview_runtime_answers.sql|25|COLUMN|interview_questions.allow_url|TAK
+666_v6_interview_runtime_answers.sql|28|COLUMN|interview_questions.allow_context_note|TAK
+666_v6_interview_runtime_answers.sql|31|COLUMN|interview_questions.answer_mode|TAK
+666_v6_interview_runtime_answers.sql|34|COLUMN|interview_questions.answer_payload|TAK
+666_v6_interview_runtime_answers.sql|37|COLUMN|interview_questions.context_note|TAK
+666_v6_interview_runtime_answers.sql|40|COLUMN|interview_questions.voice_transcript|TAK
+666_v6_interview_runtime_answers.sql|43|COLUMN|interview_questions.voice_transcript_status|TAK
+666_v6_interview_runtime_answers.sql|46|COLUMN|interview_questions.voice_audio_evidence_id|TAK
+666_v6_interview_runtime_answers.sql|49|COLUMN|interview_questions.source_template_question_id|TAK
+666_v6_interview_runtime_answers.sql|52|COLUMN|interview_questions.answer_knowledge_doc_id|TAK
+666_v6_interview_runtime_answers.sql|55|COLUMN|interview_questions.context_note_knowledge_doc_id|TAK
+666_v6_interview_runtime_answers.sql|58|COLUMN|interview_evidence.evidence_role|TAK
+666_v6_interview_runtime_answers.sql|61|COLUMN|interview_evidence.transcript_text|TAK
+666_v6_interview_runtime_answers.sql|64|COLUMN|interview_evidence.ingest_to_knowledge|TAK
+666_v6_interview_runtime_answers.sql|67|COLUMN|interview_evidence.knowledge_document_id|TAK
+666_v6_interview_runtime_answers.sql|70|DML|UPDATE interview_questions|n/d(DML)
+666_v6_interview_runtime_answers.sql|78|DML|UPDATE interview_questions|n/d(DML)
+666_v6_interview_runtime_answers.sql|83|DML|UPDATE interview_questions|n/d(DML)
+666_v6_interview_runtime_answers.sql|88|DML|UPDATE interview_evidence|n/d(DML)
+666_v6_interview_runtime_answers.sql|93|DML|UPDATE interview_evidence|n/d(DML)
+666_v6_interview_runtime_answers.sql|97|DML|UPDATE interview_sessions|n/d(DML)
