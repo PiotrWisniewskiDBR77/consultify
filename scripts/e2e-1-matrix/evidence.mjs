@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { classifyResult, flagProfile, localeOf } from './classify.mjs';
 import { MODULES, SURFACE_KINDS, variantKey } from './contract.mjs';
 
 function stableCellKey(cell) {
@@ -95,6 +96,10 @@ export function writeVariantArtifacts({ outDir, result, previous }) {
   fs.mkdirSync(outDir, { recursive: true });
   result.delta = computeDelta(previous, result);
   result.summary = summarize(result);
+  const classified = classifyResult(result, { locale: localeOf(result.variant) });
+  result.cells = classified.cells;
+  result.classes = classified.counts;
+  result.flagProfile = flagProfile(result);
   fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify(result, null, 2));
 
   const lines = [
@@ -107,6 +112,8 @@ export function writeVariantArtifacts({ outDir, result, previous }) {
     `- Cells: ${result.summary.cells}`,
     `- PASS: ${result.summary.statuses.PASS}`,
     `- FAIL/MISSING/BLOCKED: ${result.summary.hardFailures}`,
+    `- Classes: PRODUCT ${result.classes.PRODUCT} · CONTRACT ${result.classes.CONTRACT} · ENV ${result.classes.ENV}`,
+    `- Flag profile: ${result.flagProfile}`,
     `- Writes observed: ${result.cleanup?.mutatingRequests?.length || 0}`,
     `- Cleanup verified: ${result.cleanup?.verified ? 'YES' : 'NO'}`,
     '',
@@ -116,13 +123,15 @@ export function writeVariantArtifacts({ outDir, result, previous }) {
       ? `Regressions: ${result.delta.regressions.length}; fixes: ${result.delta.fixes.length}; unchanged: ${result.delta.unchanged}.`
       : 'No previous artifact for this exact variant.',
     '',
-    '| Module | Surface | Control | Result | Screenshot | Console / HTTP |',
-    '| --- | --- | --- | --- | --- | --- |',
+    '| Module | Surface | Control | Result | Class | Why | Screenshot | Console / HTTP |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
   ];
   for (const cell of result.cells || []) {
     const errors = [...(cell.consoleErrors || []), ...(cell.httpErrors || [])].join('; ') || '—';
     lines.push(
-      `| ${esc(cell.module)} | ${esc(cell.kind)} | ${esc(cell.control)} | ${esc(cell.status)} | ${esc(cell.screenshot)} | ${esc(errors)} |`
+      `| ${esc(cell.module)} | ${esc(cell.kind)} | ${esc(cell.control)} | ${esc(cell.status)} | ${esc(
+        cell.classification?.class
+      )} | ${esc(cell.classification?.reason)} | ${esc(cell.screenshot)} | ${esc(errors)} |`
     );
   }
   lines.push('');

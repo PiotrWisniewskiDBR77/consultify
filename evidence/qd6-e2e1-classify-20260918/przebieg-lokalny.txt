@@ -1,0 +1,80 @@
+QD6 / E2E-1 krok 2 — przebieg lokalny macierzy (2 z 8 wariantów), 2026-09-18, stanowisko D
+Gałąź: qoder/d-e2e1-classify-20260918. Zakres: pomiar i klasyfikacja PRODUCT/CONTRACT/ENV, ZERO napraw produktu.
+
+ŚRODOWISKo
+- API: cd server && NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false MOCK_REDIS=true ENABLE_V8_GLOBAL=true PORT=4430
+  DATABASE_URL=postgres://postgres:qoder@127.0.0.1:6630/consultify_kopia_d5 npx tsx src/index.ts
+  (kontener qoder-d-pg-1, port 6630, 778 migracji; ENABLE_V8_GLOBAL=true konieczne: v8FeatureGate.middleware.ts:15
+  bez tej zmiennej zwraca 404 na /api/v8/* — zmierzone, 7 endpointów 200 dopiero z flagą)
+- Front: VITE_API_TARGET=http://127.0.0.1:4430 npx vite --port 5430 --strictPort
+- Runner: bash /tmp/qd6-run.sh <light|dark> → node scripts/e2e-1-matrix/run.mjs (wariant admin-nw/northwind/ADMIN/en)
+  Hasło konta z /private/tmp/dane-pokazowe-en/northwind-konta.txt (grep 'dostęp pokazowy'), NIE w logach.
+- Read-only: page.route('**/api/**') przerywa każdy request mutujący przed siecią i zapisuje próbę (contractError).
+
+WYNIKI PER WARIANT (klasyfikacja jedno-wariantowa, zapisana w artefaktach przebieg-lokalny/{light,dark}/result.json)
+- light: 214 komórek = PASS 167 / FAIL 8 / MISSING 30 / BLOCKED 9 → PRODUCT 14 · CONTRACT 33 · ENV 0
+- dark : 208 komórek = PASS 161 / FAIL 8 / MISSING 30 / BLOCKED 9 → PRODUCT 13 · CONTRACT 32 · ENV 2
+- Mianownik komórek to PODŁOGA (presence check evidence.mjs:40-62), nie sztywne 896: powierzchnia create bywa
+  `none` albo nazwanym przyciskiem zależnie od przebiegu (patrz OBSERWACJE).
+
+AGREGAT 2 WARIANTÓW (przebieg-lokalny/aggregate/, przeliczony po końcowej re-derywacji; exit 1 = bramka, nie awaria)
+- observed: variants 2/8, moduleRuns 32/128, cells 422; nonPassing 94
+- klasy: PRODUCT 28 · CONTRACT 64 · ENV 2; worstClass PRODUCT; regressions 0; flagIssues 0
+- flagProfiles: jeden odcisk 7d90533cf1c4 dla admin-nw/northwind (oba motywy) → oś flag nie rozdziela wariantów
+- unexpectedWrites: 93 = tyle prób zapisu zablokował harness (46 light + 47 dark); żadna nie doszła do bazy
+- Różnica agregat vs artefakt wariantu: agregat buduje grupy MIĘDZY wariantami (ta sama rola+język, motyw jako oś
+  swobodna), więc 04-tools/ai/Teresa (FAIL w light, PASS w dark) dostaje PRODUCT „fine in 1/2 comparable variants”
+  (classify.mjs reguła grupowa) — stąd light w agregacie 15/32/0 zamiast 14/33/0. Patrz OBSERWACJE pkt 1: oś motywu
+  nie jest realnie aplikowana, więc ta „porównywalność” mierzy wariancję przebiegu, nie motyw.
+
+ZRZUTY (7 PNG, 1440×900, czytane na głos; wszystkie w przebieg-lokalny/zrzuty/)
+- light-02-my-work-menu1-my-work.png: CIEMNY motyw mimo nazwy „light”. My Work > Inbox, zakładki Ideas/Notebook/
+  Inbox/Calendar/Tasks/Decisions/Vaults, chipy filtrów ALL 0 … Done 0, przycisk AI Triage, 6 wierszy-skeletonów
+  (lista ładuje się), prawa kolumna ikon, badge LOCAL, użytkownik Robert Chen.
+- dark-02-my-work-menu1-my-work.png: identyczny kadr w motywie ciemnym (różnica vs light niewidoczna gołym okiem —
+  patrz OBSERWACJE pkt 1).
+- light-12-meeting-menu1-meeting.png: CIEMNY motyw. Nagłówek „Meetings — planned for Wave 2”, podtekst „This module
+  isn't part of the MVP yet. We'll come back to it in the next wave.”, przycisk „Back to Chat”, panel Teresy po
+  prawej („Ask Teresa about your work…”). To lądowanie legacy redirectu /meeting → /meetings.
+- dark-12-meeting-menu1-meeting.png: ten sam placeholder w motywie ciemnym, tytuł paska „Meeting”.
+- light-16-partners-menu1-partner-dashboard.png: CIEMNY motyw. Powłoka Partner Portal („Partner Portal / DBR77
+  Consultify”), sekcje HOME (Home/Dashboard/Metrics wyszarzone), REFERRALS, EARNINGS, CLIENT MANAGEMENT, ACADEMY,
+  PROFILE, RESOURCES, „Back to app”; karta pustego stanu: „The Partner profile is not connected yet” + opis +
+  przycisk „Connect this organization as a partner”; panel Teresy po prawej.
+- dark-16-partners-menu1-partner-dashboard.png: ten sam kadr w motywie ciemnym.
+- dark-09-execution-menu2-missing.png: Execution zatrzymany na spinnerze „Loading...” z pustym panelem po prawej
+  (krzyżyk zamknięcia), chip „Model” z CZERWONĄ kropką — zrzut komórki sklasyfikowanej ENV (błąd łączności
+  net::ERR_INTERNET_DISCONNECTED w konsoli przeglądarki), powierzchnia menu2 nigdy się nie pojawiła.
+
+OBSERWACJE (adresy, ZERO napraw — STREFA BEZ KOŃCA: czerwony = wiersz z plik:linia)
+1. Oś motywu jest zadeklarowana (contract.mjs:52,62), ale nigdy nie działa: harness zapisuje motyw RAZ po logowaniu
+   (run.mjs:487-494 → presentationState.mjs:13,25) i nie robi reloadu; aplikacja przy każdym page.goto (settle.mjs:39)
+   flushuje przy pagehide własny stan z pamięci (theme domyślnie 'dark', uiSlice.ts:163) przez debounced storage
+   (debouncedLocalStorage.ts:64,71,83) NA zapis harnessu, więc każdy kolejny boot czyta 'dark' (index.tsx:69-84,
+   ThemeSync AppProviders.tsx:31-48). Skutek zmierzony: wszystkie zrzuty „light-*” renderują motyw ciemny, a reguła
+   grupowa „other theme” porównuje de facto dwa przebiegi, nie dwa motywy.
+2. 08-projects/menu1: komórka BLOCKED (harness chroni zapis) maskuje niezgodność trasy — routeAfter=/my-work, bo
+   flaga VITE_PMO_PROJECTS jest OFF i AppRoutes.tsx:1858,1866 (odczyt flagi :1173) przekierowuje /projects.
+3. Niestabilność powierzchni create między przebiegami: kotwice run.mjs:52 (createPattern) i :261 (matchingButtons) —
+   „Add files” (FAIL/CONTRACT) vs `none` (MISSING/CONTRACT); 5 kluczy create zmienia się między sąsiednimi przebiegami.
+4. Niestabilność right-panel: 3 komórki PASS→FAIL między przebiegami; kotwica selektora run.mjs:404-428 (:420).
+5. 04-tools/ai/Teresa: PASS w dark, FAIL w light — przy niesprawnej osi motywu to wariancja przebiegu (kotwica pętli
+   create/ai run.mjs:435-450), a reguła grupowa czyta to jako różnicę motywu.
+
+ADRESY PRODUKTOWE DLA WIERSZY DLUG (zmierzone odczytem, bez napraw)
+- 02-my-work: POST materialize wewnątrz Promise.all ładowania skrzynki — src/components/MyWork/InboxContent.tsx:2489,
+  montowanie MyWorkHub.tsx:4425 i :157, src/views/MyWorkView.tsx:32.
+- 06-audits: efekt czytający wnioski przy montowaniu — src/services/api/conclusions.api.ts:118,
+  src/components/Audits/AuditConclusionsTab.tsx:89 (effect :116-118), AuditsMethodHub.tsx:890.
+- 01-chat: historia czatu — ChatHistorySidebar.tsx:1074,838,842; UnifiedChatPanel.tsx:5748,5762,7082; api.ts:11950.
+- 12-meeting: legacy redirect /meeting → /meetings — AppRoutes.tsx:3011,825,3013 + routeConfig.ts:137,139.
+- 16-partners: trasy portalu — AppRoutes.tsx:4065,4071, partnerLegacyRoutes.ts:16, PartnerPortalView.tsx:3254,3271,3288.
+- Kontrakt harnessu (ścieżki, których produkt nie serwuje): contract.mjs:14 (/meeting), contract.mjs:18 (/partner/dashboard).
+
+PLIKI DOWODOWE W TYM KATALOGU
+- light/result.json, dark/result.json — artefakty wariantów z klasyfikacją każdej czerwonej komórki
+- light/result-przed-naprawa-halasu.json — surowe komórki przebiegu sprzed filtra hałasu harnessu
+- aggregate/summary.json + aggregate/REPORT.md — agregat 2 wariantów (przeliczony 2026-09-19T00:21:36Z)
+- bieg-light.log, bieg-dark.log — stdout przebiegów (dodane git add -f, .gitignore:336 ignoruje *.log)
+- zrzuty/*.png — 7 zrzutów opisanych wyżej
+- ../halas-harnessa-przed-po.txt — łańcuch przed/po filtra hałasu harnessu z mutacją M6

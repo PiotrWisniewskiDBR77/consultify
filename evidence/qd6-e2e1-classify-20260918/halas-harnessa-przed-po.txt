@@ -1,0 +1,32 @@
+QD6 — hałas harnessu liczony jako błąd aplikacji: łańcuch przed/po (te same surowe komórki)
+
+DEFECT PRZYRZĄDU
+Harness blokuje własne requesty mutujące przez page.route('**/api/**') + route.abort('blockedbyclient')
+(run.mjs, sekcja read-only). Przeglądarka loguje wtedy `net::ERR_BLOCKED_BY_CLIENT` do konsoli. Przed naprawą
+nasłuch konsoli (run.mjs) i klasyfikacja (classify.mjs) liczyły ten wpis jako błąd aplikacji, więc komórka
+MISSING z takim jedynym sygnałem dostawała PRODUCT — defekt przyrządu udawał defekt produktu.
+
+ŁAŃCUCH POMIARÓW (light, admin-nw/northwind/ADMIN/en)
+1. V8 wyłączone (brak ENABLE_V8_GLOBAL): PRODUCT 19 · CONTRACT 24 — /api/v8/* 404 przez
+   v8FeatureGate.middleware.ts:15; pomiar zarzucony jako niereprezentatywny.
+2. V8 włączone, klasyfikator PRZED filtrem hałasu: PRODUCT 14 · CONTRACT 29
+   (artefakt zachowany: /tmp/qd6-before-fix/e2e-1-matrix/admin-nw-northwind-admin-en-light/result.json
+    oraz kopia surowych komórek przebieg-lokalny/light/result-przed-naprawa-halasu.json).
+3. TE SAME surowe komórki, klasyfikator PO filtrze (consoleNoise.mjs w nasłuchu i w klasyfikacji):
+   PRODUCT 12 · CONTRACT 31. Przesunięte dokładnie 2 komórki, obie PRODUCT → CONTRACT:
+   - 02-my-work/menu2  (powód po: „surface absent; single-variant evidence cannot separate a stale selector
+     from a missing feature”)
+   - 08-projects/menu2 (ten sam powód)
+   Identyczny wynik dla wariantu dark (te same 2 klucze).
+4. Osobny przebieg PO naprawie (light): PRODUCT 14 · CONTRACT 33 — różnica vs pkt 3 to wariancja przebiegu
+   (5 kluczy create i 3 right-panel zmieniają status między przebiegami, patrz przebieg-lokalny.txt OBSERWACJE 3-4),
+   nie efekt klasyfikatora.
+
+DOWÓD MUTACYJNY
+M6-halas-harnessa-liczony-jako-blad-aplikacji (cofnij filtr consoleNoise → test „the harness own blocked-request
+console noise is not an app error” czerwony; przywrócenie bajt-identyczne): M6-halas-harnessa-liczony-jako-blad-aplikacji.log
+oraz mutacje-podsumowanie.txt w katalogu wyżej. Razem 8 mutacji M1-M8, wszystkie RED z nazwanym testem.
+
+WNIOSEK
+Filtr hałasu harnessu zmienia KLASE 2 komórek na wariant (PRODUCT → CONTRACT) bez dotykania produktu; bramka
+agregatu pozostała nieosłabiona (każdy non-PASS → exit 1).

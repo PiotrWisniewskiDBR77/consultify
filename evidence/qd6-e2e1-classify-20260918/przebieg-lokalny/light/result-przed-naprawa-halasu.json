@@ -1,0 +1,5003 @@
+{
+  "schemaVersion": 1,
+  "variant": "admin-nw-northwind-admin-en-light",
+  "base": "http://127.0.0.1:5430",
+  "sha": "d9f8b2203f-local",
+  "startedAt": "2026-09-18T22:20:53.689Z",
+  "finishedAt": "2026-09-18T22:33:12.090Z",
+  "principal": {
+    "organizationId": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "organizationName": "Northwind Manufacturing Ltd.",
+    "role": "ADMIN"
+  },
+  "flags": {
+    "runtime": {},
+    "v8": {
+      "ai_core": true,
+      "chat": true,
+      "finance": false,
+      "lifecycle": true,
+      "multiplayer": true,
+      "outputs": true,
+      "pm_sync": true,
+      "results": true,
+      "workspace": true
+    }
+  },
+  "modules": [
+    {
+      "id": "01-chat",
+      "route": "/chat",
+      "settle": [
+        {
+          "route": "/chat",
+          "elapsedMs": 1768,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1730,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1922,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1850,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1829,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1760,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1709,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1727,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1719,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1702,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1780,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1713,
+          "spinnerGone": true
+        },
+        {
+          "route": "/chat",
+          "elapsedMs": 1948,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "02-my-work",
+      "route": "/my-work",
+      "settle": [
+        {
+          "route": "/my-work",
+          "elapsedMs": 2229,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2320,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2365,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2376,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2337,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2559,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2474,
+          "spinnerGone": true
+        },
+        {
+          "route": "/my-work",
+          "elapsedMs": 2227,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "03-interview",
+      "route": "/interview",
+      "settle": [
+        {
+          "route": "/interview",
+          "elapsedMs": 2068,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2158,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2220,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 1943,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2149,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2165,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2109,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2109,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2202,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2281,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2553,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2344,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2359,
+          "spinnerGone": true
+        },
+        {
+          "route": "/interview",
+          "elapsedMs": 2279,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "04-tools",
+      "route": "/discovery-tools",
+      "settle": [
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 1998,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2040,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 1941,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2003,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 1948,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2052,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 1991,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 1978,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2005,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2272,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2274,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2369,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2201,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2207,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2228,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2349,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2384,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2314,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2659,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2440,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2422,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2492,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2330,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2260,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2293,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2294,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2418,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2412,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2493,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2374,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2368,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2366,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2484,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2868,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3079,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2571,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2449,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2369,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2318,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2512,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3145,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2965,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2999,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2867,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3323,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3124,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3069,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 3157,
+          "spinnerGone": true
+        },
+        {
+          "route": "/discovery-tools",
+          "elapsedMs": 2939,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "05-assessment",
+      "route": "/assessment",
+      "settle": [
+        {
+          "route": "/assessment",
+          "elapsedMs": 2745,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2569,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2692,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2294,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2479,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2395,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2643,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2592,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2416,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 3193,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2211,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2287,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2295,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2433,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2238,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2281,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 2210,
+          "spinnerGone": true
+        },
+        {
+          "route": "/assessment",
+          "elapsedMs": 3435,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "06-audits",
+      "route": "/audit-programs",
+      "settle": [
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1823,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1640,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2035,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1758,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1742,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1688,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1893,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1693,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1625,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2215,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1892,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2004,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1898,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2072,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2128,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 1970,
+          "spinnerGone": true
+        },
+        {
+          "route": "/audit-programs",
+          "elapsedMs": 2055,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "07-initiatives",
+      "route": "/initiatives",
+      "settle": [
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2004,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 1973,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2082,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 1918,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2018,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2137,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2084,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2185,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2439,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2537,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2573,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2439,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2826,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2555,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2735,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2450,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2478,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2239,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2146,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2412,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2103,
+          "spinnerGone": true
+        },
+        {
+          "route": "/initiatives",
+          "elapsedMs": 2182,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "08-projects",
+      "route": "/projects",
+      "settle": [
+        {
+          "route": "/projects",
+          "elapsedMs": 2360,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2310,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2536,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2402,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2404,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2466,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2469,
+          "spinnerGone": true
+        },
+        {
+          "route": "/projects",
+          "elapsedMs": 2356,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "09-execution",
+      "route": "/execution",
+      "settle": [
+        {
+          "route": "/execution",
+          "elapsedMs": 1932,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1904,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1962,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1853,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1993,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1942,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1928,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2002,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2077,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2123,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2107,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1913,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2157,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 1987,
+          "spinnerGone": true
+        },
+        {
+          "route": "/execution",
+          "elapsedMs": 2602,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "10-results",
+      "route": "/results/kpi",
+      "settle": [
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1672,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1722,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1708,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1686,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1589,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1699,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1645,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1738,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 2462,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 2253,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 2008,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 2341,
+          "spinnerGone": true
+        },
+        {
+          "route": "/results/kpi",
+          "elapsedMs": 1911,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "11-materials",
+      "route": "/presentations",
+      "settle": [
+        {
+          "route": "/presentations",
+          "elapsedMs": 1755,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1750,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1695,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1741,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1703,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2179,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2412,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1907,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 1846,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2358,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2850,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2557,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2617,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2514,
+          "spinnerGone": true
+        },
+        {
+          "route": "/presentations",
+          "elapsedMs": 2288,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "12-meeting",
+      "route": "/meeting",
+      "settle": [
+        {
+          "route": "/meeting",
+          "elapsedMs": 1705,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 1827,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 2440,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 1742,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 2367,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 2410,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 2380,
+          "spinnerGone": true
+        },
+        {
+          "route": "/meeting",
+          "elapsedMs": 2796,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "13-organization",
+      "route": "/organization/profile",
+      "settle": [
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1810,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1601,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1964,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1943,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1706,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1785,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1985,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1913,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 3108,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1811,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1827,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1851,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1818,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1962,
+          "spinnerGone": true
+        },
+        {
+          "route": "/organization/profile",
+          "elapsedMs": 1870,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "14-admin",
+      "route": "/admin/people",
+      "settle": [
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1749,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1924,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1902,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1771,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1921,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1980,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 2162,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1919,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1908,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1957,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1915,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1926,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 1893,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 2278,
+          "spinnerGone": true
+        },
+        {
+          "route": "/admin/people",
+          "elapsedMs": 2278,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "15-settings",
+      "route": "/settings/profile",
+      "settle": [
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1726,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1623,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1643,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1598,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1679,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1690,
+          "spinnerGone": true
+        },
+        {
+          "route": "/settings/profile",
+          "elapsedMs": 1697,
+          "spinnerGone": true
+        }
+      ]
+    },
+    {
+      "id": "16-partners",
+      "route": "/partner/dashboard",
+      "settle": [
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 1726,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 1778,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 1931,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 1780,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 2889,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 2867,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 2473,
+          "spinnerGone": true
+        },
+        {
+          "route": "/partner/dashboard",
+          "elapsedMs": 1980,
+          "spinnerGone": true
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu1",
+      "control": "/chat",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu1-chat.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/01-chat-menu2-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Open work panel",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-open-work-panel-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Enable voice reading",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-enable-voice-reading-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Auto",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-auto-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Documents",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-documents-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Tables",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-tables-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "menu3",
+      "control": "Presentations",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-menu3-presentations-6.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/01-chat-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/01-chat-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "create",
+      "control": "New conversation",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/conversations",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-create-new-conversation-6.png",
+      "mutationAttempts": [
+        {
+          "module": "01-chat",
+          "method": "POST",
+          "url": "/api/conversations"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "[ConversationStore] Create error: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:5430/src/service",
+        "[UnifiedChatPanel] Failed to create new chat: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:5430"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "01-chat",
+      "kind": "ai",
+      "control": "Auto",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/chat",
+      "routeAfter": "/chat",
+      "screenshot": "screenshots/01-chat-ai-auto-10.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "menu1",
+      "control": "/my-work",
+      "status": "BLOCKED",
+      "note": "Mutation on view blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/02-my-work-menu1-my-work.png",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/02-my-work-menu2-missing.png",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "uncaught console error: Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/02-my-work-menu3-teresa-1.png",
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/02-my-work-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/02-my-work-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "create",
+      "control": "Triage all new items for me",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/conversations, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/02-my-work-create-triage-all-new-items-for-me-32.png",
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/conversations"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "[ConversationStore] Create error: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:5430/src/service",
+        "[UnifiedChatPanel] Failed to create conversation: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "02-my-work",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/02-my-work-ai-teresa-5.png",
+      "mutationAttempts": [
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "02-my-work",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu1",
+      "control": "/interview",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/interview",
+      "screenshot": "screenshots/03-interview-menu1-interview.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Inbox",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=my_assignments",
+      "screenshot": "screenshots/03-interview-menu2-inbox-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Sessions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=sessions",
+      "screenshot": "screenshots/03-interview-menu2-sessions-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Assigned",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=managed",
+      "screenshot": "screenshots/03-interview-menu2-assigned-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Templates",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=templates",
+      "screenshot": "screenshots/03-interview-menu2-templates-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Insights",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=insights",
+      "screenshot": "screenshots/03-interview-menu2-insights-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview?tab=initiatives",
+      "screenshot": "screenshots/03-interview-menu2-initiatives-6.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview",
+      "screenshot": "screenshots/03-interview-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/03-interview-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/03-interview-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(28)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview",
+      "screenshot": "screenshots/03-interview-create-add-files-29.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "03-interview",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/interview",
+      "routeAfter": "/interview",
+      "screenshot": "screenshots/03-interview-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu1",
+      "control": "/discovery-tools",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-menu1-discovery-tools.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu2",
+      "control": "Library",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-menu2-library-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu2",
+      "control": "Sessions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools?tab=sessions",
+      "screenshot": "screenshots/04-tools-menu2-sessions-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu2",
+      "control": "Insights",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools?tab=outputs",
+      "screenshot": "screenshots/04-tools-menu2-insights-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu2",
+      "control": "Reports",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools?tab=reports",
+      "screenshot": "screenshots/04-tools-menu2-reports-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools?tab=initiatives",
+      "screenshot": "screenshots/04-tools-menu2-initiatives-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-27.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-28.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-29.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-30.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-31.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-32.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-33.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-34.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-35.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-36.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-37.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-38.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-39.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-40.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-41.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-42.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-43.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-44.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-45.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-46.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-47.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-48.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-49.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-50.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-51.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-52.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-53.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-54.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-55.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-56.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-57.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-58.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-59.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-60.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-61.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-kebab-row-actions-62.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/04-tools-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "create",
+      "control": "Add tool",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-create-add-tool-15.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "04-tools",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/discovery-tools",
+      "routeAfter": "/discovery-tools",
+      "screenshot": "screenshots/04-tools-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu1",
+      "control": "/assessment",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-menu1-assessment.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu2",
+      "control": "Library",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-menu2-library-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu2",
+      "control": "Processes",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=processes",
+      "screenshot": "screenshots/05-assessment-menu2-processes-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu2",
+      "control": "Insights",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=outputs",
+      "screenshot": "screenshots/05-assessment-menu2-insights-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu2",
+      "control": "Reports",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=reports",
+      "screenshot": "screenshots/05-assessment-menu2-reports-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=initiatives",
+      "screenshot": "screenshots/05-assessment-menu2-initiatives-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-kebab-row-actions-21.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-kebab-row-actions-23.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-kebab-row-actions-25.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-kebab-row-actions-27.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-kebab-row-actions-29.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/05-assessment-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(33)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-create-add-files-34.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "05-assessment",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/assessment?tab=library",
+      "routeAfter": "/assessment?tab=library",
+      "screenshot": "screenshots/05-assessment-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu1",
+      "control": "/audit-programs",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu1-audit-programs.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Library",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu2-library-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Sessions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=processes",
+      "screenshot": "screenshots/06-audits-menu2-sessions-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Conclusions",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/conclusions/sync",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=conclusions",
+      "screenshot": "screenshots/06-audits-menu2-conclusions-3.png",
+      "mutationAttempts": [
+        {
+          "module": "06-audits",
+          "method": "POST",
+          "url": "/api/conclusions/sync"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Reports",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=reports",
+      "screenshot": "screenshots/06-audits-menu2-reports-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=initiatives",
+      "screenshot": "screenshots/06-audits-menu2-initiatives-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu3",
+      "control": "All 1",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu3-all-1-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu3",
+      "control": "Verified 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu3-verified-0-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "menu3",
+      "control": "Pending review 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-menu3-pending-review-0-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-kebab-row-actions-24.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/06-audits-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "create",
+      "control": "New audit",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(13)\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" aria-disabled=\"true\" ",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-create-new-audit-14.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "06-audits",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/audit-programs?tab=library",
+      "routeAfter": "/audit-programs?tab=library",
+      "screenshot": "screenshots/06-audits-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "menu1",
+      "control": "/initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-menu1-initiatives.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Initiatives",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-menu2-initiatives-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Plan",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives?tab=plan",
+      "screenshot": "screenshots/07-initiatives-menu2-plan-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "menu2",
+      "control": "Load",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives?tab=capacity",
+      "screenshot": "screenshots/07-initiatives-menu2-load-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-28.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-29.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-30.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-31.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-32.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-33.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-34.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-35.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-36.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-37.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-kebab-row-actions-38.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/07-initiatives-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "create",
+      "control": "New initiative",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-create-new-initiative-19.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "07-initiatives",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/initiatives",
+      "routeAfter": "/initiatives",
+      "screenshot": "screenshots/07-initiatives-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "menu1",
+      "control": "/projects",
+      "status": "BLOCKED",
+      "note": "Mutation on view blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/08-projects-menu1-projects.png",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "mutationAttempts": [
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/08-projects-menu2-missing.png",
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "uncaught console error: Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/08-projects-menu3-teresa-1.png",
+      "mutationAttempts": [
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/08-projects-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/08-projects-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "create",
+      "control": "Triage all new items for me",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/conversations, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/08-projects-create-triage-all-new-items-for-me-32.png",
+      "mutationAttempts": [
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/conversations"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "[ConversationStore] Create error: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:5430/src/service",
+        "[UnifiedChatPanel] Failed to create conversation: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:5430/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:5430/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "08-projects",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "BLOCKED",
+      "note": "Mutation blocked before network: POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize, POST /api/v8/my-work/inbox/canonical/materialize",
+      "routeBefore": "/my-work",
+      "routeAfter": "/my-work",
+      "screenshot": "screenshots/08-projects-ai-teresa-5.png",
+      "mutationAttempts": [
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        },
+        {
+          "module": "08-projects",
+          "method": "POST",
+          "url": "/api/v8/my-work/inbox/canonical/materialize"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+        "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+      ],
+      "httpErrors": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "a view attempted a domain write (blocked before network)"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu1",
+      "control": "/execution",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu1-execution.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu2",
+      "control": "Execution bank",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu2-execution-bank-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu2",
+      "control": "Work",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=work&view=table",
+      "screenshot": "screenshots/09-execution-menu2-work-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu2",
+      "control": "Risk management",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=control&view=table",
+      "screenshot": "screenshots/09-execution-menu2-risk-management-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu2",
+      "control": "Reports",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=reports&view=table",
+      "screenshot": "screenshots/09-execution-menu2-reports-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu3",
+      "control": "All 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu3-all-0-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu3",
+      "control": "At risk 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu3-at-risk-0-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "menu3",
+      "control": "Overdue 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-menu3-overdue-0-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/09-execution-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/09-execution-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(26)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-create-add-files-27.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "09-execution",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/execution?tab=list&view=table",
+      "routeAfter": "/execution?tab=list&view=table",
+      "screenshot": "screenshots/09-execution-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu1",
+      "control": "/results/kpi",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-menu1-results-kpi.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu2",
+      "control": "KPI",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-menu2-kpi-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu2",
+      "control": "OKR",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/okr",
+      "screenshot": "screenshots/10-results-menu2-okr-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu2",
+      "control": "ROI",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/roi",
+      "screenshot": "screenshots/10-results-menu2-roi-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu2",
+      "control": "Management reports",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi?resultsView=reports",
+      "screenshot": "screenshots/10-results-menu2-management-reports-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "kebab",
+      "control": "OPEN ACTIONS",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-kebab-open-actions-17.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/10-results-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "create",
+      "control": "New report",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-create-new-report-12.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "10-results",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/results/kpi",
+      "routeAfter": "/results/kpi",
+      "screenshot": "screenshots/10-results-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu1",
+      "control": "/presentations",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-menu1-presentations.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu2",
+      "control": "All",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations?tab=all",
+      "screenshot": "screenshots/11-materials-menu2-all-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu2",
+      "control": "Documents",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations?tab=documents",
+      "screenshot": "screenshots/11-materials-menu2-documents-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu2",
+      "control": "Presentations",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations?tab=presentations",
+      "screenshot": "screenshots/11-materials-menu2-presentations-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu2",
+      "control": "Sheets",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations?tab=sheets",
+      "screenshot": "screenshots/11-materials-menu2-sheets-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu2",
+      "control": "Template Library",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations?tab=templates",
+      "screenshot": "screenshots/11-materials-menu2-template-library-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-kebab-row-actions-27.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-kebab-row-actions-28.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/11-materials-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "create",
+      "control": "New presentation",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-create-new-presentation-17.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "11-materials",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/presentations",
+      "routeAfter": "/presentations",
+      "screenshot": "screenshots/11-materials-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "menu1",
+      "control": "/meeting",
+      "status": "FAIL",
+      "note": "",
+      "routeAfter": "/meetings",
+      "screenshot": "screenshots/12-meeting-menu1-meeting.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "navigation landed on /meetings instead of /meeting"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/12-meeting-menu2-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/meetings",
+      "routeAfter": "/meetings",
+      "screenshot": "screenshots/12-meeting-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/12-meeting-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/12-meeting-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(11)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "routeBefore": "/meetings",
+      "routeAfter": "/meetings",
+      "screenshot": "screenshots/12-meeting-create-add-files-12.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "12-meeting",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/meetings",
+      "routeAfter": "/meetings",
+      "screenshot": "screenshots/12-meeting-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu1",
+      "control": "/organization/profile",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu1-organization-profile.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu2",
+      "control": "Identity",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu2-identity-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu2",
+      "control": "Scale",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu2-scale-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu2",
+      "control": "Markets & systems",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu2-markets-systems-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu3",
+      "control": "All 13",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu3-all-13-2.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu3",
+      "control": "Filled in 8",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu3-filled-in-8-3.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu3",
+      "control": "To fill in 5",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu3-to-fill-in-5-4.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "menu3",
+      "control": "Conflicts 0",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-menu3-conflicts-0-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/13-organization-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/13-organization-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "create",
+      "control": "Add org profile details to improve Teresa's answers",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-create-add-org-profile-details-to-improve-teresa-s-answers-26.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "13-organization",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/organization/profile/identity-scale",
+      "routeAfter": "/organization/profile/identity-scale",
+      "screenshot": "screenshots/13-organization-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "menu1",
+      "control": "/admin/people",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-menu1-admin-people.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/14-admin-menu2-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-26.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-27.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-28.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-29.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-30.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-31.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "kebab",
+      "control": "Row actions",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-kebab-row-actions-32.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "PASS",
+      "screenshot": "screenshots/14-admin-right-panel-first-row.png",
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "create",
+      "control": "Add member",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-create-add-member-23.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "14-admin",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/admin/team/members",
+      "routeAfter": "/admin/team/members",
+      "screenshot": "screenshots/14-admin-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "menu1",
+      "control": "/settings/profile",
+      "status": "PASS",
+      "note": "",
+      "routeAfter": "/settings/profile",
+      "screenshot": "screenshots/15-settings-menu1-settings-profile.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/15-settings-menu2-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "menu3",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/15-settings-menu3-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/15-settings-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/15-settings-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "create",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/15-settings-create-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "15-settings",
+      "kind": "ai",
+      "control": "AI & automation",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/settings/profile",
+      "routeAfter": "/settings/profile",
+      "screenshot": "screenshots/15-settings-ai-ai-automation-12.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "menu1",
+      "control": "/partner/dashboard",
+      "status": "FAIL",
+      "note": "",
+      "routeAfter": "/partner?tab=partner-home",
+      "screenshot": "screenshots/16-partners-menu1-partner-dashboard.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "mutationAttempts": [],
+      "classification": {
+        "class": "PRODUCT",
+        "confidence": "high",
+        "reason": "navigation landed on /partner?tab=partner-home instead of /partner/dashboard"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "menu2",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/16-partners-menu2-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "menu3",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/partner?tab=partner-home",
+      "routeAfter": "/partner?tab=partner-home",
+      "screenshot": "screenshots/16-partners-menu3-teresa-1.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "kebab",
+      "control": "none",
+      "status": "MISSING",
+      "screenshot": "screenshots/16-partners-kebab-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "right-panel",
+      "control": "first-row",
+      "status": "MISSING",
+      "screenshot": "screenshots/16-partners-right-panel-missing.png",
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "surface absent; single-variant evidence cannot separate a stale selector from a missing feature"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "create",
+      "control": "Add files",
+      "status": "FAIL",
+      "note": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main button:visible, main [role=\"button\"]:visible').nth(44)\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Add files\" aria-label=\"Add files\" dat",
+      "routeBefore": "/partner?tab=partner-home",
+      "routeAfter": "/partner?tab=partner-home",
+      "screenshot": "screenshots/16-partners-create-add-files-45.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "classification": {
+        "class": "CONTRACT",
+        "confidence": "low",
+        "reason": "control not interactable within the harness budget and the app reported no error"
+      }
+    },
+    {
+      "variant": "admin-nw-northwind-admin-en-light",
+      "module": "16-partners",
+      "kind": "ai",
+      "control": "Teresa",
+      "status": "PASS",
+      "note": "",
+      "routeBefore": "/partner?tab=partner-home",
+      "routeAfter": "/partner?tab=partner-home",
+      "screenshot": "screenshots/16-partners-ai-teresa-5.png",
+      "mutationAttempts": [],
+      "consoleErrors": [],
+      "httpErrors": []
+    }
+  ],
+  "cleanup": {
+    "mode": "entry-surfaces-mutations-blocked-before-network",
+    "mutatingRequests": [
+      {
+        "module": "01-chat",
+        "method": "POST",
+        "url": "/api/conversations"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/conversations"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "02-my-work",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "06-audits",
+        "method": "POST",
+        "url": "/api/conclusions/sync"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/conversations"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      },
+      {
+        "module": "08-projects",
+        "method": "POST",
+        "url": "/api/v8/my-work/inbox/canonical/materialize"
+      }
+    ],
+    "principalRestore": {
+      "required": false,
+      "restored": true
+    },
+    "verified": true
+  },
+  "contractErrors": [
+    "unexpected mutation attempts 48"
+  ],
+  "delta": {
+    "hasPrevious": false,
+    "regressions": [],
+    "fixes": [],
+    "unchanged": 0
+  },
+  "summary": {
+    "modules": 16,
+    "cells": 214,
+    "statuses": {
+      "PASS": 171,
+      "FAIL": 8,
+      "MISSING": 25,
+      "BLOCKED": 10
+    },
+    "hardFailures": 43
+  },
+  "classes": {
+    "PRODUCT": 14,
+    "CONTRACT": 29,
+    "ENV": 0
+  },
+  "flagProfile": "4f53cda18c2b"
+}

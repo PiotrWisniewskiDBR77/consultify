@@ -1,0 +1,157 @@
+TAP version 13
+# Subtest: a view that attempts a write is a PRODUCT defect, not a harness problem
+ok 1 - a view that attempts a write is a PRODUCT defect, not a harness problem
+  ---
+  duration_ms: 1.305458
+  type: 'test'
+  ...
+# Subtest: app-reported errors stay PRODUCT even when the route never settled
+ok 2 - app-reported errors stay PRODUCT even when the route never settled
+  ---
+  duration_ms: 0.295875
+  type: 'test'
+  ...
+# Subtest: the harness own blocked-request console noise is not an app error
+ok 3 - the harness own blocked-request console noise is not an app error
+  ---
+  duration_ms: 0.559584
+  type: 'test'
+  ...
+# Subtest: a browser-level connectivity failure is ENV, not a product defect
+ok 4 - a browser-level connectivity failure is ENV, not a product defect
+  ---
+  duration_ms: 0.199125
+  type: 'test'
+  ...
+# Subtest: a non-interactable control with a stuck spinner is ENV, not PRODUCT
+ok 5 - a non-interactable control with a stuck spinner is ENV, not PRODUCT
+  ---
+  duration_ms: 0.126333
+  type: 'test'
+  ...
+# Subtest: a flag profile that moved inside one principal makes its cells ENV
+ok 6 - a flag profile that moved inside one principal makes its cells ENV
+  ---
+  duration_ms: 0.0805
+  type: 'test'
+  ...
+# Subtest: MISSING in every comparable variant is CONTRACT; MISSING in one of two is PRODUCT
+ok 7 - MISSING in every comparable variant is CONTRACT; MISSING in one of two is PRODUCT
+  ---
+  duration_ms: 0.080459
+  type: 'test'
+  ...
+# Subtest: a click timeout with no app error is CONTRACT; an unexplained FAIL is PRODUCT
+ok 8 - a click timeout with no app error is CONTRACT; an unexplained FAIL is PRODUCT
+  ---
+  duration_ms: 0.159625
+  type: 'test'
+  ...
+# Subtest: menu1 landing on the wrong route is PRODUCT with the measured route in the reason
+ok 9 - menu1 landing on the wrong route is PRODUCT with the measured route in the reason
+  ---
+  duration_ms: 0.251333
+  type: 'test'
+  ...
+# Subtest: PASS cells are never classified and the default bias is PRODUCT
+ok 10 - PASS cells are never classified and the default bias is PRODUCT
+  ---
+  duration_ms: 0.151208
+  type: 'test'
+  ...
+# Subtest: the flag profile is order-insensitive and moves only with a value
+ok 11 - the flag profile is order-insensitive and moves only with a value
+  ---
+  duration_ms: 0.547125
+  type: 'test'
+  ...
+# Subtest: the flag profile covers the v8 snapshot, not only an empty runtime map
+ok 12 - the flag profile covers the v8 snapshot, not only an empty runtime map
+  ---
+  duration_ms: 0.139959
+  type: 'test'
+  ...
+# Subtest: groups only compare variants of the same principal and locale
+not ok 13 - groups only compare variants of the same principal and locale
+  ---
+  duration_ms: 0.915292
+  type: 'test'
+  location: '/Users/piotrwisniewski/Developer/qoder-wt/consultify-d/scripts/e2e-1-matrix/classify.test.mjs:208:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        key: 'en|02-my-work|menu2|Tasks',
+    +   nonPassing: 2,
+    +   total: 3
+    -   nonPassing: 1,
+    -   total: 2
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    key: 'en|02-my-work|menu2|Tasks'
+    total: 2
+    nonPassing: 1
+  actual:
+    key: 'en|02-my-work|menu2|Tasks'
+    total: 3
+    nonPassing: 2
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/piotrwisniewski/Developer/qoder-wt/consultify-d/scripts/e2e-1-matrix/classify.test.mjs:218:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1106:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:788:18)
+    Test.postRun (node:internal/test_runner/test:1235:19)
+    Test.run (node:internal/test_runner/test:1163:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+  ...
+# Subtest: classifyResult annotates every non-PASS cell and counts the split
+ok 14 - classifyResult annotates every non-PASS cell and counts the split
+  ---
+  duration_ms: 0.192167
+  type: 'test'
+  ...
+# Subtest: the per-variant artifact carries the class of every red cell (evidence.mjs wiring)
+ok 15 - the per-variant artifact carries the class of every red cell (evidence.mjs wiring)
+  ---
+  duration_ms: 1.360708
+  type: 'test'
+  ...
+# Subtest: aggregate labels app-error reds FAIL_PRODUCT and reports the split
+ok 16 - aggregate labels app-error reds FAIL_PRODUCT and reports the split
+  ---
+  duration_ms: 38.84625
+  type: 'test'
+  ...
+# Subtest: aggregate labels a surface absent in both themes FAIL_CONTRACT, not a product defect
+ok 17 - aggregate labels a surface absent in both themes FAIL_CONTRACT, not a product defect
+  ---
+  duration_ms: 36.834375
+  type: 'test'
+  ...
+# Subtest: aggregate flags a flag profile that moved inside one principal
+ok 18 - aggregate flags a flag profile that moved inside one principal
+  ---
+  duration_ms: 38.456458
+  type: 'test'
+  ...
+# Subtest: aggregate names surfaces that exist for one principal only instead of folding them into PRODUCT
+ok 19 - aggregate names surfaces that exist for one principal only instead of folding them into PRODUCT
+  ---
+  duration_ms: 37.3735
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 18
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209.788833

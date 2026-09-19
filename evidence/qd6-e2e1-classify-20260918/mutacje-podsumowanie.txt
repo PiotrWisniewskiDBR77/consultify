@@ -1,0 +1,24 @@
+M1-missing-zawsze-PRODUCT | reguła: a surface absent in EVERY comparable variant is a harness-contract question, not a product defect
+  exit=1 tests=19 pass=15 fail=4 | przywrócone=IDENTICAL
+  czerwone: the harness own blocked-request console noise is not an app error / MISSING in every comparable variant is CONTRACT; MISSING in one of two is PRODUCT / classifyResult annotates every non-PASS cell and counts the split / aggregate labels a surface absent in both themes FAIL_CONTRACT, not a product defect
+M2-5xx-niewykrywalne | reguła: a 5xx reported by the app on a view is PRODUCT even when the route never settled
+  exit=1 tests=19 pass=15 fail=4 | przywrócone=IDENTICAL
+  czerwone: app-reported errors stay PRODUCT even when the route never settled / a browser-level connectivity failure is ENV, not a product defect / the per-variant artifact carries the class of every red cell (evidence.mjs wiring) / aggregate labels app-error reds FAIL_PRODUCT and reports the split
+M3-grupy-bez-pryncypala | reguła: cross-variant groups compare only the same principal AND locale (role/org may legitimately hide a surface)
+  exit=1 tests=19 pass=18 fail=1 | przywrócone=IDENTICAL
+  czerwone: groups only compare variants of the same principal and locale
+M4-agregat-bez-etykiety-klasy | reguła: the aggregate names the worst class in its status label (FAIL_PRODUCT / FAIL_CONTRACT / FAIL_ENV)
+  exit=1 tests=19 pass=16 fail=3 | przywrócone=IDENTICAL
+  czerwone: aggregate labels app-error reds FAIL_PRODUCT and reports the split / aggregate labels a surface absent in both themes FAIL_CONTRACT, not a product defect / aggregate flags a flag profile that moved inside one principal
+M5-artyfakt-wariantu-bez-klas | reguła: the per-variant artifact persists the classification of every red cell
+  exit=1 tests=19 pass=18 fail=1 | przywrócone=IDENTICAL
+  czerwone: the per-variant artifact carries the class of every red cell (evidence.mjs wiring)
+M6-halas-harnessa-liczony-jako-blad-aplikacji | reguła: the harness own blocked-request console noise (ERR_BLOCKED_BY_CLIENT) is not an app error
+  exit=1 tests=19 pass=18 fail=1 | przywrócone=IDENTICAL
+  czerwone: the harness own blocked-request console noise is not an app error
+M7-profil-flag-slepy-na-v8 | reguła: the flag fingerprint covers the v8 snapshot too, not only an empty runtime map
+  exit=1 tests=19 pass=18 fail=1 | przywrócone=IDENTICAL
+  czerwone: the flag profile covers the v8 snapshot, not only an empty runtime map
+M8-brak-sieci-liczony-jako-defekt-produktu | reguła: a browser-level connectivity failure (no server reached) is ENV, not a product defect
+  exit=1 tests=19 pass=18 fail=1 | przywrócone=IDENTICAL
+  czerwone: a browser-level connectivity failure is ENV, not a product defect

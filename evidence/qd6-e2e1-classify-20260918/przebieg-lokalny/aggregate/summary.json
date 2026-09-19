@@ -1,0 +1,592 @@
+{
+  "generatedAt": "2026-09-19T00:21:36.626Z",
+  "contract": {
+    "variantCount": 8,
+    "modulesPerVariant": 16,
+    "moduleRuns": 128,
+    "requiredSurfaceCells": 896,
+    "variantDefinitions": [
+      {
+        "actor": "admin-nw",
+        "secretPrefix": "E2E_ADMIN_NW",
+        "org": "northwind",
+        "expectedRole": "ADMIN",
+        "locale": "en",
+        "theme": "light",
+        "key": "admin-nw-northwind-admin-en-light"
+      },
+      {
+        "actor": "admin-nw",
+        "secretPrefix": "E2E_ADMIN_NW",
+        "org": "northwind",
+        "expectedRole": "ADMIN",
+        "locale": "en",
+        "theme": "dark",
+        "key": "admin-nw-northwind-admin-en-dark"
+      },
+      {
+        "actor": "admin-nw",
+        "secretPrefix": "E2E_ADMIN_NW",
+        "org": "northwind",
+        "expectedRole": "ADMIN",
+        "locale": "pl",
+        "theme": "light",
+        "key": "admin-nw-northwind-admin-pl-light"
+      },
+      {
+        "actor": "admin-nw",
+        "secretPrefix": "E2E_ADMIN_NW",
+        "org": "northwind",
+        "expectedRole": "ADMIN",
+        "locale": "pl",
+        "theme": "dark",
+        "key": "admin-nw-northwind-admin-pl-dark"
+      },
+      {
+        "actor": "owner-dbr77",
+        "secretPrefix": "E2E_OWNER_DBR77",
+        "org": "dbr77",
+        "expectedRole": "OWNER",
+        "locale": "en",
+        "theme": "light",
+        "key": "owner-dbr77-dbr77-owner-en-light"
+      },
+      {
+        "actor": "owner-dbr77",
+        "secretPrefix": "E2E_OWNER_DBR77",
+        "org": "dbr77",
+        "expectedRole": "OWNER",
+        "locale": "en",
+        "theme": "dark",
+        "key": "owner-dbr77-dbr77-owner-en-dark"
+      },
+      {
+        "actor": "owner-dbr77",
+        "secretPrefix": "E2E_OWNER_DBR77",
+        "org": "dbr77",
+        "expectedRole": "OWNER",
+        "locale": "pl",
+        "theme": "light",
+        "key": "owner-dbr77-dbr77-owner-pl-light"
+      },
+      {
+        "actor": "owner-dbr77",
+        "secretPrefix": "E2E_OWNER_DBR77",
+        "org": "dbr77",
+        "expectedRole": "OWNER",
+        "locale": "pl",
+        "theme": "dark",
+        "key": "owner-dbr77-dbr77-owner-pl-dark"
+      }
+    ]
+  },
+  "observed": {
+    "variants": 2,
+    "moduleRuns": 32,
+    "cells": 422
+  },
+  "missingVariants": [
+    "admin-nw-northwind-admin-pl-light",
+    "admin-nw-northwind-admin-pl-dark",
+    "owner-dbr77-dbr77-owner-en-light",
+    "owner-dbr77-dbr77-owner-en-dark",
+    "owner-dbr77-dbr77-owner-pl-light",
+    "owner-dbr77-dbr77-owner-pl-dark"
+  ],
+  "nonPassingCells": 94,
+  "classes": {
+    "PRODUCT": 28,
+    "CONTRACT": 64,
+    "ENV": 2
+  },
+  "worstClass": "PRODUCT",
+  "flagProfiles": [
+    {
+      "principal": "admin-nw/northwind",
+      "profiles": [
+        "7d90533cf1c4"
+      ],
+      "variants": [
+        "admin-nw-northwind-admin-en-dark",
+        "admin-nw-northwind-admin-en-light"
+      ]
+    }
+  ],
+  "flagIssues": [],
+  "principalOnlySurfaces": [],
+  "regressions": 0,
+  "unexpectedWrites": [
+    {
+      "module": "01-chat",
+      "method": "POST",
+      "url": "/api/conversations"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/conversations"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "06-audits",
+      "method": "POST",
+      "url": "/api/conclusions/sync"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/conversations"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "01-chat",
+      "method": "POST",
+      "url": "/api/conversations"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/conversations"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "02-my-work",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "06-audits",
+      "method": "POST",
+      "url": "/api/conclusions/sync"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    },
+    {
+      "module": "08-projects",
+      "method": "POST",
+      "url": "/api/v8/my-work/inbox/canonical/materialize"
+    }
+  ],
+  "contractErrors": [
+    "admin-nw-northwind-admin-en-dark: unexpected mutation attempts 46",
+    "admin-nw-northwind-admin-en-light: unexpected mutation attempts 47",
+    "variant denominator 2/8",
+    "module-run denominator 32/128"
+  ],
+  "status": "FAIL_PRODUCT"
+}

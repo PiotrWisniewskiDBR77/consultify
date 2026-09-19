@@ -13,6 +13,7 @@ import {
   routeMatchesModule,
   variantKey,
 } from './contract.mjs';
+import { isHarnessConsoleNoise } from './consoleNoise.mjs';
 import { validateVariantResult, writeVariantArtifacts } from './evidence.mjs';
 import { isDomainMutationRequest } from './network.mjs';
 import { onboardingDoneKey } from './onboarding.mjs';
@@ -272,7 +273,7 @@ async function runModule(page, module, allMutations) {
   const buffers = { console: [], http: [], mutations: [] };
   const settleStats = [];
   const onConsole = (message) => {
-    if (message.type() === 'error' && !/cloudflareinsights|beacon\.min\.js/i.test(message.text())) {
+    if (message.type() === 'error' && !isHarnessConsoleNoise(message.text())) {
       buffers.console.push(message.text().slice(0, 300));
     }
   };
@@ -538,6 +539,9 @@ async function main() {
   const errors = validateVariantResult(result, variant);
   result.contractErrors = errors;
   writeVariantArtifacts({ outDir: OUT, result, previous: readPrevious() });
+  console.log(
+    `[E2E-1] ${VARIANT} classes: PRODUCT ${result.classes.PRODUCT} · CONTRACT ${result.classes.CONTRACT} · ENV ${result.classes.ENV} (flag profile ${result.flagProfile})`
+  );
   if (errors.length || result.summary?.hardFailures || result.delta?.regressions?.length)
     process.exitCode = 1;
 }
