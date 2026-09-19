@@ -210,6 +210,8 @@ export const PresentationTemplateArchitectView: React.FC<
   PresentationTemplateArchitectViewProps
 > = ({ onTemplateSaved, initialTemplateId }) => {
   const { t, i18n } = useTranslation();
+  const appErrorT = (key: string, defaultValue?: string) =>
+    t(key, defaultValue === undefined ? undefined : { defaultValue });
   const navigate = useNavigate();
   const isPolish = i18n.language?.startsWith('pl') ?? false;
   const intentLabel = useIntentLabel(t);
@@ -356,7 +358,7 @@ export const PresentationTemplateArchitectView: React.FC<
       const list = await listPresentationTemplates();
       setTemplates(list);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setLoadingList(false);
     }
@@ -407,7 +409,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setLastDraftRefined(useLlm ? result.llmRefined : null);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setDrafting(false);
     }
@@ -542,7 +544,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
       onTemplateSaved?.(fresh);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setSavingOutline(false);
     }
@@ -560,7 +562,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(cloned.id);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setCloningId(null);
     }
@@ -577,7 +579,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(result.id);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setCloningId(null);
     }
@@ -596,7 +598,7 @@ export const PresentationTemplateArchitectView: React.FC<
         `v${version.lineageVersion} vs v${selectedTemplate.lineage_version || 1}: ${candidateTitles.length} → ${currentTitles.length} slides; ${Math.max(0, changed)} position(s) changed.`
       );
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     }
   };
 
@@ -611,7 +613,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await approvePresentationTemplate(selectedTemplate.id);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setApprovingId(null);
     }
@@ -670,7 +672,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
     } finally {
       setDeprecatingId(null);
     }
@@ -686,7 +688,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getAppErrorLine(appErrorT, err));
       setDeleteConfirmOpen(false);
     } finally {
       setDeprecatingId(null);
