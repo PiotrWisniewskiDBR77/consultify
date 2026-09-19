@@ -1399,8 +1399,8 @@ router.post(
 
 router.post(
   '/impersonate',
-  validateBody(ImpersonateUserSchema),
   requireConfirmation('impersonate_user', 'critical'),
+  validateBody(ImpersonateUserSchema),
   requireAudit,
   SuperAdminController.impersonateUser
 );

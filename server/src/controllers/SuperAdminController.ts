@@ -1193,7 +1193,7 @@ const impersonateUser = catchAsync(async (req, res, next) => {
         deps.db.run(
           `INSERT INTO superadmin_impersonation_sessions
            (id, admin_id, target_user_id, reason, started_at, ip_address, is_active)
-         VALUES (?, ?, ?, ?, datetime('now'), ?, 1)`,
+         VALUES (?, ?, ?, ?, datetime('now'), ?, TRUE)`,
           [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
           async (sessionErr) => {
             if (sessionErr) return next(new AppError(sessionErr.message, 500));
