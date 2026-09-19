@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { getActiveOrgLogo } from '../../documentStudio/documentAssetRegistryService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../../documentStudio/documentDocxRenderer.js';
 import {
   type DocumentBlock,
@@ -21,6 +22,12 @@ export interface ReportBuilderDocxInput {
   report: Record<string, unknown>;
   sections: Array<Record<string, unknown>>;
   generatedAt?: string;
+  /**
+   * D-47 — tenant name for the cover/header. `reportBuilderService.getReport`
+   * selects only the report row, so without this the client-final cover said
+   * "Client" and the running header carried it into every page.
+   */
+  organizationName?: string;
 }
 
 function text(value: unknown): string {
@@ -149,7 +156,8 @@ export function buildReportBuilderDocumentSchema(
   const report = input.report;
   const generatedAt = input.generatedAt || new Date().toISOString();
   const title = text(report.title) || text(report.name) || 'Client report';
-  const organizationName = text(report.organizationName) || 'Client';
+  const organizationName =
+    text(report.organizationName) || text(input.organizationName) || 'Client';
   const reportLanguage =
     text(report.language) ||
     input.sections.map((section) => text(section.language)).find(Boolean) ||
@@ -228,8 +236,13 @@ export async function exportReportBuilderDocx(input: ReportBuilderDocxInput): Pr
   await ensureTemplateRegistryHydrated(input.organizationId);
   const template = getTemplate(DOC_BASE_TEMPLATE_ID, input.organizationId);
   if (!template) throw new Error(`DOC_BASE_E_LOOKUP:${DOC_BASE_TEMPLATE_ID}`);
+  const logo = getActiveOrgLogo(input.organizationId);
   const rendered = await renderDocumentSchemaToDocxBuffer(
-    buildReportBuilderDocumentSchema(input, template)
+    buildReportBuilderDocumentSchema(input, template),
+    {
+      coverLogoAsset: logo ? { mimeType: logo.mimeType, dataBase64: logo.dataBase64 } : undefined,
+      coverLogoPlaceholder: false,
+    }
   );
   return applyDocBaseThemeContract(rendered);
 }

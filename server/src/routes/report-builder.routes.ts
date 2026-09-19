@@ -3525,10 +3525,17 @@ const writeReportBuilderDocx = async (
   filePath: string,
   organizationId: string
 ) => {
+  // D-47: getReport returns no organization name, so the client-final cover
+  // named the client "Client". The document belongs to the report's tenant.
+  const organization = await dbGet<{ name?: string }>(
+    'SELECT name FROM organizations WHERE id = ?',
+    [organizationId]
+  );
   const buffer = await exportReportBuilderDocx({
     organizationId,
     report,
     sections,
+    organizationName: organization?.name ? String(organization.name) : undefined,
   });
   await fs.promises.writeFile(filePath, buffer);
 };

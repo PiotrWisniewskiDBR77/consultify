@@ -99,6 +99,13 @@ export interface DocumentRenderOptions {
     widthCm?: number;
   };
   /**
+   * D-47 — when `false`, the client-final cover renders an empty spacer of the
+   * same height instead of the bordered `[ CLIENT LOGO ]` box if no asset bytes
+   * arrived. A client deliverable must not carry authoring scaffolding; the
+   * default `true` keeps the visible hint for Document Studio drafts.
+   */
+  coverLogoPlaceholder?: boolean;
+  /**
    * A4 — optional generation-warnings collector. When provided, the
    * renderer records `chart_raster_failed` for any chart that fell
    * through to the typographic placeholder, and `logo_unavailable` when
@@ -1514,26 +1521,33 @@ function renderClientFinalCoverBlock(
     timeZone: 'UTC',
   });
   const source = schema.sourceRefs[0];
+  const logoFallback =
+    options.coverLogoPlaceholder === false
+      ? new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          spacing: { before: 80, after: 1280 },
+        })
+      : new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          spacing: { before: 80, after: 1280 },
+          border: {
+            top: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+            bottom: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+            left: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+            right: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
+          },
+          children: [
+            new TextRun({
+              text: '[ CLIENT LOGO ]',
+              font: ctx.bodyFont,
+              color: CLIENT_FINAL_REPORT_PALETTE.muted,
+              size: 18,
+            }),
+          ],
+        });
   const logo =
     (options.coverLogoAsset ? buildCoverLogoParagraph(options.coverLogoAsset) : null) ??
-    new Paragraph({
-      alignment: AlignmentType.RIGHT,
-      spacing: { before: 80, after: 1280 },
-      border: {
-        top: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
-        bottom: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
-        left: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
-        right: { color: CLIENT_FINAL_REPORT_PALETTE.line, style: 'single', size: 4 },
-      },
-      children: [
-        new TextRun({
-          text: '[ CLIENT LOGO ]',
-          font: ctx.bodyFont,
-          color: CLIENT_FINAL_REPORT_PALETTE.muted,
-          size: 18,
-        }),
-      ],
-    });
+    logoFallback;
   const metadata = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
@@ -1541,13 +1555,8 @@ function renderClientFinalCoverBlock(
         cantSplit: true,
         children: [
           ['PREPARED FOR', schema.audience.join(', ') || organizationName],
-          ['PREPARED BY', 'Consultify · DBR77'],
-          [
-            'SOURCE',
-            source
-              ? `${source.sourceTitle || source.sourceType} (${source.sourceId})`
-              : 'Source pack required',
-          ],
+          ['PREPARED BY', organizationName],
+          ['SOURCE', source ? source.sourceTitle || source.sourceType : 'Source pack required'],
         ].map(
           ([label, value]) =>
             new TableCell({
@@ -1590,7 +1599,7 @@ function renderClientFinalCoverBlock(
     new Paragraph({
       children: [
         new TextRun({
-          text: 'Consultify · DBR77',
+          text: organizationName,
           font: ctx.bodyFont,
           bold: true,
           size: 19,
