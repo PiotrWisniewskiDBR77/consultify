@@ -89,7 +89,9 @@ describe('K5pl-MUTE-8 client localization (the defect: raw Polish rendered)', ()
     (code) => {
       // Defence in depth: even if a stale/foreign server still sends a Polish `error`,
       // the registered code wins and the user sees English.
-      const err = createApiError({ code, error: PL_SENTENCES[code] }, 'Request failed');
+      const err = createApiError({ code, error: PL_SENTENCES[code] }, 'Request failed') as Error & {
+        code?: string;
+      };
       expect(err.message).toBe(API_ERROR_FALLBACKS_EN[code]);
       expect(err.message).not.toMatch(POLISH_DIACRITICS);
       expect(err.code).toBe(code);
