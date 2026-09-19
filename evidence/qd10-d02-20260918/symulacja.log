@@ -1,0 +1,130 @@
+Pager usage is off.
+################ RESET (idempotent — clears any prior partial run) ################
+DROP TABLE
+SET
+DELETE 0
+DELETE 0
+DELETE 3
+SET
+################ PHASE A — as-restored copy (traces expected ABSENT) ################
+--- A.0 target counts BEFORE (expect 0/0/0) ---
+        k         | count 
+------------------+-------
+ A_exports_target |     0
+ A_notifs_target  |     0
+ A_dedup_target   |     0
+(3 rows)
+
+--- A.1 baseline totals (context: other pptx/presentation_export data must NOT move) ---
+             k              | count 
+----------------------------+-------
+ A_exports_total            |    67
+ A_notifs_pres_export_total |    10
+ A_dedup_pres_export_total  |    15
+(3 rows)
+
+--- A.2 RUN cleanup (1st) ---
+BEGIN
+CREATE TABLE
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+DELETE 0
+DELETE 0
+DELETE 0
+COMMIT
+--- A.3 target counts AFTER 1st run (expect 0/0/0) + totals unchanged ---
+             k              | count 
+----------------------------+-------
+ A_exports_target           |     0
+ A_notifs_target            |     0
+ A_exports_total            |    67
+ A_notifs_pres_export_total |    10
+(4 rows)
+
+--- A.4 RUN cleanup (2nd, idempotency) ---
+BEGIN
+psql:d02-cleanup.sql:47: NOTICE:  relation "d02_cleanup_backup" already exists, skipping
+CREATE TABLE
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+DELETE 0
+DELETE 0
+DELETE 0
+COMMIT
+--- A.5 backup rows captured during PHASE A (expect 0 — nothing present to snapshot) ---
+       k       | count 
+---------------+-------
+ A_backup_rows |     0
+(1 row)
+
+
+################ PHASE B — synthetic rows carrying the SAME target keys ################
+--- B.0 insert 3 exports + 3 notifications + 3 dedup (SYNTHETIC, copy DB only) ---
+SET
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+SET
+--- B.1 target counts AFTER insert (expect 3/3/3) ---
+        k         | count 
+------------------+-------
+ B_exports_target |     3
+ B_notifs_target  |     3
+ B_dedup_target   |     3
+(3 rows)
+
+--- B.2 RUN cleanup (1st) → must delete the 3+3+3 ---
+BEGIN
+CREATE TABLE
+psql:d02-cleanup.sql:47: NOTICE:  relation "d02_cleanup_backup" already exists, skipping
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+DELETE 3
+DELETE 3
+DELETE 3
+COMMIT
+--- B.3 READBACK target counts (expect 0/0/0) + backup captured 9 ---
+          k           | count 
+----------------------+-------
+ B_exports_target     |     0
+ B_notifs_target      |     0
+ B_dedup_target       |     0
+ B_backup_rows_phaseB |     9
+(4 rows)
+
+--- B.4 RUN cleanup (2nd, idempotency) → 0 ---
+BEGIN
+CREATE TABLE
+psql:d02-cleanup.sql:47: NOTICE:  relation "d02_cleanup_backup" already exists, skipping
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+DELETE 0
+DELETE 0
+DELETE 0
+COMMIT
+--- B.5 readback again (expect 0/0/0) + backup rows did NOT grow on empty re-run ---
+          k          | count 
+---------------------+-------
+ B_exports_target    |     0
+ B_notifs_target     |     0
+ B_dedup_target      |     0
+ B_backup_rows_total |     9
+(4 rows)
+
+
+################ PHASE C — collateral check: other product data untouched ################
+--- C.1 the 10 August presentation_export notifications + 33 pptx exports must be intact ---
+             k              | count 
+----------------------------+-------
+ C_notifs_pres_export_total |    10
+ C_exports_pptx_total       |    33
+ C_exports_total            |    67
+(3 rows)
+
+--- C.2 cleanup synthetic backup table (simulation artifact, NOT part of staging) ---
+DROP TABLE
+################ SYMULACJA KONIEC ################
