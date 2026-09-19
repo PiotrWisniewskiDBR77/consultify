@@ -75,7 +75,8 @@ router.get(
       });
       return res
         .status(500)
-        .json({ error: 'Nie udało się pobrać megatrendów', code: 'MEGATREND_BASELINE_FAILED' });
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — redundant Polish `error:` removed.
+        .json({ code: 'MEGATREND_BASELINE_FAILED' });
     }
   })
 );
@@ -104,7 +105,8 @@ router.get(
       });
       return res
         .status(500)
-        .json({ error: 'Nie udało się pobrać danych radaru', code: 'MEGATREND_RADAR_FAILED' });
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — redundant Polish `error:` removed.
+        .json({ code: 'MEGATREND_RADAR_FAILED' });
     }
   })
 );
@@ -135,7 +137,8 @@ router.get(
       });
       return res
         .status(500)
-        .json({ error: 'Nie udało się pobrać szczegółów trendu', code: 'MEGATREND_DETAIL_FAILED' });
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — redundant Polish `error:` removed.
+        .json({ code: 'MEGATREND_DETAIL_FAILED' });
     }
   })
 );
@@ -169,7 +172,8 @@ router.post(
       });
       return res
         .status(500)
-        .json({ error: 'Nie udało się utworzyć trendu', code: 'MEGATREND_CUSTOM_CREATE_FAILED' });
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — redundant Polish `error:` removed.
+        .json({ code: 'MEGATREND_CUSTOM_CREATE_FAILED' });
     }
   })
 );
@@ -205,7 +209,8 @@ router.put(
         correlationId: (req as any).correlationId,
       });
       return res.status(500).json({
-        error: 'Nie udało się zaktualizować trendu',
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+        // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
         code: 'MEGATREND_CUSTOM_UPDATE_FAILED',
       });
     }
