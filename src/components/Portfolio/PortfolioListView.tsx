@@ -141,19 +141,13 @@ const STATUS_ORDER: Record<string, number> = {
 
 // All statuses for the inline status dropdown
 const ALL_INITIATIVE_STATUSES: InitiativeStatus[] = [
+  InitiativeStatus.PROPOSED,
   InitiativeStatus.DRAFT,
   InitiativeStatus.PENDING_APPROVAL,
-  InitiativeStatus.PENDING_APPROVAL,
-  InitiativeStatus.PENDING_APPROVAL,
-  InitiativeStatus.PENDING_APPROVAL,
-  InitiativeStatus.APPROVED,
   InitiativeStatus.APPROVED,
   InitiativeStatus.IN_EXECUTION,
-  InitiativeStatus.IN_EXECUTION,
-  InitiativeStatus.CLOSED,
   InitiativeStatus.CLOSED,
   InitiativeStatus.REJECTED,
-  InitiativeStatus.CLOSED,
 ];
 
 const LEVEL_ORDER: Record<string, number> = STATUS_ORDER;
@@ -650,14 +644,10 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     icon: Archive,
                                     disabled:
                                       !onArchive ||
-                                      ![InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
-                                        initiative.status
-                                      ),
+                                      initiative.status !== InitiativeStatus.REJECTED,
                                     description:
                                       !onArchive ||
-                                      ![InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
-                                        initiative.status
-                                      )
+                                      initiative.status !== InitiativeStatus.REJECTED
                                         ? t(
                                             'initiatives.archive.hint',
                                             'Finish or cancel it first'
