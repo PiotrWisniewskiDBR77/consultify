@@ -62,13 +62,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
 import { HandoffAcceptanceQueue } from '@/components/MyWork/HandoffAcceptanceQueue';
 import { InboxActionCards } from '@/components/MyWork/InboxActionCards';
-import {
-  type TableSettingsColumn,
-  TableSettingsPopover,
-} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import {
   actionPillClass,
   type ActionRow,
@@ -105,12 +100,7 @@ import {
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
-import {
-  type ColumnDef,
-  ColumnResizer,
-  type ColumnWidths,
-  type TableFilters,
-} from '@/components/ui/ResizableTable';
+import { type TableFilters } from '@/components/ui/ResizableTable';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { useInitiativeNames } from '@/hooks/useInitiativeNames';
@@ -1066,115 +1056,6 @@ const INBOX_SOURCE_FILTER_OPTIONS = [
   { value: 'user', label: i18n.t('myWork.inboxContent.sourceFilter.userTeam', 'User / Team') },
 ];
 
-// ── Column definitions ──
-const INBOX_COLUMNS: ColumnDef[] = [
-  {
-    id: 'select',
-    label: '',
-    width: 40,
-    minWidth: 40,
-    maxWidth: 40,
-    resizable: false,
-    filterable: false,
-  },
-  {
-    id: 'title',
-    label: i18n.t('myWork.inboxContent.columns.title', 'Title'),
-    width: 560,
-    minWidth: 360,
-    maxWidth: 900,
-    resizable: true,
-    filterable: false,
-  },
-  {
-    id: 'status',
-    label: i18n.t('myWork.inboxContent.columns.status', 'Status'),
-    width: 100,
-    minWidth: 80,
-    maxWidth: 140,
-    resizable: true,
-    filterable: true,
-    filterType: 'multiselect',
-    filterOptions: INBOX_STATUS_FILTER_OPTIONS,
-  },
-  {
-    id: 'urgency',
-    label: i18n.t('myWork.inboxContent.columns.urgency', 'Urgency'),
-    width: 110,
-    minWidth: 80,
-    maxWidth: 150,
-    resizable: true,
-    filterable: true,
-    filterType: 'multiselect',
-    filterOptions: INBOX_URGENCY_FILTER_OPTIONS,
-  },
-  {
-    id: 'type',
-    label: i18n.t('myWork.inboxContent.columns.type', 'Type'),
-    width: 120,
-    minWidth: 90,
-    maxWidth: 160,
-    resizable: true,
-    filterable: true,
-    filterType: 'multiselect',
-    filterOptions: INBOX_TYPE_FILTER_OPTIONS,
-  },
-  {
-    id: 'section',
-    label: i18n.t('myWork.inboxContent.columns.section', 'Section'),
-    width: 150,
-    minWidth: 110,
-    maxWidth: 220,
-    resizable: true,
-    filterable: true,
-    filterType: 'multiselect',
-    filterOptions: INBOX_SECTION_FILTER_OPTIONS,
-  },
-  {
-    id: 'source',
-    label: i18n.t('myWork.inboxContent.columns.source', 'Source'),
-    width: 110,
-    minWidth: 90,
-    maxWidth: 170,
-    resizable: true,
-    filterable: true,
-    filterType: 'multiselect',
-    filterOptions: INBOX_SOURCE_FILTER_OPTIONS,
-  },
-  {
-    id: 'received',
-    label: i18n.t('myWork.inboxContent.columns.received', 'Received'),
-    width: 120,
-    minWidth: 90,
-    maxWidth: 160,
-    resizable: true,
-    filterable: false,
-  },
-  {
-    id: 'sla',
-    label: i18n.t('myWork.inboxContent.columns.sla', 'SLA'),
-    width: 100,
-    minWidth: 70,
-    maxWidth: 140,
-    resizable: true,
-    filterable: false,
-  },
-  {
-    id: 'actions',
-    label: '',
-    // App Table Standard: actions column is kebab-only (compact).
-    width: 64,
-    minWidth: 56,
-    maxWidth: 72,
-    resizable: false,
-    filterable: false,
-    align: 'right',
-  },
-];
-
-type InboxResizableColumn =
-  'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received' | 'sla';
-
 // Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
 type InboxSortField = 'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received';
 
@@ -1227,47 +1108,7 @@ const InboxSortIcon: React.FC<{
   );
 };
 
-const INBOX_RESIZE_BOUNDS: Record<InboxResizableColumn, { min: number; max: number }> = {
-  title: { min: 360, max: 900 },
-  status: { min: 80, max: 140 },
-  urgency: { min: 80, max: 150 },
-  type: { min: 90, max: 160 },
-  section: { min: 110, max: 220 },
-  source: { min: 90, max: 170 },
-  received: { min: 90, max: 160 },
-  sla: { min: 70, max: 140 },
-};
-
-const getDefaultColumnWidths = (): ColumnWidths =>
-  INBOX_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
-
-const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-inbox-table-view';
 const INBOX_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify-inbox-show-row-description';
-const INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS = ['type', 'section', 'source'] as const;
-
-function loadInboxHiddenColumns(): string[] {
-  try {
-    const raw = localStorage.getItem(INBOX_TABLE_VIEW_STORAGE_KEY);
-    if (!raw) return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
-    const parsed = JSON.parse(raw) as { hiddenColumns?: unknown };
-    const arr = Array.isArray(parsed?.hiddenColumns) ? parsed.hiddenColumns : null;
-    if (!arr) return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
-    return arr.filter((x) => typeof x === 'string') as string[];
-  } catch {
-    return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
-  }
-}
-
-function saveInboxHiddenColumns(hiddenColumns: string[]) {
-  try {
-    localStorage.setItem(
-      INBOX_TABLE_VIEW_STORAGE_KEY,
-      JSON.stringify({ hiddenColumns: Array.from(new Set(hiddenColumns)).sort() })
-    );
-  } catch {
-    // ignore
-  }
-}
 
 function loadInboxRowDescriptionSetting(): boolean {
   try {
@@ -2288,28 +2129,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Column widths
-  const [columnWidths, setColumnWidths] = usePersistedColumnWidths(
-    'mywork:inbox:column-widths',
-    getDefaultColumnWidths
-  ); // M03 L-10
-
-  // View settings (Columns) — persisted via TableSettingsPopover (canon §16)
-  const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);
   const [showRowDescription, setShowRowDescription] = useState(loadInboxRowDescriptionSetting);
-  const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
-  const isColumnVisible = useCallback((columnId: string) => !hiddenSet.has(columnId), [hiddenSet]);
-
-  const visibleResizableColumns = useMemo((): InboxResizableColumn[] => {
-    return INBOX_COLUMNS.filter(
-      (column): column is ColumnDef & { id: InboxResizableColumn } =>
-        column.id in INBOX_RESIZE_BOUNDS && isColumnVisible(column.id)
-    ).map((column) => column.id);
-  }, [isColumnVisible]);
-
-  useEffect(() => {
-    saveInboxHiddenColumns(hiddenColumns);
-  }, [hiddenColumns]);
 
   const updateRowDescriptionSetting = useCallback((next: boolean) => {
     setShowRowDescription(next);
@@ -3327,61 +3147,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       return next;
     });
   };
-
-  // ── Column resize ──
-  const handleColumnResize = (columnId: string, newWidth: number) => {
-    const currentColumn = columnId as InboxResizableColumn;
-    const currentBounds = INBOX_RESIZE_BOUNDS[currentColumn];
-    if (!currentBounds) {
-      setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
-      return;
-    }
-
-    setColumnWidths((prev) => {
-      const currentWidth = prev[currentColumn];
-      const nextColumn =
-        visibleResizableColumns[visibleResizableColumns.indexOf(currentColumn) + 1];
-      const clampedWidth = Math.max(currentBounds.min, Math.min(currentBounds.max, newWidth));
-
-      if (!nextColumn) {
-        return { ...prev, [currentColumn]: clampedWidth };
-      }
-
-      const nextBounds = INBOX_RESIZE_BOUNDS[nextColumn];
-      const nextWidth = prev[nextColumn];
-      const requestedDelta = clampedWidth - currentWidth;
-      const requestedNextWidth = nextWidth - requestedDelta;
-      const clampedNextWidth = Math.max(
-        nextBounds.min,
-        Math.min(nextBounds.max, requestedNextWidth)
-      );
-      const appliedDelta = nextWidth - clampedNextWidth;
-
-      return {
-        ...prev,
-        [currentColumn]: currentWidth + appliedDelta,
-        [nextColumn]: clampedNextWidth,
-      };
-    });
-  };
-
-  const getColumnLabel = useCallback(
-    (columnId: string) => {
-      const dict: Record<string, { pl: string; en: string }> = {
-        title: { pl: 'Tytuł', en: 'Title' },
-        status: { pl: 'Status', en: 'Status' },
-        urgency: { pl: 'Pilność', en: 'Urgency' },
-        type: { pl: 'Typ', en: 'Type' },
-        section: { pl: 'Sekcja', en: 'Section' },
-        source: { pl: 'Źródło', en: 'Source' },
-        received: { pl: 'Otrzymano', en: 'Received' },
-        sla: { pl: 'SLA', en: 'SLA' },
-        actions: { pl: 'Widok', en: 'View' },
-      };
-      return isPolish ? dict[columnId]?.pl || columnId : dict[columnId]?.en || columnId;
-    },
-    [isPolish]
-  );
 
   // ── Filter change ──
   const handleFilterChange = (columnId: string, values: string[]) => {
