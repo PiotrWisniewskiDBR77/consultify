@@ -97,6 +97,10 @@ function resolveCurrentUserIdFromToken(): string | null {
   }
 }
 
+function isOkrReportTableGroupRow(row: TableRow): boolean {
+  return isOkrReportGroupRow({ kind: row.kind });
+}
+
 /**
  * Wiersz grupy tematu — rozciągnięcie pierwszej komórki na całą szerokość.
  *
@@ -591,7 +595,7 @@ export const OkrReportPage: React.FC = () => {
           error,
           onRetry: () => void load(),
           rowClassName: (row) =>
-            isOkrReportGroupRow(row)
+            isOkrReportTableGroupRow(row)
               ? 'okr-report-group-row bg-c-surface-raised font-semibold'
               : '',
           empty:
@@ -603,11 +607,11 @@ export const OkrReportPage: React.FC = () => {
                 }
               : undefined,
           onRowClick: (row) => {
-            if (isOkrReportGroupRow(row)) return;
+            if (isOkrReportTableGroupRow(row)) return;
             openObjective(row as unknown as OkrReportKeyResultRow);
           },
           rowMenu: (row) =>
-            isOkrReportGroupRow(row)
+            isOkrReportTableGroupRow(row)
               ? {}
               : {
                   primary: [
