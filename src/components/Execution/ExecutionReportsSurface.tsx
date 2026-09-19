@@ -39,6 +39,7 @@ import { buildExecutionPreviewHead, zlozProzeBloku3 } from './executionPreviewHe
 import {
   buildExecutionReportSnapshot,
   fetchExecutionReportInputs,
+  type Translator,
 } from './executionReportModel';
 
 import {
@@ -575,6 +576,13 @@ export const ExecutionReportsSurface = ({
     (key: string, fallback: string) => t(`executionReports.definitions.${key}.name`, fallback),
     [t]
   );
+  const translateSnapshotText = useCallback<Translator>(
+    (key, fallback, options) => {
+      const value = t(key, { ...(options ?? {}), defaultValue: fallback });
+      return typeof value === 'string' ? value : fallback;
+    },
+    [t]
+  );
   const openSnapshot = useCallback(async (id: string) => {
     try {
       setOpenRun(await readExecutionReportRun(id));
@@ -645,7 +653,7 @@ export const ExecutionReportsSurface = ({
           },
           asOf,
           inputs,
-          t: (key, fallback, options) => t(key, fallback, options as never) as string,
+          t: translateSnapshotText,
         });
         const created = await createExecutionReportRun(snapshot);
         setWizardOpen(false);
@@ -661,7 +669,7 @@ export const ExecutionReportsSurface = ({
         setGenerating(false);
       }
     },
-    [catalog, definitionName, loadReportsMvp, t, wizardPeriod.end, wizardPeriod.start]
+    [catalog, definitionName, loadReportsMvp, translateSnapshotText, wizardPeriod.end, wizardPeriod.start]
   );
 
   const catalogRows = useMemo<DefinitionRow[]>(
