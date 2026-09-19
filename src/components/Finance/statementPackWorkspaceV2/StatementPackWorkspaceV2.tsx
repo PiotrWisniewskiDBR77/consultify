@@ -202,7 +202,12 @@ export interface StatementPackWorkspaceV2Props {
   businessVersionId: string;
   /** Human-readable pack label from the canonical list/legacy bridge. */
   displayName?: string;
-  resolveLineLabel: (rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string;
+  resolveLineLabel: (
+    rowKey: string,
+    canonicalLineId: string | null,
+    lineCode: string | null,
+    taxonomyNames?: { lineName: string | null; lineNamePl: string | null }
+  ) => string;
   fetchers?: Partial<StatementPackWorkspaceV2Fetchers>;
   onOpenArtifact: (edge: LineageEdgeDto) => void;
   onCreateNew: (artifactType: FinanceArtifactType, sourceBusinessVersionId: string) => void;
