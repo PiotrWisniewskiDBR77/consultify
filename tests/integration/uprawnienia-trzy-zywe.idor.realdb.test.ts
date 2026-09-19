@@ -347,6 +347,21 @@ describe('M-project-members — GET/POST/PUT/DELETE /project-members/:projectId(
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((m: any) => m.id === h.memberId)).toBe(true);
+    expect(res.body.find((m: any) => m.id === h.memberId)?.email).toBe(
+      `${h.userAId}@local.test`
+    );
+  });
+
+  itDB('GET /project-members/:projectId — MEMBER sees names but not private email', async (h) => {
+    const app = buildPmApp();
+    const memberToken = makeE2EToken(h.userAId, h.orgAId, 'MEMBER');
+    const res = await request(app)
+      .get(`/api/project-members/${h.projectId}`)
+      .set('Authorization', `Bearer ${memberToken}`);
+    expect(res.status).toBe(200);
+    const row = res.body.find((m: any) => m.id === h.memberId);
+    expect(row).toMatchObject({ id: h.memberId, user_id: h.userAId });
+    expect(row).not.toHaveProperty('email');
   });
 
   itDB(

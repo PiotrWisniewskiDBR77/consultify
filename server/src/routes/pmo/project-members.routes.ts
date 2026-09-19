@@ -12,6 +12,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
+import { shapeOrgPersonPayload } from '../../services/orgPersonPayloadPolicy.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -95,7 +96,23 @@ router.get(
         { fallback: false }
       );
 
-      res.json(members || []);
+      const shapedMembers = (members || []).map((member: Record<string, unknown>) => {
+        const person = shapeOrgPersonPayload(
+          {
+            id: member.user_id,
+            firstName: member.first_name,
+            lastName: member.last_name,
+            email: member.email,
+            avatarUrl: member.avatar_url,
+          },
+          req.user?.role
+        );
+        if (Object.prototype.hasOwnProperty.call(person, 'email')) return member;
+        const { email: _privateEmail, ...safeMember } = member;
+        return safeMember;
+      });
+
+      res.json(shapedMembers);
     } catch (error) {
       if (isSchemaMissingError(error)) {
         return res.status(503).json({
