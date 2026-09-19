@@ -934,7 +934,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         handleUseTemplate(item);
       }}
       rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
-      defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+      /* Kolejność wierszy (updatedAt DESC + PIN trzech baz systemowych na górze,
+         Wpis 159 / DEC-655) jest własnością hooka `useTemplates` — JEDNO miejsce.
+         Ta tabela NIE narzuca już własnego `defaultSort`: był to drugi sort, który
+         przestawiał wiersze po surowym `updatedAt` i gubił pin, więc bazy nigdy nie
+         docierały na szczyt widoku tabeli (domyślnego, flaga galerii OFF). Kolumna
+         „Last change" pozostaje `sortable` — użytkownik może posortować ręcznie. */
       persistKey="rap.templates.list.v4"
       selection={{ selectedIds, onChange: setSelectedIds }}
       minTableWidth="columns"

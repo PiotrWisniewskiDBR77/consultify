@@ -779,6 +779,10 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
   () => import('./screens/day267-materialy-hub-zrzuty')
 );
 
+const QoderW159TemplatePinScreen = React.lazy(
+  () => import('./screens/qoder-w159-template-pin')
+);
+
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
@@ -3053,6 +3057,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day267 — realny ReportsAndPresentationsHub; &tab=outputs_all|outputs_documents|presentations|outputs_sheets|templates &state=ready|empty|loading|error',
     render: () => <Day267MaterialyHubZrzutyScreen />,
+  },
+  'qoder-w159-template-pin': {
+    label:
+      'W159 (DEC-655) — realny ReportsAndPresentationsHub, PIN 3 baz systemowych na górze biblioteki wzorców; &tab=templates &lang=pl|en &theme=light|dark',
+    render: () => <QoderW159TemplatePinScreen />,
   },
   'auth-login': {
     label:

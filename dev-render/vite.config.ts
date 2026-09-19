@@ -243,6 +243,18 @@ function apiNoBackendPlugin() {
     configureServer(server: any) {
       if (process.env.DEV_RENDER_API_PROXY_TARGET) return;
       server.middlewares.use('/api', (_req: any, res: any) => {
+        // Niektóre loadery (flagi `v8/admin/flags`, org) łapią referencję do
+        // `fetch` już w fazie bootstrapu main.tsx, więc nadpisanie
+        // `window.fetch` w ekranie ich NIE przechwyci i request dobija tu.
+        // Opt-in: DEV_RENDER_API_STUB_OK=1 zwraca łagodne `{}` zamiast 404,
+        // żeby zrzut miał czystą konsolę (bledyKonsoli=0). Domyślnie (bez env)
+        // zostaje uczciwe 404 DEV_RENDER_NO_BACKEND.
+        if (process.env.DEV_RENDER_API_STUB_OK) {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify({}));
+          return;
+        }
         res.statusCode = 404;
         res.setHeader('content-type', 'application/json');
         res.end(JSON.stringify({ error: { code: 'DEV_RENDER_NO_BACKEND' } }));

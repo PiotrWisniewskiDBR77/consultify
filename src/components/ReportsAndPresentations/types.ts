@@ -233,6 +233,12 @@ export interface TemplateItem {
   type: TemplateType;
   category: TemplateCategory;
   scope: TemplateScope;
+  /**
+   * Rodzina kanonicznego szablonu (`originSummary.template.family`), np.
+   * `DOC-BASE` / `DECK-BASE` / `SHEET-BASE` dla trzech baz systemowych
+   * (migration 20262271). `undefined` = indeks nie niesie rodziny.
+   */
+  templateFamily?: string;
   status: TemplateStatus;
   /**
    * ISO data ostatniej zmiany albo `null`, gdy indeks jej nie zna.

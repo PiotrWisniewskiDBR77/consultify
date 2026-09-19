@@ -1244,6 +1244,22 @@ export function mapTemplateScope(scopeRaw: unknown): MaterialTemplateScope {
   return 'unknown';
 }
 
+/** Rodziny trzech baz systemowych (migration 20262271_template_base_family). */
+export const BASE_TEMPLATE_FAMILIES = ['DOC-BASE', 'DECK-BASE', 'SHEET-BASE'] as const;
+
+/**
+ * Predykat PINa biblioteki wzorców (Wpis 159 / DEC-655): baza systemowa =
+ * scope 'system' ORAZ rodzina z `BASE_TEMPLATE_FAMILIES`. Sama rodzina bez
+ * scope (albo odwrotnie) nie pinuje — obie połowy mierzone w KROK 0.
+ */
+export function isPinnedBaseTemplate(item: TemplateItem): boolean {
+  return (
+    item.scope === 'system' &&
+    typeof item.templateFamily === 'string' &&
+    (BASE_TEMPLATE_FAMILIES as readonly string[]).includes(item.templateFamily)
+  );
+}
+
 /** Runtime pochodzenia kanonicznego szablonu; nieznana wartość → `null`. */
 export function mapTemplateOriginRuntime(raw: unknown): TemplateOriginRuntime | null {
   const normalized = String(raw ?? '')
@@ -1335,7 +1351,9 @@ export function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
       outputType === 'report'
         ? coerceTemplateCategory(template?.reportType || template?.outputType || raw?.reportType)
         : coerceTemplateCategory(template?.deckType || template?.outputType),
-    scope: mapTemplateScope(template?.scope),
+    scope: mapTemplateScope(template?.scope ?? (template?.system === true ? 'system' : undefined)),
+    templateFamily:
+      typeof template?.family === 'string' && template.family.trim() ? template.family.trim() : undefined,
     status: mapTemplateStatus(template?.status),
     updatedAt,
     createdBy: String((metadata as any).createdBy || raw?.createdBy || 'System'),
@@ -1415,7 +1433,11 @@ export function useTemplates() {
         return Number.isFinite(ts) ? ts : -Infinity;
       };
       merged.sort((a, b) => updatedTs(b) - updatedTs(a));
-      setTemplates(merged);
+      // PIN (Wpis 159 / DEC-655): trzy bazy systemowe zawsze na górze biblioteki,
+      // wewnątrz pina nadal po updatedAt DESC. Jedno miejsce — hook, nie komponent
+      // (TemplatesTabContent dostaje kolejność propsem).
+      const pinned = merged.filter(isPinnedBaseTemplate);
+      setTemplates(pinned.length ? [...pinned, ...merged.filter((x) => !isPinnedBaseTemplate(x))] : merged);
       setError(null);
     } catch {
       setTemplates([]);
