@@ -45,10 +45,9 @@ router.get(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({
-        error: 'Nie udało się pobrać ustawień dostępu organizacji',
-        code: 'ORG_POLICY_SNAPSHOT_FAILED',
-      });
+      // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes
+      // it via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
+      return res.status(500).json({ code: 'ORG_POLICY_SNAPSHOT_FAILED' });
     }
   })
 );
