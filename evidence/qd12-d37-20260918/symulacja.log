@@ -1,0 +1,161 @@
+Border style is 2.
+==================== RESET (sprzątanie po ewentualnym poprzednim biegu) ======
+psql:/tmp/symulacja-d37.sql:14: NOTICE:  table "d37_fix_backup" does not exist, skipping
+DROP TABLE
+UPDATE 1
+DELETE 0
+==================== FAZA A — STAN PRZED (oczekiwane: 0 / 0 / NULL / 9) =======
+--- A1. produktowy join ( Dokładnie SQL z resolveInitiativeTransitionCase ) — ile z 9 inicjatyw NW rezolwuje sprawę (oczekiwane 0 = 409):
++-----------------------------+
+| resolved_initiatives_before |
++-----------------------------+
+|                           0 |
++-----------------------------+
+(1 row)
+
+--- A2. join dla JEDNEJ inicjatywy 88013795 z LIMIT 2 (dokładny kształt funkcji) — oczekiwane 0 wierszy:
++------------------------+
+| transformation_case_id |
++------------------------+
++------------------------+
+(0 rows)
+
+--- A3. plany NW (oczekiwane 0):
++-----------------+
+| nw_plans_before |
++-----------------+
+|               0 |
++-----------------+
+(1 row)
+
+--- A4. active_plan_id sprawy (oczekiwane NULL):
++-------------------------+
+| case_active_plan_before |
++-------------------------+
+|                         |
++-------------------------+
+(1 row)
+
+--- A5. artifact_links sprawy (oczekiwane 9):
++--------------+
+| links_before |
++--------------+
+|            9 |
++--------------+
+(1 row)
+
+==================== FAZA A — URUCHOMIENIE 1 runbooka ==========================
+BEGIN
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+UPDATE 1
+COMMIT
+--- A6. produktowy join PO — ile z 9 inicjatyw NW rezolwuje sprawę (oczekiwane 9):
++----------------------------+
+| resolved_initiatives_after |
++----------------------------+
+|                          9 |
++----------------------------+
+(1 row)
+
+--- A7. join dla JEDNEJ inicjatywy 88013795 PO (oczekiwane 1 wiersz = case_id 565fa3f3):
++--------------------------------------+
+|        transformation_case_id        |
++--------------------------------------+
+| 565fa3f3-5cd3-5589-889b-9fcec0c5cd28 |
++--------------------------------------+
+(1 row)
+
+--- A8. plany NW (oczekiwane 1) + active_plan_id ustawiony:
++----------------+
+| nw_plans_after |
++----------------+
+|              1 |
++----------------+
+(1 row)
+
++--------------------------------------+--------+---------+
+|        case_active_plan_after        | status | version |
++--------------------------------------+--------+---------+
+| d37a5f00-0000-4000-8000-565fa3f3cd28 | active |       1 |
++--------------------------------------+--------+---------+
+(1 row)
+
+--- A9. backup before-image (oczekiwane 1 wiersz):
++-------------+
+| backup_rows |
++-------------+
+|           1 |
++-------------+
+(1 row)
+
+==================== FAZA A — URUCHOMIENIE 2 (idempotencja) ====================
+BEGIN
+psql:/tmp/d37-fix.sql:47: NOTICE:  relation "d37_fix_backup" already exists, skipping
+CREATE TABLE
+INSERT 0 0
+INSERT 0 0
+UPDATE 0
+COMMIT
+--- A10. plany NW NIE rosną (oczekiwane 1):
++---------------+
+| nw_plans_run2 |
++---------------+
+|             1 |
++---------------+
+(1 row)
+
+--- A11. join nadal rezolwuje 9/9 (oczekiwane 9):
++---------------+
+| resolved_run2 |
++---------------+
+|             9 |
++---------------+
+(1 row)
+
+--- A12. backup NIE rośnie (oczekiwane 1):
++------------------+
+| backup_rows_run2 |
++------------------+
+|                1 |
++------------------+
+(1 row)
+
+==================== FAZA B — KOLATERAL (oczekiwane: nietknięty) ==============
+--- B1. 2 plany DBR77 obecne, niezmienione:
++--------------------------------------+-----------+------------------------------+
+|               plan_id                |  status   |       methodology_key        |
++--------------------------------------+-----------+------------------------------+
+| 15fe7d1d-b6d4-48d8-8c31-6c30805c535a | approved  | consultify-transformation-v1 |
+| adf3fb5a-fd88-4513-b971-0fa1ae5c8bac | cancelled | consultify-transformation-v1 |
++--------------------------------------+-----------+------------------------------+
+(2 rows)
+
+--- B2. 9 artifact_links sprawy nietknięte (oczekiwane 9):
++-------------+
+| links_after |
++-------------+
+|           9 |
++-------------+
+(1 row)
+
+--- B3. globalna liczba planów (oczekiwane 3 = 2 DBR77 + 1 NW):
++-------------+
+| total_plans |
++-------------+
+|           3 |
++-------------+
+(1 row)
+
+==================== FAZA C — PORZĄDKI ======================================
+DROP TABLE
+--- C1. backup table zdropowana (oczekiwane: brak):
++-------------------------+
+| backup_table_after_drop |
++-------------------------+
+|                         |
++-------------------------+
+(1 row)
+
+==================== KONIEC SYMULACJI =======================================
