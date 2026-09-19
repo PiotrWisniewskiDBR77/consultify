@@ -1,0 +1,7 @@
+?column?
+iq_nw=54
+iq_nw_junk=2
+ers_nw=3
+ers_nw_smoke=1
+ie_nw=19
+(5 rows)

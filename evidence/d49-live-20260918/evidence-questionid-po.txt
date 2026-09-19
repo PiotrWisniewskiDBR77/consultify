@@ -1,0 +1,4 @@
+id|coalesce
+03e3f1d9-e286-4a76-b547-599cdec53d7a|(NULL)
+b140e82d-a38e-4a3a-af01-39a8e3a16c6b|(NULL)
+(2 rows)

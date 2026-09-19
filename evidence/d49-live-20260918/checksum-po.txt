@@ -1,0 +1,12 @@
+ ORG_COUNT=13
+
+ DETAIL interview_questions real_excl_touched=128
+
+ DETAIL execution_report_snapshots real_excl_touched=2
+
+ DETAIL interview_evidence real_excl_touched=64
+
+ TOTAL_INCL_TOUCHED=196
+
+ CHECKSUM=3c342764ab3d900f12f14e55cca19a67
+

@@ -1,0 +1,6 @@
+BEGIN
+DELETE 2
+DELETE 1
+psql:evidence/d49-live-20260918/d49-live-delete.sql:58: NOTICE:  D49_PROVEN: targets gone, collateral intact (snapshots=2, answers=4)
+DO
+COMMIT
