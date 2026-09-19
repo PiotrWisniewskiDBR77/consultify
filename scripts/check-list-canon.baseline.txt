@@ -7,7 +7,7 @@
 # ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję.
 #
 # WYGENEROWANO: 2026-09-19 (scripts/check-list-canon.sh --update)
-# RAZEM: 333 naruszeń w 118 plikach
+# RAZEM: 330 naruszeń w 117 plikach
 #
 # Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają.
 2	src/components/AIAnalyticsDashboard.tsx
@@ -16,7 +16,6 @@
 2	src/components/AIChat/Artifacts/renderers/PMODocumentRenderer.tsx
 2	src/components/AIChat/Artifacts/renderers/TableRenderer.tsx
 2	src/components/AIChat/CanvasArtifactBlockRenderer.tsx
-3	src/components/AIChat/CodeInterpreter/CodeExecutionBlock.tsx
 3	src/components/AIChat/KimiWorkspace/ExceleParametricTemplates.tsx
 2	src/components/AIChat/KimiWorkspace/KimiWorkspaceShell.tsx
 2	src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx

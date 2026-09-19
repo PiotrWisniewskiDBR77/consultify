@@ -98,7 +98,7 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
     case 'table':
       return (
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table /* §27-exempt: read-only render wyniku wykonania kodu (Code Interpreter, FLOW-AI-CODE) — podgląd tabelaryczny columns/rows z output.data (slice 0..10, "Showing 10 of N rows"), nie lista encji produktu; brak Menu 1/2/3 (filtr/sort/akcje/nawigacja) */ className="min-w-full text-sm">
             <thead className="bg-slate-100 dark:bg-navy-800">
               <tr>
                 {output.data.columns?.map((col: string, i: number) => (
