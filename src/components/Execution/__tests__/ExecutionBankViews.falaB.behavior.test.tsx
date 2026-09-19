@@ -21,8 +21,13 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildExecutionBankRows } from '../executionBankModel';
+import { buildExecutionBankPreviewDeclaration } from '../executionBankPreviewDeclaration';
 import { ExecutionBankViews, formatExecutionBankDate } from '../ExecutionBankViews';
 import { buildExecutionRiskSignalMap } from '../executionRiskSignal';
+
+/** Deklaracja podglądu bierze `t` jawnie — ten sam kształt co atrapa wyżej. */
+const previewT = (key: string, defaultValue: string, vars?: Record<string, string | number>) =>
+  String(defaultValue ?? key).replace(/\{\{(\w+)\}\}/g, (_m, n) => String(vars?.[n] ?? ''));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -138,5 +143,47 @@ describe('Bank Realizacji — FALA B przy flagach ON', () => {
     // Oczekiwanie liczy TEN SAM formater co produkt — data nadal konkretna.
     expect(within(accepted!).getByText(formatExecutionBankDate('2026-04-02'))).toBeTruthy();
     expect(accepted?.getAttribute('title')).toContain('Handed over');
+  });
+});
+
+/**
+ * D-29 — WPIĘCIE, nie obecność biblioteki. `executionRiskAxisSentence` ma
+ * własny test jednostkowy, ale sam klucz i18n nic nie znaczy, dopóki zdanie
+ * nie stanie w DOM: tu pytamy REALNY bank (tabela + podgląd) o `title`
+ * pastylek. Usunięcie `title={sentence}` albo zepsucie mapowania powodu robi
+ * się czerwone bez dotykania atrapy.
+ */
+describe('D-29 — zdanie osi dociera do DOM (wpięcie)', () => {
+  it('agregat w tabeli niesie w podpowiedzi zdania WSZYSTKICH trzech osi', () => {
+    renderBank({ riskSignals, showHandoffTrace: true });
+    const full = screen
+      .getAllByTestId('execution-risk-aggregate')
+      .find((pill) => pill.getAttribute('data-risk-measured') === '3');
+    const title = full?.getAttribute('title') ?? '';
+    expect(title).toContain('Schedule health: In tolerance (index 0.99)');
+    expect(title).toContain('Impact gap: In tolerance (index 0.99)');
+    expect(title).toContain('Delivery promise: In tolerance (index 0.99)');
+    expect(title.split(' · ')).toHaveLength(3);
+    expect(full?.getAttribute('aria-label')).toBe(title);
+  });
+
+  it('podgląd niesie zdanie każdej osi, a brak pomiaru nazywa wprost', () => {
+    const declaration = buildExecutionBankPreviewDeclaration({
+      row: rows[1],
+      t: previewT,
+      statusChipTone: () => 'neutral',
+      asOf: ASOF,
+      progressLabel: '—',
+      relations: [],
+      riskSignal: riskSignals.get('ini-2') ?? null,
+    });
+    const facts = new Map(declaration.details?.properties?.map((fact) => [fact.id, fact.value]));
+    render(<>{[...facts.values()]}</>);
+
+    const schedule = screen.getByTestId('execution-risk-axis-schedule');
+    expect(schedule.getAttribute('title')).toBe('Schedule health: Escalate (index 0.40)');
+    const impact = screen.getByTestId('execution-risk-axis-impact');
+    expect(impact.getAttribute('title')).toContain('Impact gap: not measured — ');
+    expect(impact.getAttribute('aria-label')).toBe(impact.getAttribute('title'));
   });
 });
