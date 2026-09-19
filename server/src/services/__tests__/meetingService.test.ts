@@ -57,15 +57,12 @@ vi.mock('../meetingBoundary/meetingBoundaryService.js', () => ({
 }));
 
 import {
-  addMeetingDecision,
-  addMeetingFollowUp,
   createMeeting,
   deleteMeeting,
   ensureMeetingTables,
   getMeeting,
   listMeetings,
   updateMeeting,
-  updateMeetingFollowUpStatus,
   updateMeetingStatus,
 } from '../meetingService.js';
 
@@ -132,7 +129,6 @@ async function makeMeeting(overrides: Record<string, unknown> = {}) {
     attendees: ['Alice', 'Bob'],
     preRead: ['brief.pdf'],
     agenda: ['Intro', 'Scope'],
-    decisions: [],
     ...overrides,
   });
 }
@@ -266,12 +262,12 @@ describe('meetingService', () => {
 
   it('deletes a meeting and its follow-ups', async () => {
     const created = await makeMeeting();
-    await addMeetingFollowUp({
-      organizationId: ORG,
-      meetingId: created.id,
-      title: 'Send notes',
-      owner: 'Alice',
-    });
+    await runAsync(
+      `INSERT INTO meeting_follow_ups
+         (id, meeting_id, title, owner, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'open', datetime('now'), datetime('now'))`,
+      ['legacy-follow-up', created.id, 'Send notes', 'Alice']
+    );
     const deleted = await deleteMeeting({ organizationId: ORG, meetingId: created.id });
     expect(deleted).toBe(true);
 
@@ -367,35 +363,5 @@ describe('meetingService', () => {
       status: 'completed',
     });
     expect(completed?.status).toBe('completed');
-  });
-
-  it('appends decisions', async () => {
-    const created = await makeMeeting();
-    const withDecision = await addMeetingDecision({
-      organizationId: ORG,
-      meetingId: created.id,
-      decision: 'Ship MVP',
-    });
-    expect(withDecision?.decisions).toContain('Ship MVP');
-  });
-
-  it('adds and toggles follow-up status', async () => {
-    const created = await makeMeeting();
-    const withFollowUp = await addMeetingFollowUp({
-      organizationId: ORG,
-      meetingId: created.id,
-      title: 'Email recap',
-      owner: 'Bob',
-    });
-    const followUp = withFollowUp?.followUps[0];
-    expect(followUp?.status).toBe('open');
-
-    const toggled = await updateMeetingFollowUpStatus({
-      organizationId: ORG,
-      meetingId: created.id,
-      followUpId: followUp!.id,
-      status: 'done',
-    });
-    expect(toggled?.followUps[0].status).toBe('done');
   });
 });
