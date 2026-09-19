@@ -9,6 +9,7 @@
  * Governance contract is enforced server-side. This view is a thin client.
  */
 
+import type { TFunction } from 'i18next';
 import {
   Archive,
   CheckCircle2,
@@ -68,6 +69,10 @@ import type {
 import { normalizeTemplateFormattingSchema } from './types';
 import { useTranslation } from 'react-i18next';
 import { formatListDateTime } from '../../utils/listDateFormat';
+
+function getTemplateArchitectErrorLine(t: TFunction, source: unknown): string {
+  return getAppErrorLine((key, defaultValue) => t(key, defaultValue ?? key), source);
+}
 
 export function getTemplateStructureSaveErrorMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : String(error ?? '');
@@ -486,7 +491,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       const list = await listDocumentStudioTemplates();
       setTemplates(list);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setLoadingList(false);
     }
@@ -527,7 +532,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setLastDraftRefined(useLlm ? result.llmRefined : null);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setDrafting(false);
     }
@@ -541,7 +546,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       onTemplateApproved?.(approved);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -555,7 +560,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(templateId);
       setValidationIssues(result.issues);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -569,7 +574,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setAuditEntries(await listDocumentStudioTemplateAudit(templateId));
       setShowHistory(true);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -583,7 +588,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(draft.templateId);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -598,7 +603,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(draft.templateId);
       setShowHistory(false);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -616,7 +621,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -629,7 +634,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await deprecateDocumentStudioTemplate(templateId);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getTemplateArchitectErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
