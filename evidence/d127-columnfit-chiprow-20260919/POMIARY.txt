@@ -1,16 +1,21 @@
 # D-127 (Wpis 205) — pomiary warunków twardych
-# Gałąź: qoder/b-d127-columnfit-chiprow-20260919  HEAD: 14730044cc
-# Linia: origin/integracja/20260911 = 75bb013df6
+# Gałąź: qoder/b-d127-columnfit-chiprow-20260919
+# Commit kodu: b1c91e93dc; evidence tip: patrz linia READY w meldunku.
+# Linia origin/integracja/20260911 PRZESUNĘŁA SIĘ 2× w trakcie bramki:
+#   2bdf2c4076 -> 75bb013df6 (okno 16) -> 236320b143 (okno 17, Wpis 223).
+#   Finalny HEAD po rebase na 236320b143; CAŁA bramka powtórzona na nowym HEAD.
+# Plik kanonu NIE zmienił się między bazami (git diff --stat pusty) -> PRZED ważne.
 # Harness: dev-render vite :5410, 1440x900, --bez-chrome, bledyKonsoli=0, SIEC-4XX5XX=0
+# Warunki (1) i (2) PRZECHWYCONE PONOWNIE na finalnym HEAD — hashe IDENTYCZNE
+#   jak na pośrednim (render deterministyczny, niezależny od zmian translation.json z linii).
 
 ## WARUNEK (1) — trzy listy BEZ chipów: zrzuty PRZED/PO bajtowo identyczne
-# PRZED = columnWidthCanon.ts z bazy 75bb013df6; PO = HEAD (moja zmiana).
-# Plik kanonu NIE zmienił się między 2bdf2c4076 a 75bb013df6 (git diff --stat pusty).
+# PRZED = columnWidthCanon.ts z bazy 236320b143; PO = HEAD (moja zmiana).
 # Ekrany wybrane po pomiarze: 0 komórek z `span.rounded-full`, czysta konsola.
 #   - day235-materialy-dokumenty (2 tabele, 32 td, 0 chipów)
 #   - day235-materialy-excele     (1 tabela, 12 td, 0 chipów)
 #   - idea-table-tool-grouping    (1 tabela, 30 td, 0 chipów)
-# cmp -s PRZED PO → IDENTICAL; sha256 (pierwsze 16 znaków):
+# cmp -s PRZED PO -> IDENTICAL; sha256 (pierwsze 16 znaków):
 day235-materialy-dokumenty/light: IDENTICAL  ab63e140e2102bc9
 day235-materialy-dokumenty/dark:  IDENTICAL  2f120c2bade5ffa8
 day235-materialy-excele/light:    IDENTICAL  6c52f74a0f9f468e
@@ -30,22 +35,34 @@ idea-table-tool-grouping/dark:    IDENTICAL  b2bdd9ad28c2cc89
 # Uwaga: przykład CTO „Tags/Status w Initiatives" nieaktualny — CanonicalInitiativeRegister
 # (assessment-initiatives-table) renderuje 0 chipów; drugą listą chipową jest mywork-decisions.
 
-## BRAMKA (jedna, po rebase na 75bb013df6)
-# tsc front 8GB: BLEDY=81 (baza cache 81), PLIKI_Z_BLEDAMI=17 (baza 17)
+## BRAMKA (powtórzona w całości po rebase na 236320b143, finalny HEAD)
+# tsc front 8GB: BLEDY=81 (baza cache 236320b143 = 81), PLIKI_Z_BLEDAMI=17 (baza 17)
 #   RÓŻNICA ZBIORÓW (mine MINUS base) = PUSTA; żaden plik delty nie ma błędu.
-#   Mutacja przyrządu: `const x: number = "s"` → 82 (+1) → cofnięta.
+#   Mutacja przyrządu: `const x: number = "s"` -> 82 (+1) -> cofnięta.
 # check-list-canon: 343 == baseline 343 (dług nie rośnie)
 # check-artefakt: crimson 8 == 8; danger 117 == 117 (nie blokuje)
 # check:flagi:dockerfile: analyzedFlags=210 dockerArgs=222 wyjatki=13 brakujace=0
 # check:jezyk:ci: OK (nic nie wzrosło); spadki K5pl -26, K5en -39, K4obj -4, K8sen -3
-# npm run build 8GB: BUILD_EXIT=0, built in 41.13s
+# npm run build 8GB: BUILD_EXIT=0, built in 52.21s
 # Testy delty: columnWidthCanon + ChipOverflowRow + IdeasTableContent.canonV2 = 53/53 PASS
 #   Sąsiedzi chips/__tests__ + columnWidthCanon = 42/42 PASS
 # Mutacje RED (na finalnym HEAD):
-#   A (logika): cellTextLines per-chip zamiast rzędu → 3 RED (RZĄD jedna linia;
-#     chipy nie zlewają się z tekstem; kolumna chipów mierzy RZĄD) → cofnięta.
-#   B (wpięcie): fitChipRow zawsze `return n` → 5 RED (partial→1; nothing→0;
-#     collapses overflow "+N"; custom label; IdeasTagChips "+2") → cofnięta.
+#   A (logika): cellTextLines per-chip zamiast rzędu -> 3 RED (RZĄD jedna linia;
+#     chipy nie zlewają się z tekstem; kolumna chipów mierzy RZĄD) -> cofnięta.
+#   B (wpięcie): fitChipRow zawsze `return n` -> 5 RED (partial->1; nothing->0;
+#     collapses overflow "+N"; custom label; IdeasTagChips "+2") -> cofnięta.
 # ZASTANA: ProjectStageGatesPanel.columnWidth (Z-43) sum 300>285 — identycznie na bazie
-#   75bb013df6 bez mojej zmiany (Status to zwykły span whitespace-nowrap, nie chip z `label`).
+#   236320b143 bez mojej zmiany (Status to zwykły span whitespace-nowrap, nie chip z `label`).
 #   IdeaMapWorkspace.preferredTool-regression: 2 failed na bazie I na moim — ZASTANA.
+
+## Ideas — czy wymaga sprzątania po D-127 (pytanie z Wpisu 205)
+# Logika: NIE wymaga sprzątania. ZDUPLIKOWANA lokalna logika przepełnienia z ideas-i v3
+# (Wpis 204: `fitTagChips` + `TAG_CHIP_GAP_PX` + ręczne „+N") ZNIKNĘŁA w tym commicie —
+# `IdeasTagChips` (IdeasTableContent.tsx:283) to teraz cienka owijka nad kanonicznym
+# `ChipOverflowRow` z jądra; rząd chipów i „+N" liczone są RAZ w jądrze. grep: brak
+# `fitTagChips`/`TAG_CHIP_GAP` w pliku.
+# Szerokość: zostaje `width: columnWidths.tags` (IdeasTableContent.tsx:861) — to STANDARDOWA
+# konfiguracja szerokości kolumn (jak każda inna kolumna), NIE lokalny hack; columnFit
+# i tak kompresuje ją do 145 px, a „+N" z jądra gwarantuje scrollWidth<=clientWidth.
+# Ewentualne dostrojenie deklarowanej szerokości Tags = opcjonalny follow-up inbox-ii/
+# mytasks-ii, nie jest wymagane do poprawności (warunek (2) spełniony: 5/5 komórek 145/145).
