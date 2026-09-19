@@ -29,7 +29,7 @@ const { MethodOutputService } = await import('../MethodOutputService.js');
 const { EventDerivedOutputBridge, deriveFindingsFromEvents } = await import(
   '../EventDerivedOutputBridge.js'
 );
-import type { PackReadinessLookup } from '../../MethodSessionService.js';
+import type { MethodOutputBridge, PackReadinessLookup } from '../../MethodSessionService.js';
 
 const organizationId = 'org-1';
 
@@ -128,7 +128,10 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
     outputs = new MethodOutputService();
   });
 
-  async function driveToInReview(service: InstanceType<typeof MethodSessionService>) {
+  async function driveToInReview(
+    service: InstanceType<typeof MethodSessionService>,
+    sessionName?: string
+  ) {
     const created = await service.createSession({
       organizationId,
       projectId: null,
@@ -137,6 +140,7 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
       methodPackVersion: '1.0.0',
       ownerUserId: 'owner-1',
       mode: 'guided_manual',
+      ...(sessionName === undefined ? {} : { name: sessionName }),
     });
     if (!created.ok) throw new Error('setup: createSession failed');
     const session = created.session;
@@ -224,6 +228,91 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
     expect((outputCreated!.payload as any).outputId).toBe(outputRows[0].id);
   });
 
+  /**
+   * ★ D-48 (DLUG-PO-MVP, 2026-09-18) — test WPIĘCIA, nie obecności: DEC-602
+   * dał nazwę sesji tylko nagłówkowi powłoki; w TREŚCI zamrożonego raportu
+   * sesja wciąż występowała jako goły uuid (`Scope: session 63aa51e1-…`).
+   * Asertujemy ARGUMENT, który realne zamrożenie `MethodSessionService`
+   * przekazuje do mostka — nie lokalne lustro. Mutacja: usuń
+   * `sessionName: sessionRow.name ?? null` w `snapshotOnFreeze` → oba
+   * przypadki poniżej spadają (undefined !== nazwa).
+   */
+  it('D-48: freeze hands the bridge the session NAME (explicit and generated), not only the uuid', async () => {
+    const odebrane: Array<Parameters<MethodOutputBridge['onSessionFrozen']>[0]> = [];
+    const recordingBridge: MethodOutputBridge = {
+      async onSessionFrozen(input) {
+        odebrane.push(input);
+      },
+    };
+    const service = new MethodSessionService(packs, events, recordingBridge);
+
+    const nazwana = await driveToInReview(service, 'Northwind AI Readiness — pilot 2');
+    await service.assignRole(organizationId, nazwana.id, 'approver-1', 'approver');
+    await service.transition({
+      sessionId: nazwana.id,
+      to: 'frozen',
+      actorKind: 'human',
+      actorUserId: 'approver-1',
+      idempotencyKey: `${nazwana.id}-freeze`,
+    });
+
+    expect(odebrane).toHaveLength(1);
+    expect(odebrane[0].sessionId).toBe(nazwana.id);
+    expect(odebrane[0].sessionName).toBe('Northwind AI Readiness — pilot 2');
+    expect(odebrane[0].sessionName).not.toBe(odebrane[0].sessionId);
+  });
+
+  it('D-48: a session the user never renamed still forwards its generated label (uuid stays in sessionId)', async () => {
+    const odebrane: Array<Parameters<MethodOutputBridge['onSessionFrozen']>[0]> = [];
+    const recordingBridge: MethodOutputBridge = {
+      async onSessionFrozen(input) {
+        odebrane.push(input);
+      },
+    };
+    const service = new MethodSessionService(packs, events, recordingBridge);
+
+    const bezNazwy = await driveToInReview(service);
+    const zapisana = await service.getSession(bezNazwy.id);
+    await service.assignRole(organizationId, bezNazwy.id, 'approver-1', 'approver');
+    await service.transition({
+      sessionId: bezNazwy.id,
+      to: 'frozen',
+      actorKind: 'human',
+      actorUserId: 'approver-1',
+      idempotencyKey: `${bezNazwy.id}-freeze`,
+    });
+
+    expect(odebrane).toHaveLength(1);
+    // `normalizeMethodSessionName` nigdy nie zostawia pustej nazwy, więc
+    // mostek zawsze ma etykietę — a identyfikator zostaje w swoim polu.
+    expect(odebrane[0].sessionName).toBe(zapisana?.name ?? null);
+    expect(String(odebrane[0].sessionName ?? '').trim().length).toBeGreaterThan(0);
+    expect(odebrane[0].sessionId).toBe(bezNazwy.id);
+  });
+
+  it('D-48: the FROZEN scope sentence carries the session name and no longer the raw uuid', async () => {
+    const bridge = new EventDerivedOutputBridge(events, outputs);
+    const service = new MethodSessionService(packs, events, bridge);
+    const session = await driveToInReview(service, 'Northwind AI Readiness — pilot 2');
+    await service.assignRole(organizationId, session.id, 'approver-1', 'approver');
+
+    await service.transition({
+      sessionId: session.id,
+      to: 'frozen',
+      actorKind: 'human',
+      actorUserId: 'approver-1',
+      idempotencyKey: `${session.id}-freeze`,
+    });
+
+    const outputRows = testDb.getRows('method_outputs');
+    expect(outputRows).toHaveLength(1);
+    const scope = String(outputRows[0].scope ?? '');
+    expect(scope).toContain('Northwind AI Readiness — pilot 2');
+    expect(scope).not.toContain(session.id);
+    // uuid nie znika z rekordu — zostaje tam, gdzie jest identyfikatorem.
+    expect(outputRows[0].session_id).toBe(session.id);
+  });
+
   it('freeze without a bridge wired keeps pre-A6 behaviour: snapshot only, no Output created', async () => {
     const service = new MethodSessionService(packs, events); // no 3rd arg
     const session = await driveToInReview(service);
@@ -286,7 +375,7 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
     outputs = new MethodOutputService();
   });
 
-  async function zamroz(language: string | null | undefined) {
+  async function zamroz(language: string | null | undefined, sessionName?: string | null) {
     const sessionId = `session-lang-${String(language)}`;
     await events.append({
       organizationId,
@@ -320,6 +409,7 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
       methodPackVersion: '1.0.0',
       demoBypassActive: false,
       revisionOfSessionId: null,
+      ...(sessionName === undefined ? {} : { sessionName }),
       ...(language === undefined ? {} : { language }),
     });
 
@@ -399,6 +489,43 @@ describe('EventDerivedOutputBridge — scope/limitations w języku konta', () =>
     for (const l of limitations) {
       expect(maPolskieZnaki(l)).toBe(false);
     }
+  });
+
+  /**
+   * ★ D-48 — `scope` to zdanie, które klient czyta w raporcie z oceny
+   * (stopka „Ocena" i podtytuł tożsamości dokumentu). Do dziś stał w nim
+   * goły uuid sesji; DEC-602 dał nazwę tylko nagłówkowi powłoki. Trzy
+   * przypadki, bo każdy psuje się inaczej: nazwa obecna (EN i PL), nazwa
+   * biała („naprawa" przez `??` zamiast `||` + `trim()` — zdanie brzmiałoby
+   * „Scope: session , method pack …") i nazwa nieprzekazana wcale (stara
+   * ścieżka: identyfikator, nie pustka i nie `undefined`).
+   */
+  it('D-48 EN: scope niesie nazwę sesji, nie uuid', async () => {
+    const { scope } = await zamroz('en', 'Northwind AI Readiness — pilot 2');
+
+    expect(scope).toContain('Scope: session Northwind AI Readiness — pilot 2, method pack drd 1.0.0');
+    expect(scope).not.toContain('session-lang-en');
+  });
+
+  it('D-48 PL: to samo zdanie po polsku z nazwą sesji', async () => {
+    const { scope } = await zamroz('pl', 'Northwind — ocena gotowości AI');
+
+    expect(scope).toContain('Zakres: sesja Northwind — ocena gotowości AI, metodyka drd 1.0.0');
+    expect(scope).not.toContain('session-lang-pl');
+  });
+
+  it('D-48: biała nazwa nie produkuje dziury w zdaniu — zostaje identyfikator', async () => {
+    const { scope } = await zamroz('en', '   ');
+
+    expect(scope).toContain('Scope: session session-lang-en, method pack drd 1.0.0');
+    expect(scope).not.toContain('session ,');
+  });
+
+  it('D-48: brak nazwy w wejściu mostka — identyfikator, jak przed naprawą', async () => {
+    const { scope } = await zamroz('en');
+
+    expect(scope).toContain('Scope: session session-lang-en, method pack drd 1.0.0');
+    expect(scope).not.toContain('undefined');
   });
 
   /**

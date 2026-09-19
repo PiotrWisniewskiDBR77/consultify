@@ -113,6 +113,13 @@ export interface ReportSessionMeta {
   readonly mode: 'guided_manual' | 'teresa_led';
   readonly ownerUserId: string;
   /**
+   * ★ D-48 (2026-09-18): `method_sessions.name` — etykieta sesji, którą
+   * użytkownik widzi wszędzie indziej (nagłówek powłoki metody, DEC-602).
+   * Serwer zwraca ją od migracji 20262230; dokument raportu woli ją nad
+   * gołym uuid, bo raport czyta klient. Brak/pusty → dokument wraca do uuid.
+   */
+  readonly name?: string | null;
+  /**
    * ★ FALA J3 (2026-09-14): imię i nazwisko (albo e-mail) właściciela sesji,
    * dołączane OBOK identyfikatora przez `GET /api/method/sessions/:id`.
    * `null`/brak, gdy serwer nie zna nazwy — dokument wraca wtedy do

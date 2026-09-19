@@ -1998,6 +1998,10 @@ router.post(
         // this pass's scope (type errors only). Flagged for follow-up.
         demoBypassActive: false,
         revisionOfSessionId: session.revisionOfSessionId ?? null,
+        // D-48 — samonaprawa odtwarza Output DOKŁADNIE taki, jaki dałoby
+        // zwykłe zamrożenie, więc musi przekazać tę samą etykietę sesji
+        // (bez tego naprawiony `scope` wróciłby do gołego uuid).
+        sessionName: session.name ?? null,
         // Program spójności językowej (PLAN.md §2.5): `scope`/`limitations`
         // zamrażanego Outputu to zdania dla klienta — ścieżka samonaprawcza
         // musi znać język konta tak samo jak zwykłe zamrożenie, inaczej

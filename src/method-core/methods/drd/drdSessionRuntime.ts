@@ -610,6 +610,10 @@ export class DrdSessionRuntime {
     const totalUnits = Object.keys(current).length;
     const unitsWithAcceptedEvidence = findings.length;
     const priorOutput = this.currentOutputRecord();
+    // D-48 — ta sama etykieta co w `server/src/method-core/outputs/
+    // EventDerivedOutputBridge.ts`: nazwa sesji, którą użytkownik widzi
+    // w nagłówku powłoki (DEC-602), a nie goły uuid w zdaniu dla klienta.
+    const sessionLabel = state.session.name?.trim() || state.session.id;
 
     const output = createAssessmentOutput({
       id: genId(),
@@ -619,7 +623,7 @@ export class DrdSessionRuntime {
       // ★ FALA J2: te zdania czyta KLIENT w raporcie z oceny (to samo
       // lekarstwo, co w `server/src/method-core/outputs/
       // EventDerivedOutputBridge.ts` — rodzeństwo tej samej wady).
-      scope: `Zakres: sesja ${state.session.id}, metodyka ${state.session.methodPackId} ${state.session.methodPackVersion}, stan zamrożony.`,
+      scope: `Zakres: sesja ${sessionLabel}, metodyka ${state.session.methodPackId} ${state.session.methodPackVersion}, stan zamrożony.`,
       snapshotId: `local-snapshot:${state.session.id}:${nowIso()}`,
       current,
       target,

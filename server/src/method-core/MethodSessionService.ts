@@ -202,6 +202,15 @@ export interface MethodOutputBridge {
     /** See `MethodSessionRow.demo_bypass_active`. */
     readonly demoBypassActive: boolean;
     /**
+     * D-48 — `method_sessions.name`, i.e. the label the user sees for this
+     * session everywhere else (`MethodWorkspaceShell` header). Forwarded
+     * because `scope` in the frozen Output is prose the client reads, and it
+     * used to print the raw uuid there. The kernel still owns no method
+     * knowledge: this is a string it already stores. The uuid is not lost —
+     * it stays in `sessionId` above. Absent/blank → the bridge falls back.
+     */
+    readonly sessionName?: string | null;
+    /**
      * Język konta osoby, która zamraża (`users.language`) — jedyny powód,
      * dla którego jądro w ogóle przekazuje coś „ludzkiego": pola `scope`
      * i `limitations` zamrożonego Outputu są ZDANIAMI, które czyta klient,
@@ -1042,6 +1051,7 @@ export class MethodSessionService {
         methodPackVersion,
         demoBypassActive: sessionRow.demo_bypass_active,
         revisionOfSessionId: sessionRow.revision_of_session_id,
+        sessionName: sessionRow.name ?? null,
         language: await this.readActorLanguage(actorUserId),
       });
     }

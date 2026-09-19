@@ -17,6 +17,9 @@
  *   edge        — demo-bypass Output, superseded by a newer revision, ZERO
  *               recorded approvals, EMPTY aggregation.byGroup (today's real
  *               bridge shape) — exercises every "honest gap" message at once.
+ *   named       — (D-48) the same frozen Output as `happy`, but the session
+ *               carries `name`, so the SESSION property shows the human
+ *               label instead of the raw uuid; `happy` stays the fallback.
  *   not-frozen  — `outputId=null`, no fetch at all.
  */
 import React from 'react';
@@ -251,7 +254,12 @@ function installFetchStub(variant: string): void {
         return jsonResponse({ output: EDGE_OUTPUT, superseded: true, supersededByOutputId: 'out-4' });
       }
       if (/\/api\/method\/sessions\/sess-1$/.test(url)) {
-        return jsonResponse({ session: SESSION, roles: [] });
+        // D-48: wariant `named` dokłada `name` — dokładnie to pole, które
+        // serwer zwraca od migracji 20262230, a którego dokument do dziś
+        // nie czytał (pole „Session" drukowało uuid). Reszta wariantów
+        // zostaje bez nazwy, żeby pokazać uczciwy degrade do identyfikatora.
+        const name = variant === 'named' ? 'Northwind AI Readiness — pilot 2' : null;
+        return jsonResponse({ session: { ...SESSION, name }, roles: [] });
       }
       if (/\/api\/method\/sessions\/sess-1\/approvals$/.test(url)) {
         return jsonResponse({ approvals: variant === 'edge' ? [] : APPROVALS_HAPPY });

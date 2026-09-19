@@ -786,7 +786,10 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   // 15. awaria pomiędzy freeze a Output — symuluj przerwanie
   // =========================================================================
   it('15. an interruption between freeze (snapshot durable) and Output (never written) self-heals on the next freeze call', async () => {
-    const createRes = await createSession(ownerToken);
+    // D-48: sesja nazwana wprost — patrz asercja `scope` na dole. Bez
+    // `sessionName` w wywołaniu samonaprawczym trasy odtworzony Output
+    // wróciłby do gołego uuid w zdaniu, które czyta klient.
+    const createRes = await createSession(ownerToken, { name: 'P0B self-heal — named for D-48' });
     const sessionId = createRes.body.session.id;
     await driveToInReview(sessionId);
     await grantRole(sessionId, APPROVER, 'approver');
@@ -819,8 +822,16 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     expect(heal.body.selfHealed).toBe(true);
     expect(heal.body.output).toBeTruthy();
 
-    const postOutputs = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
+    const postOutputs = await pool.query(`SELECT id, scope FROM method_outputs WHERE session_id = $1`, [sessionId]);
     expect(postOutputs.rows).toHaveLength(1);
+
+    // ★ D-48 — dowód WPIĘCIA na ścieżce samonaprawczej trasy: odtworzone
+    // zdanie `scope` niesie nazwę sesji, a uuid zostaje w kolumnie
+    // identyfikatora. Mutacja: usuń `sessionName: session.name ?? null`
+    // w `method-core.routes.ts` (self-heal) → obie asercje poniżej spadają.
+    const scopeZHeal = String(postOutputs.rows[0].scope ?? '');
+    expect(scopeZHeal).toContain('P0B self-heal — named for D-48');
+    expect(scopeZHeal).not.toContain(sessionId);
   });
 
   // =========================================================================

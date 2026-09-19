@@ -253,7 +253,7 @@ export function deriveFindingsFromEvents(
 const TEKSTY_OUTPUTU: Record<
   ResponseLanguage,
   {
-    scope: (sessionId: string, packId: string, packVersion: string) => string;
+    scope: (sessionLabel: string, packId: string, packVersion: string) => string;
     aggregationRule: string;
     limitationTemplates: string;
     limitationAggregation: string;
@@ -261,8 +261,8 @@ const TEKSTY_OUTPUTU: Record<
   }
 > = {
   pl: {
-    scope: (sessionId, packId, packVersion) =>
-      `Zakres: sesja ${sessionId}, metodyka ${packId} ${packVersion}, stan zamrożony.`,
+    scope: (sessionLabel, packId, packVersion) =>
+      `Zakres: sesja ${sessionLabel}, metodyka ${packId} ${packVersion}, stan zamrożony.`,
     aggregationRule:
       'Podsumowania per oś liczone są według reguł metodyki w chwili prezentacji wyniku; ' +
       'ten zapis przechowuje poziomy per obszar.',
@@ -277,8 +277,8 @@ const TEKSTY_OUTPUTU: Record<
       'produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
   },
   en: {
-    scope: (sessionId, packId, packVersion) =>
-      `Scope: session ${sessionId}, method pack ${packId} ${packVersion}, frozen snapshot.`,
+    scope: (sessionLabel, packId, packVersion) =>
+      `Scope: session ${sessionLabel}, method pack ${packId} ${packVersion}, frozen snapshot.`,
     aggregationRule:
       'Per-axis summaries follow the method rules and are calculated when the result is ' +
       'presented; this record stores the per-area levels.',
@@ -309,6 +309,13 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
     readonly methodPackVersion: string;
     readonly demoBypassActive: boolean;
     readonly revisionOfSessionId: string | null;
+    /**
+     * D-48 — `method_sessions.name`, the label a user gave (or was given) for
+     * this session. `scope` is prose a client reads in the assessment report,
+     * so it carries the name; the uuid stays where it belongs, in this
+     * record's own `sessionId` column. Absent/blank → the id, as before.
+     */
+    readonly sessionName?: string | null;
     /** `users.language` osoby zamrażającej; brak → 'en' (PLAN.md §2.1). */
     readonly language?: string | null;
   }): Promise<void> {
@@ -328,6 +335,9 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
 
     const totalUnits = Object.keys(current).length;
     const unitsWithAcceptedEvidence = findings.length;
+    // D-48 — one label for the frozen prose: the name the user sees elsewhere
+    // (`MethodWorkspaceShell` header), never a bare uuid, unless no name exists.
+    const sessionLabel = input.sessionName?.trim() || input.sessionId;
 
     // Reopen (frozen -> active -> frozen again) lineage: this session is a
     // revision of `revisionOfSessionId` iff that field is set. Link the new
@@ -353,7 +363,7 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
       module: input.module,
       methodPackId: input.methodPackId,
       methodPackVersion: input.methodPackVersion,
-      scope: teksty.scope(input.sessionId, input.methodPackId, input.methodPackVersion),
+      scope: teksty.scope(sessionLabel, input.methodPackId, input.methodPackVersion),
       current,
       target,
       gap,

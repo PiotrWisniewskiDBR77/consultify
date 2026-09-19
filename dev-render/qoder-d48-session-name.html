@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D-48 — Session name in the frozen assessment report (harness)</title>
+  </head>
+  <body>
+    <!--
+      D-48 (QC20) evidence harness. Mounts the REAL `AssessmentReportView`
+      via `dev-render/screens/assessment-output-report.tsx` on mocked JSON.
+
+      Params:
+        &variant=named|happy   named = session has a name (D-48 fixed state),
+                               happy = no name (fallback to the uuid)
+        &theme=light|dark
+        &lang=en|pl
+    -->
+    <div id="dev-render-root" style="min-height: 100vh; width: 100vw"></div>
+    <script type="module" src="/qoder-d48-session-name-main.tsx"></script>
+  </body>
+</html>

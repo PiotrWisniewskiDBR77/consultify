@@ -212,6 +212,65 @@ describe('DrdSessionRuntime — freeze authority + Output bridge (requirements 4
     expect(outputCreated).toBeTruthy();
     expect((outputCreated!.payload as any).outputId).toBe(output.id);
   });
+
+  /**
+   * ★ D-48 — ten lokalny generator pisze TO SAMO zdanie `scope`, co
+   * `server/src/method-core/outputs/EventDerivedOutputBridge.ts` („rodzeństwo
+   * tej samej wady" — komentarz FALA J2 w pliku produktu). Nazwa sesji ma więc
+   * wejść do zdania także tutaj, a brak nazwy → identyfikator, nigdy dziura.
+   * Runtime nie ma API zmiany nazwy (sesja demo powstaje bez niej), więc test
+   * wpisuje nazwę w ZAPISANY stan — dokładnie tą ścieżką, którą czyta
+   * `read()` przy każdym wywołaniu. Mutacja: wróć do `${state.session.id}`
+   * w `scope` → pierwszy przypadek spada; `??` zamiast `||` + `trim()` →
+   * spada przypadek białej nazwy.
+   */
+  function wpiszNazweSesji(storage: Storage, sessionId: string, name: string | null): void {
+    for (let i = 0; i < storage.length; i += 1) {
+      const klucz = storage.key(i);
+      if (klucz === null) continue;
+      const raw = storage.getItem(klucz);
+      if (!raw) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      const stan = parsed as { session?: { id?: string; name?: string | null } } | null;
+      if (stan?.session?.id === sessionId) {
+        stan.session!.name = name;
+        storage.setItem(klucz, JSON.stringify(stan));
+        return;
+      }
+    }
+    throw new Error(`test: nie znaleziono zapisu sesji ${sessionId}`);
+  }
+
+  it('D-48: lokalny freeze wpisuje w `scope` nazwę sesji, a przy braku nazwy — identyfikator', () => {
+    const zNazwa = makeMemoryStorage();
+    const runtimeNazwana = driveToInReviewWithEvidence(zNazwa);
+    wpiszNazweSesji(zNazwa, runtimeNazwana.sessionId, 'Northwind AI Readiness — pilot 2');
+
+    expect(runtimeNazwana.transition('frozen', 'approver-1').ok).toBe(true);
+    const scopeNazwana = runtimeNazwana.currentOutputRecord()!.content.scope;
+    expect(scopeNazwana).toContain('Zakres: sesja Northwind AI Readiness — pilot 2, metodyka drd');
+    expect(scopeNazwana).not.toContain(runtimeNazwana.sessionId);
+
+    const bezNazwy = makeMemoryStorage();
+    const runtimeBez = driveToInReviewWithEvidence(bezNazwy);
+    expect(runtimeBez.transition('frozen', 'approver-1').ok).toBe(true);
+    const scopeBez = runtimeBez.currentOutputRecord()!.content.scope;
+    expect(scopeBez).toContain(`Zakres: sesja ${runtimeBez.sessionId}, metodyka drd`);
+    expect(scopeBez).not.toContain('undefined');
+
+    const biala = makeMemoryStorage();
+    const runtimeBiala = driveToInReviewWithEvidence(biala);
+    wpiszNazweSesji(biala, runtimeBiala.sessionId, '   ');
+    expect(runtimeBiala.transition('frozen', 'approver-1').ok).toBe(true);
+    expect(runtimeBiala.currentOutputRecord()!.content.scope).toContain(
+      `Zakres: sesja ${runtimeBiala.sessionId}, metodyka drd`
+    );
+  });
 });
 
 describe('DrdSessionRuntime — Output immutability (requirement 6)', () => {

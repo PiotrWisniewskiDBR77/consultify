@@ -1020,8 +1020,8 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           />
           <Property
             label={t('assessment.report.session', 'Session')}
-            value={output.sessionId || '—'}
-            mono={!!output.sessionId}
+            value={session?.name?.trim() || output.sessionId || '—'}
+            mono={!session?.name?.trim() && !!output.sessionId}
           />
           <Property
             label={t('assessment.report.outputVersion', 'Output version')}

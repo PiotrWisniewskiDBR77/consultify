@@ -347,4 +347,58 @@ describe('AssessmentReportDocument', () => {
     );
     expect(screen.getByRole('heading', { name: 'Units outside the axis structure' })).toBeTruthy();
   });
+
+  /**
+   * ★ D-48 (DLUG-PO-MVP, 2026-09-18). DEC-602 dał nazwę sesji nagłówkowi
+   * powłoki metody; w TREŚCI zamrożonego raportu pole „Session" nadal
+   * drukowało goły uuid — w dokumencie, który czyta zarząd. Nazwa jest już
+   * na kablu (`GET /api/method/sessions/:id` → `session.name`), więc to była
+   * wada prezentacji, nie danych: naprawa działa także dla sesji zamrożonych
+   * wcześniej. Ident zostaje w metadanych dokumentu (zdanie `output.scope`
+   * w stopce). Dowód mutacyjny: przywróć `value={output.sessionId || '—'}`
+   * → pierwszy test spada (uuid zamiast nazwy); podmień `||` na `??` →
+   * spada test białej nazwy.
+   */
+  describe('D-48 — pole „Session" pokazuje nazwę sesji, nie uuid', () => {
+    function poleSesji(data: AssessmentReportData): HTMLElement {
+      const { container } = render(<AssessmentReportDocument data={data} />);
+      const etykieta = Array.from(container.querySelectorAll('dt')).find(
+        (dt) => dt.textContent?.trim() === 'Session'
+      );
+      expect(etykieta).toBeTruthy();
+      const dd = etykieta!.parentElement?.querySelector('dd');
+      expect(dd).toBeTruthy();
+      return dd as HTMLElement;
+    }
+
+    function zNazwa(name: string | null): AssessmentReportData {
+      const data = buildData();
+      return { ...data, session: data.session ? { ...data.session, name } : data.session };
+    }
+
+    it('nazwa sesji jest wartością pola — uuid nie pojawia się w tym polu', () => {
+      const dd = poleSesji(zNazwa('Northwind AI Readiness — pilot 2'));
+      expect(dd.textContent).toBe('Northwind AI Readiness — pilot 2');
+      expect(dd.textContent).not.toContain('sess-1');
+      // Krój pisma identyfikatora zostaje dla identyfikatora.
+      expect(dd.className).not.toContain('font-mono');
+    });
+
+    it('brak nazwy — pole wraca do uuid, jak przed naprawą (uczciwy degrade)', () => {
+      const dd = poleSesji(zNazwa(null));
+      expect(dd.textContent).toBe('sess-1');
+      expect(dd.className).toContain('font-mono');
+    });
+
+    it('biała nazwa nie produkuje pustego pola', () => {
+      const dd = poleSesji(zNazwa('   '));
+      expect(dd.textContent).toBe('sess-1');
+    });
+
+    it('sesja w ogóle niepodpięta (zapis zastany) — nadal identyfikator, nie pustka', () => {
+      const data = buildData();
+      const dd = poleSesji({ ...data, session: null });
+      expect(dd.textContent).toBe('sess-1');
+    });
+  });
 });
