@@ -142,9 +142,15 @@ import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
+type ConversationBody = {
+  conversationId?: unknown;
+};
+
+type ChatMembershipRequest = AuthRequest & { body: ConversationBody };
+
 /** Chat streaming is provider-bearing: stale role claims and SUPERADMIN do not
  * replace an authoritative ACTIVE tenant membership row. */
-const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: Response, next) => {
+const requireActiveChatMembership = asyncHandler(async (req: ChatMembershipRequest, res: Response, next) => {
   const userId = String(req.userId || req.user?.id || '').trim();
   const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
   if (!userId || !organizationId) {
@@ -160,7 +166,7 @@ const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: R
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
 
-    const conversationId = String((req.body as any)?.conversationId || '').trim();
+    const conversationId = String(req.body?.conversationId || '').trim();
     if (conversationId) {
       const conversation = await dbGet<{ id?: string }>(
         `SELECT id FROM conversations
