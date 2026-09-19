@@ -8,17 +8,13 @@
 
 import {
   AlertTriangle,
-  Archive,
   Ban,
   Check,
   ChevronDown,
   Clock,
   FileCheck,
-  Pause,
-  Play,
   Rocket,
   Send,
-  XCircle,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -41,19 +37,19 @@ const STATUS_CONFIG: Partial<
     }
   >
 > = {
+  [InitiativeStatus.PROPOSED]: {
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-100',
+    darkBgColor: 'dark:bg-slate-800',
+    icon: <FileCheck size={14} />,
+    label: 'Proposed',
+  },
   [InitiativeStatus.DRAFT]: {
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-100',
     darkBgColor: 'dark:bg-slate-800',
     icon: <Clock size={14} />,
     label: 'Draft',
-  },
-  [InitiativeStatus.PENDING_APPROVAL]: {
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100',
-    darkBgColor: 'dark:bg-blue-900/30',
-    icon: <FileCheck size={14} />,
-    label: 'Planning',
   },
   [InitiativeStatus.PENDING_APPROVAL]: {
     color: 'text-amber-600 dark:text-amber-400',
@@ -76,13 +72,6 @@ const STATUS_CONFIG: Partial<
     icon: <Rocket size={14} />,
     label: 'Executing',
   },
-  [InitiativeStatus.IN_EXECUTION]: {
-    color: 'text-danger-600 dark:text-danger-400',
-    bgColor: 'bg-danger-100',
-    darkBgColor: 'dark:bg-danger-900/30',
-    icon: <Pause size={14} />,
-    label: 'Blocked',
-  },
   [InitiativeStatus.CLOSED]: {
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100',
@@ -96,13 +85,6 @@ const STATUS_CONFIG: Partial<
     darkBgColor: 'dark:bg-gray-800',
     icon: <Ban size={14} />,
     label: 'Cancelled',
-  },
-  [InitiativeStatus.CLOSED]: {
-    color: 'text-gray-500 dark:text-gray-500',
-    bgColor: 'bg-gray-50 dark:bg-navy-800',
-    darkBgColor: 'dark:bg-gray-900',
-    icon: <Archive size={14} />,
-    label: 'Archived',
   },
 };
 
@@ -301,18 +283,14 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
-              {pendingStatus === InitiativeStatus.IN_EXECUTION
-                ? 'Block Initiative'
-                : pendingStatus === InitiativeStatus.REJECTED
-                  ? 'Cancel Initiative'
-                  : 'Provide Reason'}
+              {pendingStatus === InitiativeStatus.REJECTED
+                ? 'Cancel Initiative'
+                : 'Provide Reason'}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              {pendingStatus === InitiativeStatus.IN_EXECUTION
-                ? 'Please provide a reason for blocking this initiative.'
-                : pendingStatus === InitiativeStatus.REJECTED
-                  ? 'Please provide a reason for cancelling this initiative.'
-                  : 'Please provide additional information for this status change.'}
+              {pendingStatus === InitiativeStatus.REJECTED
+                ? 'Please provide a reason for cancelling this initiative.'
+                : 'Please provide additional information for this status change.'}
             </p>
             <textarea
               value={reason}
@@ -354,10 +332,6 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                   <Check className="text-green-600 dark:text-green-400" size={24} />
                 </div>
-              ) : pendingStatus === InitiativeStatus.CLOSED ? (
-                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Archive className="text-gray-600 dark:text-gray-400" size={24} />
-                </div>
               ) : (
                 <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                   <AlertTriangle className="text-amber-600 dark:text-amber-400" size={24} />
@@ -367,19 +341,15 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
                   {pendingStatus === InitiativeStatus.CLOSED
                     ? 'Complete Initiative'
-                    : pendingStatus === InitiativeStatus.CLOSED
-                      ? 'Archive Initiative'
-                      : 'Confirm Status Change'}
+                    : 'Confirm Status Change'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {pendingStatus === InitiativeStatus.CLOSED
                     ? 'Mark this initiative as completed?'
-                    : pendingStatus === InitiativeStatus.CLOSED
-                      ? 'Move this initiative to archive?'
-                      : t('initiatives.confirmStatusChangeTo', {
-                          status: getLocalizedStatusLabel(pendingStatus, t),
-                          defaultValue: `Change status to ${getLocalizedStatusLabel(pendingStatus, t)}?`,
-                        })}
+                    : t('initiatives.confirmStatusChangeTo', {
+                        status: getLocalizedStatusLabel(pendingStatus, t),
+                        defaultValue: `Change status to ${getLocalizedStatusLabel(pendingStatus, t)}?`,
+                      })}
                 </p>
               </div>
             </div>
