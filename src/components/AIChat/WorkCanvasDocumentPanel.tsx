@@ -933,6 +933,11 @@ function WorkCanvasMarkdownDocumentPanel({
   onClose,
 }: WorkCanvasDocumentPanelProps) {
   const { t, i18n } = useTranslation();
+  const quickT = React.useCallback(
+    (key: string, defaultValue?: string) =>
+      String(t(key, { defaultValue: defaultValue ?? key })),
+    [t]
+  );
   const navigate = useNavigate();
   const authUserId = useAppStore((state) => state.currentUser?.id || null);
   const authOrganizationId = useAppStore((state) => state.currentOrganization?.id || null);
@@ -2494,7 +2499,7 @@ function WorkCanvasMarkdownDocumentPanel({
     const request = await requestCanvasQuickAI({
       prompt: `Create a ${quickAddElement} for this canvas. ${quickAddPrompt.trim()}`.trim(),
       selectedText: quickAddPrompt.trim() || quickAddElement,
-      t,
+      t: quickT,
     });
     const snippet = request.ok ? request.text : fallbackSnippet;
     if (!request.ok) {
@@ -2657,7 +2662,7 @@ function WorkCanvasMarkdownDocumentPanel({
       const request = await requestCanvasQuickAI({
         prompt: options.aiPrompt,
         selectedText,
-        t,
+        t: quickT,
       });
       replacementMd = request.ok ? request.text : options.aiPrompt;
       if (!request.ok) {
