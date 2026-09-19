@@ -40,10 +40,7 @@ function sendAssessmentLookupError(res: Response, err: unknown): boolean {
       code: 'ASSESSMENT_NOT_FOUND',
     });
   } else {
-    res.status(503).json({
-      error: 'Źródło danych oceny jest chwilowo niedostępne.',
-      code: 'ASSESSMENT_SOURCE_UNAVAILABLE',
-    });
+    res.status(503).json({ code: 'ASSESSMENT_SOURCE_UNAVAILABLE' });
   }
   return true;
 }

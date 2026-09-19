@@ -516,10 +516,7 @@ router.put(
           code: 'SETTINGS_SCHEMA_NOT_MIGRATED',
         });
       }
-      return res.status(500).json({
-        error: 'Nie udało się zapisać preferencji regionalnych',
-        code: 'SETTINGS_REGIONAL_UPDATE_FAILED',
-      });
+      return res.status(500).json({ code: 'SETTINGS_REGIONAL_UPDATE_FAILED' });
     }
   })
 );

@@ -96,9 +96,7 @@ router.post(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się przypiąć insightu', code: 'PINNED_INSIGHTS_PIN_FAILED' });
+      return res.status(500).json({ code: 'PINNED_INSIGHTS_PIN_FAILED' });
     }
   })
 );
@@ -171,10 +169,7 @@ router.patch(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res.status(500).json({
-        error: 'Nie udało się zaktualizować insightu',
-        code: 'PINNED_INSIGHTS_UPDATE_FAILED',
-      });
+      return res.status(500).json({ code: 'PINNED_INSIGHTS_UPDATE_FAILED' });
     }
   })
 );
@@ -197,9 +192,7 @@ router.delete(
         err,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się odpiąć insightu', code: 'PINNED_INSIGHTS_UNPIN_FAILED' });
+      return res.status(500).json({ code: 'PINNED_INSIGHTS_UNPIN_FAILED' });
     }
   })
 );

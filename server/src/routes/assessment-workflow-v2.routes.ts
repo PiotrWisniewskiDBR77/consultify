@@ -1122,10 +1122,7 @@ router.post(
         });
       }
       logger.error('[AssessmentWorkflowV2] Error creating initiative generation run:', err);
-      res.status(500).json({
-        error: 'Nie udało się utworzyć przebiegu',
-        code: 'ASSESSMENT_WORKFLOW_V2_CREATE_RUN_FAILED',
-      });
+      res.status(500).json({ code: 'ASSESSMENT_WORKFLOW_V2_CREATE_RUN_FAILED' });
     }
   }
 );

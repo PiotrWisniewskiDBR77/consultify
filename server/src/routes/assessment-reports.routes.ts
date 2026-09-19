@@ -1359,10 +1359,7 @@ router.post('/:reportId/conclusion', async (req: AuthRequest, res: Response) => 
       [organizationId, candidate.sourceModule, JSON.stringify(candidate.sourceRefs)]
     );
     if (!conclusionRow?.id) {
-      return res.status(500).json({
-        error: 'Wniosek zapisany bez rodowodu do oceny — przerwane',
-        code: 'ASSESSMENT_CONCLUSION_LINEAGE_MISSING',
-      });
+      return res.status(500).json({ code: 'ASSESSMENT_CONCLUSION_LINEAGE_MISSING' });
     }
 
     return res.status(201).json({

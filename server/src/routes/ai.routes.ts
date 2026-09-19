@@ -7185,10 +7185,7 @@ router.post(
           budgetStatus: error.budgetStatus,
         });
       }
-      return res.status(500).json({
-        error: 'Nie udało się wygenerować odpowiedzi asystenta',
-        code: 'AI_CHAT_FAILED',
-      });
+      return res.status(500).json({ code: 'AI_CHAT_FAILED' });
     }
   })
 );
