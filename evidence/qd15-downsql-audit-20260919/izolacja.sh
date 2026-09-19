@@ -23,7 +23,11 @@ PORT=6634
 DB=consultify_qd15_iso
 DUMP=/Users/piotrwisniewski/Developer/kopie/staging-pre-d121-20260918.dump
 P=/opt/homebrew/opt/postgresql@18/bin
-export PGPASSWORD=qoder
+# REGULA 10 (Wpis 206, CTO): zero sekretow w plikach evidence — haslo lokalnego
+# kontenera podaje srodowisko (zmienna PGPASSWORD, wartosc `<haslo-lokalne>`);
+# audyt-up-down-up.sh odziedziczy je z tego srodowiska.
+: "${PGPASSWORD:?ustaw PGPASSWORD w srodowisku (haslo lokalnego kontenera; REGULA 10 — zero sekretow w pliku)}"
+export PGPASSWORD
 cd "$ROOT" || exit 1
 
 for m in "$@"; do

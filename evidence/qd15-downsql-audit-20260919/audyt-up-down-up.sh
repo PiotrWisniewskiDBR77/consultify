@@ -28,8 +28,14 @@ DB="${1:-consultify_qd15}"
 ONLY="${2:-}"
 PSQL_BIN=/opt/homebrew/opt/postgresql@18/bin/psql
 PGDUMP_BIN=/opt/homebrew/opt/postgresql@18/bin/pg_dump
-export PGPASSWORD=qoder
-DBURL="postgres://postgres:qoder@127.0.0.1:$PORT/$DB"
+# REGULA 10 (Wpis 206, CTO): zero sekretow w plikach evidence. Haslo lokalnego
+# kontenera podaje srodowisko (zmienna PGPASSWORD, wartosc `<haslo-lokalne>`),
+# nie ten plik. Wywolanie: ustaw PGPASSWORD w srodowisku, potem
+#   bash audyt-up-down-up.sh [nazwa_db] [migracja.sql]
+: "${PGPASSWORD:?ustaw PGPASSWORD w srodowisku (haslo lokalnego kontenera; REGULA 10 — zero sekretow w pliku)}"
+export PGPASSWORD
+DBUSER="${QD15_PG_USER:-postgres}"
+DBURL="postgres://$DBUSER:$PGPASSWORD@127.0.0.1:$PORT/$DB"
 cd "$ROOT" || exit 1
 mkdir -p "$E/cykle" "$E/dumpy"
 
