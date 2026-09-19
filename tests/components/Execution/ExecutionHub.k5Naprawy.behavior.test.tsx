@@ -39,14 +39,33 @@ const { mutationFetch, getInitiatives, initiatives, executionCases } = vi.hoiste
   ],
 }));
 
-vi.mock('react-i18next', () => {
-  const t = (_key: string, fallback?: string) => fallback ?? _key;
+vi.mock('react-i18next', async () => {
+  const mod = await import('../../../public/locales/en/translation.json');
+  const dict: any = (mod as any).default ?? mod;
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<any>((node, part) => (node && typeof node === 'object' ? node[part] : undefined), dict);
+  const t = (key: string, fallback?: string) => {
+    const hit = lookup(key);
+    return typeof hit === 'string' ? hit : (fallback ?? key);
+  };
   return {
     initReactI18next: { type: '3rdParty', init: () => undefined },
     useTranslation: () => ({ t, i18n: { language: 'en' } }),
   };
 });
-vi.mock('@/i18n', () => ({ default: {} }));
+// `useKeyboardShortcuts` calls `i18n.t(…)` at module scope — an empty default
+// crashed the whole suite at import (TypeError: default.t is not a function).
+vi.mock('@/i18n', async () => {
+  const mod = await import('../../../public/locales/en/translation.json');
+  const dict: any = (mod as any).default ?? mod;
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<any>((node, part) => (node && typeof node === 'object' ? node[part] : undefined), dict);
+  const t = (key: string, fallback?: string) => {
+    const hit = lookup(key);
+    return typeof hit === 'string' ? hit : (fallback ?? key);
+  };
+  return { default: { t, language: 'en' } };
+});
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/components/Execution/executionFeatureFlags', () => ({
   isExecutionFlagEnabled: () => false,
@@ -130,6 +149,7 @@ vi.mock('@/components/Initiatives/InitiativeCompactPanel', () => ({ InitiativeCo
 vi.mock('@/components/Reports/Wizard', () => ({ ReportGeneratorWizard: () => null }));
 
 import { ExecutionHub } from '@/components/Execution/ExecutionHub';
+import { PreviewDetailsSection } from '@/components/shared/PreviewPane/PreviewDetailsSection';
 
 describe('K5-R2 — zakres „Active" widzi realizacje ORAZ inicjatywy w toku bez handoffu', () => {
   beforeEach(() => {
@@ -234,5 +254,21 @@ describe('K5-R3/R4 — podgląd banku: jeden nagłówek i właściwości klucz�
     const open = within(aside).getByRole('button', { name: 'Open' });
     expect(open).toBeDisabled();
     expect(open.getAttribute('title')).toContain('not available');
+  });
+});
+
+describe('D-56 — the words label is translated, never the raw i18n key', () => {
+  afterEach(cleanup);
+
+  it('renders the EN locale value in text and aria-label when the counter is shown', () => {
+    render(
+      <PreviewDetailsSection
+        text="one two three four five six seven eight nine ten eleven twelve"
+        showWordCount
+      />
+    );
+    const counter = screen.getByText('~12 words');
+    expect(counter.getAttribute('aria-label')).toBe('12 words');
+    expect(screen.queryByText(/sharedComponents\.previewDetailsSection/)).toBeNull();
   });
 });

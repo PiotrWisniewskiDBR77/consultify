@@ -208,6 +208,14 @@ export function buildExecutionBankPreviewDeclaration({
        */
       label: t('execution.bank.preview.detailsLabel', 'Execution context'),
       /*
+       * D-56: the "prose" above the fact table is SYNTHETIC — sentences composed
+       * by `buildExecutionBankSummary` from the row's own evidence, not an
+       * authored description. Counting its words labelled derived facts as user
+       * prose ("~21 words" over the table), so the bank opts out explicitly
+       * (canon §6: the word count applies to authored prose only).
+       */
+      showWordCount: false,
+      /*
        * K5-4: następny krok („Set the schedule baseline…") był osobnym blokiem
        * „Co dalej" pod akcjami — miejsce zarezerwowane kanonem dla create-stripa
        * encji źródłowej cross-module. Bank nią nie jest, więc zdanie wraca tam,
