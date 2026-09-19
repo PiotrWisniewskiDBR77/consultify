@@ -614,6 +614,11 @@ const materializedTargetIcons: Record<string, React.ComponentType<{ size?: numbe
 
 type CanvasPanelTFn = TFunction;
 
+type WorkCanvasQuickT = (key: string, defaultValue?: string) => string;
+
+const createWorkCanvasQuickT = (t: TFunction): WorkCanvasQuickT =>
+  (key, defaultValue) => String(t(key, defaultValue ?? key));
+
 function materializedTargetLabel(target: string, t: CanvasPanelTFn): string {
   if (target === 'idea') return t('canvas.panel.materialized.idea', 'Idea');
   if (target === 'note') return t('canvas.panel.materialized.note', 'Note');
@@ -933,6 +938,7 @@ function WorkCanvasMarkdownDocumentPanel({
   onClose,
 }: WorkCanvasDocumentPanelProps) {
   const { t, i18n } = useTranslation();
+  const canvasQuickT = React.useMemo(() => createWorkCanvasQuickT(t), [t]);
   const navigate = useNavigate();
   const authUserId = useAppStore((state) => state.currentUser?.id || null);
   const authOrganizationId = useAppStore((state) => state.currentOrganization?.id || null);
@@ -2494,7 +2500,7 @@ function WorkCanvasMarkdownDocumentPanel({
     const request = await requestCanvasQuickAI({
       prompt: `Create a ${quickAddElement} for this canvas. ${quickAddPrompt.trim()}`.trim(),
       selectedText: quickAddPrompt.trim() || quickAddElement,
-      t,
+      t: canvasQuickT,
     });
     const snippet = request.ok ? request.text : fallbackSnippet;
     if (!request.ok) {
@@ -2657,7 +2663,7 @@ function WorkCanvasMarkdownDocumentPanel({
       const request = await requestCanvasQuickAI({
         prompt: options.aiPrompt,
         selectedText,
-        t,
+        t: canvasQuickT,
       });
       replacementMd = request.ok ? request.text : options.aiPrompt;
       if (!request.ok) {
