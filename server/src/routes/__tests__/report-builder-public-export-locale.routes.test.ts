@@ -110,6 +110,17 @@ describe('GET /api/report-builder-public/:token/pptx — export locale (D-119)',
     expect(options.language).toBe('en');
   });
 
+  it('allows PPTX download without Authorization when the public token is valid (D-139)', async () => {
+    mockGetPublicLinkByToken.mockResolvedValue(publicLinkFixture({ language: 'en' }));
+
+    const app = await createApp();
+    const res = await request(app).get(`/api/report-builder-public/${TOKEN}/pptx`);
+
+    expect(res.status).toBe(200);
+    expect(mockGetPublicLinkByToken).toHaveBeenCalledWith(TOKEN);
+    expect(mockGenerateFromLegacyReport).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps Polish for a Polish report (no regression the other way)', async () => {
     mockGetPublicLinkByToken.mockResolvedValue(publicLinkFixture({ language: 'pl-PL' }));
 
