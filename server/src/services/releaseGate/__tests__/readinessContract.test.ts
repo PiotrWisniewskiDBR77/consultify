@@ -265,6 +265,7 @@ describe('shared evaluator — one implementation, not a test copy', () => {
         if (text.includes("to_regclass('public.schema_migrations')")) return { rows: [{ present: true }] };
         if (text.includes('FROM schema_migrations')) return { rows: [] };
         if (text.includes("to_regclass('public.tp_migration_history')")) return { rows: [{ present: false }] };
+        if (text === 'SELECT to_regclass($1) IS NOT NULL AS present') return { rows: [{ present: false }] };
         throw new Error(`unexpected query: ${text}`);
       }),
     };
