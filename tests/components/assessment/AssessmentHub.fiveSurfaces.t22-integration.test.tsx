@@ -212,13 +212,27 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
   it('flag ON: outputs tab with an assessment selected (via Processes) renders the real AssessmentQualityReviewPanel', async () => {
     isEnabledMock.mockImplementation((id: string) => id === 'assessmentFiveSurfacesV1');
     listMethodSessionsMock.mockResolvedValue({
-      sessions: [{
-        id: 'asm-method-1', organizationId: 'org-1', projectId: null,
-        module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
-        state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
-        createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
-        version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
-      }], total: 1,
+      sessions: [
+        {
+          id: 'asm-method-1',
+          organizationId: 'org-1',
+          projectId: null,
+          module: 'assessment',
+          methodPackId: 'drd',
+          methodPackVersion: '2.0.0-methodpack.2',
+          state: 'active',
+          domainStage: null,
+          mode: 'guided_manual',
+          ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z',
+          updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1,
+          frozenSnapshotId: null,
+          revisionOfSessionId: null,
+          hasFrozenOutput: false,
+        },
+      ],
+      total: 1,
     });
 
     render(
@@ -245,7 +259,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
   });
 });
 
-describe('T22-INTEGRATION-SHELL source anchors — protects the real Library/Outputs surfaces and this package\'s scope boundary', () => {
+describe("T22-INTEGRATION-SHELL source anchors — protects the real Library/Outputs surfaces and this package's scope boundary", () => {
   const hubSource = readFileSync(
     join(process.cwd(), 'src/components/assessment/AssessmentHub.tsx'),
     'utf8'
@@ -261,11 +275,13 @@ describe('T22-INTEGRATION-SHELL source anchors — protects the real Library/Out
     expect(hubSource).toContain('AssessmentQualityReviewPanel');
   });
 
-  it('AssessmentHub wires AssessmentOutputsTab as the outputs tab\'s no-selection default, not as a replacement for AssessmentQualityReviewPanel (doctryna gęstości §3 — new component needs a real caller)', () => {
+  it("AssessmentHub wires AssessmentOutputsTab as the outputs tab's no-selection default, not as a replacement for AssessmentQualityReviewPanel (doctryna gęstości §3 — new component needs a real caller)", () => {
     expect(hubSource).toContain("import { AssessmentOutputsTab } from './AssessmentOutputsTab';");
     expect(hubSource).toContain('<AssessmentOutputsTab');
     expect(hubSource).toContain('onCountChange={setOutputsCount}');
-    expect(hubSource).toContain('<AssessmentQualityReviewPanel assessmentId={selectedAssessmentId} />');
+    expect(hubSource).toContain(
+      '<AssessmentQualityReviewPanel assessmentId={selectedAssessmentId} />'
+    );
   });
 
   it('AssessmentOutputsTab stays self-contained — no import from a separate, out-of-scope service module', () => {

@@ -61,7 +61,7 @@ const canonicalSession = {
   projectId: null,
   module: 'assessment',
   methodPackId: 'drd',
-  methodPackVersion: '2.0.0-methodpack.1',
+  methodPackVersion: '2.0.0-methodpack.2',
   state: 'active',
   domainStage: null,
   mode: 'guided_manual',

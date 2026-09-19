@@ -36,6 +36,7 @@ const PrototypeHarness = ({
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
 const Meeting1U51Screen = React.lazy(() => import('./screens/meeting-1-u51'));
 const U19DrdTrzyKolumnyScreen = React.lazy(() => import('./screens/u19-drd-trzy-kolumny'));
+const A12DrdMethodBankHelpScreen = React.lazy(() => import('./screens/a12-drd-method-bank-help'));
 // U-43 (DECK-1A) — Deck Builder left rail, neutral "Review" panel.
 const U43DeckReviewScreen = React.lazy(() => import('./screens/u43-deck-review'));
 const P12TabelaI18nMenu3EmptyScreen = React.lazy(
@@ -76,7 +77,9 @@ const ReportBuilderLibraryTemplateScreen = React.lazy(
 );
 const Rg1ReportSourceModalScreen = React.lazy(() => import('./screens/rg1-report-source-modal'));
 const Rg1OpenedReportScreen = React.lazy(() => import('./screens/rg1-opened-report'));
-const Rg1AuditsGenerateOwnerScreen = React.lazy(() => import('./screens/rg1-audits-generate-owner'));
+const Rg1AuditsGenerateOwnerScreen = React.lazy(
+  () => import('./screens/rg1-audits-generate-owner')
+);
 // GRAFIKA (2026-09-01, zadanie 3 — audyt rodziny): plik ekranu istniał i miał
 // ocenę w docs/program/grafika/status.json (materials-registry, ocena B, z
 // realną listą "naprawione"), ale main.tsx nigdy go nie importował ani nie
@@ -266,9 +269,7 @@ const PrawyPasDeckBuilderSystemScreen = React.lazy(
 const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
 // K-20b (KANAL Wpis 133, DEC-575) — odbiór wizualny toru OFF naprawionego w
 // KeyboardShortcutsSettings.tsx:565 (jeden z 9 ekranów paczki).
-const K20bShortcutsSettingsScreen = React.lazy(
-  () => import('./screens/k20b-shortcuts-settings')
-);
+const K20bShortcutsSettingsScreen = React.lazy(() => import('./screens/k20b-shortcuts-settings'));
 const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
 // ZLECENIE 1.1-J (06.09) — lewa lista "Moje notatki" w jednej linii (kebab pionowy).
 const NotatnikListaScreen = React.lazy(() => import('./screens/notatnik-lista-11j'));
@@ -368,9 +369,7 @@ const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work')
 const U2RealizacjaDecyzjeScreen = React.lazy(() => import('./screens/u2-realizacja-decyzje'));
 const Pt15WywiadZalacznikiScreen = React.lazy(() => import('./screens/pt15-wywiad-zalaczniki'));
 const Pt06UstawieniaSuwakiScreen = React.lazy(() => import('./screens/pt06-ustawienia-suwaki'));
-const FeedbackK21bCreateOrgScreen = React.lazy(
-  () => import('./screens/feedback-k21b-create-org')
-);
+const FeedbackK21bCreateOrgScreen = React.lazy(() => import('./screens/feedback-k21b-create-org'));
 const FeedbackK20PstryczkiScreen = React.lazy(() => import('./screens/feedback-k20-pstryczki'));
 const FeedbackK31ZadaniaScreen = React.lazy(() => import('./screens/feedback-k31-zadania'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
@@ -497,17 +496,11 @@ const InterviewSessionsFullColumnsScreen = React.lazy(
   () => import('./screens/interview-sessions-full-columns')
 );
 // ST-2 (DEC-540 / U-09) etap 1 — Interview initiative candidate card (inbox).
-const InterviewCandidateCardScreen = React.lazy(
-  () => import('./screens/interview-candidate-card')
-);
+const InterviewCandidateCardScreen = React.lazy(() => import('./screens/interview-candidate-card'));
 // IS-3a (Wpis 95 / DEC-533) — real InterviewHub with the template editor open.
-const Is3aTemplateEditorHubScreen = React.lazy(
-  () => import('./screens/is3a-template-editor-hub')
-);
+const Is3aTemplateEditorHubScreen = React.lazy(() => import('./screens/is3a-template-editor-hub'));
 // AIR-1a (Wpis 119/120, DEC-566/569) — real InterviewHub managed tab with AI score column.
-const Air1aManagedAiScoreScreen = React.lazy(
-  () => import('./screens/air1a-managed-ai-score')
-);
+const Air1aManagedAiScoreScreen = React.lazy(() => import('./screens/air1a-managed-ai-score'));
 const U05SesjaWywiaduPowlokaScreen = React.lazy(
   () => import('./screens/u05-sesja-wywiadu-powloka')
 );
@@ -828,6 +821,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'pmo1-przejscie-etapu': {
     label: 'PMO-1a · initiative stage transition panel · EN light/dark',
     render: () => <Pmo1PrzejscieEtapuScreen />,
+  },
+  'a12-drd-method-bank-help': {
+    label:
+      'A12 K-23 — real QuestionHelpDisclosure from compiled DRD method bank. &area=1A|3A|5A &level=2 &lang=en',
+    render: () => <A12DrdMethodBankHelpScreen />,
   },
   'u19-drd-trzy-kolumny': {
     label: 'DRD U-19 · Northwind · DEC-552',

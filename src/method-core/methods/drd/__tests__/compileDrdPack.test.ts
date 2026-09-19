@@ -66,8 +66,8 @@ describe('compileDrdPack — structure coverage', () => {
     expect(report.fieldGaps.emptyDistinctionFromNext).toBe(233);
     expect(report.fieldGaps.emptyDistinctionFromPrevious).toBe(233);
     expect(report.fieldGaps.emptyNegativeEvidence).toBe(233);
-    expect(report.fieldGaps.emptyExamples).toBe(233);
-    // expectedEvidence IS populated from QBank "Dowód" text for every level.
+    expect(report.fieldGaps.emptyExamples).toBe(0);
+    // expectedEvidence and examples ARE populated from QBank "Evidence/Dowód" text for every level.
     expect(report.fieldGaps.emptyExpectedEvidence).toBe(0);
   });
 
@@ -85,6 +85,36 @@ describe('compileDrdPack — structure coverage', () => {
       expect(level.canonicalDefinition.length).toBeGreaterThan(0);
       expect(level.technologyExamples.length).toBeGreaterThan(0);
       expect(level.expectedEvidence.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('K-23: every EN area has examples and evidence in the compiled help bank', () => {
+    const { pack, report } = compileDrdPack('en');
+
+    expect(report.fieldGaps.emptyExamples).toBe(0);
+    expect(report.fieldGaps.emptyQuestionIntent).toBe(0);
+    expect(report.fieldGaps.emptyPlainLanguageExplanation).toBe(0);
+    expect(report.fieldGaps.emptyPositiveAnswerExample).toBe(0);
+    expect(report.fieldGaps.emptyPartialAnswerExample).toBe(0);
+    expect(report.fieldGaps.emptyNegativeAnswerExample).toBe(0);
+    expect(report.fieldGaps.emptyQuestionExpectedEvidence).toBe(0);
+
+    for (const unit of pack.units) {
+      const levels = pack.levels.filter((level) => level.unitId === unit.unitId);
+      const questions = pack.questions.filter((question) => question.unitId === unit.unitId);
+      expect(levels.flatMap((level) => level.examples).length, unit.unitId).toBeGreaterThanOrEqual(
+        2
+      );
+      expect(
+        new Set(levels.flatMap((level) => level.expectedEvidence)).size,
+        unit.unitId
+      ).toBeGreaterThanOrEqual(2);
+      expect(
+        questions.every(
+          (question) => question.positiveAnswerExample && question.expectedEvidence.length >= 2
+        ),
+        unit.unitId
+      ).toBe(true);
     }
   });
 

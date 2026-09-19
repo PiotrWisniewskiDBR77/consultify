@@ -56,7 +56,9 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
 
   beforeAll(async () => {
     if (!REAL_DB) {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.'
+      );
     }
 
     const { Pool } = await import('pg');
@@ -68,14 +70,14 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     // that cannot prove it is real must never reach its test bodies.
     await assertRealDatabase(fromPgPool(pool));
 
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG,
-      'P0 method-core HTTP test org',
-    ]);
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      OTHER_ORG,
-      'P0 method-core HTTP test org (other tenant)',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG, 'P0 method-core HTTP test org']
+    );
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [OTHER_ORG, 'P0 method-core HTTP test org (other tenant)']
+    );
     for (const [id, org] of [
       [OWNER, ORG],
       [APPROVER, ORG],
@@ -167,7 +169,9 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
         .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
         .send({ to });
       if (res.status !== 200) {
-        throw new Error(`driveToInReview: transition to ${to} failed: ${res.status} ${JSON.stringify(res.body)}`);
+        throw new Error(
+          `driveToInReview: transition to ${to} failed: ${res.status} ${JSON.stringify(res.body)}`
+        );
       }
     }
   }
@@ -242,9 +246,10 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const sessionId = createRes.body.session.id;
     expect(createRes.body.session.version).toBe(1);
 
-    const before = await pool.query(`SELECT version, state, updated_at FROM method_sessions WHERE id = $1`, [
-      sessionId,
-    ]);
+    const before = await pool.query(
+      `SELECT version, state, updated_at FROM method_sessions WHERE id = $1`,
+      [sessionId]
+    );
 
     const res = await request(app)
       .post(`/api/method/sessions/${sessionId}/transition`)
@@ -256,16 +261,17 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(res.body.error).toBe('version_conflict');
     expect(res.body.currentVersion).toBe(1);
 
-    const after = await pool.query(`SELECT version, state, updated_at FROM method_sessions WHERE id = $1`, [
-      sessionId,
-    ]);
+    const after = await pool.query(
+      `SELECT version, state, updated_at FROM method_sessions WHERE id = $1`,
+      [sessionId]
+    );
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
   it('K-02: a stale DRD answer is refused, while an idempotent replay returns the original event', async () => {
     const createRes = await createSession(ownerToken, {
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
     });
     expect(createRes.status).toBe(201);
     const sessionId = createRes.body.session.id as string;
@@ -329,12 +335,16 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
   it('DEC-544: HTTP events, matrix derivation, freeze Output, and report keep currentLevel at the gap', async () => {
     const createRes = await createSession(ownerToken, {
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
     });
     expect(createRes.status).toBe(201);
     const sessionId = createRes.body.session.id as string;
 
-    async function appendAnswer(level: number, answerState: 'confirmed' | 'no', expectedVersion: number) {
+    async function appendAnswer(
+      level: number,
+      answerState: 'confirmed' | 'no',
+      expectedVersion: number
+    ) {
       const res = await request(app)
         .post(`/api/method/sessions/${sessionId}/events`)
         .set('Authorization', `Bearer ${ownerToken}`)
@@ -361,7 +371,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .send({
         type: 'EVIDENCE_ATTACHED',
         unitId: '1A',
-        payload: { evidenceId: `ev-dec544-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+        payload: {
+          evidenceId: `ev-dec544-${randomUUID()}`,
+          evidenceType: 'document',
+          strength: 'E2',
+        },
       });
     expect(evidence.status).toBe(201);
 
@@ -373,7 +387,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
         type: 'DECISION_APPROVED',
         unitId: '1A',
         level: 5,
-        payload: { decisionId: `dec544-target-${randomUUID()}`, subject: 'target_level', rationale: 'DEC-544 target' },
+        payload: {
+          decisionId: `dec544-target-${randomUUID()}`,
+          subject: 'target_level',
+          rationale: 'DEC-544 target',
+        },
       });
     expect(target.status).toBe(201);
 
@@ -405,24 +423,30 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
 
     const reportContent = {
       executiveSummary: 'DEC-544 gap-aware report proof',
-      findings: freeze.body.output.findings.map((f: { unitId: string; currentLevel: number | null; gap: number | null }) => ({
-        unitId: f.unitId,
-        currentLevel: f.currentLevel,
-        gap: f.gap,
-      })),
+      findings: freeze.body.output.findings.map(
+        (f: { unitId: string; currentLevel: number | null; gap: number | null }) => ({
+          unitId: f.unitId,
+          currentLevel: f.currentLevel,
+          gap: f.gap,
+        })
+      ),
     };
     const reportRes = await request(app)
       .post(`/api/method/outputs/${freeze.body.output.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'DEC-544 report', content: reportContent });
     expect(reportRes.status).toBe(201);
-    expect(reportRes.body.report.content.findings[0]).toMatchObject({ unitId: '1A', currentLevel: 2, gap: 3 });
+    expect(reportRes.body.report.content.findings[0]).toMatchObject({
+      unitId: '1A',
+      currentLevel: 2,
+      gap: 3,
+    });
   });
 
   it('K-02: an event INSERT failure rolls back the session-version increment on the same connection', async () => {
     const createRes = await createSession(ownerToken, {
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
     });
     expect(createRes.status).toBe(201);
     const sessionId = createRes.body.session.id as string;
@@ -524,7 +548,9 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(second.status).toBe(200);
     expect(second.body.output.id).toBe(outputId);
 
-    const rows = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
+    const rows = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [
+      sessionId,
+    ]);
     expect(rows.rows).toHaveLength(1);
   });
 
@@ -547,7 +573,9 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(res.body.error).toBe('missing_permission');
     expect(res.body.requiredRole).toBe('approver');
 
-    const stillInReview = await pool.query(`SELECT state FROM method_sessions WHERE id = $1`, [sessionId]);
+    const stillInReview = await pool.query(`SELECT state FROM method_sessions WHERE id = $1`, [
+      sessionId,
+    ]);
     expect(stillInReview.rows[0].state).toBe('in_review');
   });
 
@@ -595,7 +623,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
     const freeze = await request(app)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
@@ -611,13 +643,17 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .patch(`/api/method/outputs/${outputId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ scope: 'MUTATED' });
-    const del = await request(app).delete(`/api/method/outputs/${outputId}`).set('Authorization', `Bearer ${ownerToken}`);
+    const del = await request(app)
+      .delete(`/api/method/outputs/${outputId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
 
     expect(put.status).toBe(404);
     expect(patch.status).toBe(404);
     expect(del.status).toBe(404);
 
-    const unchanged = await pool.query(`SELECT scope FROM method_outputs WHERE id = $1`, [outputId]);
+    const unchanged = await pool.query(`SELECT scope FROM method_outputs WHERE id = $1`, [
+      outputId,
+    ]);
     expect(unchanged.rows[0].scope).not.toBe('MUTATED');
   });
 
@@ -637,7 +673,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
     const freeze = await request(app)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
@@ -652,10 +692,12 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
 
     const content = {
       executiveSummary: `Zbudowane z Outputu ${outputRes.body.output.id}`,
-      findings: outputRes.body.output.findings.map((f: { unitId: string; currentLevel: number | null }) => ({
-        unitId: f.unitId,
-        currentLevel: f.currentLevel,
-      })),
+      findings: outputRes.body.output.findings.map(
+        (f: { unitId: string; currentLevel: number | null }) => ({
+          unitId: f.unitId,
+          currentLevel: f.currentLevel,
+        })
+      ),
     };
 
     const { computeContentHash } = await import('../db.js');
@@ -688,7 +730,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
     const freeze = await request(app)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
@@ -743,7 +789,11 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
 
     // Simulate the EXACT interruption window documented in
     // EventDerivedOutputBridge's header comment: the freeze snapshot is
@@ -755,14 +805,23 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     await pool.query(
       `INSERT INTO method_snapshots (id, organization_id, session_id, method_pack_version, payload_json, content_hash, created_at)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6, now())`,
-      [snapshotId, ORG, sessionId, PACK_VERSION, JSON.stringify({ interrupted: true }), 'interrupted-test-hash']
+      [
+        snapshotId,
+        ORG,
+        sessionId,
+        PACK_VERSION,
+        JSON.stringify({ interrupted: true }),
+        'interrupted-test-hash',
+      ]
     );
     await pool.query(
       `UPDATE method_sessions SET state = 'frozen', frozen_snapshot_id = $1, version = version + 1 WHERE id = $2`,
       [snapshotId, sessionId]
     );
 
-    const preOutputs = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
+    const preOutputs = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [
+      sessionId,
+    ]);
     expect(preOutputs.rows).toHaveLength(0); // confirms the interruption is real: no Output yet
 
     const first = await request(app)
@@ -783,7 +842,9 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(second.status).toBe(200);
     expect(second.body.output.id).toBe(healedOutputId);
 
-    const rows = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
+    const rows = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [
+      sessionId,
+    ]);
     expect(rows.rows).toHaveLength(1);
   });
 
@@ -797,24 +858,36 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     // asking for bypass is STILL refused — the environment check is not
     // overridable by any flag or any request body.
     expect(
-      isDemoBypassAllowed({ NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' }, true)
+      isDemoBypassAllowed(
+        { NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' },
+        true
+      )
     ).toBe(false);
     expect(isDemoBypassAllowed({ NODE_ENV: 'production' }, true)).toBe(false);
 
     // Non-prod + operator flag on + client requested -> allowed.
-    expect(isDemoBypassAllowed({ NODE_ENV: 'test', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' }, true)).toBe(
-      true
-    );
+    expect(
+      isDemoBypassAllowed(
+        { NODE_ENV: 'test', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' },
+        true
+      )
+    ).toBe(true);
     // Non-prod but operator flag OFF (unset) -> refused (default OFF).
     expect(isDemoBypassAllowed({ NODE_ENV: 'test' }, true)).toBe(false);
     // Non-prod + operator flag on but client did NOT ask for it -> refused.
     expect(
-      isDemoBypassAllowed({ NODE_ENV: 'test', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' }, false)
+      isDemoBypassAllowed(
+        { NODE_ENV: 'test', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' },
+        false
+      )
     ).toBe(false);
   });
 
   it('12b. HTTP: without bypass, creating a session against a methodology_review pack is refused (422) and the pack readiness is never touched', async () => {
-    const res = await createSession(ownerToken, { methodPackId: REVIEW_PACK_ID, demoBypass: false });
+    const res = await createSession(ownerToken, {
+      methodPackId: REVIEW_PACK_ID,
+      demoBypass: false,
+    });
     expect(res.status).toBe(422);
     expect(res.body.error).toBe('pack_not_released');
 
@@ -829,7 +902,10 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const priorFlag = process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS;
     process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS = 'true';
     try {
-      const res = await createSession(ownerToken, { methodPackId: REVIEW_PACK_ID, demoBypass: true });
+      const res = await createSession(ownerToken, {
+        methodPackId: REVIEW_PACK_ID,
+        demoBypass: true,
+      });
       expect(res.status).toBe(201);
       expect(res.body.demoBypassActive).toBe(true);
       expect(typeof res.body.demoBypassNotice).toBe('string');

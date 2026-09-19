@@ -194,13 +194,11 @@ export const methodPackRegistry = new MethodPackRegistry();
 // DRD_METHOD_PACK_VERSION, or manifest.name/licence change, mirror the
 // change here in the same commit.
 export const DRD_METHOD_PACK_ID = 'drd';
-export const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.1';
+export const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.2';
 const DRD_METHOD_PACK_NAME = 'DRD — Digital Readiness Diagnosis (Digital Pathfinder)';
 export const DRD_METHOD_PACK_LICENCE_NOTICES = {
-  en:
-    'DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner\'s permission.',
-  pl:
-    'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+  en: "DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner's permission.",
+  pl: 'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
 } as const;
 const DRD_METHOD_PACK_LICENCE = {
   holder: 'DBR77 / Digital Pathfinder (Dr. Piotr Wiśniewski)',
@@ -241,7 +239,11 @@ export const DRD_REGISTRATION_READINESS: MethodPackReadiness = 'pilot';
  * intended until each of those methods gets its own governed bootstrap.
  */
 export async function ensureDrdPackRegistered(organizationId: string): Promise<MethodPackRecord> {
-  const existing = await methodPackRegistry.getPack(organizationId, DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION);
+  const existing = await methodPackRegistry.getPack(
+    organizationId,
+    DRD_METHOD_PACK_ID,
+    DRD_METHOD_PACK_VERSION
+  );
   if (existing) return existing;
 
   const id = genId();
@@ -273,14 +275,20 @@ export async function ensureDrdPackRegistered(organizationId: string): Promise<M
     { fallback: false }
   );
   if (!insert.success) {
-    throw new Error(`method-core: ensureDrdPackRegistered insert failed: ${insert.error ?? 'unknown error'}`);
+    throw new Error(
+      `method-core: ensureDrdPackRegistered insert failed: ${insert.error ?? 'unknown error'}`
+    );
   }
 
   // Whether THIS call won the race or lost it to a concurrent ensure-call,
   // the row now exists — read it back rather than trust `insert` alone (a
   // lost race reports success too, since ON CONFLICT DO NOTHING is not an
   // error).
-  const record = await methodPackRegistry.getPack(organizationId, DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION);
+  const record = await methodPackRegistry.getPack(
+    organizationId,
+    DRD_METHOD_PACK_ID,
+    DRD_METHOD_PACK_VERSION
+  );
   if (!record) {
     throw new Error(
       `method-core: ensureDrdPackRegistered failed to produce a method_packs row for org ${organizationId}`

@@ -52,7 +52,7 @@ const canonicalSession = {
   tenantId: 'tenant-1',
   module: 'assessment',
   methodPackId: 'drd',
-  methodPackVersion: '2.0.0-methodpack.1',
+  methodPackVersion: '2.0.0-methodpack.2',
   state: 'active',
   version: 7,
   mode: 'guided_manual',

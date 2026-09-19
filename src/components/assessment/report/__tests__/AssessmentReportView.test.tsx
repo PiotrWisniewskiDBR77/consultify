@@ -41,16 +41,21 @@ const OUTPUT = {
   snapshotId: 'snap-1',
   module: 'assessment' as const,
   methodPackId: 'drd',
-  methodPackVersion: '2.0.0-methodpack.1',
+  methodPackVersion: '2.0.0-methodpack.2',
   outputVersion: 1,
   revisionOfOutputId: null,
-  scope: 'Sesja sess-1 — drd@2.0.0-methodpack.1, zamrożona z event-store.',
+  scope: 'Sesja sess-1 — drd@2.0.0-methodpack.2, zamrożona z event-store.',
   current: {},
   target: {},
   gap: {},
   aggregation: { byGroup: {}, mappingVersion: 'v1', rule: 'r', excluded: {} },
   visualModel: null,
-  evidenceCompleteness: { totalUnits: 0, unitsWithAcceptedEvidence: 0, unitsMissingEvidence: 0, completenessRatio: 0 },
+  evidenceCompleteness: {
+    totalUnits: 0,
+    unitsWithAcceptedEvidence: 0,
+    unitsMissingEvidence: 0,
+    completenessRatio: 0,
+  },
   limitations: ['Ograniczenie testowe.'],
   findings: [],
   prioritisationResult: null,
@@ -75,11 +80,17 @@ describe('AssessmentReportView', () => {
   });
 
   it('renders the document once the Output, session and approvals resolve', async () => {
-    hoisted.fetchOutputForReport.mockResolvedValue({ output: OUTPUT, superseded: false, supersededByOutputId: null });
+    hoisted.fetchOutputForReport.mockResolvedValue({
+      output: OUTPUT,
+      superseded: false,
+      supersededByOutputId: null,
+    });
     hoisted.fetchSessionForReport.mockResolvedValue(null);
     hoisted.fetchApprovalsForReport.mockResolvedValue([]);
     render(<AssessmentReportView outputId="out-1" />);
-    await waitFor(() => expect(screen.getByText(/DRD · 2\.0\.0-methodpack\.1/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/DRD · 2\.0\.0-methodpack\.2/)).toBeInTheDocument()
+    );
   });
 
   it('shows "not found" when the Output fetch resolves null (404)', async () => {

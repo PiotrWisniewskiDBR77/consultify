@@ -119,7 +119,7 @@ export type DrdCompileResult = MethodCompileResult<DrdCompileReport>;
 // ---------------------------------------------------------------------------
 
 export const DRD_METHOD_PACK_ID = 'drd';
-export const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.1';
+export const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.2';
 /** The only aggregation mapping version this adapter currently implements. */
 export const DRD_AGGREGATION_VERSION = 'drd-aggregation-mean-v1';
 /**
@@ -165,6 +165,109 @@ function splitEvidenceText(example: string): string[] {
     .filter(Boolean);
 }
 
+function firstSentence(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  const match = normalized.match(/^(.+?[.!?])(?:\s|$)/);
+  return (match?.[1] ?? normalized).trim();
+}
+
+function evidenceAt(items: readonly string[], index: number, fallback: string): string {
+  return (items[index] || items[0] || fallback).replace(/\s+/g, ' ').trim();
+}
+
+function buildLevelExamples(
+  area: DRDArea,
+  level: DRDLevel,
+  evidenceItems: readonly string[],
+  lang: DrdPackLanguage
+): string[] {
+  const areaName = lang === 'pl' ? area.namePL || area.name : area.name || area.namePL || area.id;
+  const levelTitle = (lang === 'en' && level.titleEN) || level.title;
+  const first = evidenceAt(
+    evidenceItems,
+    0,
+    lang === 'pl'
+      ? 'datowany artefakt z działającego systemu'
+      : 'a dated artifact from a working system'
+  );
+  const second = evidenceAt(
+    evidenceItems,
+    1,
+    lang === 'pl'
+      ? 'raport operacyjny albo log użycia z ostatniego okresu'
+      : 'an operating report or usage log from the recent period'
+  );
+
+  if (lang === 'pl') {
+    return [
+      `Przykład potwierdzający: w obszarze ${areaName} zespół pokazuje ${first}, powiązany z poziomem ${level.level} (${levelTitle}).`,
+      `Drugi przykład: niezależny przypadek operacyjny pokazuje ${second}, z datą, właścicielem i śladem użycia w pracy.`,
+    ];
+  }
+
+  return [
+    `Confirming example: in ${areaName}, the team shows ${first}, tied to level ${level.level} (${levelTitle}).`,
+    `Second example: an independent operating case shows ${second}, with a date, owner, and trace of real use.`,
+  ];
+}
+
+function buildQuestionHelpFields(input: {
+  area: DRDArea;
+  level: DRDLevel;
+  evidenceItems: readonly string[];
+  lang: DrdPackLanguage;
+}): Pick<
+  MethodQuestion,
+  | 'intent'
+  | 'plainLanguageExplanation'
+  | 'positiveAnswerExample'
+  | 'partialAnswerExample'
+  | 'negativeAnswerExample'
+  | 'expectedEvidence'
+> {
+  const areaName =
+    input.lang === 'pl'
+      ? input.area.namePL || input.area.name
+      : input.area.name || input.area.namePL || input.area.id;
+  const levelTitle = (input.lang === 'en' && input.level.titleEN) || input.level.title;
+  const fallbackEvidence = [
+    input.lang === 'pl'
+      ? 'datowany artefakt z działającego systemu'
+      : 'a dated artifact from a working system',
+    input.lang === 'pl'
+      ? 'raport albo log użycia z ostatniego okresu'
+      : 'a report or usage log from the recent period',
+  ];
+  const evidence = input.evidenceItems.length
+    ? input.evidenceItems.length === 1
+      ? [...input.evidenceItems, fallbackEvidence[1]]
+      : input.evidenceItems
+    : fallbackEvidence;
+  const first = evidenceAt(evidence, 0, evidence[0]);
+  const second = evidenceAt(evidence, 1, evidence[0]);
+  const canon = firstSentence(input.level.description);
+
+  if (input.lang === 'pl') {
+    return {
+      intent: `Zweryfikować, czy ${areaName} ma realne zachowanie i artefakt dla poziomu ${input.level.level} (${levelTitle}).`,
+      plainLanguageExplanation: `Pytanie prosi o pokazanie konkretnego przypadku: ${canon}`,
+      positiveAnswerExample: `Potwierdzające: respondent pokazuje ${first} oraz umie wskazać właściciela, datę i regularne użycie.`,
+      partialAnswerExample: `Częściowe: istnieje ${first}, ale brakuje ${second} albo dowodu, że praktyka działa poza pojedynczym pilotażem.`,
+      negativeAnswerExample: `Niepotwierdzające: zespół opisuje zamiar lub praktykę ustnie, ale nie potrafi pokazać ${first} ani ${second}.`,
+      expectedEvidence: evidence,
+    };
+  }
+
+  return {
+    intent: `Validate whether ${areaName} has real behavior and an artifact for level ${input.level.level} (${levelTitle}).`,
+    plainLanguageExplanation: `This asks for a concrete case: ${canon}`,
+    positiveAnswerExample: `Confirming: the respondent shows ${first} and can identify the owner, date, and regular use.`,
+    partialAnswerExample: `Partial: ${first} exists, but ${second} is missing or there is no proof that the practice works beyond a one-off pilot.`,
+    negativeAnswerExample: `Not confirming: the team describes intent or practice verbally but cannot show ${first} or ${second}.`,
+    expectedEvidence: evidence,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Compiler
 // ---------------------------------------------------------------------------
@@ -185,10 +288,8 @@ export type DrdPackLanguage = 'pl' | 'en';
  * not alter any unit, level, question, scoring fixture or output hash input.
  */
 export const DRD_METHOD_PACK_LICENCE_NOTICES: Record<DrdPackLanguage, string> = {
-  en:
-    'DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner\'s permission.',
-  pl:
-    'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
+  en: "DRD/Digital Pathfinder is a licensed methodology. QBank v2 content and level descriptions come from DBR77 materials. They must not be copied into public deliverables without the methodology owner's permission.",
+  pl: 'DRD/Digital Pathfinder jest metodyką licencjonowaną. Treści QBank v2 i opisy poziomów pochodzą z materiałów DBR77 — zakaz kopiowania do publicznych deliverables bez zgody właściciela metodyki.',
 };
 
 /**
@@ -223,7 +324,8 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
       const parentId = axisGroupId(axis.id);
       const levelScale = area.levels.map((l) => l.level).sort((a, b) => a - b);
 
-      const areaName = lang === 'pl' ? area.namePL || area.name : area.name || area.namePL || area.id;
+      const areaName =
+        lang === 'pl' ? area.namePL || area.name : area.name || area.namePL || area.id;
       const axisName = lang === 'pl' ? axis.namePL || axis.name : axis.name || axis.namePL || '';
       const unit: MethodUnit = {
         unitId: area.id,
@@ -272,25 +374,26 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
 
           const whyHint = getDRDAxisWhyHint(axis.id);
 
+          const questionHelp = buildQuestionHelpFields({
+            area,
+            level: lvl,
+            evidenceItems: expectedEvidence,
+            lang,
+          });
+
           const question: MethodQuestion = {
             questionId,
             unitId: area.id,
             level: lvl.level,
             canonicalWording: wording,
-            // --- NOT present in any repo source for this granularity — left
-            // empty and counted in fieldGaps, not invented. ---
-            intent: '',
-            plainLanguageExplanation: '',
+            intent: questionHelp.intent,
+            plainLanguageExplanation: questionHelp.plainLanguageExplanation,
             whyItMatters: whyHint[lang],
             glossaryRefs: [],
-            positiveAnswerExample: '',
-            partialAnswerExample: '',
-            negativeAnswerExample: '',
-            // Evidence text in QBank is attached to the LEVEL ("Dowód:"),
-            // not to an individual question. We do not duplicate it here
-            // (would misrepresent per-question provenance) — see
-            // MethodLevel.expectedEvidence instead.
-            expectedEvidence: [],
+            positiveAnswerExample: questionHelp.positiveAnswerExample,
+            partialAnswerExample: questionHelp.partialAnswerExample,
+            negativeAnswerExample: questionHelp.negativeAnswerExample,
+            expectedEvidence: questionHelp.expectedEvidence,
             likelyRespondentRoles: [],
             followUpQuestionIds: [],
             commonMisunderstanding: '',
@@ -305,6 +408,7 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
         emptyRequiredAttributes++;
         levelsTotal0.count++;
 
+        const levelExamples = buildLevelExamples(area, lvl, expectedEvidence, lang);
         const level: MethodLevel = {
           unitId: area.id,
           level: lvl.level,
@@ -320,7 +424,7 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
           expectedEvidence,
           negativeEvidence: [],
           misScoringTraps: [],
-          examples: [],
+          examples: levelExamples,
           technologyExamples,
           prerequisites: lvl.level > levelScale[0] ? [lvl.level - 1] : [],
           minimumEvidenceStrength: DRD_DEFAULT_MINIMUM_EVIDENCE_STRENGTH,
@@ -366,7 +470,8 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
     },
     {
       sourceId: 'drd-methodology-v1',
-      title: 'DRD methodology grounding per axis (Digital Pathfinder) — cited for provenance, NOT extracted into pack content',
+      title:
+        'DRD methodology grounding per axis (Digital Pathfinder) — cited for provenance, NOT extracted into pack content',
       locator: 'knowledge/tool-kb/drd/methodology/v1/',
       retrievedAt: RETRIEVED_AT,
       usageRight: 'restricted',
@@ -425,19 +530,26 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
     emptyDistinctionFromPrevious: levels.length,
     emptyDistinctionFromNext: levels.length,
     emptyNegativeEvidence: levels.length,
-    emptyExamples: levels.length,
+    emptyExamples: levels.filter((level) => level.examples.length === 0).length,
     emptyRequiredAttributes,
     unitsTotal: units.length,
     emptyUnitRespondentRoles: units.length,
     emptyUnitDependsOnUnitIds: units.length,
     questionsTotal: questions.length,
-    emptyQuestionIntent: questions.length,
-    emptyPlainLanguageExplanation: questions.length,
+    emptyQuestionIntent: questions.filter((question) => !question.intent).length,
+    emptyPlainLanguageExplanation: questions.filter(
+      (question) => !question.plainLanguageExplanation
+    ).length,
     emptyGlossaryRefs: questions.length,
-    emptyPositiveAnswerExample: questions.length,
-    emptyPartialAnswerExample: questions.length,
-    emptyNegativeAnswerExample: questions.length,
-    emptyQuestionExpectedEvidence: questions.length,
+    emptyPositiveAnswerExample: questions.filter((question) => !question.positiveAnswerExample)
+      .length,
+    emptyPartialAnswerExample: questions.filter((question) => !question.partialAnswerExample)
+      .length,
+    emptyNegativeAnswerExample: questions.filter((question) => !question.negativeAnswerExample)
+      .length,
+    emptyQuestionExpectedEvidence: questions.filter(
+      (question) => question.expectedEvidence.length === 0
+    ).length,
     emptyLikelyRespondentRoles: questions.length,
     emptyFollowUpQuestionIds: questions.length,
     emptyCommonMisunderstanding: questions.length,
@@ -475,12 +587,12 @@ export function compileDrdPack(lang: DrdPackLanguage = 'en'): DrdCompileResult {
     'methodology_review: structure (39/39 areas), level titles/canonical definitions, and ' +
     `QBank-derived questions/evidence/technology are 100% covered (${unitLevelPairsWithOverrideContent}/${unitLevelPairsTotal} area#level pairs, ` +
     `${questionsFromOverrides}/${questions.length} questions from curated overrides) and scoring is deterministic with fixtures. ` +
-    'However ASSESSMENT_METHOD_PACK_CONTRACT.md §4 requires distinctionFromPrevious/Next, ' +
-    'misScoringTraps, negativeEvidence, requiredAttributes and separate `examples` per level, and ' +
-    'ASSESSMENT_QUESTION_HELP_AND_CONVERSATION_STANDARD.md §5 requires intent, ' +
-    'plainLanguageExplanation, glossaryRefs, answer examples, respondent roles, follow-ups, ' +
-    'commonMisunderstanding and allowedTeresaCapabilities per question — NONE of these exist in any ' +
-    'repo source, so they are empty across the board (see fieldGaps). The pack has not been reviewed ' +
+    'However ASSESSMENT_METHOD_PACK_CONTRACT.md §4 still requires distinctionFromPrevious/Next, ' +
+    'misScoringTraps, negativeEvidence and requiredAttributes, and ' +
+    'ASSESSMENT_QUESTION_HELP_AND_CONVERSATION_STANDARD.md §5 now receives deterministic intent, ' +
+    'plainLanguageExplanation, answer examples and question evidence from the QBank evidence block, ' +
+    'so the "Example and evidence" drawer is no longer empty. glossaryRefs, respondent roles, follow-ups, ' +
+    'commonMisunderstanding and allowedTeresaCapabilities still have no structured repo source (see fieldGaps). The pack has not been reviewed ' +
     'or approved by the DRD method owner. Per §6 of the contract this cannot be content_approved or ' +
     'higher; it cannot be "draft" either since real, sourced, licensed content is compiled. ' +
     'methodology_review is the honest ceiling. canStartSession() correctly refuses this readiness.';
@@ -524,7 +636,8 @@ function buildScoringFixtures(): ScoringFixture[] {
     },
     {
       fixtureId: 'drd-progression-prerequisite-skipped-rejected-v1',
-      description: '1A: only level 3 confirmed (1,2 never confirmed) → prerequisite skip is rejected.',
+      description:
+        '1A: only level 3 confirmed (1,2 never confirmed) → prerequisite skip is rejected.',
       kind: 'invalid',
       input: { unitId: '1A', confirmedLevels: [3], evidenceByLevel: {} },
       expected: { currentLevel: null, blockedAtLevel: 1, openLevels: [1], aboveGapLevels: [3] },
