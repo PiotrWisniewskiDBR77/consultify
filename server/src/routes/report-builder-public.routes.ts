@@ -13,6 +13,7 @@ import PDFDocument from 'pdfkit';
 
 import config from '../config/Config.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
+import { resolveReportExportLocale } from '../services/report/exportLocale.js';
 import { buildAttachmentContentDisposition } from '../utils/contentDisposition.js';
 import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
@@ -485,6 +486,16 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
         ? JSON.parse(result.report.config)
         : result.report.config || {};
 
+    // D-119: sibling of D-46 on the public (token) route. The renderer defaults
+    // to Polish, so decide the locale once — explicit ?language= → report config
+    // language → section language → DEC-510 identity chain → 'en' — instead of
+    // handing a shared English deck a Polish title slide.
+    const exportLocale = await resolveReportExportLocale(req, {
+      explicit: req.query.language,
+      report: { language: reportConfig.language },
+      sections: enabledSections as any,
+    });
+
     const pptxResult = await pipeline.generateFromLegacyReport(
       {
         report: result.report,
@@ -494,7 +505,7 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
         projectName: result.report.title,
       },
       {
-        language: reportConfig.language || 'pl',
+        language: exportLocale,
         template: reportConfig.styling?.template || 'corporate',
         brandColor: reportConfig.styling?.primaryColor,
         confidentiality: 'confidential',
