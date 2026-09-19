@@ -47,7 +47,7 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
       `INSERT INTO initiatives
          (id,organization_id,name,status,owner_business_id,created_by,updated_by,
           planned_start_date,planned_end_date)
-       VALUES ($1,$2,$3,'EXECUTING',$4,$4,$4,'2026-01-01','2026-12-31')`,
+       VALUES ($1,$2,$3,'IN_EXECUTION',$4,$4,$4,'2026-01-01','2026-12-31')`,
       [initiativeId, organizationId, 'Day 142 closing initiative', userId]
     );
     await pool.query(
@@ -116,10 +116,10 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
     const response = await request(app)
       .patch(`/api/initiatives/${initiativeId}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ status: 'DONE', reason: 'Day 142 canonical closure survival measurement' });
+      .send({ status: 'CLOSED', reason: 'Day 142 canonical closure survival measurement' });
     console.log('DAY142_HTTP_CLOSE', response.status, JSON.stringify(response.body));
     expect(response.status).toBe(200);
-    expect(response.body.status).toBe('DONE');
+    expect(response.body.status).toBe('CLOSED');
 
     const after = await pool.query(
       `SELECT i.status AS initiative_status,k.id AS kpi_id,k.initiative_id,
@@ -133,7 +133,7 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
 
     expect(after.rows).toHaveLength(1);
     expect(after.rows[0]).toMatchObject({
-      initiative_status: 'DONE',
+      initiative_status: 'CLOSED',
       kpi_id: kpiId,
       initiative_id: initiativeId,
       current_value: 40,
@@ -141,5 +141,13 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
       unit: 'percent',
       archived_at: null,
     });
+
+    const aggregate = await pool.query(
+      `SELECT payload_json->>'lifecycleState' AS lifecycle_stage
+         FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+      [organizationId, initiativeId]
+    );
+    expect(aggregate.rows).toEqual([{ lifecycle_stage: 'CLOSED' }]);
   });
 });

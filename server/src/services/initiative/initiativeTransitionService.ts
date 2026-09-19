@@ -90,6 +90,51 @@ export const pushOptionalColumnUpdate = (
   params.push(value);
 };
 
+/**
+ * Canonical writer for the initiative aggregate lifecycle stage.
+ *
+ * Kept as an exported transaction helper so seed/repair paths can reuse the
+ * exact runtime upsert instead of copying the payload merge and version rules.
+ * A disposition has no stage and deliberately leaves the aggregate untouched.
+ */
+export async function writeInitiativeAggregateLifecycleStage(
+  client: PgTransactionClient,
+  input: {
+    organizationId: string;
+    initiativeId: string;
+    lifecycleStage: string | null;
+  }
+): Promise<'written' | 'skipped' | 'aggregate-table-missing'> {
+  if (input.lifecycleStage === null) return 'skipped';
+
+  const stagePatch = JSON.stringify({
+    initiativeId: input.initiativeId,
+    lifecycleState: input.lifecycleStage,
+  });
+  try {
+    await client.query(
+      `INSERT INTO ie_aggregate_state
+         (organization_id, aggregate_type, aggregate_id, version, payload_json, updated_at)
+       VALUES (?, 'initiative', ?, 1, CAST(? AS jsonb), NOW())
+       ON CONFLICT (organization_id, aggregate_type, aggregate_id) DO UPDATE
+         SET version = ie_aggregate_state.version + 1,
+             payload_json = ie_aggregate_state.payload_json || CAST(? AS jsonb),
+             updated_at = NOW()`,
+      [input.organizationId, input.initiativeId, stagePatch, stagePatch]
+    );
+    return 'written';
+  } catch (stageErr: unknown) {
+    const msg = String((stageErr as Error)?.message || stageErr || '');
+    if (!/ie_aggregate_state/i.test(msg) || !/does not exist|no such table/i.test(msg)) {
+      throw stageErr;
+    }
+    logger.warn(
+      `[initiatives] etap silnika ${input.lifecycleStage} NIE zapisany dla ${input.initiativeId}: brak tabeli ie_aggregate_state`
+    );
+    return 'aggregate-table-missing';
+  }
+}
+
 interface GateDecisionCheck {
   ok: boolean;
   decisionId: string | null;
@@ -1259,31 +1304,11 @@ export async function executeInitiativeTransition(
       // wtedy `null` i agregatu NIE dotykamy. Inicjatywa odrzucona zachowuje
       // etap, na którym umarła; nadpisanie go `CLOSED` kłamałoby, że przeszła
       // całą ścieżkę realizacji (canon §5.3: odrzucenie to dyspozycja, nie etap).
-      const stagePatch =
-        nextStage === null ? null : JSON.stringify({ initiativeId: id, lifecycleState: nextStage });
-      if (stagePatch !== null) try {
-        await client.query(
-          `INSERT INTO ie_aggregate_state
-             (organization_id, aggregate_type, aggregate_id, version, payload_json, updated_at)
-           VALUES (?, 'initiative', ?, 1, CAST(? AS jsonb), NOW())
-           ON CONFLICT (organization_id, aggregate_type, aggregate_id) DO UPDATE
-             SET version = ie_aggregate_state.version + 1,
-                 payload_json = ie_aggregate_state.payload_json || CAST(? AS jsonb),
-                 updated_at = NOW()`,
-          [orgId, id, stagePatch, stagePatch]
-        );
-      } catch (stageErr: unknown) {
-        // FAIL CLOSED, z jednym wyjątkiem: baza bez tabeli agregatu (stary
-        // bootstrap „thin"). Tam etapu nie ma gdzie zapisać i milczenie byłoby
-        // kłamstwem — dlatego głośny WARN, nie ciche `catch {}`.
-        const msg = String((stageErr as Error)?.message || stageErr || '');
-        if (!/ie_aggregate_state/i.test(msg) || !/does not exist|no such table/i.test(msg)) {
-          throw stageErr;
-        }
-        logger.warn(
-          `[initiatives] etap silnika ${nextStage} NIE zapisany dla ${id}: brak tabeli ie_aggregate_state`
-        );
-      }
+      await writeInitiativeAggregateLifecycleStage(client, {
+        organizationId: orgId,
+        initiativeId: id,
+        lifecycleStage: nextStage,
+      });
 
       // H1d — USUNIĘTE: domyślne okno śledzenia korzyści przy 'DONE'→'TRACKING'.
       // Ani 'DONE', ani 'TRACKING' nie są kodami kolumny po P12 (CHECK
