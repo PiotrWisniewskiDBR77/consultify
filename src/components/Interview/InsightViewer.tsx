@@ -1995,13 +1995,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   }, [insight, parsedInsightSections]);
 
   const executiveSummary = useMemo(() => {
+    // Serwer składa `content` od nagłówka '## Executive Summary'
+    // (InterviewInsightService.renderV6ContentAsMarkdown), więc pierwszy akapit
+    // `content` to sama ETYKIETA sekcji — Callout pokazywał ją zamiast prozy
+    // (werdykt właściciela DEC-664: „powinny być teksty, nie tylko liczby").
+    // Pole generowane jest źródłem tożsamości; `content` zostaje fallbackiem
+    // rekordów legacy bez pola.
+    const generated = (insight?.executiveSummary || '').trim();
+    if (generated) return generated;
     if (!insight?.content) return '';
     const firstParagraph = insight.content
       .split('\n\n')
       .map((part) => stripMarkdownPreview(part))
       .find(Boolean);
     return firstParagraph || '';
-  }, [insight?.content]);
+  }, [insight?.executiveSummary, insight?.content]);
 
   // IS-3b (DEC-510 / U-08): the Executive Summary section renders the generator's
   // prose (insight.executiveSummary) as document typography instead of the

@@ -144,6 +144,28 @@ const MOCK_SESSION_SUMMARIES: Record<string, any> = {
 };
 
 // ── Rdzeń artefaktu ──────────────────────────────────────────────────────
+/**
+ * ★ WIERNY SKŁAD REKORDU V6 (QB0c, DEC-664): serwer składa `content` od
+ * nagłówka '## Executive Summary' + proza pola `executive_summary`
+ * (InterviewInsightService.renderV6ContentAsMarkdown :2487). Poprzednio
+ * fixture zaczynał `content` gołym akapitem wiodącym — kształt, którego
+ * produkcja NIE wytwarza — i maskował defekt Callouta (pierwszy akapit
+ * `content` realnego rekordu to sama etykieta sekcji). Jedna stała niesie
+ * prozę pola I treść sekcji, żeby się nie rozjechały.
+ */
+const EXEC_PROZA =
+  'Zakład nie jest ograniczony maszynowo — jest ograniczony obiegiem informacji między ' +
+  'planowaniem, produkcją i utrzymaniem ruchu. Rozbudowa czwartej linii bez naprawy tego ' +
+  'obiegu powieli istniejące straty na większej skali. ' +
+  'Zakład ma sprawną załogę i działające narzędzia, ale traci zdolność produkcyjną na styku ' +
+  'trzech funkcji: planowania, produkcji i utrzymania ruchu. Trzy wywiady niezależnie wskazały ' +
+  'ten sam mechanizm — decyzje operacyjne podejmowane są na danych z wczoraj, a każda z funkcji ' +
+  'mierzy się innym wskaźnikiem. Skutkiem jest przezbrojenie trwające 2,4x dłużej od standardu ' +
+  'i 62% zleceń serwisowych realizowanych reaktywnie. Największa dostępna dźwignia nie wymaga ' +
+  'CAPEX: uwspólnienie definicji wskaźników i przeniesienie sygnału o awarii z porannej odprawy ' +
+  'do momentu zdarzenia. Szacowany odzysk to 6-9 punktów OEE w horyzoncie dwóch kwartałów, ' +
+  'przy czym liczba wymaga potwierdzenia w logach CMMS przed wpisaniem jej do biznes case.';
+
 const MOCK_INSIGHT = {
   id: INSIGHT_ID,
   organizationId: ORG_ID,
@@ -173,15 +195,7 @@ const MOCK_INSIGHT = {
   createdBy: 'user-piotr-demo',
   createdAt: daysAgoIso(12),
   updatedAt: daysAgoIso(2),
-  executiveSummary:
-    'Zakład ma sprawną załogę i działające narzędzia, ale traci zdolność produkcyjną na styku ' +
-    'trzech funkcji: planowania, produkcji i utrzymania ruchu. Trzy wywiady niezależnie wskazały ' +
-    'ten sam mechanizm — decyzje operacyjne podejmowane są na danych z wczoraj, a każda z funkcji ' +
-    'mierzy się innym wskaźnikiem. Skutkiem jest przezbrojenie trwające 2,4x dłużej od standardu ' +
-    'i 62% zleceń serwisowych realizowanych reaktywnie. Największa dostępna dźwignia nie wymaga ' +
-    'CAPEX: uwspólnienie definicji wskaźników i przeniesienie sygnału o awarii z porannej odprawy ' +
-    'do momentu zdarzenia. Szacowany odzysk to 6-9 punktów OEE w horyzoncie dwóch kwartałów, ' +
-    'przy czym liczba wymaga potwierdzenia w logach CMMS przed wpisaniem jej do biznes case.',
+  executiveSummary: EXEC_PROZA,
   /**
    * ★ ROZDZIELENIE „ODCZYTU" OD „NARRACJI" (naprawa duplikatu 1:1).
    *
@@ -199,12 +213,13 @@ const MOCK_INSIGHT = {
    *   Odczyt konsultingowy    → co mówią rozmówcy vs co z tego wynika
    *   Narracja konsultingowa  → pełny wywód z mechanizmem i falsyfikacją
    *   Memo zarządcze          → decyzja do podjęcia i o co prosimy
-   * Pierwszy akapit (bez nagłówka) jest wiodącym zdaniem karty.
+   * Prowadzenie karty niesie sekcja '## Executive Summary' z prozą pola
+   * generowanego — jak w rekordzie V6 z produkcji (QB0c).
    */
   content:
-    'Zakład nie jest ograniczony maszynowo — jest ograniczony obiegiem informacji między ' +
-    'planowaniem, produkcją i utrzymaniem ruchu. Rozbudowa czwartej linii bez naprawy tego ' +
-    'obiegu powieli istniejące straty na większej skali.\n\n' +
+    '## Executive Summary\n\n' +
+    EXEC_PROZA +
+    '\n\n' +
     '## Podsumowanie\n\n' +
     'Wniosek: pieniądze leżą w organizacji, nie w maszynach. Trzy niezależne wywiady wskazały ' +
     'ten sam mechanizm — decyzje operacyjne zapadają na danych z wczoraj, bo sygnał o awarii ' +
