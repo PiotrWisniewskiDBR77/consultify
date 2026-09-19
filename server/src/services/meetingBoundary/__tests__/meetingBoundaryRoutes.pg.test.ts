@@ -311,6 +311,51 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     expect(adminAttempt.body.receipt).toBeTruthy();
   });
 
+  it('generate -> approve -> GET exposes governed outputs through the legacy read adapter', async () => {
+    const created = await createMeeting();
+    const meetingId = created.body.meeting.id;
+    const generated = await request(app)
+      .post(`/api/meeting/${meetingId}/generate-notes`)
+      .set(betaAdmin())
+      .send({
+        transcript: `${PREFIX} Team decided to ship the governed pilot on Friday. Action item: Alice will prepare the rollout plan by Monday.`,
+        language: 'en',
+      });
+    expect(generated.status).toBe(201);
+    expect(generated.body.note.decisions).toHaveLength(1);
+    expect(generated.body.note.actionItems).toHaveLength(1);
+
+    const approved = await request(app)
+      .post(`/api/meeting/${meetingId}/notes/${generated.body.meetingNoteId}/decision`)
+      .set(admin())
+      .send({ action: 'approve' });
+    expect(approved.status).toBe(200);
+
+    const readback = await request(app)
+      .get(`/api/meeting/${meetingId}`)
+      .set(betaAdmin());
+    expect(readback.status).toBe(200);
+    expect(readback.body.meeting.decisions).toEqual(
+      generated.body.note.decisions.map((item: { decision: string }) => item.decision)
+    );
+    expect(readback.body.meeting.followUps).toMatchObject(
+      generated.body.note.actionItems.map((item: { task: string; owner: string }) => ({
+        title: item.task,
+        owner: item.owner,
+        status: 'open',
+      }))
+    );
+
+    const legacy = await pool.query(
+      `SELECT decisions_json,
+              (SELECT COUNT(*)::int FROM meeting_follow_ups WHERE meeting_id = m.id) AS follow_ups
+         FROM meetings m WHERE id = $1`,
+      [meetingId]
+    );
+    expect(JSON.parse(legacy.rows[0].decisions_json || '[]')).toEqual([]);
+    expect(legacy.rows[0].follow_ups).toBe(0);
+  });
+
   it('an invalid decision action is rejected 400', async () => {
     const created = await createMeeting();
     const meetingId = created.body.meeting.id;
