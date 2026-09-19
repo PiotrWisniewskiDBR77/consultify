@@ -83,7 +83,7 @@ P3.3/P3.5 wymagają decyzji zanim dotkniemy kodu).
   docstringiem (wzorzec: late-flip ON z akceptem Piotra 07-15/07-16, nagłówek nadal mówi OFF):
   agentPlan, artifactApprovalUi, businessCaseAdvisory, canvasNewDocOptions, clientReader,
   clientVault, commandCenter, evidencePanel, financeEvBasket, ideasPreviewOverlay,
-  m03InboxStandardTable, m03TasksStandardTable, scimGroupSync, ssoSelfService, tabeleAiEditor.
+  m03TasksStandardTable, scimGroupSync, ssoSelfService, tabeleAiEditor.
   Jedna fala porządkowa (zero zmian zachowania) — pełna lista w raporcie robotnika P0.4.
 - **P3.6 [M] — czat→prezentacje zerwana integracja**: UnifiedChatPanel.tsx:3323 ustawia
   chatKickoffMessage i nawiguje /prezentacje, ale PrezentacjeView NIGDY nie konsumuje tego stanu —

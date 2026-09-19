@@ -152,7 +152,6 @@ Railway):
 | `src/utils/interviewCreatorShellFlag.ts` | `VITE_INTERVIEW_CREATOR_SHELL` |
 | `src/utils/interviewPendingReviewTabFlag.ts` | `VITE_INTERVIEW_PENDING_REVIEW_TAB` |
 | `src/utils/interviewPipelineStepperFlag.ts` | `VITE_INTERVIEW_PIPELINE_STEPPER` |
-| `src/utils/m03InboxStandardTableFlag.ts` | `VITE_M03_INBOX_STANDARD_TABLE` |
 | `src/utils/m03TasksStandardTableFlag.ts` | `VITE_M03_TASKS_STANDARD_TABLE` |
 | `src/utils/m05DecisionWorkspaceFlag.ts` | `VITE_M05_DECISION_WORKSPACE` |
 | `src/utils/melsDeckBuilderFlag.ts` | `VITE_MELS_DECK_BUILDER` |

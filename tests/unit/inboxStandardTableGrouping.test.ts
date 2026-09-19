@@ -8,11 +8,11 @@ import {
 } from '../../src/components/MyWork/InboxContent';
 
 /**
- * M03 Inbox flat mode → StandardTable grouped-rows (kanon TRIADA §27, flag
- * ff_m03InboxStandardTable). Guards the pure group/flatten/mirror pipeline
+ * M03 Inbox flat mode → StandardTable grouped-rows (kanon TRIADA §27). Guards
+ * the pure group/flatten/mirror pipeline
  * WITHOUT mounting the component (wzór tests/unit/myWorkOpenItemRouting.test.ts) —
  * `renderStandardFlatView`/`inboxStandardColumns` are exercised visually via
- * the flagged screenshot harness, not here.
+ * the screenshot harness, not here.
  *
  * The invariant under test: dedup-group expand/collapse (Layers xN badge)
  * and keyboard-nav focus (`__visibleIndex`) must survive StandardTable's

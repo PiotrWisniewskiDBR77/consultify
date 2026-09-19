@@ -16,7 +16,7 @@
  * for a build-time override) — no code change or redeploy needed to revert.
  *
  * Resolution order (highest wins), identical contract to
- * `m03TasksStandardTableFlag.ts` / `m03InboxStandardTableFlag.ts`:
+ * `m03TasksStandardTableFlag.ts`:
  *   1. URL query `?ff_m05DecisionWorkspace=0|1` — instant kill-switch bypass.
  *   2. `localStorage["ff.m05_decision_workspace"]` — override user/org.
  *   3. `import.meta.env.VITE_M05_DECISION_WORKSPACE` — override build-time.

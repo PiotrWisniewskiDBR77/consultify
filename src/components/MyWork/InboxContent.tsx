@@ -123,7 +123,6 @@ import {
 } from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
-import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
 import { listTransitionProposals } from '@/services/initiativeTransitionInboxApi';
 import {
   listMyAcceptanceWork,
@@ -633,7 +632,7 @@ interface InboxContentProps {
 }
 
 // ── Deduplication: group items by _key ──
-// Exported (kanon TRIADA §27, flag ff_m03InboxStandardTable) so the
+// Exported (kanon TRIADA §27) so the
 // grouped-rows flatten/mirror invariant (`flattenInboxDisplayGroups` below)
 // is unit-testable without rendering the component — see
 // tests/inboxStandardTableGrouping.test.ts.
@@ -644,8 +643,8 @@ export interface InboxGroup {
   count: number;
 }
 
-// ── StandardTable grouped-rows shape (kanon TRIADA §27, flag
-// ff_m03InboxStandardTable) — flattened dedup-group row (representative or
+// ── StandardTable grouped-rows shape (kanon TRIADA §27) — flattened
+// dedup-group row (representative or
 // child). Typed cast target for `row as unknown as InboxStandardRow`, wzór
 // `row as unknown as Task` (MyTasksListContent) zamiast `any`. `status`/
 // `urgency`/`type`/`section`/`source`/`title`/`received` are the
@@ -682,8 +681,8 @@ export const groupItems = (items: InboxItem[]): InboxGroup[] => {
   }));
 };
 
-// ── Flatten dedup-groups into StandardTable rows (kanon TRIADA §27, flag
-// ff_m03InboxStandardTable) — pure, exported for unit testing (see
+// ── Flatten dedup-groups into StandardTable rows (kanon TRIADA §27) — pure,
+// exported for unit testing (see
 // tests/inboxStandardTableGrouping.test.ts). Each group becomes a
 // representative row + (when `isExpanded`) its child rows, all independent
 // `InboxStandardRow`s. `status`/`urgency`/`type`/`section`/`source`/`title`/
@@ -697,8 +696,7 @@ export const groupItems = (items: InboxItem[]): InboxGroup[] => {
 // immediately after their representative regardless of which column is
 // sorted/filtered. Cell rendering never reads these mirrored fields — it
 // always reads `__item` (the row's OWN real item) so children still display
-// their OWN actual status/urgency/etc, exactly like legacy
-// `renderRow(group.items[i], …)`.
+// their OWN actual status/urgency/etc.
 export const flattenInboxDisplayGroups = (
   displayGroups: (InboxGroup & { isExpanded: boolean })[]
 ): InboxStandardRow[] => {
@@ -2066,14 +2064,11 @@ const AIHintStrip: React.FC<{
   );
 };
 
-// ── StandardTable kebab (kanon TRIADA §27, flag ff_m03InboxStandardTable) ──
+// ── StandardTable kebab (kanon TRIADA §27) ──
 // Plain function (not a hook) — StandardTable calls `rowActions(row)` directly,
 // same pattern as `buildTaskKebabSections` (MyTasksListContent) /
-// `buildDecisionKebabSections` (DecisionsPanelContent). Sections 1:1 z legacy
-// `renderRow`'s inline kebab (context actions / fixed manifest — Open preview·
-// Edit·Archive / danger — Reject); legacy `renderRow` keeps its OWN inline
-// copy untouched (this is a parallel extraction for the new render path, not
-// a refactor of the default one — zero risk to the legacy render).
+// `buildDecisionKebabSections` (DecisionsPanelContent). Sections: context
+// actions / fixed manifest — Open preview·Edit·Archive / danger — Reject.
 interface InboxRowHandlers {
   onOpen: (item: InboxItem) => void;
   onOpenPreview: (item: InboxItem) => void;
@@ -2274,11 +2269,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     },
     [controlledViewMode, onViewModeChange]
   );
-  // kanon TRIADA §27 (flag ff_m03InboxStandardTable, default OFF) — flat mode
-  // renders StandardTable grouped-rows instead of the bespoke table markup
-  // below (renderFlatView, untouched as the default render). `sections` view
-  // is never affected by this flag.
-  const useInboxStandardTable = isM03InboxStandardTableEnabled();
   const [uncontrolledInboxSection, setUncontrolledInboxSection] = useState<
     'today' | 'this_week' | 'all'
   >('all');
@@ -2316,15 +2306,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         column.id in INBOX_RESIZE_BOUNDS && isColumnVisible(column.id)
     ).map((column) => column.id);
   }, [isColumnVisible]);
-
-  const tableMinWidth = useMemo(() => {
-    const visibleWidth = INBOX_COLUMNS.reduce((sum, column) => {
-      if (column.id !== 'select' && column.id !== 'actions' && hiddenSet.has(column.id)) return sum;
-      return sum + (columnWidths[column.id] || column.width);
-    }, 0);
-
-    return Math.max(1080, visibleWidth);
-  }, [columnWidths, hiddenSet]);
 
   useEffect(() => {
     saveInboxHiddenColumns(hiddenColumns);
@@ -2786,14 +2767,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     return map;
   }, [groups, viewMode]);
 
-  // ── StandardTable rows (kanon TRIADA §27, flag ff_m03InboxStandardTable) ──
+  // ── StandardTable rows (kanon TRIADA §27) ──
   // Delegates to the pure, unit-tested `flattenInboxDisplayGroups` (see its
   // doc comment above for the group-cohesion/mirroring rationale, and
   // tests/inboxStandardTableGrouping.test.ts for the regression coverage).
   const inboxStandardRows = useMemo<StandardTableRow[]>(() => {
-    if (!useInboxStandardTable) return [];
     return flattenInboxDisplayGroups(displayItems);
-  }, [displayItems, useInboxStandardTable]);
+  }, [displayItems]);
 
   // CB-04/RV-029 — SEMANTIC duplicate warning, distinct from the "×N similar"
   // badge above. That badge groups by `_key` (sourceEntityType:sourceEntityId)
@@ -2815,12 +2795,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     );
   }, [inboxStandardRows]);
 
-  // ── StandardTable columns (kanon TRIADA §27) — cell markup 1:1 z legacy
-  // `renderRow` (title/status/urgency/type/section/source/received/sla).
+  // ── StandardTable columns (kanon TRIADA §27) — cell markup for the flat
+  // inbox view (title/status/urgency/type/section/source/received/sla).
   // `row as unknown as InboxStandardRow` at each render/sortAccessor boundary
   // — wzór `row as unknown as Task` (MyTasksListContent) zamiast `any`.
   const inboxStandardColumns = useMemo<StandardTableColumn[]>(() => {
-    if (!useInboxStandardTable) return [];
     return [
       {
         id: 'title',
@@ -3054,7 +3033,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   }, [
     t,
     isPolish,
-    useInboxStandardTable,
     toggleGroupExpanded,
     inboxSemanticDuplicateGroups,
     displayInboxTitle,
@@ -3510,476 +3488,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filteredItems, focusedIndex, open, preview, previewItem, triage, isPolish]);
 
-  // ── Render row ──
-  const renderRow = (item: InboxItem, index: number, groupCount?: number, groupKey?: string) => {
-    const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
-    const UIcon = u.icon;
-    const isSelected = selectedIds.has(item.id);
-    const isFocused = index === focusedIndex;
-    const isPreviewed = previewItem?.id === item.id;
-    const isNotification = String(item._key || '').startsWith('notification:');
-    const { text: receivedText, agingLevel } = formatRelativeTime(item.receivedAt, isPolish);
-    const sla = slaPill(item.sla);
-    const showDupeCount = groupCount && groupCount > 1;
-    const isGroupExpanded = groupKey ? expandedGroups.has(groupKey) : false;
-
-    return (
-      <tr
-        key={item.id}
-        data-index={index}
-        className={`
-          group cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
-          ${isSelected ? SELECTED_ROW_CLASS : ''}
-          ${isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
-          ${isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : ''}
-          transition-colors duration-150
-          hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
-        `}
-        onClick={() => preview(item)}
-        onDoubleClick={() => open(item)}
-      >
-        {/* Checkbox */}
-        <td className="w-10 px-2 py-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelectItem(item.id);
-            }}
-            className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all ${
-              isSelected
-                ? 'bg-c-text border-c-text text-c-surface opacity-100'
-                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
-            }`}
-          >
-            {isSelected && <CheckSquare size={12} />}
-          </button>
-        </td>
-
-        {/* Title */}
-        <td className="px-3 py-3" style={{ width: columnWidths.title }}>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-c-text truncate block" title={item.title}>
-              {item.title}
-            </span>
-            {item.suggestedAction && (
-              <span
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
-                title={
-                  item.suggestedReason || t('myWork.inboxContent.aISuggestion', 'AI suggestion')
-                }
-              >
-                AI:{' '}
-                {item.suggestedAction === 'accept_today'
-                  ? '✓'
-                  : item.suggestedAction === 'archive'
-                    ? '📦'
-                    : item.suggestedAction === 'schedule'
-                      ? '📅'
-                      : '→'}
-              </span>
-            )}
-            {showDupeCount && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (groupKey)
-                    setExpandedGroups((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(groupKey)) next.delete(groupKey);
-                      else next.add(groupKey);
-                      return next;
-                    });
-                }}
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-c-surface-raised text-[10px] font-semibold text-c-text-secondary hover:bg-c-border-subtle transition-colors"
-                title={isPolish ? `${groupCount} podobnych` : `${groupCount} similar`}
-              >
-                <Layers size={10} />x{groupCount}
-                {isGroupExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-              </button>
-            )}
-          </div>
-          {showRowDescription && (item.description || item.reason) ? (
-            <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
-              {item.description || item.reason}
-            </div>
-          ) : null}
-        </td>
-
-        {/* Status */}
-        {!hiddenSet.has('status') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.status }}>
-            {(() => {
-              const st = item.itemStatus || (item.triaged ? 'done' : 'open');
-              const labels: Record<string, string> = {
-                open: t('myWork.inboxContent.open2', 'Open'),
-                done: t('myWork.inboxContent.done2', 'Done'),
-                saved: t('myWork.inboxContent.saved', 'Saved'),
-                snoozed: t('myWork.inboxContent.snoozed', 'Snoozed'),
-                dismissed: t('myWork.inboxContent.dismissed', 'Dismissed'),
-              };
-              return (
-                <span className="inline-flex items-center gap-1.5">
-                  {/* EntityStatusChip carries the canonical filled signal shell
-                      (info/success/… ) in both light and dark — §5 / SYS-3. */}
-                  <EntityStatusChip status={st} label={labels[st] || labels.open} />
-                  {item.isActionable && <Zap size={10} className="text-amber-500" />}
-                </span>
-              );
-            })()}
-          </td>
-        )}
-
-        {/* Urgency */}
-        {!hiddenSet.has('urgency') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.urgency }}>
-            <span
-              className={`inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap ${u.pill}`}
-            >
-              <UIcon size={11} />
-              {u.label}
-            </span>
-          </td>
-        )}
-
-        {/* Type */}
-        {!hiddenSet.has('type') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
-            <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
-              <span className="truncate">{inboxTypeLabel(item.type)}</span>
-            </span>
-          </td>
-        )}
-
-        {/* Section */}
-        {!hiddenSet.has('section') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
-            <span className="text-xs text-c-text-secondary">
-              {SMART_SECTIONS.find((s) => s.id === item.section)?.[
-                isPolish ? 'labelPl' : 'labelEn'
-              ] || item.section}
-            </span>
-          </td>
-        )}
-
-        {/* Source */}
-        {!hiddenSet.has('source') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.source }}>
-            {(() => {
-              const src = item.source?.type || 'system';
-              const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
-                system: {
-                  icon: Bell,
-                  color: 'text-c-text-muted',
-                  label: t('myWork.inboxContent.label16', 'System'),
-                },
-                ai: { icon: Star, color: 'text-c-ai', label: 'AI' },
-                user: {
-                  icon: MessageSquare,
-                  color: 'text-blue-500',
-                  label: item.source?.userName || t('myWork.inboxContent.team', 'Team'),
-                },
-              };
-              const c = cfg[src] || cfg.system;
-              const SrcIcon = c.icon;
-              return (
-                <span className={`inline-flex items-center gap-1 text-xs ${c.color}`}>
-                  <SrcIcon size={11} />
-                  <span className="truncate">{c.label}</span>
-                </span>
-              );
-            })()}
-          </td>
-        )}
-
-        {/* Received (relative + aging) */}
-        {!hiddenSet.has('received') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.received }}>
-            <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
-              {receivedText}
-            </span>
-          </td>
-        )}
-
-        {/* SLA / due — single DueChip (canon §4.4) */}
-        {!hiddenSet.has('sla') && (
-          <td className="px-3 py-2 text-left" style={{ width: columnWidths.sla }}>
-            {sla.label === '-' ? (
-              <span className="text-c-text-muted">—</span>
-            ) : (
-              <DueChip
-                label={sla.label}
-                risk={
-                  item.sla?.isBreached
-                    ? 'overdue'
-                    : item.sla && item.sla.level !== 'none' && item.sla.level !== 'L1'
-                      ? 'soon'
-                      : 'none'
-                }
-                title={sla.title}
-              />
-            )}
-          </td>
-        )}
-
-        {/* Inline Actions */}
-        <td
-          className="px-2 py-2 text-right"
-          style={{ width: columnWidths.actions }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {(() => {
-            const contextActions: RowAction[] = [
-              {
-                id: 'open',
-                label: t('myWork.inboxContent.label17', 'Open'),
-                icon: Eye,
-                variant: 'primary',
-                onClick: () => open(item),
-              },
-              ...(item.suggestedAction && !item.triaged
-                ? [
-                    {
-                      id: 'apply-ai',
-                      label: isPolish
-                        ? `Zastosuj AI (${item.suggestedAction})`
-                        : `Apply AI (${item.suggestedAction})`,
-                      icon: Sparkles,
-                      onClick: () =>
-                        triage(item, item.suggestedAction!, {
-                          fromAISuggestion: true,
-                          confidence: item.suggestedConfidence,
-                        }),
-                    } as RowAction,
-                  ]
-                : []),
-              {
-                id: 'focus-today',
-                label: t('myWork.inboxContent.label18', 'Focus → Today'),
-                icon: Zap,
-                onClick: () => triage(item, 'accept_today'),
-              },
-              {
-                id: 'focus-week',
-                label: t('myWork.inboxContent.label19', 'Focus → This week'),
-                icon: CalendarClock,
-                onClick: () => triage(item, 'accept_week'),
-              },
-              {
-                id: 'focus-later',
-                label: t('myWork.inboxContent.label20', 'Focus → Later'),
-                icon: Calendar,
-                onClick: () => triage(item, 'accept_later'),
-              },
-              {
-                id: 'done',
-                label: t('myWork.inboxContent.label21', 'Done'),
-                icon: CheckCircle2,
-                divider: true,
-                onClick: () => triage(item, 'done'),
-              },
-              {
-                id: 'save',
-                label: t('myWork.inboxContent.label22', 'Save'),
-                icon: Bookmark,
-                onClick: () => triage(item, 'save'),
-              },
-              {
-                id: 'save-note',
-                label: t('myWork.inboxContent.label23', 'Save as note'),
-                icon: FileText,
-                onClick: () => handleSaveAsNote(item),
-              },
-              ...SNOOZE_PRESETS.map((p, idx) => ({
-                id: `snooze-${p.id}`,
-                label: `${t('myWork.inboxContent.snooze2', 'Snooze')}: ${isPolish ? p.labelPl : p.labelEn}`,
-                icon: Clock,
-                divider: idx === 0,
-                onClick: () => handleSnooze(item, p.id),
-              })),
-            ];
-            const sections: RowActionSection[] = [
-              { id: 'context', kind: 'context', actions: contextActions },
-              { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
-              {
-                id: 'danger',
-                kind: 'danger',
-                actions: [
-                  {
-                    id: 'reject',
-                    label: t('myWork.inboxContent.label24', 'Reject'),
-                    icon: X,
-                    variant: 'danger',
-                    onClick: () => triage(item, 'reject'),
-                  },
-                ],
-              },
-            ];
-            return (
-              <RowActionsMenu
-                sections={sections}
-                iconVariant="vertical"
-                className="opacity-40 transition-opacity group-hover:opacity-100"
-              />
-            );
-          })()}
-        </td>
-      </tr>
-    );
-  };
-
-  // ── Render table header ──
-  const renderTableHeader = () => (
-    <thead>
-      <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
-        {/* Select All */}
-        <th className="w-10 px-2 py-2">
-          <button
-            onClick={() => handleSelectAll(!allSelected)}
-            className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
-              allSelected
-                ? 'bg-c-text border-c-text text-c-surface'
-                : someSelected
-                  ? 'bg-c-text/60 border-c-text text-c-surface'
-                  : 'border-c-border-subtle text-transparent hover:border-c-border-strong hover:text-c-text-muted'
-            }`}
-          >
-            {allSelected ? (
-              <CheckSquare size={14} />
-            ) : someSelected ? (
-              <Minus size={14} />
-            ) : (
-              <Square size={14} />
-            )}
-          </button>
-        </th>
-
-        <th
-          className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-          style={{ width: columnWidths.title }}
-        >
-          <button
-            type="button"
-            onClick={() => handleSort('title')}
-            className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
-          >
-            {t('myWork.inboxContent.title', 'Title')}
-            <InboxSortIcon field="title" sortConfig={sortConfig} />
-          </button>
-          <ColumnResizer
-            columnId="title"
-            currentWidth={columnWidths.title}
-            minWidth={INBOX_RESIZE_BOUNDS.title.min}
-            maxWidth={INBOX_RESIZE_BOUNDS.title.max}
-            onResize={handleColumnResize}
-          />
-        </th>
-
-        {INBOX_COLUMNS.filter(
-          (c) => !['select', 'title', 'actions'].includes(c.id) && !hiddenSet.has(c.id)
-        ).map((col) => {
-          const colId = col.id;
-          const isFilterable = Boolean(col.filterable);
-          const hasFilter = isFilterable && col.filterOptions?.length;
-          const isResizable = Boolean(col.resizable);
-          // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
-          const leftAligned = [
-            'status',
-            'urgency',
-            'type',
-            'section',
-            'source',
-            'received',
-          ].includes(colId);
-          // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
-          const isSortable = colId !== 'sla';
-          return (
-            <th
-              key={colId}
-              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header`}
-              style={{ width: columnWidths[colId] }}
-            >
-              <div
-                className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}
-              >
-                {isSortable ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSort(colId as InboxSortField)}
-                    className={`inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary ${
-                      (tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''
-                    }`}
-                  >
-                    {getColumnLabel(colId)}
-                    <InboxSortIcon field={colId as InboxSortField} sortConfig={sortConfig} />
-                  </button>
-                ) : (
-                  <span
-                    className={
-                      (tableFilters[colId] as string[])?.length ? 'text-c-text-secondary' : ''
-                    }
-                  >
-                    {getColumnLabel(colId)}
-                  </span>
-                )}
-                {hasFilter ? (
-                  <FilterDropdown
-                    column={col}
-                    value={tableFilters[colId] as string[]}
-                    onChange={(val) => handleFilterChange(colId, val as string[])}
-                    isOpen={openFilterId === colId}
-                    onToggle={() => setOpenFilterId(openFilterId === colId ? null : colId)}
-                    onClose={() => setOpenFilterId(null)}
-                  />
-                ) : null}
-              </div>
-              {isResizable ? (
-                <ColumnResizer
-                  columnId={colId}
-                  currentWidth={columnWidths[colId]}
-                  minWidth={col.minWidth!}
-                  maxWidth={col.maxWidth!}
-                  onResize={handleColumnResize}
-                />
-              ) : null}
-            </th>
-          );
-        })}
-
-        <th
-          className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
-          style={{ width: columnWidths.actions }}
-        >
-          <div className="flex items-center justify-end normal-case tracking-normal">
-            <TableSettingsPopover
-              columns={INBOX_COLUMNS.filter((c) => c.id !== 'select').map(
-                (col): TableSettingsColumn => ({
-                  id: col.id,
-                  label: getColumnLabel(col.id),
-                  required: col.id === 'title' || col.id === 'actions',
-                  visible:
-                    col.id === 'title' || col.id === 'actions' ? true : !hiddenSet.has(col.id),
-                })
-              )}
-              onToggle={(columnId, visible) =>
-                setHiddenColumns((prev) => {
-                  const set = new Set(prev);
-                  if (visible) set.delete(columnId);
-                  else set.add(columnId);
-                  return Array.from(set);
-                })
-              }
-              showDescription={showRowDescription}
-              onToggleDescription={updateRowDescriptionSetting}
-              label={t('myWork.inboxContent.label25', 'View settings')}
-              columnsHeading={t('myWork.inboxContent.columnsHeading', 'Visible columns')}
-              descriptionLabel={t('myWork.inboxContent.descriptionLabel', 'Show row description')}
-            />
-          </div>
-        </th>
-      </tr>
-    </thead>
-  );
-
   // ── Render smart sections ──
   const renderSectionsView = () => {
     if (!sectionGroups) return null;
@@ -4339,35 +3847,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     );
   };
 
-  // ── Render flat view ──
-  const renderFlatView = () => {
-    let globalIndex = 0;
-    return (
-      <table
-        /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
-        style={{ minWidth: tableMinWidth }}
-      >
-        {renderTableHeader()}
-        <tbody>
-          {displayItems.map((group) => {
-            const idx = globalIndex++;
-            const rows = [renderRow(group.representative, idx, group.count, group.key)];
-            if (group.count > 1 && group.isExpanded) {
-              for (let i = 1; i < group.items.length; i++) {
-                rows.push(renderRow(group.items[i], globalIndex++));
-              }
-            }
-            return rows;
-          })}
-        </tbody>
-      </table>
-    );
-  };
-
-  // ── Render flat view — StandardTable grouped-rows (kanon TRIADA §27, flag
-  // ff_m03InboxStandardTable, default OFF). Replaces the ENTIRE bespoke table
-  // markup above for the flat mode when the flag is ON; `renderFlatView`
-  // (legacy, default render) stays untouched. `sections` view is unaffected.
+  // ── Render flat view — StandardTable grouped-rows (kanon TRIADA §27).
+  // The `sections` view is rendered separately by `renderSectionsView`.
   const renderStandardFlatView = () => (
     <StandardTable
       columns={inboxStandardColumns}
@@ -4567,11 +4048,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </div>
           ) : (
             <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
-              {viewMode === 'sections'
-                ? renderSectionsView()
-                : useInboxStandardTable
-                  ? renderStandardFlatView()
-                  : renderFlatView()}
+              {viewMode === 'sections' ? renderSectionsView() : renderStandardFlatView()}
             </div>
           )}
         </div>

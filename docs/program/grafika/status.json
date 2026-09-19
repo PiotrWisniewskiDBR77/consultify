@@ -638,7 +638,7 @@
           "id": "mywork-inbox",
           "nazwa": "Skrzynka (Inbox) — zakładka domyślna",
           "ocena": "B",
-          "co": "StandardTable (ff_m03InboxStandardTable ON), 11 pozycji.",
+          "co": "StandardTable, 11 pozycji.",
           "naprawione": [
             "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma.",
             "2026-09-03 (MYW-PHOTO-001/007, jeszcze BEZ ponownego zrzutu do akceptu Piotra): dołożone 2 pozycje (inbox-10 `fyi_system`, inbox-11 `other`) — brakowały 2 z 9 wartości `InboxSection`, licznik filtra byłby zawsze zero dla tych sekcji. 9 pozycji cytowanych wcześniej niezmienione."
