@@ -19,7 +19,14 @@ import {
   Trash2,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
 import type { TableRow } from '@/components/shared/ModuleHub/FilterableTable';
@@ -264,6 +271,100 @@ function SortIndicator({ active, direction }: { active: boolean; direction: Sort
     </span>
   );
 }
+
+/** Matches the `gap-1` between tag chips in the Tags cell. */
+const TAG_CHIP_GAP_PX = 4;
+
+/**
+ * How many leading chips fit WHOLE inside `avail`, given each chip's natural
+ * width and the width of the trailing "+N" chip. Pure + DOM-free so it can be
+ * unit-tested and mutated without a browser.
+ *
+ * Contract (Wpis 204 method b — zero clipped glyphs, never a sliced chip):
+ *  - all chips fit → return every chip (no "+N");
+ *  - otherwise → the largest k whose k chips + one gap-separated "+N" still fit;
+ *  - `avail <= 0` (jsdom / pre-measure) → return n, i.e. show everything, so we
+ *    never falsely collapse a cell we could not measure.
+ */
+export const fitTagChips = (
+  chipWidths: number[],
+  plusWidth: number,
+  avail: number,
+  gap: number
+): number => {
+  const n = chipWidths.length;
+  if (n === 0) return 0;
+  if (avail <= 0) return n;
+
+  const allWidth = chipWidths.reduce((a, b) => a + b, 0) + Math.max(0, n - 1) * gap;
+  if (allWidth <= avail) return n;
+
+  let k = 0;
+  for (let cand = 1; cand <= n - 1; cand++) {
+    const w = chipWidths.slice(0, cand).reduce((a, b) => a + b, 0) + cand * gap + plusWidth;
+    if (w <= avail) k = cand;
+    else break;
+  }
+  return k;
+};
+
+/**
+ * Tags cell that NEVER clips a chip: measures natural widths in a hidden layer,
+ * then renders the whole chips that fit plus a "+N" chip whose sibling `title`
+ * carries the full list. A ResizeObserver keeps it correct on column resize.
+ */
+const IdeasTagChips: React.FC<{ tags: string[] }> = ({ tags }) => {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(tags.length);
+
+  const recompute = useCallback(() => {
+    const box = boxRef.current;
+    const measure = measureRef.current;
+    if (!box || !measure) return;
+    const avail = box.clientWidth;
+    const kids = Array.from(measure.children) as HTMLElement[];
+    const plusEl = kids[kids.length - 1];
+    const chipWidths = kids.slice(0, tags.length).map((el) => el.offsetWidth);
+    const plusWidth = plusEl ? plusEl.offsetWidth : 0;
+    setVisibleCount(fitTagChips(chipWidths, plusWidth, avail, TAG_CHIP_GAP_PX));
+  }, [tags.length]);
+
+  useLayoutEffect(() => {
+    recompute();
+    const box = boxRef.current;
+    if (!box || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => recompute());
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, [recompute, tags]);
+
+  const shown = tags.slice(0, visibleCount);
+  const hidden = tags.length - shown.length;
+
+  return (
+    <div
+      ref={boxRef}
+      className="relative flex min-w-0 flex-nowrap items-center justify-start gap-1 overflow-hidden"
+      title={tags.join(', ')}
+    >
+      <div
+        ref={measureRef}
+        aria-hidden="true"
+        className="pointer-events-none invisible absolute inset-0 flex flex-nowrap items-center gap-1 overflow-hidden"
+      >
+        {tags.map((tag) => (
+          <MetaChip key={tag} label={tag} className="shrink-0" />
+        ))}
+        <MetaChip label={`+${tags.length}`} className="shrink-0" />
+      </div>
+      {shown.map((tag) => (
+        <MetaChip key={tag} label={tag} className="shrink-0" />
+      ))}
+      {hidden > 0 ? <MetaChip label={`+${hidden}`} className="shrink-0" /> : null}
+    </div>
+  );
+};
 
 export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   ideas,
@@ -1086,29 +1187,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     );
   };
 
-  const renderTagBadges = (tags?: string[], max = 2) => {
+  const renderTagBadges = (tags?: string[]) => {
     if (!tags?.length) {
       return <span className="text-[11px] text-c-text-muted">—</span>;
     }
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
-    // `flex-nowrap overflow-hidden`, nie `flex-wrap`: jądro kanonu dociska
-    // szerokość kolumny do POMIARU TEKSTU (każdy chip liczy jako osobna linia),
-    // więc przy dwóch chipach kolumna bywa węższa niż ich rząd — z `flex-wrap`
-    // rząd łamał się do drugiej linii i wiersz rósł ponad sąsiadów (odbiór
-    // właściciela: nierówne wysokości). Jedna niełamliwa linia trzyma kanoniczną
-    // wysokość wiersza (§3.4); `title` oddaje pełną listę, gdyby chip się przyciął.
-    return (
-      <div
-        className="flex min-w-0 flex-nowrap items-center justify-start gap-1 overflow-hidden"
-        title={tags.join(', ')}
-      >
-        {tags.slice(0, max).map((tag) => (
-          <MetaChip key={tag} label={tag} />
-        ))}
-        {tags.length > max ? <MetaChip label={`+${tags.length - max}`} /> : null}
-      </div>
-    );
+    // Wpis 204 method (b): the cell measures natural chip widths and renders
+    // only WHOLE chips that fit plus a "+N" chip whose `title` carries the full
+    // list — so no glyph is ever sliced and the row keeps its canonical height
+    // (§3.4). Replaces the old static `slice(0, max)`, which clipped the second
+    // chip whenever the column was narrower than the chip row.
+    return <IdeasTagChips tags={tags} />;
   };
 
   /**

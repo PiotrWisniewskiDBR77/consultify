@@ -19,7 +19,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { IdeasTableContent } from '../../../src/components/MyWork/IdeasTableContent';
+import { IdeasTableContent, fitTagChips } from '../../../src/components/MyWork/IdeasTableContent';
 import type { MyIdea } from '../../../src/components/MyWork/myIdeasTypes';
 import { SELECTED_ROW_CLASS } from '../../../src/components/shared/selectionTokens';
 import { LIST_CANON_V2_FLAG_KEYS } from '../../../src/config/listCanonV2';
@@ -84,6 +84,7 @@ function renderTable(overrides: {
   selectedIds?: Set<string>;
   tableFilters?: TableFilters;
   focusedIndex?: number;
+  ideas?: MyIdea[];
 }) {
   const spies = {
     onFocusIndexChange: vi.fn(),
@@ -100,10 +101,11 @@ function renderTable(overrides: {
     onSort: vi.fn(),
   };
   const selectedIds = overrides.selectedIds ?? new Set<string>();
+  const ideas = overrides.ideas ?? IDEAS;
   const utils = render(
     <MemoryRouter initialEntries={['/']}>
       <IdeasTableContent
-        ideas={IDEAS}
+        ideas={ideas}
         isPolish={false}
         tableFilters={overrides.tableFilters ?? {}}
         availableStageOptions={STAGE_OPTIONS}
@@ -111,8 +113,8 @@ function renderTable(overrides: {
         availableToolOptions={TOOL_OPTIONS}
         columnWidths={COLUMN_WIDTHS}
         selectedIds={selectedIds}
-        allSelected={selectedIds.size === IDEAS.length}
-        someSelected={selectedIds.size > 0 && selectedIds.size < IDEAS.length}
+        allSelected={selectedIds.size === ideas.length}
+        someSelected={selectedIds.size > 0 && selectedIds.size < ideas.length}
         focusedIndex={overrides.focusedIndex ?? -1}
         sortField="date"
         sortDir="desc"
@@ -214,16 +216,21 @@ describe('IdeasTableContent — list-canon-v2 PO (flaga ON, kanoniczny StandardT
   it('a row with two tags keeps both chips on ONE line (no wrap → equal row heights)', () => {
     // Odbiór właściciela (Wpis 201): wiersz z dwoma tagami łamał je do drugiej
     // linii i rósł ponad sąsiadów. Gwarancja jednej linii to `flex-nowrap` +
-    // `overflow-hidden` na pojemniku chipów; `title` oddaje pełną listę, gdyby
-    // chip się przyciął. Mutacja dowodowa: powrót do `flex-wrap` → RED.
+    // `overflow-hidden` na pojemniku chipów. Od Wpis 204 pojemnik niesie też
+    // UKRYTĄ warstwę pomiarową (`aria-hidden`, duplikuje etykiety chipów), więc
+    // widoczne chipy czytamy z BEZPOŚREDNICH dzieci `span` pudełka, a nie przez
+    // `getByText` (złapałby duplikat). W jsdom `clientWidth=0` → guard pokazuje
+    // wszystkie chipy (brak „+N"). Mutacja dowodowa: powrót do `flex-wrap` → RED.
     const { container } = renderTable({});
     const tagsBox = container.querySelector('div[title="rynek, DE"]');
     expect(tagsBox).not.toBeNull();
     expect(tagsBox!.className).toContain('flex-nowrap');
     expect(tagsBox!.className).toContain('overflow-hidden');
     expect(tagsBox!.className).not.toContain('flex-wrap');
-    expect(within(tagsBox as HTMLElement).getByText('rynek')).toBeInTheDocument();
-    expect(within(tagsBox as HTMLElement).getByText('DE')).toBeInTheDocument();
+    const visibleChips = Array.from(
+      tagsBox!.querySelectorAll(':scope > span')
+    ).map((el) => el.textContent);
+    expect(visibleChips).toEqual(['rynek', 'DE']);
   });
 
   it('row click gives the parent the SAME index argument as PRZED and marks the preview row', () => {
@@ -369,5 +376,80 @@ describe('IdeasTableContent — list-canon-v2 PO (flaga ON, kanoniczny StandardT
 
     expect(spies.onFocusIndexChange).toHaveBeenCalledWith(0);
     expect(row.className).not.toContain(SELECTED_ROW_CLASS);
+  });
+});
+
+describe('fitTagChips — pure overflow helper (Wpis 204 method b)', () => {
+  const GAP = 4;
+
+  it('returns every chip when they all fit (no "+N")', () => {
+    // 64 + 96 + one gap = 164 ≤ 200
+    expect(fitTagChips([64, 96], 28, 200, GAP)).toBe(2);
+  });
+
+  it('returns the largest whole-chip count that still leaves room for "+N"', () => {
+    // chip0 + gap + plus = 64 + 4 + 28 = 96 ≤ 145, but both chips = 164 > 145
+    expect(fitTagChips([64, 96], 28, 145, GAP)).toBe(1);
+  });
+
+  it('returns 0 when even the first chip + "+N" does not fit', () => {
+    expect(fitTagChips([64, 96], 28, 60, GAP)).toBe(0);
+  });
+
+  it('keeps a single long chip (never slices it, "+N" would be pointless)', () => {
+    // n=1: all-fits check 67 ≤ 145 → 1; the loop only runs to n-1 so a lone chip
+    // is never replaced by "+1".
+    expect(fitTagChips([67], 28, 145, GAP)).toBe(1);
+  });
+
+  it('returns 0 for an empty tag list', () => {
+    expect(fitTagChips([], 28, 145, GAP)).toBe(0);
+  });
+
+  it('shows everything when the box is unmeasured (avail<=0, jsdom guard)', () => {
+    expect(fitTagChips([64, 96, 120], 28, 0, GAP)).toBe(3);
+  });
+});
+
+describe('IdeasTagChips — overflow wiring (canon-v2, flaga ON)', () => {
+  beforeEach(() => {
+    clearFlagAndFacadeState();
+    window.localStorage.setItem(LIST_CANON_V2_FLAG_KEYS.localStorageScreen('ideas'), '1');
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    clearFlagAndFacadeState();
+  });
+
+  it('collapses an overflowing Tags cell to whole chips + "+N", never a sliced chip', () => {
+    // Wymuszamy przepełnienie: pudełko 230 px, chip = 10 px/znak. Trzy tagi
+    // (80 + 130 + 70 + 2×4 = 288) nie mieszczą się; mieści się tylko pierwszy
+    // chip + „+2" (80 + 4 + 20 = 104 ≤ 230), drugi już nie (210 + 8 + 20 = 238).
+    // Dowód WPIĘCIA: IdeasTagChips naprawdę woła fitTagChips i renderuje „+N".
+    // Mutacja: `return n` w fitTagChips (zawsze wszystko) → brak „+2" → RED.
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(230);
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return (this.textContent || '').length * 10;
+    });
+
+    const wideIdea: MyIdea = {
+      id: 'idea-wide',
+      title: 'Szeroki wiersz tagów',
+      body: 'Trzy długie tagi, które nie mieszczą się w kolumnie.',
+      tags: ['operacje', 'automatyzacja', 'raporty'],
+      stage: 'ready',
+      preferredTool: 'table',
+      createdAt: '2026-06-18T09:00:00Z',
+      updatedAt: '2026-07-12T08:00:00Z',
+    };
+
+    const { container } = renderTable({ ideas: [wideIdea] });
+    const tagsBox = container.querySelector('div[title="operacje, automatyzacja, raporty"]');
+    expect(tagsBox).not.toBeNull();
+
+    const visibleChips = Array.from(tagsBox!.querySelectorAll(':scope > span')).map(
+      (el) => el.textContent
+    );
+    expect(visibleChips).toEqual(['operacje', '+2']);
   });
 });
