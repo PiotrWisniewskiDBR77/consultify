@@ -485,7 +485,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         onScroll={onBodyScroll}
       >
         <table
-          /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-max min-w-full border-collapse text-left"
+          /* §27-exempt: GridView = platforma-tabel (archetyp Airtable), zły archetyp do StandardTable — właściciel rozstrzygnął „ZOSTAW" (DEC-693, Harvard/wdrozenie-100/_ROZLICZENIE_1-88_2026-07-12.md:298) */ className="w-max min-w-full border-collapse text-left"
         >
           <thead className={stickyTop}>
             <tr>
@@ -716,7 +716,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         className="shrink-0 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised"
         onScroll={onFooterScroll}
       >
-        <table className="w-max min-w-full border-collapse text-left text-xs text-c-text-secondary">
+        <table /* §27-exempt: stopka-sum GridView, część tej samej platformy-tabel (DEC-693, _ROZLICZENIE_1-88_2026-07-12.md:298) */ className="w-max min-w-full border-collapse text-left text-xs text-c-text-secondary">
           <tbody>
             <tr>
               <td

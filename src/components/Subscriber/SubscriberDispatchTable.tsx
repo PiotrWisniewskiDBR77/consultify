@@ -110,9 +110,7 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
         </div>
       ) : (
         <div className="overflow-x-auto border-t border-slate-200 dark:border-slate-800">
-          <table
-            /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="min-w-full text-left text-xs"
-          >
+          <table /* §27-exempt: prezentacyjny widget „recent dispatches" (≤5 wierszy dostarczonych przez serwer, maxRows=5), nie lista encji — kanon StandardTable/FilterableTable nie ma zastosowania */ className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
               <tr>
                 <th scope="col" className="px-4 py-2">
