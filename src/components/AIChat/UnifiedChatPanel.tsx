@@ -2061,6 +2061,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         errorCode: providerErrorCode,
       });
       const providerErrorMetadata = {
+        error: providerErrorCode,
         aiProviderError: {
           code: providerErrorCode,
           ...(adminDiagnostic ? { adminDiagnostic } : {}),
