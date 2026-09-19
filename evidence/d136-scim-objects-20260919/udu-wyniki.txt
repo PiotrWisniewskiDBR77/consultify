@@ -1,0 +1,18 @@
+# D-136 UP->DOWN->UP, 2026-09-19 04:07:33 CDT
+kontener=qoder-d-pg-6 port=6635 baza=consultify_d136 (kopia staging-auto-20260919T0330.dump)
+migracja=20262304_scim_missing_objects.sql  down=server/migrations/rollback/20262304_scim_missing_objects.down.sql
+down_transakcyjny_begin=1
+down_destrukcyjne_operacje=0
+baseline_obiektow_obecnych=0/5
+rc_up1=0  Applying migrations: 1  ledger=success
+po_up1_obiektow=5/5
+diff_baseline_po_up1_linie=19
+rc_down=0
+po_down_obiektow=0/5
+diff_baseline_po_down_linie=0  (oczekiwane 0 = schema wróciła)
+rc_delete_ledger=0  rc_up2=0  Applying migrations: 1  ledger=success
+po_up2_obiektow=5/5
+diff_po_up1_po_up2_linie=0  (oczekiwane 0 = cykl odtwarzalny)
+diff_baseline_po_up2_linie=19  (oczekiwane = diff_baseline_po_up1_linie)
+
+WERDYKT=PASS (RC 0/0/0, obiekty 5->0->5, diff baseline-PO_DOWN=0, diff UP1-UP2=0)

@@ -1,0 +1,8 @@
+2026-09-19 04:07:38:738 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 04:07:38:738 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 04:07:38:738 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 04:07:38:738 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 04:07:38:738 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262304_scim_missing_objects.sql
+✅ Postgres migrations complete

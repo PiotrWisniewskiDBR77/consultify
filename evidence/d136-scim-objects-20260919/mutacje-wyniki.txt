@@ -1,0 +1,156 @@
+D-136 dowód mutacyjny — 2026-09-19T09:20:12Z
+test: server/src/routes/integrations/__tests__/scimMissingObjects.pg.test.ts
+sha256 migracji przed: 451917cec8776426478856ea284a9f81ff0c879a0b05aaa3d2685cb6143af0b0
+sha256 down przed:     0e108e8589a9d075a4d04271c65eb14b842ffe5ff6fc54f0654cb4bef0f0c82b
+
+=== M1 — bez users.scim_last_sync_at ===
+plik: server/migrations/20262304_scim_missing_objects.sql | zmieniony: TAK
+RC=1
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 28ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 26ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 7ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 3ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 5ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 8ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 47ms
+       ✓ T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 28ms
+       ✓ T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 26ms
+       × T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 7ms
+       × T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 3ms
+       × T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 1ms
+       × T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 5ms
+       × T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 8ms
+       × T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+       × T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 47ms
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+  blad:    → expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad:    → expected [ 'ADD COLUMN IF NOT EXISTS', …(1) ] to have a length of 3 but got 2
+  blad: AssertionError: expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad: AssertionError: expected [ 'ADD COLUMN IF NOT EXISTS', …(1) ] to have a length of 3 but got 2
+
+przywrócono: sha256 zgodny z baseline
+
+=== M2 — bez idx_scim_conflicts_org ===
+plik: server/migrations/20262304_scim_missing_objects.sql | zmieniony: TAK
+RC=1
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 29ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 28ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 8ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 4ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 2ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 9ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 2ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 63ms
+       ✓ T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 29ms
+       ✓ T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 28ms
+       × T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 8ms
+       × T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 4ms
+       × T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 2ms
+       × T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+       × T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 9ms
+       × T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 2ms
+       × T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 63ms
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+  blad:    → expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad:    → expected [ 'CREATE UNIQUE INDEX IF NOT EXISTS' ] to have a length of 2 but got 1
+  blad: AssertionError: expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad: AssertionError: expected [ 'CREATE UNIQUE INDEX IF NOT EXISTS' ] to have a length of 2 but got 1
+
+przywrócono: sha256 zgodny z baseline
+
+=== M3 — bez users.scim_external_id (wpięcie: zapytanie trasy SCIM) ===
+plik: server/migrations/20262304_scim_missing_objects.sql | zmieniony: TAK
+RC=1
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 31ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 30ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 5ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 4ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 6ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 60ms
+       ✓ T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 31ms
+       ✓ T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 30ms
+       × T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 5ms
+       × T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 4ms
+       × T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 1ms
+       × T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+       × T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 6ms
+       × T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+       × T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 60ms
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+   Test Files  1 failed (1)
+        Tests  7 failed | 2 passed (9)
+  blad:    → expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad:    → expected [ 'ADD COLUMN IF NOT EXISTS', …(1) ] to have a length of 3 but got 2
+  blad: AssertionError: expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+  blad: AssertionError: expected [ 'ADD COLUMN IF NOT EXISTS', …(1) ] to have a length of 3 but got 2
+
+przywrócono: sha256 zgodny z baseline
+
+=== M4 — down bez DROP COLUMN scim_provisioned ===
+plik: server/migrations/rollback/20262304_scim_missing_objects.down.sql | zmieniony: TAK
+RC=1
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 31ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 27ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 10ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 5ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 13ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 11ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 6ms
+       ✓ T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 31ms
+       ✓ T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 27ms
+       ✓ T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 10ms
+       ✓ T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 5ms
+       ✓ T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 13ms
+       ✓ T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 6ms
+       ✓ T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 11ms
+       ✓ T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+       × T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 6ms
+   Test Files  1 failed (1)
+        Tests  1 failed | 8 passed (9)
+   Test Files  1 failed (1)
+        Tests  1 failed | 8 passed (9)
+  blad:    → expected [ 'DROP COLUMN IF EXISTS', …(1) ] to have a length of 3 but got 2
+  blad: AssertionError: expected [ 'DROP COLUMN IF EXISTS', …(1) ] to have a length of 3 but got 2
+  blad: AssertionError: expected [ 'DROP COLUMN IF EXISTS', …(1) ] to have a length of 3 but got 2
+
+przywrócono: sha256 zgodny z baseline
+
+=== PRZEBIEG KOŃCOWY (pliki bazowe, bez mutacji) ===
+sha256 migracji: 451917cec8776426478856ea284a9f81ff0c879a0b05aaa3d2685cb6143af0b0
+sha256 down:     0e108e8589a9d075a4d04271c65eb14b842ffe5ff6fc54f0654cb4bef0f0c82b
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T0 preflight: kopia dumpu nie ma żadnego z 5 obiektów SCIM 27ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T1 wpięcie PRE: zapytanie trasy SCIM milczy (fallback:true → []), a z fallback:false rzuca brak kolumny 24ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T2 UP z pliku migracji tworzy dokładnie te 5 obiektów 10ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T3 typy, domyślne i definicje indeksów są zgodne z blobem historycznym 5ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T4 wpięcie PO: to samo zapytanie trasy zwraca wiersz z kluczami scim_* 11ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T5 unikalny indeks częściowy: duplikat external_id odrzucony, NULL wiele razy dozwolony 5ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T6 idempotencja: ponowne zastosowanie UP nie zmienia schematu 9ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T7 źródło migracji: dokładnie 3 ADD COLUMN IF NOT EXISTS + 2 CREATE INDEX IF NOT EXISTS, zero DROP 1ms
+  scimMissingObjects.pg.test.ts > D-136 — SCIM missing objects (real PostgreSQL) > T8 DOWN cofa wyłącznie te 5 obiektów — bez DROP TABLE, tabele i reszta kolumn nietknięte 114ms
+  scimMissingObjects.pg.test.ts (9 tests) 344ms
+   Test Files  1 passed (1)
+        Tests  9 passed (9)
+   Test Files  1 passed (1)
+        Tests  9 passed (9)
+RC=0
+WERSJA_KONCOWA_RC=0
+
+=== M3 SZCZEGÓŁY (wpięcie) — RC=1, sha po przywróceniu zgodne: TAK ===
+     → column "scim_external_id" of relation "users" does not exist
+     → expected error: column "scim_external_id" of relat… { …(15) } to match object { code: '23505' }
+     → column "scim_external_id" does not exist

@@ -1,0 +1,28 @@
+# D-136 — pomiar ścieżki ZAPISU SCIM po zastosowaniu 20262304 (DEC-607, poza zakresem zlecenia)
+
+Data pomiaru: 2026-09-19 04:22 CDT (09:22 UTC)
+Baza: KOPIA dumpu `consultify_d136` (kontener `qoder-d-pg-6`, 127.0.0.1:6635), stan PO UP 20262304 (5/5 obiektów).
+Metoda: skrypt sondy uruchomiony przez `npx tsx`, wywołania `DbPromise.run/all` = DOKŁAWNIE te, których używa trasa
+(`server/src/routes/integrations/scim.routes.ts`); sonda usunięta po pomiarze (`server/src/scratch/` nie istnieje).
+Hasło/URL: wyłącznie w środowisku (REGUŁA 10), w pliku brak sekretów.
+
+## Wynik (jedna linia z przebiegu)
+
+```
+PROBE org= true seed= true  | UPDATE(:388)= true changes= 1  | INSERT(:403)= false column "scim_provisioned" is of type boolean but expression is of type integer
+PROBE row= [{"scim_external_id":"ext-new","scim_provisioned":true,"synced":true}]
+```
+
+## Wnioski zmierzone, nie wywnioskowane
+
+| Ścieżka | plik:linia | wynik | mechanizm |
+| --- | --- | --- | --- |
+| UPDATE `scim_provisioned = 1, scim_last_sync_at = datetime('now')` | `scim.routes.ts:388` (i `:1161`) | **DZIAŁA** (success=true, changes=1, wiersz: `scim_provisioned=true`, `synced=true`) | `normalizeBooleanFlags` przepisuje porównanie `= 1` → `TRUE` (`scim_provisioned` jest w `ALWAYS_BOOLEAN_COLUMNS`, `PostgresDatabase.ts:254`), a `datetime('now')` → `NOW()` (`PostgresDatabase.ts:964-967`) |
+| INSERT z literałem `1` w liście VALUES | `scim.routes.ts:403-405` | **NIE DZIAŁA** (success=false, `column "scim_provisioned" is of type boolean but expression is of type integer`) | adapter ma early-out `/(?:=\|!=\|<>)\s*[01]\b/` (`PostgresDatabase.ts:434`) — literał w VALUES nie jest porównaniem, więc nie zostaje przepisany |
+
+Skutek produktowy INSERT-u: wynik `dbRun` NIE jest sprawdzany (`scim.routes.ts:401-413`), a odpowiedź jest składana
+z `created || { id, email, ... }` (`:421-430`) → SCIM `POST /Users` odpowiada **201 Created**, choć wiersz nie powstał.
+Ta sama klasa defektu co MFA (`mfaPersistence.pg.test.ts`, nagłówek „four of the six write routes returned 200 anyway").
+
+Zakres zlecenia Wpis 214 (DEC-685) = 5 obiektów, „typy jak tam" — NAPRAWA TEGO WPISU NIE OBJĘŁA (DEC-607: jedno zdanie, zero kodu).
+Pomiar wykonany tylko po to, by w meldunku nie padło niezmierzone zdanie „ścieżka zapisu działa".

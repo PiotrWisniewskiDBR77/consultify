@@ -1,0 +1,5 @@
+COL users.scim_external_id|1
+COL users.scim_last_sync_at|1
+COL users.scim_provisioned|1
+IDX idx_scim_conflicts_org|1
+IDX idx_users_scim_external_id|1

@@ -1,0 +1,23 @@
+41216c41216,41219
+<     availability_percent integer
+---
+>     availability_percent integer,
+>     scim_external_id text,
+>     scim_provisioned boolean DEFAULT false,
+>     scim_last_sync_at timestamp with time zone
+88176a88180,88186
+> -- Name: idx_scim_conflicts_org; Type: INDEX; Schema: public; Owner: -
+> --
+> 
+> CREATE INDEX idx_scim_conflicts_org ON public.scim_conflict_log USING btree (organization_id);
+> 
+> 
+> --
+91711a91722,91728
+> -- Name: idx_users_scim_external_id; Type: INDEX; Schema: public; Owner: -
+> --
+> 
+> CREATE UNIQUE INDEX idx_users_scim_external_id ON public.users USING btree (scim_external_id) WHERE (scim_external_id IS NOT NULL);
+> 
+> 
+> --

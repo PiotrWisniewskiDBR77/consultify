@@ -1,0 +1,22 @@
+Border style is 2.
++----------------------------------+----------+
+|              obiekt              | istnieje |
++----------------------------------+----------+
+| COL users.scim_external_id       | false    |
+| COL users.scim_last_sync_at      | false    |
+| COL users.scim_provisioned       | false    |
+| IDX idx_scim_conflicts_org       | false    |
+| IDX idx_users_scim_external_id   | false    |
+| KONTEKST TBL scim_conflict_log   | true     |
+| KONTEKST TBL scim_group_mappings | true     |
+| KONTEKST TBL users               | true     |
++----------------------------------+----------+
+(8 rows)
+
++------------------+-----------------------------+
+|       stan       |            stan2            |
++------------------+-----------------------------+
+| wierszy users=52 | wierszy scim_conflict_log=0 |
++------------------+-----------------------------+
+(1 row)
+
