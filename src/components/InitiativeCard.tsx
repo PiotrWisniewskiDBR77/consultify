@@ -21,6 +21,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Initiative, InitiativeStatus } from '../types';
+import { INITIATIVE_STATUS_LABEL_KEYS } from '../types/core';
 
 interface InitiativeCardProps {
   initiative: Initiative;
@@ -81,18 +82,8 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   };
 
   const getStatusLabel = (status: InitiativeStatus) => {
-    const labels: Record<string, string> = {
-      [InitiativeStatus.DRAFT]: 'Draft',
-      [InitiativeStatus.PENDING_APPROVAL]: 'Planning',
-      [InitiativeStatus.PENDING_APPROVAL]: 'In Review',
-      [InitiativeStatus.APPROVED]: 'Approved',
-      [InitiativeStatus.IN_EXECUTION]: 'Executing',
-      [InitiativeStatus.IN_EXECUTION]: 'Blocked',
-      [InitiativeStatus.CLOSED]: 'Done',
-      [InitiativeStatus.REJECTED]: 'Cancelled',
-      [InitiativeStatus.CLOSED]: 'Archived',
-    };
-    return labels[status] || status;
+    const labelKey = INITIATIVE_STATUS_LABEL_KEYS[status] ?? 'initiatives.status.unknown';
+    return t(labelKey, { defaultValue: status });
   };
 
   // Helpers for Strategic Intent Colors
