@@ -453,9 +453,6 @@ router.post(
       attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : [],
       preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : [],
       agenda: Array.isArray(req.body?.agenda) ? req.body.agenda : [],
-      // Decisions are outputs, never scheduling metadata. They enter only via
-      // the governed note proposal below, not through meeting creation.
-      decisions: [],
     });
 
     return res.status(201).json({ meeting });

@@ -44,7 +44,6 @@ export const MeetingExecutor = {
       attendees: Array.isArray(payload.attendees) ? payload.attendees : [],
       preRead: [],
       agenda: [],
-      decisions: [],
     });
 
     return {
