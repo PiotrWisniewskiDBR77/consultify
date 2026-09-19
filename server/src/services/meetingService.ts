@@ -418,7 +418,6 @@ export async function createMeeting(input: {
   attendees?: string[];
   preRead?: string[];
   agenda?: string[];
-  decisions?: string[];
 }): Promise<MeetingRecord> {
   await ensureMeetingTables();
   const id = `meeting-${uuidv4()}`;
@@ -427,7 +426,7 @@ export async function createMeeting(input: {
     `INSERT INTO meetings (
       id, organization_id, project_id, title, start_at, end_at, location,
       attendees_json, pre_read_json, agenda_json, decisions_json, status, created_by, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', 'scheduled', ?, ?, ?)`,
     [
       id,
       input.organizationId,
@@ -439,7 +438,6 @@ export async function createMeeting(input: {
       JSON.stringify(input.attendees || []),
       JSON.stringify(input.preRead || []),
       JSON.stringify(input.agenda || []),
-      JSON.stringify(input.decisions || []),
       input.createdBy,
       now,
       now,
@@ -586,87 +584,6 @@ export async function updateMeetingStatus(input: {
     `UPDATE meetings SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
     [input.status, new Date().toISOString(), input.meetingId, input.organizationId]
   );
-  return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
-}
-
-export async function addMeetingFollowUp(input: {
-  organizationId: string;
-  meetingId: string;
-  title: string;
-  owner?: string | null;
-}): Promise<MeetingRecord | null> {
-  await ensureMeetingTables();
-  const meeting = await getMeeting({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-  });
-  if (!meeting) return null;
-  await dbRun(
-    `INSERT INTO meeting_follow_ups (id, meeting_id, title, owner, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'open', ?, ?)`,
-    [
-      `meeting-fu-${uuidv4()}`,
-      input.meetingId,
-      input.title.trim(),
-      String(input.owner || '').trim(),
-      new Date().toISOString(),
-      new Date().toISOString(),
-    ]
-  );
-  await dbRun(`UPDATE meetings SET updated_at = ? WHERE id = ?`, [
-    new Date().toISOString(),
-    input.meetingId,
-  ]);
-  return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
-}
-
-export async function addMeetingDecision(input: {
-  organizationId: string;
-  meetingId: string;
-  decision: string;
-}): Promise<MeetingRecord | null> {
-  await ensureMeetingTables();
-  const meeting = await getMeeting({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-  });
-  if (!meeting) return null;
-  const decisions = [...meeting.decisions, input.decision.trim()].filter(Boolean);
-  await dbRun(`UPDATE meetings SET decisions_json = ?, updated_at = ? WHERE id = ?`, [
-    JSON.stringify(decisions),
-    new Date().toISOString(),
-    input.meetingId,
-  ]);
-  return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
-}
-
-export async function updateMeetingFollowUpStatus(input: {
-  organizationId: string;
-  meetingId: string;
-  followUpId: string;
-  status: FollowUpStatus;
-}): Promise<MeetingRecord | null> {
-  await ensureMeetingTables();
-  const meeting = await getMeeting({
-    organizationId: input.organizationId,
-    meetingId: input.meetingId,
-  });
-  if (!meeting) return null;
-  // M12-F01: the UPDATE below matches 0 rows for an unknown follow-up id (or one
-  // that belongs to a different meeting) and `dbRun` defaults to fallback:true,
-  // so it cannot report that. Without this guard the route answered 200 + the
-  // full meeting for an action that changed nothing — a false success the UI
-  // rendered as an ordinary state refresh. The follow-up list is the authority.
-  if (!meeting.followUps.some((item) => item.id === input.followUpId)) return null;
-  await dbRun(
-    `UPDATE meeting_follow_ups SET status = ?, updated_at = ?
-     WHERE id = ? AND meeting_id = ?`,
-    [input.status, new Date().toISOString(), input.followUpId, input.meetingId]
-  );
-  await dbRun(`UPDATE meetings SET updated_at = ? WHERE id = ?`, [
-    new Date().toISOString(),
-    input.meetingId,
-  ]);
   return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
 }
 

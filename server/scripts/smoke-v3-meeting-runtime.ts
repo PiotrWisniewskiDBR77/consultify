@@ -24,27 +24,33 @@ function main(): void {
   const api = read(root, 'src/services/api.ts');
 
   checks.push({
-    name: 'Meeting runtime persists meetings and follow-ups in backend tables',
-    pass: includesAll(meetingService, [
-      'CREATE TABLE IF NOT EXISTS meetings',
-      'CREATE TABLE IF NOT EXISTS meeting_follow_ups',
-      'createMeeting(',
-      'addMeetingDecision(',
-      'addMeetingFollowUp(',
-      'updateMeetingFollowUpStatus(',
-    ]),
+    name: 'Meeting runtime keeps legacy outputs read-only and uses governed records',
+    pass:
+      includesAll(meetingService, [
+        'CREATE TABLE IF NOT EXISTS meetings',
+        'CREATE TABLE IF NOT EXISTS meeting_follow_ups',
+        'createMeeting(',
+        'createMeetingDecisionRecord(',
+        'createMeetingFollowUpRecord(',
+        "agenda_json, decisions_json, status",
+        "?, ?, '[]', 'scheduled'",
+      ]) &&
+      !meetingService.includes('export async function addMeetingDecision(') &&
+      !meetingService.includes('export async function addMeetingFollowUp(') &&
+      !meetingService.includes('export async function updateMeetingFollowUpStatus('),
   });
 
   checks.push({
     name: 'Meeting API exposes list create status and follow-up endpoints',
-    pass: includesAll(meetingRoutes, [
-      "router.get(\n  '/'",
-      "router.post(\n  '/'",
-      "'/:id/status'",
-      "'/:id/decisions'",
-      "'/:id/follow-ups'",
-      "'/:meetingId/follow-ups/:followUpId'",
-    ]) && includesAll(gateway, ['/api/meeting', 'meetingRoutes']),
+    pass:
+      includesAll(meetingRoutes, [
+        "router.get(\n  '/'",
+        "router.post(\n  '/'",
+        "'/:id/status'",
+        "'/:id/decisions'",
+        "'/:id/follow-ups'",
+        "'/:meetingId/follow-ups/:followUpId'",
+      ]) && includesAll(gateway, ['/api/meeting', 'meetingRoutes']),
   });
 
   checks.push({
@@ -58,7 +64,7 @@ function main(): void {
         'generateMeetingNotes',
         'listMeetingNotes',
         'decideMeetingNote',
-        "Shared workspace",
+        'Shared workspace',
         'Nothing becomes a decision or follow-up before human approval.',
       ]) && !meetingHub.includes('consultify.meeting.module.v1'),
   });
@@ -69,8 +75,11 @@ function main(): void {
       includesAll(meetingExecutor, [
         'createMeeting({',
         'Meeting execution requires organizationId',
-        'action: \'schedule_meeting\'',
-      ]) && !meetingExecutor.includes('Feature unavailable: MEETING_SCHEDULE execution is not implemented'),
+        "action: 'schedule_meeting'",
+      ]) &&
+      !meetingExecutor.includes(
+        'Feature unavailable: MEETING_SCHEDULE execution is not implemented'
+      ),
   });
 
   checks.push({
