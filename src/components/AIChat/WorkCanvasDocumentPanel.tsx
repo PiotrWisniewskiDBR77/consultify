@@ -453,6 +453,9 @@ const menuOutputActionIds: CanvasActionId[] = [
 
 const isVitestRuntime = typeof process !== 'undefined' && Boolean(process.env?.VITEST);
 
+const isReportDocumentPublicLinksEnabled = () =>
+  import.meta.env.VITE_REPORT_DOCUMENT_PUBLIC_LINKS === 'true';
+
 const failClosedCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
   canCreatePresentation: false,
   canCreateTable: false,
@@ -1184,11 +1187,10 @@ function WorkCanvasMarkdownDocumentPanel({
   const handoffKeysRef = React.useRef(new Map<string, string>());
   const handoffFlightsRef = React.useRef(new Map<string, Promise<WorkCanvasConversionProposal>>());
 
-  const activeTemplate =
-    localizeStarterTemplate(
-      starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
-        starterTemplates[1]
-    );
+  const activeTemplate = localizeStarterTemplate(
+    starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
+      starterTemplates[1]
+  );
   const selectedWorkflowTemplateOption =
     workflowTemplateOptions.find((template) => template.id === selectedWorkflowTemplate) ||
     workflowTemplateOptions[0];
@@ -1582,7 +1584,7 @@ function WorkCanvasMarkdownDocumentPanel({
       if (cancelled) return;
       const next: CanvasRuntimeCapabilities = { ...failClosedCanvasRuntimeCapabilities };
       for (const [key, allowed] of entries) {
-        next[key] = allowed;
+        next[key] = key === 'canShare' ? allowed && isReportDocumentPublicLinksEnabled() : allowed;
       }
       setRuntimeCapabilities(next);
       setRuntimeCapabilityAuthScope(authScope);
@@ -2437,8 +2439,7 @@ function WorkCanvasMarkdownDocumentPanel({
   React.useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail as
-        | { markdown?: string; mode?: 'append' | 'replace' }
-        | undefined;
+        { markdown?: string; mode?: 'append' | 'replace' } | undefined;
       const markdown = String(detail?.markdown || '').trim();
       if (!markdown) return;
 
@@ -2447,12 +2448,7 @@ function WorkCanvasMarkdownDocumentPanel({
       const hasSelection = Boolean(selection && selection.from !== selection.to);
 
       if (detail?.mode === 'replace' && richEditor && !richEditor.isDestroyed && hasSelection) {
-        richEditor
-          .chain()
-          .focus()
-          .deleteSelection()
-          .insertContent(markdownToHtml(markdown))
-          .run();
+        richEditor.chain().focus().deleteSelection().insertContent(markdownToHtml(markdown)).run();
         const next = htmlToMarkdown(richEditor.getHTML()).trim();
         updateMarkdown(next);
         void persistDraft({ ...documentState, contentMd: next });
@@ -2514,7 +2510,9 @@ function WorkCanvasMarkdownDocumentPanel({
     updateMarkdown(next);
     void persistDraft();
     setStatusFeedback(
-      request.ok ? 'AI-generated element added to Markdown draft.' : 'Template added to Markdown draft.'
+      request.ok
+        ? 'AI-generated element added to Markdown draft.'
+        : 'Template added to Markdown draft.'
     );
     setQuickAddPrompt('');
   };
@@ -3028,6 +3026,13 @@ function WorkCanvasMarkdownDocumentPanel({
   };
 
   const runShareAction = async () => {
+    if (!isReportDocumentPublicLinksEnabled()) {
+      setCanvasErrorFeedback(
+        new Error('REPORT_DOCUMENT_PUBLIC_LINKS_DISABLED'),
+        t('canvas.panel.share.publicLinksDisabled')
+      );
+      return;
+    }
     if (commandActionInFlightRef.current.has('share')) return;
     commandActionInFlightRef.current.add('share');
     let commandDraftId: string | null = null;
@@ -3297,9 +3302,7 @@ function WorkCanvasMarkdownDocumentPanel({
         })
       );
       setLatestDiff(buildLineDiff(documentState.contentMd, version.contentMd));
-      setStatusFeedback(
-        `Restored Canvas version from ${formatListDateTime(version.createdAt)}.`
-      );
+      setStatusFeedback(`Restored Canvas version from ${formatListDateTime(version.createdAt)}.`);
       await loadVersions();
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to restore Canvas version.');
@@ -5183,8 +5186,7 @@ function WorkCanvasMarkdownDocumentPanel({
           </button>
           {shareInfo.expiresAt ? (
             <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              {t('canvas.panel.share.expires', 'expires')}{' '}
-              {formatListDate(shareInfo.expiresAt)}
+              {t('canvas.panel.share.expires', 'expires')} {formatListDate(shareInfo.expiresAt)}
             </span>
           ) : null}
           <button

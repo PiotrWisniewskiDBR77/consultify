@@ -25,6 +25,7 @@ interface PublicArtifactData {
   contentMd: string;
   updatedAt: string;
   orgBranding?: { name: string };
+  version?: { current: number; total: number; label?: string };
 }
 
 /** Kinds whose contentMd is a faithful full rendering of the artifact. */
@@ -85,6 +86,11 @@ export const PublicArtifactView: React.FC = () => {
     : null;
 
   const isMarkdownKind = data ? MARKDOWN_KINDS.has(data.kind) : false;
+  const versionLabel = data?.version
+    ? isPl
+      ? `Wersja ${data.version.current}/${data.version.total}`
+      : `Version ${data.version.current}/${data.version.total}`
+    : null;
 
   return (
     <div className="min-h-screen bg-c-bg">
@@ -157,10 +163,12 @@ export const PublicArtifactView: React.FC = () => {
         {status === 'ok' && data && isMarkdownKind && (
           <>
             <h1 className="text-2xl font-semibold text-c-text">{data.title}</h1>
-            {formattedUpdatedAt && (
+            {(formattedUpdatedAt || versionLabel) && (
               <p className="mt-1 text-sm text-c-text-muted">
                 {isPl ? 'Ostatnia aktualizacja: ' : 'Last updated: '}
                 {formattedUpdatedAt}
+                {formattedUpdatedAt && versionLabel ? ' · ' : ''}
+                {versionLabel}
               </p>
             )}
             <div className="mt-8 prose prose-sm dark:prose-invert max-w-none text-c-text-secondary">

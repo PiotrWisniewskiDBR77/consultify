@@ -41030,6 +41030,7 @@
         "expires": "expires",
         "revoking": "Revoking share link...",
         "revoked": "Share revoked — the public link no longer works.",
+        "publicLinksDisabled": "Public document links are disabled.",
         "collapse": "Collapse (link stays active)"
       },
       "source": {

@@ -223,6 +223,7 @@ describe('work canvas routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.ENABLE_REPORT_DOCUMENT_PUBLIC_LINKS = 'true';
     proposalsTable = { ...proposalRow };
     // assertCanvasIdeaReceiptSchema() (canvasMaterialize.ts) runs a plain
     // dbGet/dbAllGlobal preflight — through this same DbPromise mock, NOT
@@ -304,7 +305,8 @@ describe('work canvas routes', () => {
           let paramIdx = 0;
           for (const assignment of updateMatch[1].split(',')) {
             const [rawCol, rawVal] = assignment.split('=').map((s) => s.trim());
-            proposalsTable[rawCol] = rawVal === '?' ? params[paramIdx++] : rawVal.replace(/^'(.*)'$/, '$1');
+            proposalsTable[rawCol] =
+              rawVal === '?' ? params[paramIdx++] : rawVal.replace(/^'(.*)'$/, '$1');
           }
         }
       }
@@ -468,7 +470,10 @@ describe('work canvas routes', () => {
   });
 
   it('does not allow reading a private draft from another user in the same organization', async () => {
-    await request(app).get('/api/work-canvas/drafts/draft-1').set('x-user-id', 'user-2').expect(404);
+    await request(app)
+      .get('/api/work-canvas/drafts/draft-1')
+      .set('x-user-id', 'user-2')
+      .expect(404);
   });
 
   it('saves a Canvas draft to a workspace idea with read-back', async () => {
@@ -1280,6 +1285,20 @@ describe('work canvas routes', () => {
       'Recommendation: Choose Partner A'
     );
     expect(response.body.data.draft.blocks[0].markdownProjection).toContain('Assumptions:');
+  });
+
+  it('fails closed when public document links are disabled', async () => {
+    process.env.ENABLE_REPORT_DOCUMENT_PUBLIC_LINKS = 'false';
+
+    const response = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/share')
+      .send({})
+      .expect(403);
+
+    expect(response.body).toMatchObject({
+      code: 'REPORT_DOCUMENT_PUBLIC_LINKS_DISABLED',
+    });
+    expect(dbRunMock).not.toHaveBeenCalled();
   });
 
   it('creates a share token on the Canvas draft provenance', async () => {

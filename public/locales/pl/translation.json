@@ -41598,6 +41598,7 @@
         "expires": "wygasa",
         "revoking": "Cofanie udostępniania...",
         "revoked": "Udostępnianie cofnięte — link publiczny przestał działać.",
+        "publicLinksDisabled": "Publiczne linki dokumentów są wyłączone.",
         "collapse": "Zwiń pasek (link pozostaje aktywny)"
       },
       "source": {

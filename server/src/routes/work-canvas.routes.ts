@@ -20,6 +20,7 @@ import {
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
 import { materializeCanvasTable } from '../services/canvasTableMaterialize.js';
+import { isReportDocumentPublicLinksEnabled } from './public-artifacts.routes.js';
 import {
   hasEffectiveCapability,
   resolveEffectiveAccess,
@@ -4098,6 +4099,12 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
 });
 
 router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
+  if (!isReportDocumentPublicLinksEnabled()) {
+    return res.status(403).json({
+      error: 'REPORT_DOCUMENT_PUBLIC_LINKS_DISABLED',
+      code: 'REPORT_DOCUMENT_PUBLIC_LINKS_DISABLED',
+    });
+  }
   // P0-2 — mirror the UI gate: minting a public link requires canvas.share,
   // not just draft ownership (direct API calls used to bypass the UI check).
   if (!(await requireCanvasCapability(req, res, 'canvas.share'))) return;

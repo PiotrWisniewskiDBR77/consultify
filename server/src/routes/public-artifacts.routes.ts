@@ -38,6 +38,14 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+export function isReportDocumentPublicLinksEnabled(): boolean {
+  return (
+    String(process.env.ENABLE_REPORT_DOCUMENT_PUBLIC_LINKS || '')
+      .trim()
+      .toLowerCase() === 'true'
+  );
+}
+
 const publicArtifactLimiter = rateLimit({
   windowMs: 60_000,
   max: 30,
@@ -68,6 +76,10 @@ type PublicDraftRow = {
   updated_at: string;
 };
 
+type VersionCountRow = {
+  count: number | string;
+};
+
 function parseShare(provenanceJson: string | null): ShareRecord | null {
   if (!provenanceJson) return null;
   try {
@@ -83,6 +95,21 @@ function parseShare(provenanceJson: string | null): ShareRecord | null {
     };
   } catch {
     return null;
+  }
+}
+
+async function countDraftVersions(draftId: string): Promise<number> {
+  try {
+    if (!(await tableExists('work_canvas_versions'))) return 0;
+    const row = await dbGet<VersionCountRow>(
+      `SELECT COUNT(*) AS count FROM work_canvas_versions WHERE draft_id = ?`,
+      [draftId],
+      { fallback: false }
+    );
+    const count = Number(row?.count || 0);
+    return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -107,6 +134,10 @@ async function lookupOrgName(organizationId: string): Promise<string | null> {
  */
 router.get('/:token', publicArtifactLimiter, async (req: Request, res: Response) => {
   try {
+    if (!isReportDocumentPublicLinksEnabled()) {
+      return res.status(404).json({ error: 'Shared artifact not found' });
+    }
+
     const tokenParam = req.params.token;
     const token = String(Array.isArray(tokenParam) ? tokenParam[0] : tokenParam || '')
       .trim()
@@ -153,6 +184,8 @@ router.get('/:token', publicArtifactLimiter, async (req: Request, res: Response)
     }
 
     const orgName = await lookupOrgName(match.organization_id);
+    const historicalVersions = await countDraftVersions(match.id);
+    const currentVersion = historicalVersions + 1;
 
     // Sanitized payload: no draft/org/author IDs, no provenance, no emails.
     return res.json({
@@ -160,6 +193,11 @@ router.get('/:token', publicArtifactLimiter, async (req: Request, res: Response)
       kind: match.kind,
       contentMd: match.content_md || '',
       updatedAt: match.updated_at,
+      version: {
+        current: currentVersion,
+        total: currentVersion,
+        label: `v${currentVersion}`,
+      },
       ...(orgName ? { orgBranding: { name: orgName } } : {}),
     });
   } catch (err) {
