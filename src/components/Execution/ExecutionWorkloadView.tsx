@@ -308,9 +308,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                     className={`text-xs px-2 py-0.5 rounded ${
                       allocation.status === InitiativeStatus.IN_EXECUTION
                         ? 'bg-blue-500/20 text-blue-400'
-                        : allocation.status === InitiativeStatus.IN_EXECUTION
-                          ? 'bg-danger-500/20 text-danger-400'
-                          : 'bg-slate-500/20 text-slate-600'
+                        : 'bg-slate-500/20 text-slate-600'
                     }`}
                   >
                     {allocation.status}
