@@ -272,7 +272,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
               </div>
               <div className="text-xs text-slate-400 dark:text-slate-500">
                 {t('partner.academy.minutesTotal', '{{count}} min total', {
-                  count: categoryModules.reduce((sum, m) => {
+                  count: categoryModules.reduce<number>((sum, m) => {
                     const min = parseInt(m.duration.replace(' min', ''));
                     return sum + (isNaN(min) ? 0 : min);
                   }, 0),
