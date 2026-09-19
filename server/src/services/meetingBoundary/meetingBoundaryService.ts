@@ -831,17 +831,77 @@ async function materializeMeetingNote(input: {
  * `status` still flips to 'approved' and it remains the durable, approved
  * minutes record; `materialArtifactId` on the note record points at the
  * same artifact id as the receipt's `targetRecordId`. The decisions/action
- * items carried inside the note's payload are
- * NOT separately materialized into `tasks`/`decisions` — those target kinds
- * do not exist in `handoffSpineService`'s `TARGET_KINDS`, and Lane C does
- * not own that lifecycle (see `handoffSpineService.ts` + the migration
- * header). A consumer that wants to turn an approved note's decisions/action
- * items into real task/decision rows reads the approved
- * `artifact_handoff_proposals` row (`payload_json`) and its
- * `artifact_handoff_receipts` row via `producer_kind = 'meeting'` and does
- * so in ITS OWN service, under ITS OWN governance — this function
- * deliberately stops at "approved + materialized as a meeting material".
+ * items carried inside the note's payload are projected one-way into the
+ * meeting registers after materialization succeeds. Provenance
+ * (`source_kind='note'`, `source_note_id`, `source_index`) plus the existing
+ * unique indexes makes approval replay idempotent; the registers never write
+ * back into the governed note.
  */
+async function projectApprovedNoteToMeetingRegisters(input: {
+  note: MeetingNoteRecord;
+  createdBy: string;
+}): Promise<void> {
+  const { note, createdBy } = input;
+  const now = new Date().toISOString();
+  await withPgTransaction(async (query) => {
+    await query(
+      `UPDATE meeting_notes
+          SET status = 'approved', updated_at = $1
+        WHERE id = $2 AND organization_id = $3 AND meeting_id = $4`,
+      [now, note.id, note.organizationId, note.meetingId]
+    );
+
+    for (const [index, decision] of note.decisions.entries()) {
+      const statement = String(decision.decision || '').trim();
+      if (!statement) continue;
+      await query(
+        `INSERT INTO meeting_decisions (
+           id, organization_id, meeting_id, statement, rationale, decided_by,
+           decided_at, status, source_kind, source_note_id, source_index,
+           created_by, created_at, updated_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,'recorded','note',$8,$9,$10,$11,$11)
+         ON CONFLICT DO NOTHING`,
+        [
+          `${note.id}:decision:${index}`,
+          note.organizationId,
+          note.meetingId,
+          statement,
+          String(decision.rationale || '').trim(),
+          String(decision.decidedBy || '').trim() || null,
+          now,
+          note.id,
+          index,
+          createdBy,
+          now,
+        ]
+      );
+    }
+
+    for (const [index, action] of note.actionItems.entries()) {
+      const title = String(action.task || '').trim();
+      if (!title) continue;
+      await query(
+        `INSERT INTO meeting_follow_ups (
+           id, meeting_id, organization_id, title, owner, due_at, status,
+           source_kind, source_note_id, source_index, created_at, updated_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,'open','note',$7,$8,$9,$9)
+         ON CONFLICT DO NOTHING`,
+        [
+          `${note.id}:action:${index}`,
+          note.meetingId,
+          note.organizationId,
+          title,
+          String(action.owner || '').trim(),
+          String(action.deadline || '').trim() || null,
+          note.id,
+          index,
+          now,
+        ]
+      );
+    }
+  });
+}
+
 export async function decideMeetingNote(
   input: DecideMeetingNoteInput
 ): Promise<DecideMeetingNoteResult | null> {
@@ -902,8 +962,15 @@ export async function decideMeetingNote(
   // materialize call that just ran — the DB row is the only accurate source
   // for the FINAL state ('materialized').
   const proposal = await readHandoffProposal(organizationId, note.proposalId);
-  const updated = await setNoteStatus(note.id, organizationId, 'approved');
-  return { note: updated || note, proposal, receipt, replayed };
+  await projectApprovedNoteToMeetingRegisters({ note, createdBy: decidedBy });
+  const updated = await getMeetingNote({
+    organizationId,
+    meetingId,
+    noteId,
+    userId: decidedBy,
+    roleKey: input.roleKey,
+  });
+  return { note: updated || { ...note, status: 'approved' }, proposal, receipt, replayed };
 }
 
 /**
