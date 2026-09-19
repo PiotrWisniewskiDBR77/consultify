@@ -140,7 +140,7 @@ describe('evidenceItemsFor — K-24a read-model rows (nazwa / data / kto, BEZ ro
     ];
     const item = evidenceItemsFor(events, UNIT)[0];
     expect(Object.keys(item)).not.toContain('size');
-    expect((item as Record<string, unknown>).size).toBeUndefined();
+    expect('size' in item).toBe(false);
   });
 
   it('falls back to the event id when payload.evidenceId is absent', () => {
