@@ -1,0 +1,13 @@
+
+[1mQD3 — sweep dangling demo-clone residue (prefix "ateliertoys-demo-session-")[0m
+[36mℹ[0m DB host: thomas.proxy.rlwy.net:52567
+[36mℹ[0m Mode: [32mDRY-RUN (no writes)[0m
+[36mℹ[0m Scope: only rows whose clone org row is GONE (dangling)
+
+[36mℹ[0m Organization-scoped columns discovered: 1297
+[36mℹ[0m Tables with residue: 1, rows: 258
+[33m⚠[0m SKIPPED — append-only (BEFORE DELETE trigger), needs a CTO policy decision, never forced:
+   - results_writer_observations.organization_id: 258 row(s), trigger(s): trg_results_writer_observation_no_delete
+
+[32m✓[0m DRY-RUN complete. No changes made.
+[2m  → Sweepable rows: 0. Re-run with: --apply FORCE_PURGE=true[0m

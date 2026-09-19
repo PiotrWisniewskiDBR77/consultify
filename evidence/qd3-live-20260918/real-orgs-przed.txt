@@ -1,0 +1,21 @@
+Output format is aligned.
+                  id                  |             name             | created_at 
+--------------------------------------+------------------------------+------------
+ a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77                        | 2026-02-19
+ system                               | System                       | 2026-03-03
+ dbr77                                | DBR77 Digital Consulting     | 2026-04-03
+ 468b234c-66c4-54e1-b626-5e0fb3a92f6a | Northwind Manufacturing Ltd. | 2026-09-08
+ 3935603f-e81c-4fc3-a154-623394e7cc32 | TT22TT                       | 2026-09-09
+ 9151ee70-0141-43fd-9614-8ea609a7e5aa | My Company                   | 2026-09-09
+ a6b81efe-98b8-426d-bac6-03340e1ea4f6 | TT22TT                       | 2026-09-09
+ be953b47-1dba-469c-98cb-414806f36276 | TT22TT                       | 2026-09-09
+ 8bed87c6-a77e-4d7b-a2b7-bffedfb89c02 | TT22TT 2                     | 2026-09-10
+ 3af18124-275e-484c-8ca1-b512915423c9 | QA Fable 13.09               | 2026-09-13
+ c56e8bd5-3295-4366-b150-72e978fb8f18 | QA Fable 13.09               | 2026-09-13
+ b8dbb6e9-e855-4245-9748-21e5186390d2 | CTO Service (staging)        | 2026-09-16
+ ateliertoys-demo                     | Atelier Toys                 | 2026-09-18
+
+        ?column?        
+------------------------
+ demo_prefix_org_rows=0
+

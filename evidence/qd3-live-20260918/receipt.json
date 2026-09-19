@@ -1,0 +1,27 @@
+{
+  "operation": "cleanup-orphan-demo-residue",
+  "dbHost": "thomas.proxy.rlwy.net:52567",
+  "prefix": "ateliertoys-demo-session-",
+  "includeLiveOrgs": false,
+  "committedAt": "2026-09-19T02:36:01.080Z",
+  "deleted": {
+    "artifact_lineage_events.organization_id": 384,
+    "artifact_lineage_receipts.organization_id": 384,
+    "conversion_events.organization_id": 2,
+    "v8_artifact_origin_links.organization_id": 381,
+    "work_signal_runs.organization_id": 18639,
+    "work_signals.organization_id": 3318
+  },
+  "totalDeleted": 23108,
+  "skippedAppendOnly": [
+    {
+      "table": "results_writer_observations",
+      "column": "organization_id",
+      "rows": 258,
+      "triggers": [
+        "trg_results_writer_observation_no_delete"
+      ]
+    }
+  ],
+  "rollback": "Re-insert the JSONL rows into a restored copy; this receipt is evidence, not a restore tool."
+}

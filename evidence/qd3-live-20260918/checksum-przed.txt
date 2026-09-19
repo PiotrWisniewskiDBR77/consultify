@@ -1,0 +1,13 @@
+Output format is unaligned.
+?column?
+ORG_COUNT=13
+?column?
+CHECKSUM=9b2de44a7c54ae0631c2e21a5fc5fb5f
+?column?
+DETAIL artifact_lineage_events real=911 total=1295
+DETAIL artifact_lineage_receipts real=424 total=808
+DETAIL conversion_events real=21 total=225
+DETAIL results_writer_observations real=85 total=343
+DETAIL v8_artifact_origin_links real=932 total=1337
+DETAIL work_signal_runs real=2977 total=21616
+DETAIL work_signals real=172 total=3490
