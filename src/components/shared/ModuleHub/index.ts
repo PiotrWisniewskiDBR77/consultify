@@ -19,11 +19,11 @@ export type { StatusFilter } from './ModuleNavBar';
 export { ModuleNavBar } from './ModuleNavBar';
 export type {
   AssessmentStatus,
-  InitiativeStatus,
   ModuleContext,
   ReportStatus,
   StatusOption,
 } from './StatusDropdown';
+export type { InitiativeStatus } from '../../../../packages/shared/src/constants/initiativeStatuses.generated';
 export {
   ALL_OPTION,
   ALL_STATUSES,
