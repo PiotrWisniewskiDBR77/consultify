@@ -14,7 +14,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter, useNavigate } from 'react-router-dom';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 vi.unmock('react-router-dom');
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -158,7 +158,7 @@ afterEach(() => {
 });
 
 describe('IE01 preparation navigation', () => {
-  it('renders exactly three stable module destinations by default (Work report gated behind VITE_INITIATIVES_FOUR_BUTTONS, K5-8), with List and Analysis inside Initiatives', async () => {
+  it('renders exactly three stable module destinations by default (Work report gated behind VITE_INITIATIVES_FOUR_BUTTONS, K5-8), with the workspace lens inside Initiatives and no dead "Analysis" entry (D-76)', async () => {
     renderHubAt('/initiatives');
     await screen.findByRole('combobox', { name: 'Initiative workspace' });
     expect(screen.queryByRole('tab', { name: 'Work report' })).not.toBeInTheDocument();
@@ -171,18 +171,31 @@ describe('IE01 preparation navigation', () => {
     // „Analysis" przy fladze OFF pokazuje kanoniczny rejestr, nie „Preparation overview".
     expect(await screen.findByText('ie01-register-row')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
+    // D-76 (W1): „Analysis" nie jest już wartością do wybrania — próba nie może
+    // zostawić pustego pola, selektor wraca na istniejącą opcję.
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
   });
 });
 
 it('restores the preparation lens in both directions through router history', async () => {
   function HistoryControls() {
     const navigate = useNavigate();
-    return <><button onClick={() => navigate(1)}>→</button><button onClick={() => navigate(-1)}>←</button></>;
+    const location = useLocation();
+    return (
+      <>
+        <button onClick={() => navigate(1)}>→</button>
+        <button onClick={() => navigate(-1)}>←</button>
+        <span data-testid="loc">{location.search}</span>
+      </>
+    );
   }
   render(<MemoryRouter initialEntries={['/initiatives?lens=list','/initiatives?lens=analysis']} initialIndex={0}><HistoryControls/><InitiativesHub/></MemoryRouter>);
   expect(await screen.findByRole('combobox', {name:'Initiative workspace'})).toHaveValue('list');
   fireEvent.click(screen.getByRole('button',{name:'→'}));
-  await waitFor(() => expect(screen.getByRole('combobox', {name:'Initiative workspace'})).toHaveValue('analysis'));
+  // D-76 (W1): pozycji „Analysis" w selektorze już nie ma, ale alias w URL żyje —
+  // adres stoi na `?lens=analysis`, a pole pokazuje „List".
+  await waitFor(() => expect(screen.getByTestId('loc')).toHaveTextContent('?lens=analysis'));
+  expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
   expect(await screen.findByText('ie01-register-row')).toBeInTheDocument();
   expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
   fireEvent.click(screen.getByRole('button',{name:'←'}));

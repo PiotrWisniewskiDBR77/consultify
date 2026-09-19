@@ -252,7 +252,9 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
     const workspace = screen.getByRole('combobox', { name: 'Initiative workspace' });
     expect(workspace).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'List' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Analysis' })).toBeInTheDocument();
+    // D-76 (W1): pozycja „Analysis" usunięta — alias `?lens=analysis` od RP3
+    // (DEC-543) renderuje ten sam rejestr co „List", więc udawała wybór.
+    expect(screen.queryByRole('option', { name: 'Analysis' })).toBeNull();
     expect(screen.queryByTestId('initiatives-project-filter')).toBeNull();
     expect(screen.queryByTestId('initiatives-archive-scope')).toBeNull();
     expect(screen.getByRole('button', { name: 'Timeline' })).toBeInTheDocument();

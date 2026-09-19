@@ -12,7 +12,7 @@
  * Mutacja: przywrócenie gałęzi OFF i pliku atrapy (stan sprzed RP3) wywraca
  * pierwszy test na czerwono — region „Preparation overview" wraca do DOM.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -166,11 +166,9 @@ describe('RP3 — atrapa InitiativePreparationReadView usunięta', () => {
     renderHubAt('/initiatives?lens=analysis');
     await waitFor(() => expect(screen.getAllByRole('tab').length).toBeGreaterThan(0));
 
-    // Soczewka faktycznie stoi na „Analysis" — to dokładnie ten stan, w którym
-    // przed RP3 montowała się atrapa.
-    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue(
-      'analysis'
-    );
+    // D-76 (W1): pozycja „Analysis" zniknęła z selektora, bo od RP3 alias nie
+    // otwiera już niczego osobnego — selektor pokazuje więc „List", a nie pustkę.
+    expect(screen.getByRole('combobox', { name: 'Initiative workspace' })).toHaveValue('list');
 
     // Atrapy nie ma w DOM: ani jej region, ani jej zdania.
     expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
@@ -193,5 +191,33 @@ describe('RP3 — atrapa InitiativePreparationReadView usunięta', () => {
 
     expect(analysisHtml).toBeTruthy();
     expect(analysisHtml).toBe(listHtml);
+  });
+});
+
+/**
+ * D-76 (W1, Wpis 159 pkt 2): przy fladze OFF selektor „Initiative workspace"
+ * nie ma już pozycji „Analysis" — od RP3 (DEC-543) alias nie otwiera osobnej
+ * powierzchni, więc pozycja udawała wybór. Sam alias w URL zostaje obsługiwany.
+ *
+ * Mutacje: (1) przywrócenie `<option value="analysis">` → RED test pierwszy;
+ * (2) zdjęcie normalizacji wartości (`value={preparationLens}`) → RED drugi
+ * (pole puste, `select.value === ''`).
+ */
+describe('D-76 — selektor workspace bez martwej pozycji „Analysis"', () => {
+  it('flag OFF: w selektorze NIE MA pozycji „Analysis", zostaje „List"', async () => {
+    renderHubAt('/initiatives');
+    const select = await screen.findByRole('combobox', { name: 'Initiative workspace' });
+    expect(within(select).queryByRole('option', { name: 'Analysis' })).toBeNull();
+    expect(within(select).getByRole('option', { name: 'List' })).toBeTruthy();
+  });
+
+  it('flag OFF: alias ?lens=analysis otwiera rejestr, a pole nie zostaje puste', async () => {
+    renderHubAt('/initiatives?lens=analysis');
+    expect(await screen.findByText('rp3-register-row')).toBeInTheDocument();
+    const select = screen.getByRole('combobox', {
+      name: 'Initiative workspace',
+    }) as HTMLSelectElement;
+    expect(select.value).toBe('list');
+    expect(select.selectedOptions[0]?.textContent).toBe('List');
   });
 });

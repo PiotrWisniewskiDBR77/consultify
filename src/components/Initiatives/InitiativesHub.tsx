@@ -3149,7 +3149,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           {!initiativesFourButtonsEnabled && (
             <select
               aria-label={t('initiatives.workspace.label', 'Initiative workspace')}
-              value={preparationLens}
+              /* D-76: alias ?lens=analysis pokazuje „List" — wprost, nie z fallbacku Reacta. */
+              value={preparationLens === 'analysis' ? 'list' : preparationLens}
               className={MENU_2_FILTER_SELECT}
               onChange={(event) => {
                 setPreparationLens(event.target.value);
@@ -3159,7 +3160,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               }}
             >
               <option value="list">{t('initiatives.workspace.list', 'List')}</option>
-              <option value="analysis">{t('initiatives.workspace.analysis', 'Analysis')}</option>
               {PORTFOLIO_HEALTH_ENABLED && (
                 <option value="portfolioHealth">
                   {t('initiatives.tabs.portfolioHealth', 'Portfolio health')}
