@@ -734,7 +734,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table /* §27-exempt: macierz projekcji read-only (wiersze = linie budżetu, kolumny = okresy projekcji, wartości formatowane z activeScenario.projections) — render analityczny, nie lista encji; brak Menu 1/2/3 (filtr/sort/akcje/nawigacja per wiersz) */ className="w-full text-sm">
                       <thead>
                         <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
                           <th className="px-3 py-2 sticky left-0 bg-white dark:bg-navy-900">
@@ -846,7 +846,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           {t('finance.budget.scenarioDiff', 'Scenario Comparison')}
                         </h3>
                       </div>
-                      <table className="w-full text-sm">
+                      <table /* §27-exempt: macierz porównania scenariuszy read-only (wiersze = ustalone metryki finansowe totalRevenue/grossProfit/ebitda/netIncome/operatingCF/fcf, kolumny = scenariusze, wartości + delta wyliczane z summaryMetrics) — render analityczny, nie lista encji; brak Menu 1/2/3 */ className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
                             <th className="px-4 py-2">{t('finance.budget.metric', 'Metric')}</th>
@@ -967,7 +967,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     </div>
                   ) : (
                     <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-                      <table className="w-full text-sm">
+                      <table /* §27-todo: lista encji (linkedInitiatives) — wiersz = inicjatywa z nawigacją /initiatives?id=, plakietką statusu i akcją Unlink (handleUnlinkInitiative) + przycisk Link Initiative; docelowo migracja do FilterableTable/StandardTable z Menu 1/2/3 (klasyfikacja bez refaktoru, dług zostaje) */ className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
                             <th className="px-4 py-2">
