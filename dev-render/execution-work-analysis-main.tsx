@@ -8,7 +8,8 @@ import { useAppStore } from '../src/store/useAppStore';
 import ExecutionReportDay11Screen from './screens/execution-report-day11';
 
 const language = new URLSearchParams(window.location.search).get('lang') || 'en';
-const theme = new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light';
+const theme =
+  new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light';
 useAppStore.setState({ theme });
 void i18n.changeLanguage(language);
 

@@ -12,7 +12,6 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
 import D73V3InsightsWidthDetailsScreen from './screens/d73v3-insights-width-details';
 
 const params = new URLSearchParams(window.location.search);

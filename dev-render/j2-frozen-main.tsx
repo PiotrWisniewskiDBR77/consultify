@@ -12,9 +12,9 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 
-import i18n from '../src/i18n';
-import { FeatureFlagsProvider } from '../src/contexts/FeatureFlagsContext';
 import { DrdHttpMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
+import { FeatureFlagsProvider } from '../src/contexts/FeatureFlagsContext';
+import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);

@@ -20,13 +20,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
-import i18n from '../src/i18n';
 import { DOCUMENT_VIEWER_FLAG_KEYS } from '../src/components/documents/documentViewerFlag';
+import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
-import Doc0Etap2aDeepLinkScreen, {
-  DOC0_ETAP2A_TARGETS,
-} from './screens/doc0-etap2a-deep-link';
 import { seedRealisticSession } from './mocks/seedStore';
+import Doc0Etap2aDeepLinkScreen, { DOC0_ETAP2A_TARGETS } from './screens/doc0-etap2a-deep-link';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
