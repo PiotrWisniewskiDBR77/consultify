@@ -1530,7 +1530,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             });
                             return (
                               <div className="overflow-x-auto">
-                                <table className="w-full text-xs border-collapse">
+                                <table /* §27-exempt: macierz wrażliwości (heatmap) read-only — wiersze WACC × kolumny g, komórki EV z sensitivityHeatmapColor + legenda Lower/Mid/Higher; czysta wizualizacja danych, nie lista encji; brak Menu 1/2/3 (filtr/sort/akcje/nawigacja) */ className="w-full text-xs border-collapse">
                                   <thead>
                                     <tr>
                                       <th className="px-2 py-1.5 text-left text-c-text-muted dark:text-c-text-muted font-medium">
