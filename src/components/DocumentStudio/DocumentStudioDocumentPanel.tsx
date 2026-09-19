@@ -143,6 +143,10 @@ interface DocumentStudioDocumentPanelProps {
 
 type TFn = TFunction;
 
+function getDocumentStudioErrorLine(t: TFunction, source: unknown): string {
+  return getAppErrorLine((key, defaultValue) => t(key, defaultValue ?? key), source);
+}
+
 /**
  * A4 — discreet "generated with limitations" chip. Collapsed by default to
  * a single amber (c-warning) pill showing the count; expands to a list of
@@ -724,7 +728,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     try {
       setEntries(await getDocumentStudioAccessHistory(artifactId, { limit: 80 }));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -810,7 +814,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       const result = await listDocumentStudioShareLinks(artifactId);
       setLinks(Array.isArray(result) ? result : []);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -834,7 +838,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       setLinks(Array.isArray(refreshed) ? refreshed : []);
       toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -853,7 +857,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       await refresh();
       toast.success(t('documentStudio.panel.shareRotated', 'Share link rotated'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setMutatingLinkId(null);
     }
@@ -868,7 +872,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       await refresh();
       toast.success(t('documentStudio.panel.shareRevoked', 'Share link revoked'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setMutatingLinkId(null);
     }
@@ -1006,7 +1010,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
     try {
       setVariants(await listDocumentStudioVariants(artifactId));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1031,7 +1035,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         })
       );
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     }
   };
 
@@ -1127,7 +1131,7 @@ export function SchemaDiffPanel({
     try {
       setResult(await getDocumentStudioSchemaDiff(artifactId, selectedVersionId || undefined));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1165,7 +1169,7 @@ export function SchemaDiffPanel({
       setSelectedVersionId(snapshot.versionId);
       setRestoreConfirm(false);
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setCapturing(false);
     }
@@ -1189,7 +1193,7 @@ export function SchemaDiffPanel({
       setRestoreConfirm(false);
       await refresh();
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setRestoring(false);
     }
@@ -1344,7 +1348,7 @@ function ManifestGatePanel(): React.ReactElement {
       const manifest = await fetchExecutionModuleManifest('doc-builder');
       setResult(await validateExecutionModuleManifest('doc-builder', manifest));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1494,7 +1498,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
     try {
       setApprovals(await listDocumentStudioApprovals(artifactId));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1532,7 +1536,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       setReason('');
       toast.success(t('documentStudio.documentPanel.approvalRequested', 'Approval requested'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1557,7 +1561,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         t('documentStudio.documentPanel.approvalDecisionRecorded', 'Approval decision recorded')
       );
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1577,7 +1581,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       );
       toast.success(t('documentStudio.documentPanel.approvalCancelled', 'Approval cancelled'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1820,7 +1824,7 @@ function ContentLibraryPanel({
         })
       );
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1848,7 +1852,7 @@ function ContentLibraryPanel({
       setInstantiatedBlock(result.block);
       toast.success(t('documentStudio.panel.blockInstantiated', 'Content block instantiated'));
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1878,7 +1882,7 @@ function ContentLibraryPanel({
         t('documentStudio.panel.blockInserted', 'Content block inserted into document')
       );
     } catch (err) {
-      setError(getAppErrorLine(t, err));
+      setError(getDocumentStudioErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -2252,7 +2256,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           );
           return;
         }
-        toast.error(getAppErrorLine(t, err));
+        toast.error(getDocumentStudioErrorLine(t, err));
       }
     },
     [artifactId, onSchemaUpdated, schema.sections, schema.title, schema.updatedAt, t]
@@ -2448,10 +2452,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           // but a stale policy or deep link can still surface this — refresh
           // the cached policy and show a clear message.
           setPolicy({ canOverrideQa: false, role: err.role ?? null });
-          setExportError(getAppErrorLine(t, err));
+          setExportError(getDocumentStudioErrorLine(t, err));
           return;
         }
-        setExportError(getAppErrorLine(t, err));
+        setExportError(getDocumentStudioErrorLine(t, err));
       } finally {
         setExporting(null);
       }
@@ -2486,7 +2490,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       toast.success(t('documentStudio.panel.openingBuilder', 'Opening sheets builder lane…'));
       window.location.assign(targetPath);
     } catch (err) {
-      setExportError(getAppErrorLine(t, err));
+      setExportError(getDocumentStudioErrorLine(t, err));
     } finally {
       setOpeningBuilder(false);
     }
@@ -2627,7 +2631,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       );
       navigate(`/document-studio/${encodeURIComponent(created.artifactId)}`);
     } catch (err) {
-      const message = getAppErrorLine(t, err);
+      const message = getDocumentStudioErrorLine(t, err);
       setSaveAsError(message);
       toast.error(message);
     } finally {
