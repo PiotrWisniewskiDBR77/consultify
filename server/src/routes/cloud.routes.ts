@@ -420,7 +420,7 @@ router.get('/providers', verifyToken, async (req: AuthRequest, res: Response) =>
       const { listCloudSources } = await import('../services/cloudDataService.js');
       const sources = await listCloudSources(organizationId);
       for (const s of sources || []) {
-        const provider = String((s as any)?.provider || '').toLowerCase();
+        const provider = String(s.provider || '').toLowerCase();
         if (provider) sourceConfigured.add(provider);
       }
     }
