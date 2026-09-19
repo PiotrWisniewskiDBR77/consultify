@@ -6139,6 +6139,36 @@ export type ReportApprovalStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
 /**
  * Management Report
  */
+export interface ReportBuilderDocumentSection {
+  id: string;
+  reportId: string;
+  sectionKey: string;
+  sectionType: string;
+  title: string;
+  orderIndex: number;
+  enabled: boolean;
+  required: boolean;
+  length: 'short' | 'medium' | 'long';
+  language: 'business';
+  generatedContent: string;
+  editedContent?: string;
+  contentFormat: 'markdown';
+  sourceDataSnapshot?: string;
+  generatedAt?: string | null;
+}
+
+export interface ReportBuilderDocumentAdapter {
+  report: {
+    id: string;
+    sourceType: string;
+    sourceId: string;
+    title: string;
+    reportType: string;
+    status?: string | null;
+  };
+  sections: ReportBuilderDocumentSection[];
+}
+
 export interface ManagementReport {
   id: string;
   organizationId: string;
@@ -6178,6 +6208,7 @@ export interface ManagementReport {
   previousReportId?: string;
   // Period comparison
   periodComparison?: PeriodComparisonData;
+  reportBuilderDocument?: ReportBuilderDocumentAdapter;
 }
 
 /**

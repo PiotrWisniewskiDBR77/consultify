@@ -125,6 +125,8 @@ export type {
   Report,
   ReportApproval,
   ReportApprovalStatus,
+  ReportBuilderDocumentAdapter,
+  ReportBuilderDocumentSection,
   ReportBlock,
   ReportComment,
   ReportVersion,
