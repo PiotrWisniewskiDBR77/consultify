@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export type AppErrorCode =
   | 'NOT_FOUND'
   | 'VALIDATION'
@@ -22,7 +24,11 @@ export interface AppErrorCopy {
   correlationLabel: string | null;
 }
 
-type TFunc = (key: string, defaultValue?: string) => unknown;
+type TFunc = TFunction | ((key: string, defaultValue?: string) => unknown);
+
+function translate(t: TFunc, key: string, defaultValue: string): unknown {
+  return Reflect.apply(t, undefined, [key, defaultValue]);
+}
 
 const CODES = new Set<AppErrorCode>([
   'NOT_FOUND',
@@ -104,7 +110,7 @@ export function getAppErrorCopy(t: TFunc, source: unknown): AppErrorCopy {
   const slug = SLUG[code];
   const fallback = FALLBACK_EN[code];
   const correlationId = readCorrelationId(source);
-  const label = String(t('errors.app.reportId', 'Report identifier'));
+  const label = String(translate(t, 'errors.app.reportId', 'Report identifier'));
   const rawCode = String(envelope.errorCode ?? '')
     .trim()
     .toUpperCase();
@@ -112,12 +118,12 @@ export function getAppErrorCopy(t: TFunc, source: unknown): AppErrorCopy {
   const message =
     !CODES.has(rawCode as AppErrorCode) && serverMessage
       ? serverMessage
-      : String(t(`errors.app.${slug}.message`, fallback.message));
+      : String(translate(t, `errors.app.${slug}.message`, fallback.message));
 
   return {
     code,
     message,
-    action: String(t(`errors.app.${slug}.action`, fallback.action)),
+    action: String(translate(t, `errors.app.${slug}.action`, fallback.action)),
     correlationId,
     correlationLabel: correlationId ? `${label}: ${correlationId}` : null,
   };
