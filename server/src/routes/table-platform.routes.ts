@@ -4458,10 +4458,9 @@ function requireTenantAdmin(req: Request, res: Response, next: NextFunction): vo
   );
   const allowed = ['OWNER', 'ADMIN', 'SUPERADMIN'];
   if (authReq.user?.isSuperAdmin || allowed.includes(role)) return next();
-  res.status(403).json({
-    error: 'Uprawnienia administratora organizacji są wymagane.',
-    code: 'ADMIN_ACCESS_REQUIRED',
-  });
+  // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+  // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
+  res.status(403).json({ code: 'ADMIN_ACCESS_REQUIRED' });
 }
 
 /**
