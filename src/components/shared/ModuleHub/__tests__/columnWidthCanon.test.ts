@@ -69,6 +69,37 @@ describe('cellTextLines — tekst komórki rozbity na linie', () => {
     // o sumarycznej szerokości (to był powód, dla którego kolumna rosła 2×).
     expect(cellTextLines(komorka)).toEqual(['Optymalizacja zapasów', 'Brak opisu problemu']);
   });
+
+  // ── D-127 (Wpis 205): rząd chipów = JEDNA linia, nie chip-per-linia ──────
+  it('pojedynczy chip (tekst w `label`, bez `children`) jest w ogóle zmierzony', () => {
+    // Stary obchód czytał tylko `children ?? content` → chip mierzył ZERO.
+    // Mutacja: usunięcie gałęzi `label` — test padnie (pusta linia).
+    const Chip: React.FC<{ label: string }> = () => null;
+    expect(cellTextLines(h(Chip, { label: 'operacje' }))).toEqual(['operacje']);
+  });
+
+  it('RZĄD sąsiadujących chipów to JEDNA linia (suma), nie N osobnych', () => {
+    // Sedno D-127: `measureColumnContent` bierze MAKSYMUM linii, więc N chipów
+    // jako N linii dałoby szerokość najszerszego JEDNEGO chipa, nie rzędu.
+    // Mutacja: przywróć pomiar per chip (każdy chip zamyka własną linię) →
+    // wynik ['rynek','DE'] zamiast ['rynek DE'] → RED.
+    const Chip: React.FC<{ label: string }> = () => null;
+    const komorka = h('div', {}, h(Chip, { label: 'rynek' }), h(Chip, { label: 'DE' }));
+    expect(cellTextLines(komorka)).toEqual(['rynek DE']);
+  });
+
+  it('chipy NIE zlewają się ze zwykłym tekstem wiersza (tylko rząd chipów)', () => {
+    // Reguła „zagnieżdżony element = nowa linia" zostaje dla treści bez `label`.
+    const Chip: React.FC<{ label: string }> = () => null;
+    const komorka = h(
+      'div',
+      {},
+      h('span', {}, 'Tytuł'),
+      h(Chip, { label: 'rynek' }),
+      h(Chip, { label: 'DE' })
+    );
+    expect(cellTextLines(komorka)).toEqual(['Tytuł', 'rynek DE']);
+  });
 });
 
 describe('measureColumnContent — ile kolumna NAPRAWDĘ potrzebuje', () => {
@@ -123,6 +154,28 @@ describe('measureColumnContent — ile kolumna NAPRAWDĘ potrzebuje', () => {
       measure,
     });
     expect(wynik.bomba.width).toBe(40);
+  });
+
+  it('kolumna chipów mierzy RZĄD (sumę), nie jest PUSTA i nie bierze jednego chipa', () => {
+    // D-127: przed naprawą chip (tekst w `label`) mierzył ZERO → `empty=true`,
+    // `width=40` (podłoga jak kolumna samych „—"). Po naprawie kolumna widzi
+    // cały rząd „rynek DE" (8 znaków × 7 px + 40 = 96), NIE najszerszy chip.
+    // Mutacja: przywróć pomiar per chip → max(„rynek") = 5×7+40 = 75 ≠ 96 → RED.
+    const Chip: React.FC<{ label: string }> = () => null;
+    const wynik = measureColumnContent({
+      columns: [
+        {
+          id: 'tags',
+          label: 'Tags',
+          dataType: 'text' as const,
+          render: () => h('div', {}, h(Chip, { label: 'rynek' }), h(Chip, { label: 'DE' })),
+        },
+      ],
+      rows: [{ id: '1' }],
+      measure,
+    });
+    expect(wynik.tags.empty).toBe(false);
+    expect(wynik.tags.width).toBe('rynek DE'.length * 7 + 40);
   });
 });
 

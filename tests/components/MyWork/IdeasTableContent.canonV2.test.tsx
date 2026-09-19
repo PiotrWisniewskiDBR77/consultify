@@ -19,7 +19,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { IdeasTableContent, fitTagChips } from '../../../src/components/MyWork/IdeasTableContent';
+import { IdeasTableContent } from '../../../src/components/MyWork/IdeasTableContent';
 import type { MyIdea } from '../../../src/components/MyWork/myIdeasTypes';
 import { SELECTED_ROW_CLASS } from '../../../src/components/shared/selectionTokens';
 import { LIST_CANON_V2_FLAG_KEYS } from '../../../src/config/listCanonV2';
@@ -379,38 +379,6 @@ describe('IdeasTableContent — list-canon-v2 PO (flaga ON, kanoniczny StandardT
   });
 });
 
-describe('fitTagChips — pure overflow helper (Wpis 204 method b)', () => {
-  const GAP = 4;
-
-  it('returns every chip when they all fit (no "+N")', () => {
-    // 64 + 96 + one gap = 164 ≤ 200
-    expect(fitTagChips([64, 96], 28, 200, GAP)).toBe(2);
-  });
-
-  it('returns the largest whole-chip count that still leaves room for "+N"', () => {
-    // chip0 + gap + plus = 64 + 4 + 28 = 96 ≤ 145, but both chips = 164 > 145
-    expect(fitTagChips([64, 96], 28, 145, GAP)).toBe(1);
-  });
-
-  it('returns 0 when even the first chip + "+N" does not fit', () => {
-    expect(fitTagChips([64, 96], 28, 60, GAP)).toBe(0);
-  });
-
-  it('keeps a single long chip (never slices it, "+N" would be pointless)', () => {
-    // n=1: all-fits check 67 ≤ 145 → 1; the loop only runs to n-1 so a lone chip
-    // is never replaced by "+1".
-    expect(fitTagChips([67], 28, 145, GAP)).toBe(1);
-  });
-
-  it('returns 0 for an empty tag list', () => {
-    expect(fitTagChips([], 28, 145, GAP)).toBe(0);
-  });
-
-  it('shows everything when the box is unmeasured (avail<=0, jsdom guard)', () => {
-    expect(fitTagChips([64, 96, 120], 28, 0, GAP)).toBe(3);
-  });
-});
-
 describe('IdeasTagChips — overflow wiring (canon-v2, flaga ON)', () => {
   beforeEach(() => {
     clearFlagAndFacadeState();
@@ -425,8 +393,9 @@ describe('IdeasTagChips — overflow wiring (canon-v2, flaga ON)', () => {
     // Wymuszamy przepełnienie: pudełko 230 px, chip = 10 px/znak. Trzy tagi
     // (80 + 130 + 70 + 2×4 = 288) nie mieszczą się; mieści się tylko pierwszy
     // chip + „+2" (80 + 4 + 20 = 104 ≤ 230), drugi już nie (210 + 8 + 20 = 238).
-    // Dowód WPIĘCIA: IdeasTagChips naprawdę woła fitTagChips i renderuje „+N".
-    // Mutacja: `return n` w fitTagChips (zawsze wszystko) → brak „+2" → RED.
+    // Dowód WPIĘCIA: IdeasTagChips renderuje kanoniczny `ChipOverflowRow` z jądra
+    // (D-127), który woła `fitChipRow` i dokłada „+N".
+    // Mutacja: `return n` w `fitChipRow` (zawsze wszystko) → brak „+2" → RED.
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(230);
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
       return (this.textContent || '').length * 10;

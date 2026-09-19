@@ -129,7 +129,56 @@ export const inferColumnDataType = (
  * stosuje sam komponent. Prop, który nie trafia na ekran, nie jest tu ryzykiem:
  * pomiar i tak nigdy nie przekracza ani sufitu typu, ani szerokości
  * zadeklarowanej przez ekran.
+ *
+ * ── RZĄD CHIPÓW = JEDNA LINIA (D-127, Wpis 205, 2026-09-19) ─────────────────
+ *
+ * Dwie ŚLEPE PLAMY na komórkach chipowych (kanoniczne `MetaChip`/`StatusChip`/
+ * `EntityStatusChip`/… z `src/components/ui/primitives/chips/`):
+ *
+ *   1. Chip niesie tekst w propie `label` (`<MetaChip label="rynek" />`), NIE w
+ *      `children` ani `content`. Stary obchód nie widział ŻADNEGO z nich, więc
+ *      kolumna chipów mierzyła ZERO tekstu → `width = 0 + padding`, `empty=true`
+ *      → `columnFit` sadzał ją na podłodze dokładnie jak kolumnę samych „—".
+ *   2. Każdy chip to osobny element, a stary obchód robił `zamknij()` na KAŻDYM
+ *      elemencie — więc N chipów w jednym wierszu dawało N osobnych „linii", a
+ *      `measureColumnContent` brał MAKSYMUM (najszerszy pojedynczy chip), nigdy
+ *      SUMĘ rzędu. Kolumna mieściła jeden chip, reszta się cięła.
+ *
+ * Naprawa RAZ W JĄDRZE (zamiast per ekran): (1) obchód czyta `label` jak
+ * `content`; (2) SĄSIADUJĄCE chipy (element z `label`, bez `children`) w jednej
+ * tablicy dzieci zlewają się w JEDNĄ linię („rynek DE"), więc kolumna mierzy
+ * RZĄD, nie chip. To wciąż pomiar bez DOM-u (statyczny obchód drzewa Reacta),
+ * ograniczony sufitem typu i szerokością zadeklarowaną — nie „rozszerza tabel w
+ * nieskończoność". Gwarancję `scrollWidth ≤ clientWidth` domyka kanoniczny
+ * wzorzec przepełnienia „+N" (`ChipOverflowRow`), który dostosowuje LICZBĘ
+ * chipów do finalnej (ściśniętej przez `columnFit`) szerokości kolumny.
+ *
+ * Reguła „zagnieżdżony element zaczyna nową linię" zostaje dla zwykłych
+ * elementów z `children` (komórka dwupiętrowa `div>span+span` = 2 linie) —
+ * zlewanie dotyczy WYŁĄCZNIE chipów (`label`, bez `children`), więc listy bez
+ * chipów mierzą się bajtowo tak samo jak przed D-127.
  */
+
+/**
+ * Podpis chipa: element React, który niesie tekst w `label` i NIE ma `children`
+ * (dokładnie tak zbudowane są kanoniczne chipy — `MetaChip` przekazuje `label`
+ * do `ChipBase` jako dzieci, ale NA ZEWNĄTRZ, w drzewie `render(row)`, chip to
+ * `<MetaChip label=… />` bez `children`). Zwraca tekst chipa albo `null`, gdy
+ * węzeł nie jest prostym chipem — wtedy obchód traktuje go zwykłą ścieżką.
+ */
+const chipLabelOf = (node: React.ReactNode): string | null => {
+  if (node === null || node === undefined || typeof node === 'boolean') return null;
+  if (typeof node === 'string' || typeof node === 'number') return null;
+  if (Array.isArray(node)) return null;
+  const element = node as { props?: { children?: React.ReactNode; label?: unknown } };
+  if (!element || typeof element !== 'object' || !('props' in element)) return null;
+  if (element.props?.children !== null && element.props?.children !== undefined) return null;
+  const label = element.props?.label;
+  if (typeof label === 'string') return label;
+  if (typeof label === 'number') return String(label);
+  return null;
+};
+
 export const cellTextLines = (node: React.ReactNode, depth = 0): string[] => {
   const lines: string[] = [];
   let bufor = '';
@@ -140,6 +189,11 @@ export const cellTextLines = (node: React.ReactNode, depth = 0): string[] => {
     bufor = '';
   };
 
+  const doklej = (tekst: string) => {
+    if (!tekst) return;
+    bufor += bufor ? ` ${tekst}` : tekst;
+  };
+
   const chodz = (n: React.ReactNode, d: number) => {
     if (n === null || n === undefined || typeof n === 'boolean') return;
     if (typeof n === 'string' || typeof n === 'number') {
@@ -148,19 +202,54 @@ export const cellTextLines = (node: React.ReactNode, depth = 0): string[] => {
     }
     if (d > 8) return;
     if (Array.isArray(n)) {
-      for (const dziecko of n) chodz(dziecko, d);
+      // RZĄD CHIPÓW (D-127): sąsiadujące chipy zlewamy w JEDNĄ linię, resztę
+      // dzieci obchodzimy jak dotąd. Bez tego każdy chip byłby osobną „linią",
+      // a `measureColumnContent` wziąłby maksimum, nie sumę rzędu.
+      let i = 0;
+      while (i < n.length) {
+        const rzad: string[] = [];
+        while (i < n.length) {
+          const label = chipLabelOf(n[i]);
+          if (label === null) break;
+          rzad.push(label);
+          i += 1;
+        }
+        if (rzad.length > 0) {
+          doklej(rzad.join(' '));
+          zamknij();
+          continue;
+        }
+        chodz(n[i], d);
+        i += 1;
+      }
       return;
     }
-    const element = n as { props?: { children?: React.ReactNode; content?: unknown } };
+    const element = n as {
+      props?: { children?: React.ReactNode; content?: unknown; label?: unknown };
+    };
     if (element && typeof element === 'object' && 'props' in element) {
-      zamknij();
       const dzieci = element.props?.children;
       const content = element.props?.content;
+      const label = element.props?.label;
+      // Pojedynczy chip (`label`, bez `children`) doklejamy do bieżącej linii —
+      // nie zamykamy jej tu, żeby rząd chipów złożony przez rodzica został jedną
+      // linią, a tekst „chip obok tekstu" skleił się naturalnie.
+      if (
+        (dzieci === null || dzieci === undefined) &&
+        (typeof label === 'string' || typeof label === 'number')
+      ) {
+        doklej(String(label));
+        return;
+      }
+      zamknij();
       if (dzieci !== null && dzieci !== undefined) {
         chodz(dzieci, d + 1);
       } else if (typeof content === 'string' || typeof content === 'number') {
         // `children ?? content` — reguła `OverflowTooltip`, patrz nota wyżej.
         chodz(content, d + 1);
+      } else if (typeof label === 'string' || typeof label === 'number') {
+        // Chip z `label` — tekst niesiony propem, jak `content` w `OverflowTooltip`.
+        doklej(String(label));
       }
       zamknij();
     }

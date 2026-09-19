@@ -21,6 +21,12 @@ export {
   type ChipSize,
   type ChipTone,
 } from './chipBase';
+export {
+  CHIP_ROW_GAP_PX,
+  ChipOverflowRow,
+  type ChipOverflowRowProps,
+  fitChipRow,
+} from './ChipOverflowRow';
 export { deriveDueRisk, DueChip, type DueChipProps, type DueRisk } from './DueChip';
 export {
   EntityStatusChip,
