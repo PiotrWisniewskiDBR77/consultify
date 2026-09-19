@@ -1,0 +1,33 @@
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+DB_IDENTITY role=migration identity=127.0.0.1:6637/consultify_qd16 host=127.0.0.1 port=6637 database=consultify_qd16 source=migration:resolved-url
+[release-gate] NOTE: this gate runs inside the application service and shares its environment, so it CANNOT observe a migration/application database divergence (DEC-2026-08-28-165) and does not claim to. That divergence is checked only by scripts/validate-deploy-target.sh in GitHub Actions, from APP_DATABASE_URL and MIGRATION_DATABASE_URL supplied independently. If that guard is unarmed, this deploy carries NO cross-service divergence check at all.
+[release-gate] target host verified against expected fingerprint (host redacted). dbTarget=unset dbIdentity=127.0.0.1:6637/consultify_qd16
+[release-gate] build sha: 6be676ff4f64017017385c71fec9a0f789fa95e6
+[release-gate] applying full migration chain (no --only, no --safe, no --allow-checksum-drift)
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 05:44:16:4416 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 0
+✅ Postgres migrations complete
+
+[release-gate] verification:
+  PASS  sql_ledger_present: schema_migrations present
+  PASS  sql_ledger_no_failed: failed=0
+  PASS  sql_ledger_no_skipped: skipped=0
+  PASS  sql_chain_no_pending: pending=0
+  PASS  sql_chain_no_unexplained_drift: no unexplained drift (32 approved variant(s), 1 schema-attested)
+  PASS  sql_chain_acceptable: state=ok: chain complete; 32 approved historical variant(s); 3 postcondition-verified; 1 schema-attested legacy variant(s)
+  PASS  tp_chain_no_pending: pending=156 (applied at boot by DatabaseInitializer; enforced by readiness, not by this pre-deploy gate)
+  PASS  no_unresolved_present_without_history: no known present-without-history marker
+  PASS  repair_a_postcondition: ai_instruction_suggestions new columns=2/2
+  PASS  repair_b_postcondition: level col=1/1 check=1/1
+  PASS  repair_c_postcondition: baseline repair columns=29/29
+  PASS  schema_coverage_critical_relations: all 22 critical write-path relations present
+
+RELEASE_MIGRATION_GATE_PASS buildSha=6be676ff4f64017017385c71fec9a0f789fa95e6 checks=12 hostVerified=true dbTarget=unset dbIdentity=127.0.0.1:6637/consultify_qd16

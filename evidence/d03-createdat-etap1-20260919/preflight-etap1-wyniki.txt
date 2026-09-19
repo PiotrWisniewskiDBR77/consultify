@@ -1,0 +1,102 @@
+# QD16 / D-03 ETAP 1 — preflight migracji 20262305, 2026-09-19 05:44:09 CDT
+kontener=qoder-d-pg-8  port=6637  baza=consultify_qd16  (kopia dumpu, staging/demo nietknięte)
+linia_integracyjna=6be676ff4f64017017385c71fec9a0f789fa95e6
+HEAD_worktree=0fbd1d905dea884acc558c1dfd431dae9c589b48
+dump=/Users/piotrwisniewski/Developer/kopie/staging-auto-20260919T0330.dump
+dump_rozmiar=251619652
+pg_wersja_kopii=18.6 (Debian 18.6-1.pgdg12+2)
+tabel_w_public=1912
+ledger_wierszy=1031
+ledger_statusy=failed=1, skipped=7, success=1023
+20262304_w_ledgerze=0
+20262305_w_ledgerze=0
+etap1_tabel_text_przed=24
+etap1_tabel_razem=24
+created_at_text_w_calej_bazie_przed=272
+
+# §2 odcisk danych PRZED (wiersze|nieNULL|md5tekst|md5chwila per tabela)
+odcisk_przed_wierszy_razem=5875
+odcisk_przed_nienull_razem=5875
+typy_przed_text=24
+typy_przed_timestamptz=0
+
+# §3 dry-run
+rc_dry_run=0
+pending=2
+lista_pending=20262304_scim_missing_objects.sql,20262305_created_at_timestamptz_etap1.sql,
+ASERCJA_PENDING=PASS (pending == 2 i to DOKŁADNIE 20262304_scim_missing_objects.sql + 20262305_created_at_timestamptz_etap1.sql)
+
+# §4 UP (realny runner)
+rc_up1=0  Applying migrations: 2
+ledger_20262305=success|384eb474416b3f3d63d37d2563f02d33031b395dc1ebf910739d4f0be82c1e81
+notice_z_migracji=0
+
+# §5 PO_UP
+etap1_timestamptz=24
+etap1_wciaz_text=0
+created_at_text_w_calej_bazie_po=248
+domyslne_po_up1:
+  ai_deep_thinking_confirms = CURRENT_TIMESTAMP
+  decision_escalation_templates = now()
+  deck_comments = (brak)
+  document_share_links = (brak)
+  meeting_decisions = now()
+  meeting_participants = (brak)
+  notification_dedup = (brak)
+  research_evidence_graph = CURRENT_TIMESTAMP
+  research_report_artifacts = CURRENT_TIMESTAMP
+  research_session_events = CURRENT_TIMESTAMP
+  research_sessions = CURRENT_TIMESTAMP
+  tax_rates = now()
+  usage_pricing_tiers = '2026-03-03 18:30:11.358808+00'::timestamp with time zone
+  v8_promotion_gates = now()
+  wave5_artifact_versions = CURRENT_TIMESTAMP
+  wave6_context_ledger = CURRENT_TIMESTAMP
+  wave6_context_snapshots = CURRENT_TIMESTAMP
+  wave6_memory_candidates = CURRENT_TIMESTAMP
+  wave6_memory_stewardship_decisions = CURRENT_TIMESTAMP
+  wave7_connectors = CURRENT_TIMESTAMP
+  wave8_agent_notifications = CURRENT_TIMESTAMP
+  wave8_agent_runs = CURRENT_TIMESTAMP
+  wave9_evidence_registry = CURRENT_TIMESTAMP
+  work_canvas_proposals = (brak)
+chwila_przed_vs_po_up1_diff=0
+
+# §6 PODWÓJNE zastosowanie (drugi przebieg tego samego pliku przez psql)
+rc_drugi_przebieg=0
+  D03-20262305: etap 1 done — converted=0, already timestamptz=24, absent=0 (of 24)
+bledow_w_drugim_przebiegu=0
+chwila_po_up1_vs_po_podwojnym_diff=0
+typy_po_podwojnym_timestamptz=24
+
+# §7 bramka release-migration-gate
+rc_gate=0  PASS=13  FAIL=0
+  RELEASE_MIGRATION_GATE_PASS buildSha=6be676ff4f64017017385c71fec9a0f789fa95e6 checks=12 hostVerified=true dbTarget=unset dbIdentity=127.0.0.1:6637/consultify_qd16
+
+# §8 pg_dump -s diff baseline<->PO_UP1
+diff_baseline_po_up1_linie=67
+  w tym zmian typu created_at: 48
+
+# §9 DOWN (rollback) + kasacja wiersza ledgera
+rc_down=0  rc_delete_ledger=0
+  D03-20262305-down: done — reverted=24, already text=0, absent=0 (of 24)
+bledow_w_down=0
+etap1_text_po_down=24
+etap1_timestamptz_po_down=0
+WIERNOSC_TEKSTU_przed_vs_po_down_diff=0
+chwila_przed_vs_po_down_diff=0
+diff_baseline_po_down_linie=19  (oczekiwane = wyłącznie 5 obiektów SCIM z 20262304)
+domyslne_po_down_rownosc_z_przed=0
+
+# §10 UP2 (cykl odtwarzalny)
+rc_up2=0  Applying migrations: 1
+typy_po_up1_vs_po_up2_diff=0
+chwila_po_up1_vs_po_up2_diff=0
+diff_dump_po_up1_po_up2_linie=0
+diff_baseline_po_up2_linie=67
+
+# §11 sha256 plików migracji
+  384eb474416b3f3d63d37d2563f02d33031b395dc1ebf910739d4f0be82c1e81  server/migrations/20262305_created_at_timestamptz_etap1.sql
+  2e51be472b8535f0ce53b5e9cdeb0baa6d2535c0c66ab308bc1dc4af323b1cf1  server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql
+
+WERDYKT=PASS (pending=2={20262304,20262305}, UP/DOWN/UP RC 0/0/0, 24/24 text->timestamptz, drugi przebieg RC=0 i bez zmian, wierność tekstu po rollbacku diff=0, gate RC=0)

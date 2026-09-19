@@ -1,0 +1,29 @@
+BEGIN
+SET
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave6_context_ledger — 3675 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave6_context_snapshots — 1127 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave5_artifact_versions — 262 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: research_session_events — 89 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: research_sessions — 22 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: research_evidence_graph — 12 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: research_report_artifacts — 12 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave7_connectors — 13 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave6_memory_candidates — 11 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave6_memory_stewardship_decisions — 5 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave8_agent_notifications — 6 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave8_agent_runs — 6 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: wave9_evidence_registry — 4 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: ai_deep_thinking_confirms — 8 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: usage_pricing_tiers — 3 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: v8_promotion_gates — 1 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: notification_dedup — 487 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: meeting_participants — 67 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: work_canvas_proposals — 56 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: document_share_links — 5 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: deck_comments — 4 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: decision_escalation_templates — 0 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: meeting_decisions — 0 row(s), shape ISOZ, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: tax_rates — 0 row(s), shape KANON, timestamptz -> text
+psql:server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql:166: NOTICE:  D03-20262305-down: done — reverted=24, already text=0, absent=0 (of 24)
+DO
+COMMIT

@@ -1,0 +1,37 @@
+=================== BASELINE (bez mutacji) — oczekiwane 6 passed ===================
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+
+=================== M1 — UP bez pg_input_is_valid (fail-closed usunięty) — oczekiwane RED na 'fails closed' ===================
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mAssertionError[22m: the migration must refuse, not guess: expected 'invalid input syntax for type timesta…' to contain 'D03-20262305'[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (6)[39m
+
+=================== M2 — DOWN: ISO-Z wymuszone na created_at::text — oczekiwane RED na wierności ISO-Z ===================
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mAssertionError[22m: notification_dedup ISO-Z bytes: expected [ '2026-07-05 12:14:57.993+00', …(1) ] to deeply equal [ '2026-07-05T12:14:57.993Z', …(1) ][39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+
+=================== M3 — DOWN bez SET LOCAL TIME ZONE 'UTC' — oczekiwane RED na wierności KANON ===================
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mAssertionError[22m: wave6_context_ledger KANON bytes: expected [ …(2) ] to deeply equal [ …(2) ][39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+
+=================== M4 — UP bez wave9_evidence_registry — oczekiwane RED na 'converts all 24' ===================
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mAssertionError[22m: wave9_evidence_registry.created_at type: expected 'text' to be 'timestamp with time zone' // Object.is equality[39m
+[31m[1mAssertionError[22m: expected 'text' to be 'timestamp with time zone' // Object.is equality[39m
+[31m[1mAssertionError[22m: expected 'text' to be 'timestamp with time zone' // Object.is equality[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (6)[39m
+
+=================== PO PRZYWRÓCENIU (wszystkie mutacje cofnięte) — oczekiwane 6 passed ===================
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+
+=================== checksumy po przywróceniu ===================
+384eb474416b3f3d63d37d2563f02d33031b395dc1ebf910739d4f0be82c1e81  server/migrations/20262305_created_at_timestamptz_etap1.sql
+2e51be472b8535f0ce53b5e9cdeb0baa6d2535c0c66ab308bc1dc4af323b1cf1  server/migrations/rollback/20262305_created_at_timestamptz_etap1.down.sql

@@ -1,0 +1,2 @@
+psql:server/migrations/20262305_created_at_timestamptz_etap1.sql:194: NOTICE:  D03-20262305: etap 1 done — converted=0, already timestamptz=24, absent=0 (of 24)
+DO

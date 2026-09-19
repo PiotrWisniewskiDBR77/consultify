@@ -1,0 +1,8 @@
+2026-09-19 05:44:12:4412 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 05:44:12:4412 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 05:44:12:4412 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 05:44:12:4412 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 05:44:12:4412 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Pending migrations: 2
+- 20262304_scim_missing_objects.sql
+- 20262305_created_at_timestamptz_etap1.sql

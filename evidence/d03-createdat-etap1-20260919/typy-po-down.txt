@@ -1,0 +1,24 @@
+ai_deep_thinking_confirms|text|CURRENT_TIMESTAMP
+decision_escalation_templates|text|to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text)
+deck_comments|text|(brak)
+document_share_links|text|(brak)
+meeting_decisions|text|(now())::text
+meeting_participants|text|(brak)
+notification_dedup|text|(brak)
+research_evidence_graph|text|CURRENT_TIMESTAMP
+research_report_artifacts|text|CURRENT_TIMESTAMP
+research_session_events|text|CURRENT_TIMESTAMP
+research_sessions|text|CURRENT_TIMESTAMP
+tax_rates|text|to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text)
+usage_pricing_tiers|text|'2026-03-03 18:30:11.358808+00'::timestamp with time zone
+v8_promotion_gates|text|now()
+wave5_artifact_versions|text|CURRENT_TIMESTAMP
+wave6_context_ledger|text|CURRENT_TIMESTAMP
+wave6_context_snapshots|text|CURRENT_TIMESTAMP
+wave6_memory_candidates|text|CURRENT_TIMESTAMP
+wave6_memory_stewardship_decisions|text|CURRENT_TIMESTAMP
+wave7_connectors|text|CURRENT_TIMESTAMP
+wave8_agent_notifications|text|CURRENT_TIMESTAMP
+wave8_agent_runs|text|CURRENT_TIMESTAMP
+wave9_evidence_registry|text|CURRENT_TIMESTAMP
+work_canvas_proposals|text|(brak)
