@@ -501,7 +501,11 @@ export function assertNoDuplicateMigrationIdentity(migrations: Migration[]): voi
  * legitimate narrow `--dir` / `--only` invocations, whose ledger necessarily
  * contains filenames absent from the directory being run.
  */
-export function assertLedgerRowIsTrusted(row: AppliedMigrationRow): void {
+export function assertLedgerRowIsTrusted(
+  row: AppliedMigrationRow,
+  currentChecksum?: string,
+  warn: (message?: unknown, ...optionalParams: unknown[]) => void = console.warn
+): void {
   if (!KNOWN_LEDGER_STATUSES.has(row.status)) {
     throw new MalformedLedgerEntryError(
       row.filename,
@@ -514,6 +518,13 @@ export function assertLedgerRowIsTrusted(row: AppliedMigrationRow): void {
         row.filename,
         `status 'skipped' but checksum ${JSON.stringify(row.checksum)} is not the ` +
           `'skipped:<sha256>' form this runner writes under --safe`
+      );
+    }
+    const storedChecksum = row.checksum.slice('skipped:'.length);
+    if (currentChecksum && storedChecksum !== currentChecksum) {
+      warn(
+        `[Migrate] ⚠️ Skipped migration checksum drift: ${row.filename} ledger checksum ${row.checksum} ` +
+          `does not match current file sha256 ${currentChecksum}`
       );
     }
     return;
@@ -564,7 +575,7 @@ export function runLedgerPreflight(
   for (const m of candidates) {
     const row = applied.get(m.filename);
     if (!row) continue;
-    assertLedgerRowIsTrusted(row);
+    assertLedgerRowIsTrusted(row, m.checksum);
     if (row.status !== 'success') continue;
     // `row.checksum` is non-null here: assertLedgerRowIsTrusted enforced the
     // 64-char hex shape for 'success'.
