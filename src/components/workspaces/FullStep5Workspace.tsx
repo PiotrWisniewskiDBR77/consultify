@@ -11,6 +11,12 @@ interface FullStep5WorkspaceProps {
   onNextStep: () => void;
 }
 
+const TODO_INITIATIVE_STATUSES: readonly InitiativeStatus[] = [
+  InitiativeStatus.DRAFT,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.APPROVED,
+];
+
 export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
   fullSession,
   onUpdateInitiative: _onUpdateInitiative,
@@ -46,12 +52,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
       if (showBlockedOnly && i.status !== InitiativeStatus.IN_EXECUTION && status !== 'Blocked')
         return false;
 
-      if (status === 'To Do')
-        return [
-          InitiativeStatus.DRAFT,
-          InitiativeStatus.PENDING_APPROVAL,
-          InitiativeStatus.APPROVED,
-        ].includes(i.status);
+      if (status === 'To Do') return TODO_INITIATIVE_STATUSES.includes(i.status);
       if (status === 'In Progress') return i.status === InitiativeStatus.IN_EXECUTION;
       if (status === 'Blocked') return i.status === InitiativeStatus.IN_EXECUTION;
       if (status === 'Done') return i.status === InitiativeStatus.CLOSED;
