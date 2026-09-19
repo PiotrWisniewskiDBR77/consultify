@@ -1,21 +1,27 @@
 /**
  * @vitest-environment jsdom
  *
- * Regression test for AGT/templates status chips: before this fix, the
- * top-strip status chips for the Template Library tab were a hardcoded list
- * (active/draft/deprecated/archived) that never matched the values actually
- * produced by `mapTemplateStatus()` in useRapData.ts (approved/published/
- * draft/deprecated/unknown). Report-sourced templates (the majority of the
- * library) resolve to 'published' and were therefore invisible behind every
- * chip while 'All' still showed the true count.
+ * Regression test for the Template Library status filter. The original bug:
+ * the status affordance was a hardcoded chip list (active/draft/deprecated/
+ * archived) that never matched the values `mapTemplateStatus()` in useRapData.ts
+ * actually produces (approved/published/draft/deprecated/unknown). Report-sourced
+ * templates — the majority of the library — resolve to 'published' and were
+ * therefore invisible behind every chip while 'All' still showed the true count.
  *
- * This test renders the real chip-building logic (statusChips derived from
- * TEMPLATE_STATUS_META) against a templates list containing 'published' and
- * 'approved' items, and asserts the corresponding chips appear with correct
- * counts and are clickable.
+ * DEC-423d (owner, 06.09.2026) moved that affordance out of the Menu 3 top-strip
+ * chips and into the Menu 2 "Status" dropdown (data-testid
+ * `materials-status-dropdown`, component `Menu2PresetDropdown`). The dropdown is
+ * built from the SAME two sources that drive the table — `tabStatusOptions`
+ * (from TEMPLATE_STATUS_META) and `tabStatusCounts` (countRowsByStatus over the
+ * real `status` field) — so a status can no longer be counted-but-unselectable.
+ *
+ * This test renders the real Hub against a templates list containing
+ * 'published' and 'approved' items and asserts those statuses appear in the
+ * dropdown with correct counts, that 'All' equals the total, and that picking a
+ * status drives the filter (round-trips into the dropdown's selected value).
  */
 import React from 'react';
-import { act, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -32,22 +38,6 @@ vi.mock('react-i18next', async () => {
     }),
   };
 });
-
-vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, title, commandRowContent, children }: any) => (
-    <div>
-      <h1>{title}</h1>
-      <div data-testid="active-tab">{activeTab}</div>
-      <div>
-        {tabs.map((tab: any) => (
-          <span key={tab.id}>{tab.label}</span>
-        ))}
-      </div>
-      <div data-testid="command-row">{commandRowContent}</div>
-      <div>{children}</div>
-    </div>
-  ),
-}));
 
 vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
   useModuleOpenDocuments: () => ({
@@ -132,61 +122,75 @@ vi.mock('../../../src/components/ReportsAndPresentations/SheetsTabContent', () =
 
 vi.mock('../../../src/components/ReportsAndPresentations/TemplatesTabContent', () => ({
   TemplatesTabContent: () => <div data-testid="templates-tab">templates-tab</div>,
+  filterTemplatesBySearch: (rows: any[]) => rows,
 }));
 
-describe('ReportsAndPresentationsHub — Template Library status chips', () => {
-  it('renders a chip (with correct count) for every status actually produced by mapTemplateStatus, including published/approved', () => {
+/** Open the Menu 2 Status dropdown and return its option elements. */
+function openStatusOptions(): HTMLElement[] {
+  const dropdown = screen.getByTestId('materials-status-dropdown');
+  fireEvent.click(within(dropdown).getByRole('button', { expanded: false }));
+  return within(within(dropdown).getByRole('listbox')).getAllByRole('option');
+}
+
+/**
+ * Find the dropdown option whose label span reads exactly `label`. When `count`
+ * is given, the option's count badge must match too — needed because the
+ * `__drafts__` preset and the real `draft` status share the label "Draft"
+ * (only the latter carries a count).
+ */
+function optionByLabel(options: HTMLElement[], label: string, count?: number): HTMLElement {
+  const matches = options.filter((o) => within(o).queryByText(label) !== null);
+  const match =
+    count === undefined
+      ? matches[0]
+      : matches.find((o) => within(o).queryByText(String(count)) !== null);
+  if (!match) {
+    throw new Error(
+      `No status option labelled "${label}"${count === undefined ? '' : ` with count ${count}`}. Found: ${options
+        .map((o) => o.textContent)
+        .join(' | ')}`
+    );
+  }
+  return match;
+}
+
+describe('ReportsAndPresentationsHub — Template Library status filter (Menu 2 dropdown)', () => {
+  it('offers every status produced by mapTemplateStatus (incl. published/approved) with correct counts, and All = total', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=templates']}>
         <ReportsAndPresentationsHub />
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('templates');
-
-    const commandRow = screen.getByTestId('command-row');
+    const options = openStatusOptions();
 
     // Previously missing entirely — this is the core of the bug: Report-sourced
     // templates resolve to 'published'/'approved' and had no chip to appear under.
-    const publishedChip = within(commandRow).getByTitle('Published');
-    expect(publishedChip).toHaveTextContent('2');
-
-    const approvedChip = within(commandRow).getByTitle('Approved');
-    expect(approvedChip).toHaveTextContent('1');
-
-    const draftChip = within(commandRow).getByTitle('Draft');
-    expect(draftChip).toHaveTextContent('1');
+    expect(within(optionByLabel(options, 'Published', 2)).getByText('2')).toBeInTheDocument();
+    expect(within(optionByLabel(options, 'Approved', 1)).getByText('1')).toBeInTheDocument();
+    // 'Draft' is ambiguous (the __drafts__ preset shares the label); the count
+    // argument pins the real status option.
+    expect(within(optionByLabel(options, 'Draft', 1)).getByText('1')).toBeInTheDocument();
 
     // 'All' must equal the sum of all templates regardless of status.
-    const allChip = within(commandRow).getByTitle('All');
-    expect(allChip).toHaveTextContent(String(templatesFixture.length));
+    expect(
+      within(optionByLabel(options, 'All')).getByText(String(templatesFixture.length))
+    ).toBeInTheDocument();
   });
 
-  it('clicking the Published chip toggles it active/inactive (drives the status filter)', () => {
+  it('selecting Published drives the status filter (round-trips into the dropdown value)', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=templates']}>
         <ReportsAndPresentationsHub />
       </MemoryRouter>
     );
 
-    const commandRow = screen.getByTestId('command-row');
-    const publishedChip = within(commandRow).getByTitle('Published');
+    // Pick "Published" — onChange('published') -> setSinglePreset('status', ...).
+    fireEvent.click(optionByLabel(openStatusOptions(), 'Published'));
 
-    // MENU_3_CHIP_ACTIVE is the only variant carrying `bg-state-selected`
-    // (both variants share Tailwind's `active:` pseudo-class prefix in their
-    // base classes, so a naive /active/ substring check would false-positive).
-    expect(publishedChip.className).not.toMatch(/bg-state-selected/);
-
-    act(() => {
-      publishedChip.click();
-    });
-
-    expect(publishedChip.className).toMatch(/bg-state-selected/);
-
-    act(() => {
-      publishedChip.click();
-    });
-
-    expect(publishedChip.className).not.toMatch(/bg-state-selected/);
+    // Reopen: the Published option is now the selected one, All is not.
+    const options = openStatusOptions();
+    expect(optionByLabel(options, 'Published')).toHaveAttribute('aria-selected', 'true');
+    expect(optionByLabel(options, 'All')).toHaveAttribute('aria-selected', 'false');
   });
 });
