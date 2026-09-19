@@ -1,0 +1,25 @@
+wave6_context_ledger | 3675 | 0 | KANON | CURRENT_TIMESTAMP | 0
+wave6_context_snapshots | 1127 | 0 | KANON | CURRENT_TIMESTAMP | 0
+notification_dedup | 487 | 0 | ISO-Z | (brak) | 0
+wave5_artifact_versions | 262 | 0 | KANON | CURRENT_TIMESTAMP | 0
+research_session_events | 89 | 0 | KANON | CURRENT_TIMESTAMP | 0
+meeting_participants | 67 | 0 | ISO-Z | (brak) | 0
+work_canvas_proposals | 56 | 0 | ISO-Z | (brak) | 0
+research_sessions | 22 | 0 | KANON | CURRENT_TIMESTAMP | 0
+wave7_connectors | 13 | 0 | KANON | CURRENT_TIMESTAMP | 0
+research_evidence_graph | 12 | 0 | KANON | CURRENT_TIMESTAMP | 0
+research_report_artifacts | 12 | 0 | KANON | CURRENT_TIMESTAMP | 0
+wave6_memory_candidates | 11 | 0 | KANON | CURRENT_TIMESTAMP | 0
+ai_deep_thinking_confirms | 8 | 0 | KANON | CURRENT_TIMESTAMP | 0
+wave8_agent_notifications | 6 | 0 | KANON | CURRENT_TIMESTAMP | 0
+wave8_agent_runs | 6 | 0 | KANON | CURRENT_TIMESTAMP | 0
+document_share_links | 5 | 0 | ISO-Z | (brak) | 0
+wave6_memory_stewardship_decisions | 5 | 0 | KANON | CURRENT_TIMESTAMP | 0
+deck_comments | 4 | 0 | ISO-Z | (brak) | 0
+wave9_evidence_registry | 4 | 0 | KANON | CURRENT_TIMESTAMP | 0
+usage_pricing_tiers | 3 | 0 | KANON | '2026-03-03 18:30:11.358808+00'::timestamp with time zone | 0
+v8_promotion_gates | 1 | 0 | KANON | now() | 0
+billing_webhook_events | 0 | 0 | PUSTA | to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text) | 0
+decision_escalation_templates | 0 | 0 | PUSTA | to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text) | 0
+meeting_decisions | 0 | 0 | PUSTA | (now())::text | 0
+tax_rates | 0 | 0 | PUSTA | to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text) | 0

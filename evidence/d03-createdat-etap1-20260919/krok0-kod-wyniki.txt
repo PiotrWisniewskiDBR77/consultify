@@ -1,0 +1,93 @@
+=== J. tekstowe operacje SQL na created_at w kodzie serwera ===
+trafień (linie): 119
+plików z takim wzorcem: 54
+--- 10 przykładów plik:linia ---
+server/src/controllers/SuperAdminController.ts:1780:datetime(created_at
+server/src/controllers/SuperAdminController.ts:1806:datetime(created_at
+server/src/controllers/SuperAdminController.ts:2374:substr(created_at
+server/src/controllers/SuperAdminController.ts:2381:substr(created_at
+server/src/controllers/ai/LLMController.ts:1213:date(created_at
+server/src/controllers/ai/LLMController.ts:1218:date(created_at
+server/src/controllers/ai/LLMController.ts:1777:date(created_at
+server/src/routes/v8/results.routes.ts:4223:created_at ||
+server/src/routes/report-builder.routes.ts:1027:created_at ||
+server/src/routes/report-builder.routes.ts:1094:created_at ||
+
+=== K. operacje łańcuchowe JS na created_at (server i front) ===
+server/src: 0
+src (front): 0
+--- jedyny taki przypadek w serwerze (kontekst) ---
+server/src/services/ai/engagementSummaryService.ts:250:created_at?.slice(0, 10)
+
+=== L. SQLite nie czyta tej migracji (ścieżka Table Platform bierze tylko 7*.sql) ===
+export function discoverTablePlatformMigrationFiles(migrationsDir: string): string[] {
+  return fs
+    .readdirSync(migrationsDir)
+    .filter((f: string) => MIGRATION_PATTERN.test(f))
+    .sort(compareMigrationFilenames);
+}
+
+/**
+ * Run Table Platform migrations (server/migrations/7*.sql).
+ * Tracks executed migrations in tp_migration_history to ensure idempotency.
+ * Each migration runs inside its own transaction.
+ * PostgreSQL only — SQLite does not support the table platform.
+ */
+async function runTablePlatformMigrations(db: any): Promise<void> {
+  const TAG = '[TP-Migrations]';
+  const candidateDirs = [
+    path.resolve(__dirname_esm, '../../migrations'),
+    path.resolve(__dirname_esm, '../../../migrations'),
+    path.resolve(process.cwd(), 'migrations'),
+    path.resolve(process.cwd(), 'server/migrations'),
+  ];
+
+
+=== M. które tabele z puli 152 pojawiają się w kodzie i w plikach ryzykownych ===
+tabel w puli: 152
+  10 kod_serwera=0 kod_frontu=0 plik_z_tekstowym_created_at=0
+ 102 kod_serwera=1 kod_frontu=0 plik_z_tekstowym_created_at=0
+  32 kod_serwera=1 kod_frontu=0 plik_z_tekstowym_created_at=1
+   3 kod_serwera=1 kod_frontu=1 plik_z_tekstowym_created_at=0
+   5 kod_serwera=1 kod_frontu=1 plik_z_tekstowym_created_at=1
+--- tabele odrzucone, bo występują w pliku z tekstowym created_at (pierwsze 40) ---
+admin_approval_requests
+admin_approval_workflows
+admin_role_assignments
+ai_operator_communications
+ai_operator_interventions
+ai_operator_plans
+ai_operator_profiles
+ai_run_events
+ai_run_ledger
+ai_spending_alerts
+assessment_definitions
+backup_configurations
+calendar_events
+compliance_audits
+compliance_frameworks
+custom_roles
+dsar_requests
+permission_definitions
+processing_records
+scim_conflict_log
+scim_group_mappings
+scim_sync_logs
+scim_tokens
+system_health_alerts
+v8_artifact_access_grants
+v8_artifact_origin_links
+v8_artifact_run_audit_log
+v8_artifact_runs
+v8_executive_review_packs
+v8_finance_lane_runs
+v8_finance_version_snapshots
+v8_kpi_finance_reconciliations
+v8_output_artifacts
+v8_output_exports
+v8_publish_records
+v8_review_gates
+wave5_artifacts
+
+=== N. pula bezpieczna (kod bez tekstowego created_at) — rozmiar ===
+     115
