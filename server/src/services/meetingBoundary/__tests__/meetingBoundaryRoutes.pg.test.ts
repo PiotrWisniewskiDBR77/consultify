@@ -138,6 +138,10 @@ describe('meeting boundary — route layer (real Postgres)', () => {
 
 
   const cleanupMeetingRows = async () => {
+    await pool.query(
+      `DELETE FROM meeting_decisions WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id LIKE $1)`,
+      [`${PREFIX}%`]
+    );
     await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
       `${PREFIX}%`,
     ]);
@@ -309,6 +313,81 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     expect(adminAttempt.status).toBe(200);
     expect(adminAttempt.body.note.status).toBe('approved');
     expect(adminAttempt.body.receipt).toBeTruthy();
+  });
+
+  it('projects 2 decisions + 2 actions once when an approved note is replayed', async () => {
+    const created = await createMeeting();
+    const meetingId = created.body.meeting.id;
+    const generated = await request(app)
+      .post(`/api/meeting/${meetingId}/generate-notes`)
+      .set(betaAdmin())
+      .send({ transcript: `${PREFIX} governed register projection source`, language: 'en' });
+    expect(generated.status).toBe(201);
+    const noteId = generated.body.meetingNoteId as string;
+
+    const decisions = [
+      { decision: 'Launch pilot', decidedBy: 'Team', rationale: 'Evidence is ready' },
+      { decision: 'Keep rollback window', decidedBy: 'Owner', rationale: 'Limit exposure' },
+    ];
+    const actionItems = [
+      { task: 'Prepare rollout', owner: 'Alice', deadline: '2026-09-25' },
+      { task: 'Verify rollback', owner: 'Bob', deadline: '2026-09-26' },
+    ];
+    await pool.query(
+      `UPDATE meeting_notes SET decisions_json=$1, action_items_json=$2 WHERE id=$3`,
+      [JSON.stringify(decisions), JSON.stringify(actionItems), noteId]
+    );
+
+    const approve = () =>
+      request(app)
+        .post(`/api/meeting/${meetingId}/notes/${noteId}/decision`)
+        .set(admin())
+        .send({ action: 'approve' });
+    const first = await approve();
+    const replay = await approve();
+    expect(first.status).toBe(200);
+    expect(replay.status).toBe(200);
+    expect(replay.body.replayed).toBe(true);
+
+    const decisionRows = await pool.query(
+      `SELECT statement, source_kind, source_note_id, source_index
+         FROM meeting_decisions WHERE organization_id=$1 AND meeting_id=$2
+         ORDER BY source_index`,
+      [ORG_A, meetingId]
+    );
+    const actionRows = await pool.query(
+      `SELECT title, owner, due_at, source_kind, source_note_id, source_index
+         FROM meeting_follow_ups WHERE organization_id=$1 AND meeting_id=$2
+         ORDER BY source_index`,
+      [ORG_A, meetingId]
+    );
+    expect(decisionRows.rows).toMatchObject([
+      { statement: 'Launch pilot', source_kind: 'note', source_note_id: noteId, source_index: 0 },
+      {
+        statement: 'Keep rollback window',
+        source_kind: 'note',
+        source_note_id: noteId,
+        source_index: 1,
+      },
+    ]);
+    expect(actionRows.rows).toMatchObject([
+      {
+        title: 'Prepare rollout',
+        owner: 'Alice',
+        due_at: '2026-09-25',
+        source_kind: 'note',
+        source_note_id: noteId,
+        source_index: 0,
+      },
+      {
+        title: 'Verify rollback',
+        owner: 'Bob',
+        due_at: '2026-09-26',
+        source_kind: 'note',
+        source_note_id: noteId,
+        source_index: 1,
+      },
+    ]);
   });
 
   it('an invalid decision action is rejected 400', async () => {
