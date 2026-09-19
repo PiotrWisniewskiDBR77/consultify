@@ -120,13 +120,13 @@ export function countExecutionWorkTasks(items: Array<{ status: string; dueAt: st
 export function assertNonEmptyExecutionWorkSnapshot(args: {
   taskItems: ExecutionWorkTaskItem[];
   decisionItems: unknown[];
-  sourceTaskRows: unknown[];
-  sourceDecisionRows: unknown[];
+  sourceTaskCount: number;
+  sourceDecisionCount: number;
 }): void {
   if (
     args.taskItems.length === 0 &&
     args.decisionItems.length === 0 &&
-    (args.sourceTaskRows.length > 0 || args.sourceDecisionRows.length > 0)
+    (args.sourceTaskCount > 0 || args.sourceDecisionCount > 0)
   ) {
     throw new Error('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
   }
