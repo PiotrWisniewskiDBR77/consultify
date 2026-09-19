@@ -20,7 +20,14 @@ const PROGI = {
   '03 Interview': { K1def: 0, K4pl: 0, K4en: 19, K7: 0 },
   '11 Audits': { K1def: 0, K4pl: 0, K4en: 4, K7: 0 },
   '06 Initiatives': { K1def: 1, K4pl: 0, K4en: 128, K7: 0 },
-  '07 Execution': { K1def: 0, K4pl: 0, K4en: 138, K7: 0 },
+  // D-118: 138→137 — paczka 772ac6c601 (DEC-461 „localize Polish execution
+  // report") owinęła twardy EN „AI Executive Readout" w
+  // tr('execution.report.section.aiReadout', …) w
+  // src/components/Execution/ReportDocumentView.tsx:1979 (klucz sparowany en/pl:
+  // en translation.json:19421, pl:18683). K4en liczy EN POZA t(), więc uczciwie
+  // spadł o 1; baseline.json odświeżony do 137 w bd7ff49431. Zmierzono: jedyny
+  // ubytek w liście trafień Execution między e75274e6fb (138) a tipem (137).
+  '07 Execution': { K1def: 0, K4pl: 0, K4en: 137, K7: 0 },
 };
 const KATEGORIE = ['K1def', 'K4pl', 'K4en', 'K7'];
 
