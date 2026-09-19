@@ -23,7 +23,7 @@ export interface LegacyStatusProjection {
 }
 
 export const LEGACY_STATUS_PROJECTIONS: Readonly<
-  Record<LegacyInitiativeStatus, LegacyStatusProjection>
+  Partial<Record<LegacyInitiativeStatus, LegacyStatusProjection>>
 > = {
   DRAFT: {
     runtimeStatus: 'DRAFT',
@@ -161,6 +161,6 @@ export const LEGACY_STATUS_PROJECTIONS: Readonly<
 
 export function projectLegacyInitiativeStatus(status: string): LegacyStatusProjection | null {
   return Object.prototype.hasOwnProperty.call(LEGACY_STATUS_PROJECTIONS, status)
-    ? LEGACY_STATUS_PROJECTIONS[status as LegacyInitiativeStatus]
+    ? (LEGACY_STATUS_PROJECTIONS[status as LegacyInitiativeStatus] ?? null)
     : null;
 }
