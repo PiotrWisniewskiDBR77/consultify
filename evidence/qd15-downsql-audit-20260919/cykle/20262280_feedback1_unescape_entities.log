@@ -1,0 +1,23 @@
+=== 20262280_feedback1_unescape_entities.sql ===
+down: server/migrations/rollback/20262280_feedback1_unescape_entities.down.sql
+start: 02:22:51
+BEGIN
+psql:server/migrations/rollback/20262280_feedback1_unescape_entities.down.sql:129: ERROR:  20262280 rollback conflict in public.organization_context_snapshots.snapshot_json: 1 rows changed or missing after apply
+CONTEXT:  PL/pgSQL function inline_code_block line 56 at RAISE
+2026-09-19 02:22:52:2252 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:52:2252 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:52:2252 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:52:2252 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:52:2252 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262280_feedback1_unescape_entities.sql
+✅ Postgres migrations complete
+2026-09-19 02:23:20:2320 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:23:20:2320 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:23:20:2320 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:23:20:2320 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:23:20:2320 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262280_feedback1_unescape_entities.sql
+✅ Postgres migrations complete
+koniec: 02:23:52 up1=0 down=3 up2=0 SEM=NIE POS=NIE DUMP=NIE diff_linie=25

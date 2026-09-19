@@ -1,0 +1,15 @@
+db=consultify_qd15_iso
+baseline_sem=eda03e29eabc3bc234b9546ffe25f087
+baseline_pos=806db0f2c4a988345c80580d255e4666
+baseline_dump_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+data_start=2026-09-19 02:09:06 CDT
+filtr=20262271_template_base_family.sql
+
+migracja|down|rc_up1|rc_down|rc_up2|applied1|applied2|begin_w_down|destrukcyjne_w_down|SEM_powrot|POS_powrot|DUMP_powrot|diff_dump_linie|sem_diff_vs_baseline|sem_delta_vs_poprzedni|pos_diff_vs_baseline|ledger|sem_po|pos_po|dump_po|uwagi
+20262271_template_base_family.sql|DOWN_TAK|1|0|1|Applying migrations: 1|Applying migrations: 1|1|4|NIE|NIE|NIE|20|7|7|4|failed|baf130754aa38c4dc1fff9725ce68b60|8936f9e40b585b7ac6f7babc26713e1d|4850d710f82ec428ac7c1c0ab01331602c6a9ccd8e09842b1881e182d348d2e2|up1_rc=1; up2_rc=1; SEM_rozjazd; 
+
+data_koniec=2026-09-19 02:09:13 CDT
+koniec_sem=baf130754aa38c4dc1fff9725ce68b60
+koniec_pos=8936f9e40b585b7ac6f7babc26713e1d
+koniec_dump_sha256=4850d710f82ec428ac7c1c0ab01331602c6a9ccd8e09842b1881e182d348d2e2
+koniec_diff_vs_baseline_linie=20

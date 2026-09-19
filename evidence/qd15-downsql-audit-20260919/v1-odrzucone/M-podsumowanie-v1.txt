@@ -1,0 +1,25 @@
+=== QD15 mutacje przyrzadu: skrypt audytu MUSI raportowac czerwien ===
+plik down: server/migrations/rollback/20262303_meeting_protocols.down.sql
+sha256 oryginalu: 029d09974e4720cfcd2a19d8e5c907036fde14e88caba688eed25411990a488c
+
+--- M1: dopisany niepoprawny SQL do down ---
+oczekiwane: rc_down != 0
+20262303_meeting_protocols.sql|DOWN_TAK|0|3|0|Applying migrations: 1|Applying migrations: 1|1|1|TAK|success|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|ok
+sha256_po_M1_revert: 029d09974e4720cfcd2a19d8e5c907036fde14e88caba688eed25411990a488c
+
+--- M2: down dopisany o CREATE TABLE qd15_mutation_probe ---
+oczekiwane: schemat_identyczny = NIE
+20262303_meeting_protocols.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|1|NIE|success|f58ad3519c1285a04e56aae4752e1fd80e2ba2982cac9a5d1f57efac83bed234|schemat_po_cyklu=f58ad3519c1285a04e56aae4752e1fd80e2ba2982cac9a5d1f57efac83bed234; 
+sha256_po_M2_revert: 029d09974e4720cfcd2a19d8e5c907036fde14e88caba688eed25411990a488c
+przywrocone_identyczne: TAK
+DROP TABLE
+DELETE 1
+2026-09-19 01:42:29:4229 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 01:42:29:4229 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 01:42:29:4229 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 01:42:29:4229 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 01:42:29:4229 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262303_meeting_protocols.sql
+✅ Postgres migrations complete
+RC_przywrocenia_stanu=0

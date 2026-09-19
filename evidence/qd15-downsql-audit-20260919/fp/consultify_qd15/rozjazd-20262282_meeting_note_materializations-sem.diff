@@ -1,0 +1,22 @@
+12253c12253
+< COL meeting_note_materializations.created_at text NO -
+---
+> COL meeting_note_materializations.created_at timestamp with time zone NO now()
+12256c12256
+< COL meeting_note_materializations.last_attempt_at text YES -
+---
+> COL meeting_note_materializations.last_attempt_at timestamp with time zone YES -
+12262,12264c12262,12264
+< COL meeting_note_materializations.stage text YES -
+< COL meeting_note_materializations.status text NO -
+< COL meeting_note_materializations.updated_at text NO -
+---
+> COL meeting_note_materializations.stage text NO 'content'::text
+> COL meeting_note_materializations.status text NO 'pending'::text
+> COL meeting_note_materializations.updated_at timestamp with time zone NO now()
+27740d27739
+< CON meeting_note_materializations meeting_note_materializations_organization_id_meeting_id_no_key UNIQUE (organization_id, meeting_id, note_id)
+34051d34049
+< IDX meeting_note_materializations CREATE INDEX idx_meeting_note_materializations_lookup ON public.meeting_note_materializations USING btree (organization_id, meeting_id, status)
+34054d34051
+< IDX meeting_note_materializations CREATE UNIQUE INDEX meeting_note_materializations_organization_id_meeting_id_no_key ON public.meeting_note_materializations USING btree (organization_id, meeting_id, note_id)

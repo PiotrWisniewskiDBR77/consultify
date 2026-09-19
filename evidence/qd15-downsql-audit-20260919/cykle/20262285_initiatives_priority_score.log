@@ -1,0 +1,25 @@
+=== 20262285_initiatives_priority_score.sql ===
+down: server/migrations/rollback/20262285_initiatives_priority_score.down.sql
+start: 02:22:21
+DROP INDEX
+UPDATE 51
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+2026-09-19 02:22:22:2222 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:22:2222 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:22:2222 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:22:2222 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:22:2222 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262285_initiatives_priority_score.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:24:2224 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:24:2224 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:24:2224 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:24:2224 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:24:2224 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262285_initiatives_priority_score.sql
+✅ Postgres migrations complete
+koniec: 02:22:27 up1=0 down=0 up2=0 SEM=TAK POS=NIE DUMP=NIE diff_linie=6

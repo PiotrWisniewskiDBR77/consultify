@@ -1,0 +1,31 @@
+=== 20262301_meetings_agenda_lifecycle.sql ===
+down: server/migrations/rollback/20262301_meetings_agenda_lifecycle.down.sql
+start: 02:22:08
+BEGIN
+DROP INDEX
+DROP INDEX
+DROP TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+2026-09-19 02:22:09:229 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:09:229 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:09:229 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:09:229 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:09:229 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262301_meetings_agenda_lifecycle.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:11:2211 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:11:2211 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:11:2211 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:11:2211 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:11:2211 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262301_meetings_agenda_lifecycle.sql
+✅ Postgres migrations complete
+koniec: 02:22:14 up1=0 down=0 up2=0 SEM=TAK POS=NIE DUMP=NIE diff_linie=6

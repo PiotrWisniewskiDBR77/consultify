@@ -1,0 +1,33 @@
+12253c12253
+< COL meeting_note_materializations.created_at text NO -
+---
+> COL meeting_note_materializations.created_at timestamp with time zone NO now()
+12256c12256
+< COL meeting_note_materializations.last_attempt_at text YES -
+---
+> COL meeting_note_materializations.last_attempt_at timestamp with time zone YES -
+12262,12264c12262,12264
+< COL meeting_note_materializations.stage text YES -
+< COL meeting_note_materializations.status text NO -
+< COL meeting_note_materializations.updated_at text NO -
+---
+> COL meeting_note_materializations.stage text NO 'content'::text
+> COL meeting_note_materializations.status text NO 'pending'::text
+> COL meeting_note_materializations.updated_at timestamp with time zone NO now()
+18885,18888d18884
+< COL template_1_20262271_backup._backup jsonb NO -
+< COL template_1_20262271_backup.backed_up_at timestamp with time zone NO CURRENT_TIMESTAMP
+< COL template_1_20262271_backup.entity_key text NO -
+< COL template_1_20262271_backup.entity_type text NO -
+27740d27735
+< CON meeting_note_materializations meeting_note_materializations_organization_id_meeting_id_no_key UNIQUE (organization_id, meeting_id, note_id)
+29217d29211
+< CON template_1_20262271_backup template_1_20262271_backup_pkey PRIMARY KEY (entity_type, entity_key)
+34051d34044
+< IDX meeting_note_materializations CREATE INDEX idx_meeting_note_materializations_lookup ON public.meeting_note_materializations USING btree (organization_id, meeting_id, status)
+34054d34046
+< IDX meeting_note_materializations CREATE UNIQUE INDEX meeting_note_materializations_organization_id_meeting_id_no_key ON public.meeting_note_materializations USING btree (organization_id, meeting_id, note_id)
+35671d35662
+< IDX template_1_20262271_backup CREATE UNIQUE INDEX template_1_20262271_backup_pkey ON public.template_1_20262271_backup USING btree (entity_type, entity_key)
+38566d38556
+< TBL template_1_20262271_backup r

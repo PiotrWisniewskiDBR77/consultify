@@ -1,0 +1,26 @@
+=== 20262283_meeting_approved_minutes_pointer.sql ===
+down: server/migrations/rollback/20262283_meeting_approved_minutes_pointer.down.sql
+start: 02:22:35
+BEGIN
+DROP INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+2026-09-19 02:22:36:2236 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:36:2236 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:36:2236 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:36:2236 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:36:2236 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262283_meeting_approved_minutes_pointer.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:37:2237 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:37:2237 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:37:2237 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:37:2237 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:37:2237 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262283_meeting_approved_minutes_pointer.sql
+✅ Postgres migrations complete
+koniec: 02:22:40 up1=0 down=0 up2=0 SEM=TAK POS=NIE DUMP=TAK diff_linie=0

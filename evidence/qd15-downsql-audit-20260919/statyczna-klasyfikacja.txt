@@ -1,0 +1,27 @@
+=== QD15 statyczna klasyfikacja migracji >= 20262260 (linia origin/integracja/20260911)
+generacja: 2026-09-19 02:30:44 CDT
+tip linii: 700e8f8e98de88b8ab0f20b33ca73f1dbdca362a
+katalog rollback: server/migrations/rollback/ (wylaczony z lancucha forward przez KNOWN_EXCLUDED_MIGRATIONS_SUBDIRS)
+
+migracja                                             down      linie BEGIN DROPtab DROPkol DELETE UPDATE tresc_destrukcyjna
+20262260_initiatives_lifecycle_stage.sql             BRAK          -     -     -     -     -     - plik .down.sql NIE ISTNIEJE
+20262271_template_base_family.sql                    JEST         91     1     1     0     3     1 -
+20262272_template_library_cleanup_96.sql             JEST         87     1     1     0     3     1 -
+20262273_deliverable_template_workflow.sql           JEST         13     1     2     0     0     0 -
+20262280_feedback1_unescape_entities.sql             JEST        131     1     0     0     0     1 -
+20262281_pmo1b_roles_sla_escalations.sql             JEST         18     0     3     2     0     0 -
+20262282_meeting_note_materializations.sql           JEST         11     1     1     0     0     0 -
+20262283_meeting_approved_minutes_pointer.sql        JEST         11     1     0     3     0     0 -
+20262284_initiative_lifecycle_projection_backfill.sql JEST          7     0     0     0     0     0 -
+20262285_initiatives_priority_score.sql              JEST         11     0     0     3     0     1 -
+20262286_m1_plan_task_role_demand.sql                BRAK          -     -     -     -     -     - plik .down.sql NIE ISTNIEJE
+20262300_showcase_date_roll.sql                      JEST          7     0     1     0     0     0 -
+20262301_meetings_agenda_lifecycle.sql               JEST         22     1     1     4     0     0 -
+20262302_meetings_protocol_columns.sql               JEST         22     1     0     6     0     0 -
+20262303_meeting_protocols.sql                       JEST         14     1     1     0     0     0 -
+
+=== podsumowanie liczbami
+migracji >= 20262260 na linii      = 15
+z plikiem .down.sql                = 13
+BEZ pliku .down.sql                = 2
+downow transakcyjnych (BEGIN)      = 9

@@ -1,0 +1,32 @@
+=== QD15 sprzatanie — 2026-09-19 02:36:10 CDT
+
+--- wolumeny kontenera qoder-d-pg-5 PRZED:
+bind  /Users/piotrwisniewski/Developer/kopie -> /kopie
+volume af4000795ea254e7cb8537f27f5701ef1fb62d0df0e5a95a7d2cf8ee69dfcc89 /var/lib/docker/volumes/af4000795ea254e7cb8537f27f5701ef1fb62d0df0e5a95a7d2cf8ee69dfcc89/_data -> /var/lib/postgresql/data
+
+--- docker system df PRZED:
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          9         2         4.031GB   1.166GB (28%)
+Containers      2         1         40.96kB   16.38kB (40%)
+Local Volumes   3         2         3.139GB   82.12MB (2%)
+Build Cache     0         0         0B        0B
+
+--- drop baz:
+DROP DATABASE
+DROP DATABASE
+
+--- docker rm -vf qoder-d-pg-5:
+qoder-d-pg-5
+
+--- docker system df PO:
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          9         1         4.031GB   755.3MB (18%)
+Containers      1         0         16.38kB   16.38kB (100%)
+Local Volumes   2         1         406.3MB   82.12MB (20%)
+Build Cache     0         0         0B        0B
+
+--- kontenery qoder-d-pg* PO (musi byc puste):
+(koniec listy)
+
+--- wolumeny qoder* PO:
+(koniec listy)

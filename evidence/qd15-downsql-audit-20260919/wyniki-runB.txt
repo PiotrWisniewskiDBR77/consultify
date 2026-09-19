@@ -1,0 +1,29 @@
+db=consultify_qd15
+baseline_sem=eda03e29eabc3bc234b9546ffe25f087
+baseline_pos=806db0f2c4a988345c80580d255e4666
+baseline_dump_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+data_start=2026-09-19 02:16:30 CDT
+filtr=brak (pelny audyt)
+
+migracja|down|rc_up1|rc_down|rc_up2|applied1|applied2|begin_w_down|destrukcyjne_w_down|SEM_powrot|POS_powrot|DUMP_powrot|diff_dump_linie|sem_diff_vs_baseline|sem_delta_vs_poprzedni|pos_diff_vs_baseline|ledger|sem_po|pos_po|dump_po|uwagi
+20262303_meeting_protocols.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|1|TAK|TAK|TAK|0|0|0|0|success|eda03e29eabc3bc234b9546ffe25f087|806db0f2c4a988345c80580d255e4666|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|ok
+20262302_meetings_protocol_columns.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|6|TAK|NIE|TAK|0|0|0|12|success|eda03e29eabc3bc234b9546ffe25f087|51ef83f37670ae87a9c694b188e93c97|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|tylko_kolejnosc_kolumn; 
+20262301_meetings_agenda_lifecycle.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|5|TAK|NIE|NIE|6|0|0|20|success|eda03e29eabc3bc234b9546ffe25f087|0f373f87feae4bc25effb909c426c825|3ffc9ffae3749fbb49bfa3b5ab516105eafe0ada38633102e5414078b8fcd43e|tylko_kolejnosc_kolumn; 
+20262300_showcase_date_roll.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|0|1|TAK|NIE|NIE|6|0|0|20|success|eda03e29eabc3bc234b9546ffe25f087|0f373f87feae4bc25effb909c426c825|3ffc9ffae3749fbb49bfa3b5ab516105eafe0ada38633102e5414078b8fcd43e|tylko_kolejnosc_kolumn; 
+20262286_m1_plan_task_role_demand.sql|DOWN_BRAK|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|plik .down.sql nie istnieje
+20262285_initiatives_priority_score.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|0|3|TAK|NIE|NIE|6|0|0|26|success|eda03e29eabc3bc234b9546ffe25f087|e70e2093b37fb283544a435c175e2491|3ffc9ffae3749fbb49bfa3b5ab516105eafe0ada38633102e5414078b8fcd43e|tylko_kolejnosc_kolumn; 
+20262284_initiative_lifecycle_projection_backfill.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|0|0|TAK|NIE|NIE|6|0|0|26|success|eda03e29eabc3bc234b9546ffe25f087|e70e2093b37fb283544a435c175e2491|3ffc9ffae3749fbb49bfa3b5ab516105eafe0ada38633102e5414078b8fcd43e|tylko_kolejnosc_kolumn; 
+20262283_meeting_approved_minutes_pointer.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|3|TAK|NIE|TAK|0|0|0|32|success|eda03e29eabc3bc234b9546ffe25f087|44dd57298a0e1fe70ecd6f1f79bf6cff|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|tylko_kolejnosc_kolumn; 
+20262282_meeting_note_materializations.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|1|NIE|NIE|NIE|25|13|13|32|success|625795e7642a3cd87d24c705b1b2748c|44dd57298a0e1fe70ecd6f1f79bf6cff|2036480fd41f99a77e193ad4976bf4ba4c21ef89abf51b6272f9e513005054c6|SEM_rozjazd; 
+20262281_pmo1b_roles_sla_escalations.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|0|5|NIE|NIE|NIE|25|13|0|36|success|625795e7642a3cd87d24c705b1b2748c|328ca6b445370d6a708d903979c9aa06|2036480fd41f99a77e193ad4976bf4ba4c21ef89abf51b6272f9e513005054c6|SEM_rozjazd; 
+20262280_feedback1_unescape_entities.sql|DOWN_TAK|0|3|0|Applying migrations: 1|Applying migrations: 1|1|0|NIE|NIE|NIE|25|13|0|36|success|625795e7642a3cd87d24c705b1b2748c|328ca6b445370d6a708d903979c9aa06|2036480fd41f99a77e193ad4976bf4ba4c21ef89abf51b6272f9e513005054c6|down_rc=3; SEM_rozjazd; 
+20262273_deliverable_template_workflow.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|2|NIE|NIE|NIE|25|13|0|36|success|625795e7642a3cd87d24c705b1b2748c|328ca6b445370d6a708d903979c9aa06|2036480fd41f99a77e193ad4976bf4ba4c21ef89abf51b6272f9e513005054c6|SEM_rozjazd; 
+20262272_template_library_cleanup_96.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|4|NIE|NIE|NIE|25|13|0|36|success|625795e7642a3cd87d24c705b1b2748c|328ca6b445370d6a708d903979c9aa06|2036480fd41f99a77e193ad4976bf4ba4c21ef89abf51b6272f9e513005054c6|SEM_rozjazd; 
+20262271_template_base_family.sql|DOWN_TAK|1|0|1|Applying migrations: 1|Applying migrations: 1|1|4|NIE|NIE|NIE|45|20|7|40|failed|ca4a24135293e287e310fd89c2001652|4502de74e727d14fe2ed598eb70d09d1|817b37afd66363ae9864e5ff1302c9c83e4b0b09c1d9b62d1dc422c997ef2171|up1_rc=1; up2_rc=1; SEM_rozjazd; 
+20262260_initiatives_lifecycle_stage.sql|DOWN_BRAK|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|plik .down.sql nie istnieje
+
+data_koniec=2026-09-19 02:18:48 CDT
+koniec_sem=ca4a24135293e287e310fd89c2001652
+koniec_pos=4502de74e727d14fe2ed598eb70d09d1
+koniec_dump_sha256=817b37afd66363ae9864e5ff1302c9c83e4b0b09c1d9b62d1dc422c997ef2171
+koniec_diff_vs_baseline_linie=45

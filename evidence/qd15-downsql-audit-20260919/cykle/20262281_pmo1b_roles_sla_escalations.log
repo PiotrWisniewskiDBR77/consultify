@@ -1,0 +1,32 @@
+=== 20262281_pmo1b_roles_sla_escalations.sql ===
+down: server/migrations/rollback/20262281_pmo1b_roles_sla_escalations.down.sql
+start: 02:22:46
+DROP INDEX
+DROP INDEX
+DROP TABLE
+DROP INDEX
+DROP INDEX
+DROP TABLE
+DROP INDEX
+DROP TABLE
+DROP INDEX
+DROP INDEX
+ALTER TABLE
+ALTER TABLE
+2026-09-19 02:22:46:2246 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:46:2246 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:46:2246 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:46:2246 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:46:2246 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262281_pmo1b_roles_sla_escalations.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:49:2249 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:49:2249 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:49:2249 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:49:2249 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:49:2249 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262281_pmo1b_roles_sla_escalations.sql
+✅ Postgres migrations complete
+koniec: 02:22:51 up1=0 down=0 up2=0 SEM=NIE POS=NIE DUMP=NIE diff_linie=25

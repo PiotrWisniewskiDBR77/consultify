@@ -1,0 +1,21 @@
+=== 20262300_showcase_date_roll.sql ===
+down: server/migrations/rollback/20262300_showcase_date_roll.down.sql
+start: 02:22:14
+DROP TABLE
+2026-09-19 02:22:15:2215 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:15:2215 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:15:2215 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:15:2215 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:15:2215 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262300_showcase_date_roll.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:18:2218 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:18:2218 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:18:2218 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:18:2218 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:18:2218 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262300_showcase_date_roll.sql
+✅ Postgres migrations complete
+koniec: 02:22:21 up1=0 down=0 up2=0 SEM=TAK POS=NIE DUMP=NIE diff_linie=6

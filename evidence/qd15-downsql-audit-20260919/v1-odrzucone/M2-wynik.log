@@ -1,0 +1,8 @@
+baseline_schema_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+data_start=2026-09-19 01:42:21 CDT
+filtr=20262303_meeting_protocols.sql
+
+20262303_meeting_protocols.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|1|NIE|success|f58ad3519c1285a04e56aae4752e1fd80e2ba2982cac9a5d1f57efac83bed234|schemat_po_cyklu=f58ad3519c1285a04e56aae4752e1fd80e2ba2982cac9a5d1f57efac83bed234; 
+
+data_koniec=2026-09-19 01:42:26 CDT
+baseline_powtorny=f58ad3519c1285a04e56aae4752e1fd80e2ba2982cac9a5d1f57efac83bed234

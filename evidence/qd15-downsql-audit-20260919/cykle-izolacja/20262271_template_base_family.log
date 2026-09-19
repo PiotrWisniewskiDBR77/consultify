@@ -1,0 +1,25 @@
+=== 20262271_template_base_family.sql ===
+down: server/migrations/rollback/20262271_template_base_family.down.sql
+start: 02:09:06
+BEGIN
+DO
+COMMIT
+2026-09-19 02:09:07:97 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:09:07:97 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:09:07:97 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:09:07:97 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:09:07:97 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262271_template_base_family.sql
+✗ 20262271_template_base_family.sql: TEMPLATE-1 readback: duplicate active base card
+❌ Postgres migrate failed: TEMPLATE-1 readback: duplicate active base card
+2026-09-19 02:09:08:98 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:09:08:98 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:09:08:98 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:09:08:98 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:09:08:98 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262271_template_base_family.sql
+✗ 20262271_template_base_family.sql: TEMPLATE-1 readback: duplicate active base card
+❌ Postgres migrate failed: TEMPLATE-1 readback: duplicate active base card
+koniec: 02:09:12 up1=1 down=0 up2=1 SEM=NIE POS=NIE DUMP=NIE diff_linie=20

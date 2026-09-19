@@ -1,0 +1,11 @@
+18885,18888d18884
+< COL template_1_20262271_backup._backup jsonb NO -
+< COL template_1_20262271_backup.backed_up_at timestamp with time zone NO CURRENT_TIMESTAMP
+< COL template_1_20262271_backup.entity_key text NO -
+< COL template_1_20262271_backup.entity_type text NO -
+29216d29211
+< CON template_1_20262271_backup template_1_20262271_backup_pkey PRIMARY KEY (entity_type, entity_key)
+35668d35662
+< IDX template_1_20262271_backup CREATE UNIQUE INDEX template_1_20262271_backup_pkey ON public.template_1_20262271_backup USING btree (entity_type, entity_key)
+38563d38556
+< TBL template_1_20262271_backup r

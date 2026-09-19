@@ -1,0 +1,28 @@
+=== 20262303_meeting_protocols.sql ===
+down: server/migrations/rollback/20262303_meeting_protocols.down.sql
+start: 02:25:56
+BEGIN
+DROP INDEX
+DROP INDEX
+DROP INDEX
+DROP TABLE
+psql:server/migrations/rollback/20262303_meeting_protocols.down.sql:13: ERROR:  relation "qd15_tabela_ktorej_nie_ma" does not exist
+LINE 1: SELECT * FROM qd15_tabela_ktorej_nie_ma;
+                      ^
+2026-09-19 02:25:57:2557 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:25:57:2557 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:25:57:2557 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:25:57:2557 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:25:57:2557 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262303_meeting_protocols.sql
+✅ Postgres migrations complete
+2026-09-19 02:25:59:2559 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:25:59:2559 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:25:59:2559 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:25:59:2559 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:25:59:2559 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262303_meeting_protocols.sql
+✅ Postgres migrations complete
+koniec: 02:26:02 up1=0 down=3 up2=0 SEM=TAK POS=TAK DUMP=TAK diff_linie=0

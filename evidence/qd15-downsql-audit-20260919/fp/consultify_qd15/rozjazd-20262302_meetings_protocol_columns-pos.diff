@@ -1,0 +1,24 @@
+12212c12212
+< POS meeting_decisions.decision_type 16
+---
+> POS meeting_decisions.decision_type 20
+12214c12214
+< POS meeting_decisions.impact_text 17
+---
+> POS meeting_decisions.impact_text 21
+12217c12217
+< POS meeting_decisions.owner_user_id 15
+---
+> POS meeting_decisions.owner_user_id 19
+12219c12219
+< POS meeting_decisions.rejected_alternative 18
+---
+> POS meeting_decisions.rejected_alternative 22
+12226c12226
+< POS meeting_follow_ups.agenda_item_id 15
+---
+> POS meeting_follow_ups.agenda_item_id 17
+12238c12238
+< POS meeting_follow_ups.task_id 14
+---
+> POS meeting_follow_ups.task_id 16

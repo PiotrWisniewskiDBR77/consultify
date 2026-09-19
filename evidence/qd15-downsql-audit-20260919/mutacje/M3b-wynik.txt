@@ -1,0 +1,15 @@
+db=consultify_qd15_iso
+baseline_sem=eda03e29eabc3bc234b9546ffe25f087
+baseline_pos=806db0f2c4a988345c80580d255e4666
+baseline_dump_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+data_start=2026-09-19 02:30:10 CDT
+filtr=20262303_meeting_protocols.sql
+
+migracja|down|rc_up1|rc_down|rc_up2|applied1|applied2|begin_w_down|destrukcyjne_w_down|SEM_powrot|POS_powrot|DUMP_powrot|diff_dump_linie|sem_diff_vs_baseline|sem_delta_vs_poprzedni|pos_diff_vs_baseline|DOWN_zmienil_schemat|ledger|sem_po|pos_po|dump_po|uwagi
+20262303_meeting_protocols.sql|DOWN_TAK|0|0|0|Applying migrations: 1|Applying migrations: 1|1|0|TAK|TAK|TAK|0|0|0|0|NIE|success|eda03e29eabc3bc234b9546ffe25f087|806db0f2c4a988345c80580d255e4666|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|DOWN_pusty_lub_data_only; 
+
+data_koniec=2026-09-19 02:30:18 CDT
+koniec_sem=eda03e29eabc3bc234b9546ffe25f087
+koniec_pos=806db0f2c4a988345c80580d255e4666
+koniec_dump_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+koniec_diff_vs_baseline_linie=0

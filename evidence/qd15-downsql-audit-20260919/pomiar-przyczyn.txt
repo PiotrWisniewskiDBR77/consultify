@@ -1,0 +1,36 @@
+=== QD15 pomiar przyczyn (baza: consultify_qd15_iso, swiezy restore staging-pre-d121-20260918.dump, 2026-09-19 02:14:10 CDT)
+
+--- [1] 20262271_template_base_family.sql — asercja ':502-511 duplicate active base card'
+org_count = 13
+pary (organization_id, template_family_ref) z wiecej niz jedna AKTYWNA karta bazowa (is_draft=0):
+3935603f-e81c-4fc3-a154-623394e7cc32 | DOC-BASE | 21
+3af18124-275e-484c-8ca1-b512915423c9 | DOC-BASE | 21
+468b234c-66c4-54e1-b626-5e0fb3a92f6a | DOC-BASE | 21
+a3e05d4a-5397-419d-b486-8e44366c0063 | DOC-BASE | 21
+liczba_par_z_duplikatem = 4
+aktywne_snapshoty_bazowe = 36  (asercja ':487 oczekuje org_count*3 = 39)
+
+--- [2] 20262282_meeting_note_materializations.sql — rollback/…down.sql:9 'DROP TABLE IF EXISTS meeting_note_materializations'
+wiersze_w_tabeli_przed = 0
+wlasciciel_obiektu = 20261090_meetings_day19_note_materialization.sql:4 (CREATE TABLE), 20262282:13 to CREATE TABLE IF NOT EXISTS = no-op na stagingu
+constraint_20261090_obecny = 1
+index_lookup_20261090_obecny = 1
+created_at_typ_przed = text
+created_at_default_przed = (brak)
+
+--- [3] 20262280_feedback1_unescape_entities.sql — rollback/…down.sql:61-64 konflikt fail-closed
+tabela_zapasowa = z_feedback_20262280_backup_organization_context_sn_ecf28a3737
+wierszy_zapasowych = 1
+wierszy_w_tabeli_docelowej = 6
+ERROR:  column t.snapshot_id does not exist
+LINE 1: ...s t ON jsonb_build_object('snapshot_id', to_jsonb(t.snapshot...
+                                                             ^
+konfliktowych (wg dokladnego wyrazenia z down.sql:53-59) = 
+stan_manifestu = 20262280 state=APPLIED
+--- [3] DOPELNIENIE: pk_columns={organization_id}, wiec wyrazenie z down.sql:53-59 to jsonb_build_object('organization_id', to_jsonb(t.organization_id))
+wierszy_zapasowych = 1
+konfliktowych = 1
+szczegoly konfliktu (organization_id, rebuilt_at, czy wiersz istnieje, czy snapshot_json == new_value):
+a3e05d4a-5397-419d-b486-8e44366c0063 | f | t | 2026-09-19 01:43:03.324 | 1667697 | 1619181
+manifest: 20262280 state=APPLIED applied_at=2026-09-16 22:40:09.163434+00 backup_count=4701
+wniosek: down.sql:61-64 podnosi EXCEPTION, bo wartosc snapshot_json dla 1 organizacji zostala po zastosowaniu migracji nadpisana (rebuilt_at pozniejszy niz applied_at) — fail-closed DZIALA zgodnie z projektem (down.sql:2-3), ale oznacza, ze rollback 20262280 na dzisiejszym stagingu JEST NIEWYKONALNY bez recznego przywrocenia backupu.

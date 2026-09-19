@@ -1,0 +1,25 @@
+=== 20262284_initiative_lifecycle_projection_backfill.sql ===
+down: server/migrations/rollback/20262284_initiative_lifecycle_projection_backfill.down.sql
+start: 02:22:27
+                                            notice                                            
+----------------------------------------------------------------------------------------------
+ 20262284_initiative_lifecycle_projection_backfill is data-only and has no automatic rollback
+(1 row)
+
+2026-09-19 02:22:28:2228 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:28:2228 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:28:2228 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:28:2228 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:28:2228 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262284_initiative_lifecycle_projection_backfill.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:31:2231 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:31:2231 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:31:2231 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:31:2231 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:31:2231 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262284_initiative_lifecycle_projection_backfill.sql
+✅ Postgres migrations complete
+koniec: 02:22:35 up1=0 down=0 up2=0 SEM=TAK POS=NIE DUMP=NIE diff_linie=6

@@ -1,0 +1,26 @@
+=== 20262282_meeting_note_materializations.sql ===
+down: server/migrations/rollback/20262282_meeting_note_materializations.down.sql
+start: 02:22:40
+BEGIN
+DROP INDEX
+DROP INDEX
+DROP INDEX
+DROP TABLE
+COMMIT
+2026-09-19 02:22:40:2240 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:40:2240 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:40:2240 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:40:2240 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:40:2240 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262282_meeting_note_materializations.sql
+✅ Postgres migrations complete
+2026-09-19 02:22:43:2243 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-19 02:22:43:2243 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-19 02:22:43:2243 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-19 02:22:43:2243 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-19 02:22:43:2243 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 1
+→ 20262282_meeting_note_materializations.sql
+✅ Postgres migrations complete
+koniec: 02:22:46 up1=0 down=0 up2=0 SEM=NIE POS=NIE DUMP=NIE diff_linie=25

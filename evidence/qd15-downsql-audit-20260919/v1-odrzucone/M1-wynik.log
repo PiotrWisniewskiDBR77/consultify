@@ -1,0 +1,8 @@
+baseline_schema_sha256=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
+data_start=2026-09-19 01:42:13 CDT
+filtr=20262303_meeting_protocols.sql
+
+20262303_meeting_protocols.sql|DOWN_TAK|0|3|0|Applying migrations: 1|Applying migrations: 1|1|1|TAK|success|9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd|ok
+
+data_koniec=2026-09-19 01:42:17 CDT
+baseline_powtorny=9d7837393fa4a70967f015eb332f61d15cf16ba8436dc43cb3a934eef1b1e2dd
