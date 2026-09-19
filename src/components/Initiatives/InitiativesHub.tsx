@@ -1786,6 +1786,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [searchParams, setActiveDocumentId, setSearchParams]
   );
 
+  // D-50 (dług QA15): klientowa nawigacja (React Router `navigate`/`Link`) na
+  // `/initiatives?tab=...` NIE remountuje komponentu i NIE odpala `popstate`,
+  // więc ani inicjalizator `useState`, ani nasłuch historii nie przełączają
+  // zakładki. Synchronizujemy `activeTab` z `?tab=` na każdą zmianę TEGO
+  // parametru (ref pamięta poprzednią wartość), nie na każdą zmianę adresu —
+  // dzięki temu otwarcie karty (`?open=` kasuje `?tab=`) i bezpośrednie
+  // `setActiveTab('capacity'|'plan')` bez zapisu URL nie walczą z efektem.
+  const lastSyncedTabParamRef = useRef<string | null>(searchParams.get('tab'));
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    if (requestedTab === lastSyncedTabParamRef.current) return;
+    lastSyncedTabParamRef.current = requestedTab;
+    const nextTab =
+      requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab as ModuleTab)
+        ? (requestedTab as ModuleTab)
+        : 'list';
+    setActiveTab(nextTab);
+    setActiveDocumentId(null);
+  }, [searchParams, setActiveDocumentId]);
+
   useEffect(() => {
     const syncTabFromHistory = () => {
       const requestedTab = new URLSearchParams(window.location.search).get(
