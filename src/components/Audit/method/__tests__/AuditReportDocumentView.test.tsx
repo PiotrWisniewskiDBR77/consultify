@@ -276,7 +276,8 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     render(<AuditReportDocumentView reportId="rep-1" />);
 
     await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
-    expect(screen.getByText('A2C_BUILDER_AUDIT_SUMMARY')).toBeInTheDocument();
+    expect(screen.getByTestId('report-builder-document-viewer')).toBeInTheDocument();
+    expect(screen.getByTestId('report-builder-document-section-executive_summary')).toHaveTextContent('A2C_BUILDER_AUDIT_SUMMARY');
     expect(screen.queryByText('A2C_LEGACY_AUDIT_SUMMARY')).not.toBeInTheDocument();
     expect(mockedGetReportPresentation).not.toHaveBeenCalled();
   });

@@ -110,8 +110,9 @@ describe('ManagementReportCard report-builder document adapter', () => {
       </ManagementReportCard>
     );
 
-    expect(screen.getByTestId('shell-section-status_summary')).toHaveTextContent('A2B_STATUS_AMBER');
-    expect(screen.getByTestId('shell-section-blockers')).toHaveTextContent('A2B_BLOCKER');
+    expect(screen.getByTestId('report-builder-document-viewer')).toBeInTheDocument();
+    expect(screen.getByTestId('report-builder-document-section-status_summary')).toHaveTextContent('A2B_STATUS_AMBER');
+    expect(screen.getByTestId('report-builder-document-section-blockers')).toHaveTextContent('A2B_BLOCKER');
     expect(screen.queryByText('A2B_LEGACY_BODY')).not.toBeInTheDocument();
   });
 });

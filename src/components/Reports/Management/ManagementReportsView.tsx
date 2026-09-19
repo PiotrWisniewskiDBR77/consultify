@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   CalendarClock,
   FileBarChart2,
-  FileText,
   History,
   Loader2,
   Plus,
@@ -22,6 +21,7 @@ import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from
 import { toast } from 'react-hot-toast';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { ReportBuilderDocumentViewer } from '@/components/ReportBuilder/ReportBuilderDocumentViewer';
 import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
 import { StandardArtifactShell } from '@/components/standard/StandardArtifactShell';
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
@@ -34,7 +34,6 @@ import {
   ManagementReportScope,
   ManagementReportStatus,
   ManagementReportType,
-  type ReportBuilderDocumentSection,
 } from '../../../types';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
@@ -75,17 +74,6 @@ function withReportBuilderDocument(payload: ManagementReportResponsePayload): Ma
   };
 }
 
-function ReportBuilderDocumentSectionBlock({ section }: { section: ReportBuilderDocumentSection }) {
-  return (
-    <article className="space-y-3" data-testid={`management-report-builder-section-${section.sectionKey}`}>
-      <h2 className="text-lg font-semibold text-c-text">{section.title}</h2>
-      <pre className="whitespace-pre-wrap rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 text-sm leading-6 text-c-text-secondary">
-        {section.editedContent || section.generatedContent}
-      </pre>
-    </article>
-  );
-}
-
 export const ManagementReportCard: React.FC<{
   report: ManagementReport;
   onBack: () => void;
@@ -101,26 +89,15 @@ export const ManagementReportCard: React.FC<{
   useEffect(() => {
     setActiveSection(initialSection);
   }, [initialSection, report.id]);
-  const sections: StandardSekcjaDef[] = useMemo(() => {
-    if (builderSections.length > 0) {
-      return builderSections.map((section) => ({
-        id: section.sectionKey,
-        label: { pl: section.title, en: section.title },
-        icon: FileText,
-        iconName: 'FileText',
-        component: <ReportBuilderDocumentSectionBlock section={section} />,
-        aiContract: {
-          none: true as const,
-          reason: MANAGEMENT_REPORT_CARD_CONTRACT[0]?.aiReason ?? '',
-        },
-      }));
-    }
-    return MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
-      ...item,
-      component: children,
-      aiContract: { none: true as const, reason: item.aiReason },
-    }));
-  }, [builderSections, children]);
+  const sections: StandardSekcjaDef[] = useMemo(
+    () =>
+      MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
+        ...item,
+        component: children,
+        aiContract: { none: true as const, reason: item.aiReason },
+      })),
+    [children]
+  );
   // Słownik enumów module-scope (wzór J7b): wartość bazy NIGDY nie trafia na
   // ekran surowa, a etykieta ma angielski default — konto EN nie zobaczy polskiego.
   const reportTypeLabel: Record<string, string> = {
@@ -149,6 +126,25 @@ export const ManagementReportCard: React.FC<{
     comments: { pominieta: true as const, reason: t('reports.management.panel.noComments', 'A management report has no comment thread.') },
     history: { label: t('reports.management.panel.history', 'History'), children: <p className="text-sm">{t('reports.management.panel.createdVersion', 'Created {{date}} · version {{version}}', { date: formatListDate(report.createdAt), version: report.currentVersion ?? 1 })}</p> },
   };
+  if (report.reportBuilderDocument && builderSections.length > 0) {
+    return (
+      <ReportBuilderDocumentViewer
+        document={report.reportBuilderDocument}
+        artifactId={report.id}
+        title={report.title}
+        statusLabel={report.status}
+        statusTone={report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft'}
+        onBack={onBack}
+        rightPanel={rightPanel}
+        panelAriaLabel={t('reports.management.panel.ariaLabel', 'Management report details')}
+        primaryActionReason={t('reports.management.panel.primaryActionReason', 'Export and sharing live in the Actions section.')}
+        aiContext={{ title: report.title, status: report.status, type: 'management-report' }}
+        aiReadOnlyReason={t('reports.management.panel.readOnlyReason', 'the report is generator output and has no fields to fill in')}
+        onAskAi={() => toast(t('reports.management.panel.reanalyzeBlocked', 'This report holds the analysis from the moment it was generated; a fresh analysis needs a new report.'))}
+      />
+    );
+  }
+
   return <div className="h-full min-h-0"><StandardArtifactShell karta="management-report" klasa="L" header={{ title: report.title, onTitleChange: () => undefined, titleReadOnly: true, artifactType: 'document' as any, artifactId: report.id, onSave: () => undefined, saveState: 'saved', onClose: onBack, statusLabel: report.status, statusTone: report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft' }} primaryAction={{ intentionallyNone: true, reason: t('reports.management.panel.primaryActionReason', 'Export and sharing live in the Actions section.') }} sections={sections} rightPanel={rightPanel} activeSection={activeSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={() => undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={activeSection} onSectionChange={setActiveSection} readMode ai={{ onAnalizuj: () => toast(t('reports.management.panel.reanalyzeBlocked', 'This report holds the analysis from the moment it was generated; a fresh analysis needs a new report.')), kontekstArtefaktu: { title: report.title, status: report.status, type: 'management-report' }, moznaEdytowac: false, powodTylkoOdczyt: t('reports.management.panel.readOnlyReason', 'the report is generator output and has no fields to fill in') }} />} panelAriaLabel={t('reports.management.panel.ariaLabel', 'Management report details')} /></div>;
 };
 

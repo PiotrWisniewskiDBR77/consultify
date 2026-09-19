@@ -104,6 +104,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import i18n from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { ReportBuilderDocumentViewer } from '@/components/ReportBuilder/ReportBuilderDocumentViewer';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import {
@@ -1509,6 +1510,55 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       children: null,
     },
   ];
+
+  if (viewMode === 'full' && report.reportBuilderDocument?.sections?.length) {
+    const panelById = new Map(rightPanelSections.map((panelSection) => [panelSection.id, panelSection]));
+    const actionsPanel = panelById.get('actions');
+    const propertiesPanel = panelById.get('properties');
+    const sharedRightPanel = {
+      actions: actionsPanel?.children
+        ? { label: actionsPanel.label, children: actionsPanel.children, actionIds: ['download-docx', 'download-pdf'] }
+        : { pominieta: true as const, reason: 'A2D_ACTIONS_EMPTY' },
+      properties: propertiesPanel?.children
+        ? { label: propertiesPanel.label, children: propertiesPanel.children }
+        : { pominieta: true as const, reason: 'A2D_PROPERTIES_EMPTY' },
+      relations: { pominieta: true as const, reason: 'A2D_RELATIONS_EMPTY' },
+      evidence: { pominieta: true as const, reason: 'A2D_EVIDENCE_EMPTY' },
+      comments: { pominieta: true as const, reason: 'A2D_COMMENTS_EMPTY' },
+      history: { pominieta: true as const, reason: 'A2D_HISTORY_EMPTY' },
+    };
+
+    return (
+      <div className="flex h-full min-h-0 flex-col" data-testid="audit-report-document-view">
+        <ReportBuilderDocumentViewer
+          document={report.reportBuilderDocument}
+          artifactId={report.id}
+          title={report.title}
+          statusLabel={reportStatusLabel(report.status, isPolish)}
+          statusTone={headerStatusTone(report.status)}
+          onBack={goBack}
+          rightPanel={sharedRightPanel}
+          panelAriaLabel={isPolish ? 'Panel raportu' : 'Report panel'}
+          primaryActionReason={String(t('audit.report.viewer.noPrimaryAction', 'The report is already published or has no gated approval action available.'))}
+          primaryAction={
+            header.primaryAction
+              ? {
+                  id: canApprove ? 'approve' : 'publish',
+                  ...header.primaryAction,
+                }
+              : undefined
+          }
+          aiContext={{ title: report.title, status: report.status, type: 'audit-report' }}
+          aiReadOnlyReason="A2D_READ_ONLY"
+          breadcrumb={[
+            { label: t('audit.report.viewer.audits', 'Audits'), onClick: goBack },
+            { label: t('audit.report.viewer.reports', 'Reports'), onClick: goBack },
+            { label: report.title },
+          ]}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="audit-report-document-view">
