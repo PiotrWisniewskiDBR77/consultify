@@ -1,6 +1,18 @@
+import { execFileSync } from 'node:child_process';
+
 import { describe, expect, it } from 'vitest';
 
 describe('PPTX services in the Node ESM runtime', () => {
+  it('loads both real service modules in a native Node ESM process', () => {
+    const output = execFileSync(process.execPath, ['scripts/testing/pptx-native-esm-gate.mjs'], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      env: { ...process.env, NODE_OPTIONS: '' },
+    });
+
+    expect(output).toContain('PPTX_NATIVE_ESM_GATE PASS services=2 runtime=node');
+  });
+
   it('loads the legacy report exporter without a global require', async () => {
     const module = await import('../../../server/src/services/report/PptxExportService.js');
     const service = new module.PptxExportService();
