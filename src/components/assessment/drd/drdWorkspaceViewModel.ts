@@ -12,6 +12,7 @@
 import type { TableColumn } from '@/components/standard/StandardTable';
 import { rollupAnswerState } from '@/components/method-workspace/answerStateColors';
 import type {
+  EvidenceListItem,
   InterviewFocusQuestion,
   MatrixRow,
   MethodAnswerState,
@@ -94,6 +95,28 @@ export function targetLevelFor(events: readonly MethodEvent[], unitId: string): 
 
 export function evidenceEventsFor(events: readonly MethodEvent[], unitId: string): MethodEvent[] {
   return events.filter((e) => e.type === 'EVIDENCE_ATTACHED' && e.unitId === unitId);
+}
+
+/**
+ * Read-model row for the K-24a evidence list (DEC-649): name / date / who.
+ * Deliberately NO size field — the append-only registry never carries bytes
+ * (`recordEvidence` stores metadata only), so a size column would be fiction.
+ */
+export function evidenceItemsFor(
+  events: readonly MethodEvent[],
+  unitId: string
+): EvidenceListItem[] {
+  return evidenceEventsFor(events, unitId).map((e) => {
+    const payload = (e.payload ?? {}) as { evidenceId?: string; strength?: EvidenceStrength };
+    return {
+      eventId: e.id,
+      name: payload.evidenceId ?? e.id,
+      occurredAt: e.occurredAt,
+      actorUserId: e.actorUserId,
+      actorKind: e.actorKind,
+      strength: payload.strength ?? null,
+    };
+  });
 }
 
 /**

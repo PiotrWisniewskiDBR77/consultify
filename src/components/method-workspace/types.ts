@@ -18,6 +18,7 @@
 import type {
   AnswerEventPayload,
   EvidenceStrength,
+  MethodActorKind,
   MethodLevel,
   MethodQuestion,
   MethodReadiness,
@@ -99,6 +100,27 @@ export interface InterviewFocusQuestion {
    * it (e.g. SIRI) are unaffected.
    */
   readonly evidenceStrength?: EvidenceStrength | null;
+  /**
+   * K-24a (DEC-649): projected read-model rows for the attached-evidence list
+   * (name / date / who). Optional so callers that don't surface the list are
+   * unaffected. Deliberately NO size field — the append-only event registry
+   * never carries bytes.
+   */
+  readonly evidenceItems?: readonly EvidenceListItem[];
+}
+
+/**
+ * Presentational row of the attached-evidence list (K-24a, DEC-649). Built by
+ * the DRD read model (`evidenceItemsFor`) from `EVIDENCE_ATTACHED` events; the
+ * UI consumes ONLY this shape, never the raw event log.
+ */
+export interface EvidenceListItem {
+  readonly eventId: string;
+  readonly name: string;
+  readonly occurredAt: string;
+  readonly actorUserId: string | null;
+  readonly actorKind: MethodActorKind;
+  readonly strength: EvidenceStrength | null;
 }
 
 export interface ResolutionCardData {

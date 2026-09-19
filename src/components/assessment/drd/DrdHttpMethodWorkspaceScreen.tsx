@@ -94,6 +94,7 @@ import {
   buildNavigatorNodes,
   confirmedLevelsFor,
   evidenceEventsFor,
+  evidenceItemsFor,
   evidenceStateFor,
   evidenceStrengthFor,
   getOutputUnitColumns,
@@ -757,6 +758,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   );
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
   const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
+  const evidenceItemsForUnit = evidenceItemsFor(events, activeArea.id);
 
   const interviewQuestions: InterviewFocusQuestion[] = focusQuestions.map((q) => {
     const { state: answerState, text } = questionAnswerState(events, q.questionId);
@@ -771,6 +773,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       evidenceState: evidenceStateFor(events, activeArea.id, activeProgression.blockedAtLevel),
       evidenceCount: evidenceCountForUnit,
       evidenceStrength: evidenceStrengthForUnit,
+      evidenceItems: evidenceItemsForUnit,
     };
   });
 

@@ -21,6 +21,7 @@ import { DRD_STRUCTURE } from '@/services/drdStructure';
 import {
   buildMatrixRowsForAxis,
   confirmedLevelsFor,
+  evidenceItemsFor,
   evidenceStrengthFor,
 } from '../drdWorkspaceViewModel';
 
@@ -109,5 +110,58 @@ describe('buildMatrixRowsForAxis — cells beyond the blocker are shaped as "una
     const row = rows.find((r) => r.unitId === UNIT)!;
     const level1 = row.levels.find((c) => c.level === 1)!;
     expect(level1.blocker).toBe(true);
+  });
+});
+
+describe('evidenceItemsFor — K-24a read-model rows (nazwa / data / kto, BEZ rozmiaru)', () => {
+  it('projects name from payload.evidenceId, plus occurredAt + actorUserId + strength', () => {
+    const events: MethodEvent[] = [
+      makeEvent({
+        type: 'EVIDENCE_ATTACHED',
+        level: 1,
+        actorUserId: 'anna.kowalska',
+        occurredAt: '2026-08-13T09:30:00.000Z',
+        payload: { evidenceId: 'polityka.pdf', evidenceType: 'document', strength: 'E2' },
+      }),
+    ];
+    const items = evidenceItemsFor(events, UNIT);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      name: 'polityka.pdf',
+      occurredAt: '2026-08-13T09:30:00.000Z',
+      actorUserId: 'anna.kowalska',
+      strength: 'E2',
+    });
+  });
+
+  it('carries NO size field — the append-only registry never stores bytes (DEC-649)', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'x.pdf', strength: 'E1' } }),
+    ];
+    const item = evidenceItemsFor(events, UNIT)[0];
+    expect(Object.keys(item)).not.toContain('size');
+    expect((item as Record<string, unknown>).size).toBeUndefined();
+  });
+
+  it('falls back to the event id when payload.evidenceId is absent', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: {} }),
+    ];
+    const item = evidenceItemsFor(events, UNIT)[0];
+    expect(item.name).toBe(item.eventId);
+  });
+
+  it('only projects EVIDENCE_ATTACHED events for the requested unit', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ type: 'EVIDENCE_ATTACHED', unitId: UNIT, level: 1, payload: { evidenceId: 'a.pdf' } }),
+      makeEvent({ type: 'EVIDENCE_ATTACHED', unitId: 'other-unit', level: 1, payload: { evidenceId: 'b.pdf' } }),
+      makeEvent({ type: 'ANSWER_CONFIRMED', unitId: UNIT, level: 1, payload: { questionId: 'q', answerState: 'confirmed' } }),
+    ];
+    const items = evidenceItemsFor(events, UNIT);
+    expect(items.map((i) => i.name)).toEqual(['a.pdf']);
+  });
+
+  it('returns an empty list when the unit has no evidence', () => {
+    expect(evidenceItemsFor([], UNIT)).toEqual([]);
   });
 });

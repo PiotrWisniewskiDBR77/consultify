@@ -171,6 +171,16 @@ const QUESTIONS: InterviewFocusQuestion[] = [
         : 'Mamy listę inicjatyw w arkuszu współdzielonym, ale nie przechodziła formalnej akceptacji zarządu.',
     evidenceState: 'weak',
     evidenceCount: 1,
+    evidenceItems: [
+      {
+        eventId: 'evt-evidence-demo-1',
+        name: 'protokol-zarzad-2026-03.pdf',
+        occurredAt: '2026-08-13T09:30:00.000Z',
+        actorUserId: 'anna.kowalska',
+        actorKind: 'human',
+        strength: 'E2',
+      },
+    ],
   },
 ];
 

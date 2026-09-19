@@ -20,6 +20,8 @@ import { answerStateCardClass, answerStateDotClass } from './answerStateColors';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
 import { skipReasonOptionsUi, type DrdSkipReasonCode } from './skipReasonCodes';
+import { isDrdEvidenceListEnabled } from '@/utils/drdEvidenceListFlag';
+import { localeListy } from '@/utils/listDateFormat';
 
 export interface InterviewFocusPanelProps {
   /** Breadcrumb context — axis/pillar, area/dimension, level under consideration. */
@@ -343,6 +345,45 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               )}
             </span>
           </div>
+
+          {/* K-24a (DEC-649): read-only attached-evidence list — name / date /
+              who, from the projected read model only. Flag-gated (default
+              OFF) until the owner accepts the card. */}
+          {isDrdEvidenceListEnabled() && (q.evidenceItems?.length ?? 0) > 0 && (
+            <div
+              data-testid="evidence-list"
+              className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
+            >
+              <div className="grid grid-cols-[1fr_auto_auto] gap-3 text-[11px] font-medium uppercase tracking-wide text-c-text-secondary">
+                <span>{t('methodWorkspace.focus.evidenceColName', 'Name')}</span>
+                <span>{t('methodWorkspace.focus.evidenceColDate', 'Date')}</span>
+                <span>{t('methodWorkspace.focus.evidenceColBy', 'By')}</span>
+              </div>
+              <ul className="mt-1 space-y-1">
+                {(q.evidenceItems ?? []).map((item) => (
+                  <li
+                    key={item.eventId}
+                    data-testid="evidence-list-row"
+                    className="grid grid-cols-[1fr_auto_auto] gap-3 text-xs text-c-text"
+                  >
+                    <span className="truncate" title={item.name}>
+                      {item.name}
+                    </span>
+                    <span className="shrink-0 text-c-text-secondary">
+                      {new Date(item.occurredAt).toLocaleDateString(localeListy(), {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                    <span className="shrink-0 text-c-text-secondary">
+                      {item.actorUserId ?? t('methodWorkspace.focus.evidenceActorSystem', 'system')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {questions.length > 1 && (
             <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle pt-3">

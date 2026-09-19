@@ -1,0 +1,19 @@
+K-24a (QC3, DEC-649) — read-only DRD evidence list, zrzuty dowodowe
+Data: 2026-09-18, harness dev-render, flaga VITE_DRD_EVIDENCE_LIST=true (serwer startowany z env inline)
+URL: http://localhost:5420/method-workspace.html?view=interview&theme=<light|dark>&lang=en&state=default
+Serwer: npx vite --config dev-render/vite.config.ts --port 5420 --strictPort (zabity po zrzutach)
+
+Zrzuty:
+  k24a-evidence-light.png        1440x900  light  (pelny ekran; naglowek listy NAME/DATE/BY u dolu)
+  k24a-evidence-dark.png         1440x900  dark   (pelny ekran)
+  k24a-evidence-light-detail.png 1440x1500 light  (lista w calosci: NAME / protokol-zarzad-2026-03.pdf / 13 Aug 2026 / anna.kowalska)
+  k24a-evidence-dark-detail.png  1440x1500 dark   (to samo, motyw ciemny)
+
+KONSOLA-BLEDY: 0   (shot.mjs nie wypisal linii KONSOLA-BLEDY = brak bledow konsoli/pageerror)
+SIEC-4XX5XX:   0   (shot.mjs nie wypisal linii SIEC-4XX5XX = brak zadnych 4xx/5xx)
+
+Odczyt na glos (detail, oba motywy):
+  - naglowek kolumn: NAME | DATE | BY  (trzy kolumny, BEZ kolumny rozmiaru — DEC-649)
+  - wiersz: protokol-zarzad-2026-03.pdf | 13 Aug 2026 | anna.kowalska
+  - lista siedzi pod strefa dropu dowodu, na powierzchni raised; kontrast czytelny w obu motywach
+  - motyw ustawiony przez store aplikacji (useAppStore.theme), NIE emulateMedia
