@@ -4391,11 +4391,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                   {t('ideas.table.noFilterResultsTitle', 'No filter results')}
                                 </div>
                                 <div className="text-[11px] leading-relaxed">
-                                  {t('ideas.table.noFilterResultsBody', {
-                                    count: unfilteredRowCount,
-                                    defaultValue:
-                                      'Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.',
-                                  })}
+                                  {t(
+                                    'ideas.table.noFilterResultsBody',
+                                    'None of the {{count}} rows match the current filter. Change the conditions or clear the filter to see every record.',
+                                    { count: unfilteredRowCount }
+                                  )}
                                 </div>
                                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                                   <button
