@@ -35,8 +35,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const appErrorT = (key: string, defaultValue?: string) =>
+    t(key, defaultValue === undefined ? undefined : { defaultValue });
   const heading = title ?? t('common.errorTitle', { defaultValue: 'Something went wrong' });
-  const appError = source ? getAppErrorCopy(t, source) : null;
+  const appError = source ? getAppErrorCopy(appErrorT, source) : null;
   const visibleMessage = appError?.message ?? message;
 
   return (
