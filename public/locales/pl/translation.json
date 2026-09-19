@@ -55805,6 +55805,9 @@
     "notMeasured": "Nie zmierzono",
     "noTarget": "Brak celu",
     "noKpiResults": "Nie zapisano wyników KPI dla inicjatyw w tej organizacji.",
+    "workAnalysis": {
+      "emptySnapshot": "Analiza nie została zapisana, ponieważ Consultify znalazł zadania, ale nie złożył migawki raportu. Odśwież zakładkę Praca i spróbuj ponownie."
+    },
     "source": "Consultify · Realizacja · {{level}}",
     "e4": {
       "title": "Raporty Realizacji",

@@ -55435,6 +55435,9 @@
     "notMeasured": "Not measured",
     "noTarget": "No target",
     "noKpiResults": "No KPI results have been recorded for initiatives in this organization.",
+    "workAnalysis": {
+      "emptySnapshot": "The analysis was not saved because Consultify found work records but could not assemble a report snapshot. Refresh the Work tab and try again."
+    },
     "source": "Consultify · Execution · {{level}}",
     "e4": {
       "title": "Execution reports",

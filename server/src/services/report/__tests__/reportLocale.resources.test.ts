@@ -29,7 +29,13 @@ describe('report locale resources', () => {
   const pl = readLocale('pl');
 
   it('publishes every server report message key as a non-empty EN and PL string', () => {
-    expect(REPORT_MESSAGE_KEYS).toHaveLength(42);
+    // 43rd key: executionReports.workAnalysis.emptySnapshot, added server-side by
+    // 3ca97b51f8 (Codex, "Align execution work task source") without its frontend
+    // mirror; D-120 publishes it under executionReports.workAnalysis in both
+    // translation.json files. The count is pinned next to the explicit key so the
+    // next addition must name its commit here, not just bump the number.
+    expect(REPORT_MESSAGE_KEYS).toContain('executionReports.workAnalysis.emptySnapshot');
+    expect(REPORT_MESSAGE_KEYS).toHaveLength(43);
 
     for (const key of REPORT_MESSAGE_KEYS) {
       const enValue = readKey(en, key);
