@@ -754,8 +754,9 @@ router.post(
           return res.status(404).json({ error: 'Unknown connector' });
         }
         if (isGovernedConnectorApprovalError(error)) {
+          // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+          // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
           return res.status(501).json({
-            error: 'Integracja nie jest dostępna w tej wersji',
             code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
           });
         }
@@ -817,8 +818,9 @@ router.post(
           return res.status(404).json({ error: 'Unknown connector' });
         }
         if (isGovernedConnectorApprovalError(error)) {
+          // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+          // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
           return res.status(501).json({
-            error: 'Integracja nie jest dostępna w tej wersji',
             code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
           });
         }
