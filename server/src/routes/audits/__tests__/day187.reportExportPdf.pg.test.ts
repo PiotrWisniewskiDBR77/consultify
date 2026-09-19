@@ -21,6 +21,7 @@ const USER = `day187-pdf-user-${RUN}`;
 const PACK = `day187-pdf-pack-${RUN}`;
 const PROGRAM = `day187-pdf-program-${RUN}`;
 const REPORT = `day187-pdf-report-${RUN}`;
+const EN_REPORT = `day187-pdf-report-en-${RUN}`;
 const BROKEN_REPORT = `day187-pdf-broken-${RUN}`;
 const ORG_NAME = `Dzień 187 — Organizacja PDF ${RUN}`;
 const PROGRAM_NAME = `Dzień 187 — Program PDF ${RUN}`;
@@ -107,6 +108,14 @@ beforeAll(async () => {
       [id, PROGRAM, ORG, JSON.stringify(payload), USER, version]
     );
   }
+  await auditRun(
+    `INSERT INTO audit_reports
+       (id, program_id, organization_id, version, report_kind, title, status, payload,
+        content_hash, language, generated_at, created_by)
+     VALUES ($1, $2, $3, 3, 'audit_report', 'Łódź — raport jakości', 'draft', $4,
+             'hash-day187-pdf', 'en', '2026-08-30T10:00:00.000Z', $5)`,
+    [EN_REPORT, PROGRAM, ORG, JSON.stringify(validPayload), USER]
+  );
 }, 180_000);
 
 afterAll(async () => {
@@ -159,6 +168,16 @@ describe.skipIf(!REAL_PG)('Day 187 audit report HTTP PDF export', () => {
     if (process.env.DAY187_EXPORT_PATH) {
       await writeFile(process.env.DAY187_EXPORT_PATH, buffer);
     }
+  });
+
+  it('D-39: downloads an English PDF filename for an English report', async () => {
+    const response = await download(EN_REPORT);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const disposition = response.headers['content-disposition'];
+    expect(disposition).toContain('filename="Audit_report_Lodz');
+    expect(disposition).toContain("filename*=UTF-8''Audit_report_%C5%81%C3%B3d%C5%BA");
+    expect(disposition).not.toContain('Raport_audytu');
+    expect(Buffer.from(response.body).subarray(0, 5).toString()).toBe('%PDF-');
   });
 
   it('returns 422 AUDIT_REPORT_INVALID_PAYLOAD for the same malformed shape as DOCX', async () => {

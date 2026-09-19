@@ -23,6 +23,7 @@ import { requireCapability } from '../../services/audits/permissions.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { renderDocumentSchemaToDocxBuffer } from '../../services/documentStudio/documentDocxRenderer.js';
 import { renderDocumentSchemaToPdfBuffer } from '../../services/documentStudio/documentPdfRenderer.js';
+import { resolveReportExportLocale, type ExportLocale } from '../../services/report/exportLocale.js';
 
 import { auditActor, assertActor, route } from './context.js';
 
@@ -77,6 +78,32 @@ function requireReportPayloadShape(payload: unknown): AuditReportDocument {
   return payload as AuditReportDocument;
 }
 
+/**
+ * D-39: nazwa pliku eksportu idzie za locale eksportu (język raportu → profil
+ * aktora DEC-510 → 'en'), więc użytkownik EN nie dostaje już
+ * `Raport_audytu_…`; polskie raporty zachowują polski przedrostek.
+ */
+function auditExportFilenames(
+  report: { id: string; title: string; version: number; generatedAt: string | null; createdAt: string },
+  locale: ExportLocale,
+  extension: 'docx' | 'pdf'
+): { filename: string; asciiFilename: string } {
+  const safeTitle = report.title
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  const date = (report.generatedAt ?? report.createdAt).slice(0, 10).replaceAll('-', '');
+  const prefix = locale === 'pl' ? 'Raport_audytu_' : 'Audit_report_';
+  const filename = `${prefix}${safeTitle || report.id}_v${report.version}_${date}.${extension}`;
+  const asciiFilename = filename
+    .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._-]/g, '_');
+  return { filename, asciiFilename };
+}
+
 router.get(
   '/',
   route('GET /reports', async (req, res) => {
@@ -109,19 +136,8 @@ router.get(
     const context = await resolveReportContext(actor.organizationId, report.programId);
     const schema = buildAuditReportDocumentSchema(report, document, context);
     const buffer = await renderDocumentSchemaToDocxBuffer(schema);
-    const safeTitle = report.title
-      .normalize('NFC')
-      .replace(/[^\p{L}\p{N}._-]+/gu, '_')
-      .replace(/^_+|_+$/g, '')
-      .slice(0, 80);
-    const generatedAt = report.generatedAt ?? report.createdAt;
-    const date = generatedAt.slice(0, 10).replaceAll('-', '');
-    const filename = `Raport_audytu_${safeTitle || report.id}_v${report.version}_${date}.docx`;
-    const asciiFilename = filename
-      .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^A-Za-z0-9._-]/g, '_');
+    const locale = await resolveReportExportLocale(req, { report });
+    const { filename, asciiFilename } = auditExportFilenames(report, locale, 'docx');
     res
       .status(200)
       .set({
@@ -147,19 +163,8 @@ router.get(
     const context = await resolveReportContext(actor.organizationId, report.programId);
     const schema = buildAuditReportDocumentSchema(report, document, context);
     const buffer = await renderDocumentSchemaToPdfBuffer(schema);
-    const safeTitle = report.title
-      .normalize('NFC')
-      .replace(/[^\p{L}\p{N}._-]+/gu, '_')
-      .replace(/^_+|_+$/g, '')
-      .slice(0, 80);
-    const generatedAt = report.generatedAt ?? report.createdAt;
-    const date = generatedAt.slice(0, 10).replaceAll('-', '');
-    const filename = `Raport_audytu_${safeTitle || report.id}_v${report.version}_${date}.pdf`;
-    const asciiFilename = filename
-      .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^A-Za-z0-9._-]/g, '_');
+    const locale = await resolveReportExportLocale(req, { report });
+    const { filename, asciiFilename } = auditExportFilenames(report, locale, 'pdf');
     res
       .status(200)
       .set({

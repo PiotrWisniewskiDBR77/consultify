@@ -17,7 +17,10 @@ const ORG = `day41-export-org-${RUN}`;
 const OTHER_ORG = `day41-export-other-${RUN}`;
 const USER = `day41-export-user-${RUN}`;
 const AUDIT_REPORT = `day41-export-audit-${RUN}`;
+const AUDIT_REPORT_EN = `day41-export-audit-en-${RUN}`;
+const AUDIT_REPORT_NOLANG = `day41-export-audit-nolang-${RUN}`;
 const REMEDIATION_REPORT = `day41-export-remediation-${RUN}`;
+const USER_PL = `day41-export-user-pl-${RUN}`;
 
 const sectionIds = [
   'executive_summary',
@@ -52,16 +55,16 @@ const remediationPayload = {
 
 let app: express.Express;
 
-function token(org = ORG) {
+function token(org = ORG, user = USER) {
   return `Bearer ${jwt.sign(
     {
-      id: USER,
-      email: `${USER}@test.local`,
+      id: user,
+      email: `${user}@test.local`,
       role: 'admin',
       organizationId: org,
       isSuperAdmin: false,
       isDemo: false,
-      jti: `${org}-${RUN}`,
+      jti: `${org}-${user}-${RUN}`,
     },
     (config as unknown as { JWT_SECRET: string }).JWT_SECRET,
     { expiresIn: '30m' }
@@ -88,6 +91,7 @@ beforeAll(async () => {
     await auditRun(`INSERT INTO organizations (id) VALUES ($1) ON CONFLICT DO NOTHING`, [org]);
   }
   await auditRun(`INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`, [USER]);
+  await auditRun(`INSERT INTO users (id, language) VALUES ($1, 'pl') ON CONFLICT DO NOTHING`, [USER_PL]);
   for (const org of [ORG, OTHER_ORG]) {
     await auditRun(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status)
@@ -95,6 +99,12 @@ beforeAll(async () => {
       [`day41-export-member-${org}`, org, USER]
     );
   }
+  await auditRun(
+    `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+     VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')
+     ON CONFLICT (id) DO NOTHING`,
+    [`day41-export-member-pl-${RUN}`, ORG, USER_PL]
+  );
   for (const [id, kind, payload, title] of [
     [AUDIT_REPORT, 'audit_report', auditPayload, 'Łódź — raport jakości'],
     [REMEDIATION_REPORT, 'remediation_progress', remediationPayload, 'Naprawa'],
@@ -108,16 +118,37 @@ beforeAll(async () => {
       [id, `program-${RUN}`, ORG, kind, title, JSON.stringify(payload), USER]
     );
   }
+  for (const [id, language] of [
+    [AUDIT_REPORT_EN, 'en'],
+    [AUDIT_REPORT_NOLANG, null],
+  ] as const) {
+    await auditRun(
+      `INSERT INTO audit_reports
+         (id, program_id, organization_id, version, report_kind, title, status, payload,
+          content_hash, language, generated_at, created_by)
+       VALUES ($1, $2, $3, 1, 'audit_report', $4, 'draft', $5, 'hash-day41-locale', $6,
+               '2026-08-28T10:00:00.000Z', $7)`,
+      [
+        id,
+        `program-${language ?? 'nolang'}-${RUN}`,
+        ORG,
+        'Łódź — raport jakości',
+        JSON.stringify(auditPayload),
+        language,
+        USER,
+      ]
+    );
+  }
 }, 180_000);
 
 afterAll(async () => {
   if (REAL_PG) await cleanup();
 }, 60_000);
 
-function download(id: string, org = ORG) {
+function download(id: string, org = ORG, user = USER) {
   return request(app)
     .get(`/api/audits/reports/${id}/export.docx`)
-    .set('Authorization', token(org))
+    .set('Authorization', token(org, user))
     .set('x-organization-id', org)
     .buffer(true)
     .parse((response, callback) => {
@@ -143,6 +174,27 @@ describe.skipIf(!REAL_PG)('Day 41 audit report HTTP DOCX export', () => {
     const disposition = (await download(AUDIT_REPORT)).headers['content-disposition'];
     expect(disposition).toContain('filename="Raport_audytu_Lodz');
     expect(disposition).toContain("filename*=UTF-8''Raport_audytu_%C5%81%C3%B3d%C5%BA");
+  });
+
+  it('D-39: downloads an English filename for an English report', async () => {
+    const response = await download(AUDIT_REPORT_EN);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const disposition = response.headers['content-disposition'];
+    expect(disposition).toContain('filename="Audit_report_Lodz');
+    expect(disposition).toContain("filename*=UTF-8''Audit_report_%C5%81%C3%B3d%C5%BA");
+    expect(disposition).not.toContain('Raport_audytu');
+  });
+
+  it('D-39: report without language follows the Polish actor profile (DEC-510)', async () => {
+    const response = await download(AUDIT_REPORT_NOLANG, ORG, USER_PL);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.headers['content-disposition']).toContain('filename="Raport_audytu_Lodz');
+  });
+
+  it('D-39: report without language defaults to the English filename (DEC-461)', async () => {
+    const response = await download(AUDIT_REPORT_NOLANG);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.headers['content-disposition']).toContain('filename="Audit_report_Lodz');
   });
 
   it('returns AUDIT_NOT_FOUND for a missing report', async () => {
