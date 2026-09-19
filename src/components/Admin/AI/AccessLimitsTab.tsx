@@ -915,7 +915,7 @@ export const AccessLimitsTab: React.FC = () => {
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table /* §27-exempt: data-viz/render analityczny read-only (cost attribution dashboard — Entity/Requests/Tokens/Cost/% of Total z costAttribution), nie lista encji; brak Menu 1/2/3 (filtr/sort/akcje/nawigacja) — jak tabela wyżej */ className="w-full text-left text-sm">
                 <thead className="bg-black/20 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-3">
