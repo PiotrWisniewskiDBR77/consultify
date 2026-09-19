@@ -52,7 +52,15 @@ import jwt from 'jsonwebtoken';
 import type { PoolClient } from 'pg';
 import request from 'supertest';
 
-import { ORG_ID, Licznik, czytajWspolneArgumenty, det, otworzPool, sprawdzCel, wymaganyUrl } from './00-wspolne';
+import {
+  ORG_ID,
+  Licznik,
+  czytajWspolneArgumenty,
+  det,
+  otworzPool,
+  sprawdzCel,
+  wymaganyUrl,
+} from './00-wspolne';
 
 // ============================================================================
 // Ludzie z 01-rdzen.ts — reużywamy te same deterministyczne id (te same
@@ -99,7 +107,8 @@ export const WYWIADY: WywiadDane[] = [
     pytania: [
       {
         kategoria: 'process',
-        pytanie: 'Walk me through a typical shift on the Leeds line — where does time actually get lost?',
+        pytanie:
+          'Walk me through a typical shift on the Leeds line — where does time actually get lost?',
         odpowiedz:
           'The biggest losses are changeovers and waiting for parts from the warehouse. A changeover on Line 2 still takes close to 90 minutes because setup sheets are paper-based and operators re-check tolerances by hand. Inbound picking delays add another 20-30 minutes most shifts.',
         wymagane: true,
@@ -169,7 +178,8 @@ export const WYWIADY: WywiadDane[] = [
       },
       {
         kategoria: 'wrapup',
-        pytanie: 'If you could fix one thing in the next six months, what would move the needle most?',
+        pytanie:
+          'If you could fix one thing in the next six months, what would move the needle most?',
         odpowiedz:
           'Real-time, trustworthy downtime and OEE data by line. Everything else — changeover standard work, warehouse re-layout, predictive maintenance — gets easier to prioritise once we can actually see where the time and money are going.',
         wymagane: true,
@@ -227,7 +237,8 @@ export const WYWIADY: WywiadDane[] = [
       },
       {
         kategoria: 'metrics',
-        pytanie: 'What is your current first-pass yield and defect rate, and do you trust the numbers?',
+        pytanie:
+          'What is your current first-pass yield and defect rate, and do you trust the numbers?',
         odpowiedz:
           'First-pass yield sits around 94 percent and customer PPM has been trending down for two quarters, which is genuine progress. I trust the trend more than the absolute number, because a few defect categories are still miscoded at the point of entry.',
         wymagane: true,
@@ -255,7 +266,8 @@ export const WYWIADY: WywiadDane[] = [
       },
       {
         kategoria: 'wrapup',
-        pytanie: 'If you had one investment to make in quality systems this year, what would it be?',
+        pytanie:
+          'If you had one investment to make in quality systems this year, what would it be?',
         odpowiedz:
           'A single connected source for inspection and supplier data. Right now good decisions depend on someone manually stitching three sources together, and that does not scale as volume grows.',
         wymagane: true,
@@ -275,7 +287,8 @@ export type WniosekDane = {
 export const WNIOSKI: WniosekDane[] = [
   {
     slug: 'warehouse-and-changeover-time-loss',
-    title: 'Warehouse layout and manual changeovers are the largest source of unplanned time loss on the Leeds line',
+    title:
+      'Warehouse layout and manual changeovers are the largest source of unplanned time loss on the Leeds line',
     content:
       'Both the changeover process (paper setup sheets, ~90 minutes per changeover, knowledge concentrated in two senior setters) and the warehouse layout (fast-moving parts stored behind slow-moving stock) independently add avoidable minutes to almost every shift. Neither has a written, current standard to build automation or training against yet.',
     promptType: 'summary',
@@ -291,7 +304,8 @@ export const WNIOSKI: WniosekDane[] = [
   },
   {
     slug: 'quality-data-fragmented-across-three-sources',
-    title: 'Inspection, gauge and supplier-quality data are fragmented across three disconnected sources',
+    title:
+      'Inspection, gauge and supplier-quality data are fragmented across three disconnected sources',
     content:
       'Final inspection is paper-based, precision-cell gauge readings are re-keyed by hand, and supplier quality scoring runs on a separate spreadsheet updated quarterly. No system currently links a finished-goods defect back to its incoming material batch automatically, which slows root-cause analysis and audit preparation.',
     promptType: 'summary',
@@ -299,7 +313,8 @@ export const WNIOSKI: WniosekDane[] = [
   },
   {
     slug: 'shared-priority-single-source-of-truth-before-capital-request',
-    title: 'Plant and quality leadership independently want one connected source of truth before the next capital request',
+    title:
+      'Plant and quality leadership independently want one connected source of truth before the next capital request',
     content:
       'Without asking each other directly, both Sarah Mitchell and Robert Chen named the same underlying gap: decisions and business cases currently rest on manually reconciled data rather than a trusted, real-time source. This is a strong shared entry point for a data foundation initiative that both functions would actively support.',
     promptType: 'cross_session',
@@ -342,8 +357,18 @@ export const NARZEDZIA: NarzedzieDane[] = [
         'Mapped the outbound flow from goods-in to shipped pallet across 7 process steps. Total lead time is 3.4 days against 41 minutes of actual value-added work — a value-add ratio of roughly 1%.',
       steps: [
         { step: 'Goods-in booking', leadTimeMinutes: 25, valueAddMinutes: 8, wasteType: 'waiting' },
-        { step: 'Putaway to storage', leadTimeMinutes: 40, valueAddMinutes: 12, wasteType: 'motion' },
-        { step: 'Pick release to line', leadTimeMinutes: 1380, valueAddMinutes: 6, wasteType: 'inventory' },
+        {
+          step: 'Putaway to storage',
+          leadTimeMinutes: 40,
+          valueAddMinutes: 12,
+          wasteType: 'motion',
+        },
+        {
+          step: 'Pick release to line',
+          leadTimeMinutes: 1380,
+          valueAddMinutes: 6,
+          wasteType: 'inventory',
+        },
         { step: 'Picking', leadTimeMinutes: 35, valueAddMinutes: 9, wasteType: 'motion' },
         { step: 'Staging', leadTimeMinutes: 480, valueAddMinutes: 0, wasteType: 'waiting' },
         { step: 'Pack & label', leadTimeMinutes: 18, valueAddMinutes: 6, wasteType: null },
@@ -399,11 +424,20 @@ export const NARZEDZIA: NarzedzieDane[] = [
         'Skilled-labour shortage in controls engineering makes over-reliance on a few experts riskier.',
       ],
       tensions: [
-        { posture: 'attack', text: 'Digital traceability is an opportunity Northwind is well placed to win on customer trust alone.' },
-        { posture: 'defend', text: 'Cyber exposure grows with every new connected shopfloor system — segmentation needs to keep pace.' },
+        {
+          posture: 'attack',
+          text: 'Digital traceability is an opportunity Northwind is well placed to win on customer trust alone.',
+        },
+        {
+          posture: 'defend',
+          text: 'Cyber exposure grows with every new connected shopfloor system — segmentation needs to keep pace.',
+        },
       ],
     },
-    answersJson: { horizon: '2026-2027', participants: ['james.whitfield', 'sarah.mitchell', 'robert.chen'] },
+    answersJson: {
+      horizon: '2026-2027',
+      participants: ['james.whitfield', 'sarah.mitchell', 'robert.chen'],
+    },
     contextSnapshot: { workshopFormat: 'facilitated', durationMinutes: 90 },
   },
   {
@@ -419,12 +453,36 @@ export const NARZEDZIA: NarzedzieDane[] = [
       summary:
         'Capability scan across 6 digital/automation domains, scored 1 (ad hoc) to 5 (industrialised). Overall average 2.5 — foundational capability exists in isolated pockets but is not yet connected or standardised.',
       capabilities: [
-        { domain: 'Shopfloor connectivity', score: 3, note: 'Digital gauges live on 2 of 6 inspection stations; PLC data not yet centralised.' },
-        { domain: 'Data foundation', score: 2, note: 'No shared data layer; production, quality and supplier data sit in separate spreadsheets.' },
-        { domain: 'Process automation', score: 2, note: 'Manual changeovers and manual data entry dominate; one pilot automated cell on Line 3.' },
-        { domain: 'Predictive maintenance', score: 1, note: 'No condition-monitoring sensors deployed; maintenance is reactive/scheduled only.' },
-        { domain: 'Digital work instructions', score: 2, note: 'Standard work exists on paper; not consistently followed or version-controlled.' },
-        { domain: 'Cybersecurity (OT/IT)', score: 3, note: 'Perimeter and access controls reasonable; OT/IT segmentation uneven across sites.' },
+        {
+          domain: 'Shopfloor connectivity',
+          score: 3,
+          note: 'Digital gauges live on 2 of 6 inspection stations; PLC data not yet centralised.',
+        },
+        {
+          domain: 'Data foundation',
+          score: 2,
+          note: 'No shared data layer; production, quality and supplier data sit in separate spreadsheets.',
+        },
+        {
+          domain: 'Process automation',
+          score: 2,
+          note: 'Manual changeovers and manual data entry dominate; one pilot automated cell on Line 3.',
+        },
+        {
+          domain: 'Predictive maintenance',
+          score: 1,
+          note: 'No condition-monitoring sensors deployed; maintenance is reactive/scheduled only.',
+        },
+        {
+          domain: 'Digital work instructions',
+          score: 2,
+          note: 'Standard work exists on paper; not consistently followed or version-controlled.',
+        },
+        {
+          domain: 'Cybersecurity (OT/IT)',
+          score: 3,
+          note: 'Perimeter and access controls reasonable; OT/IT segmentation uneven across sites.',
+        },
       ],
       recommendations: [
         'Prioritise a shared data foundation before adding further point solutions — several gaps trace back to this one root cause.',
@@ -432,7 +490,10 @@ export const NARZEDZIA: NarzedzieDane[] = [
         'Convert paper standard work to a version-controlled digital format alongside the changeover-time initiative.',
       ],
     },
-    answersJson: { assessor: 'daniel.osei', method: 'structured interview + shopfloor walk, 2 sites' },
+    answersJson: {
+      assessor: 'daniel.osei',
+      method: 'structured interview + shopfloor walk, 2 sites',
+    },
     contextSnapshot: { sites: ['Leeds', 'Rotherham'], scale: '1-5' },
   },
 ];
@@ -461,17 +522,49 @@ export const OSIE_DRD: Array<{ id: number; nazwa: string; poziom: number; skala:
 // KAŻDEGO z 39 obszarów.
 // ============================================================================
 export const DRD_OBSZARY_39 = [
-  '1A', '1B', '1C', '1D', '1E', '1F', '1G', '1H', '1I',
-  '2A', '2B', '2C', '2D', '2E',
-  '3A', '3B', '3C', '3D', '3E',
-  '4A', '4B', '4C', '4D', '4E',
-  '5A', '5B', '5C', '5D', '5E',
-  '6A', '6B', '6C', '6D', '6E',
-  '7A', '7B', '7C', '7D', '7E',
+  '1A',
+  '1B',
+  '1C',
+  '1D',
+  '1E',
+  '1F',
+  '1G',
+  '1H',
+  '1I',
+  '2A',
+  '2B',
+  '2C',
+  '2D',
+  '2E',
+  '3A',
+  '3B',
+  '3C',
+  '3D',
+  '3E',
+  '4A',
+  '4B',
+  '4C',
+  '4D',
+  '4E',
+  '5A',
+  '5B',
+  '5C',
+  '5D',
+  '5E',
+  '6A',
+  '6B',
+  '6C',
+  '6D',
+  '6E',
+  '7A',
+  '7B',
+  '7C',
+  '7D',
+  '7E',
 ] as const;
 
 const DRD_METHOD_PACK_ID = 'drd';
-const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.1';
+const DRD_METHOD_PACK_VERSION = '2.0.0-methodpack.2';
 const DRD_ANSWER_LEVEL = 3;
 const DRD_EVIDENCE_STRENGTH = 'E2';
 
@@ -501,15 +594,21 @@ async function main() {
     // --- KROK 0 (powtórzony w runtime): zależność od 01-rdzen.ts ------------
     const org = await c.query('SELECT 1 FROM organizations WHERE id = $1', [ORG_ID]);
     if (org.rows.length === 0) {
-      throw new Error(`Organizacja „${ORG_ID}" nie istnieje. Uruchom najpierw 01-rdzen.ts --apply.`);
+      throw new Error(
+        `Organizacja „${ORG_ID}" nie istnieje. Uruchom najpierw 01-rdzen.ts --apply.`
+      );
     }
-    const osoby = await c.query('SELECT id FROM users WHERE id = ANY($1)', [[JAMES, SARAH, ROBERT, DANIEL]]);
+    const osoby = await c.query('SELECT id FROM users WHERE id = ANY($1)', [
+      [JAMES, SARAH, ROBERT, DANIEL],
+    ]);
     if (osoby.rows.length !== 4) {
       throw new Error(
         `Brakuje ${4 - osoby.rows.length} z 4 wymaganych osób (James/Sarah/Robert/Daniel). Uruchom 01-rdzen.ts --apply.`
       );
     }
-    const projekty = await c.query('SELECT id FROM projects WHERE id = ANY($1)', [[PROJEKT_OEP, PROJEKT_DAR]]);
+    const projekty = await c.query('SELECT id FROM projects WHERE id = ANY($1)', [
+      [PROJEKT_OEP, PROJEKT_DAR],
+    ]);
     if (projekty.rows.length !== 2) {
       throw new Error('Brakuje projektów northwind. Uruchom 01-rdzen.ts --apply.');
     }
@@ -517,7 +616,9 @@ async function main() {
     // --- KROK 0: `tools` katalog globalny — sprawdź, że 3 wybrane tool_type
     // NAPRAWDĘ istnieją w bazie (premisa mierzona, nie zakładana). --------
     const wymaganeToolType = NARZEDZIA.map((n) => n.toolType);
-    const istniejaceTooly = await c.query('SELECT name FROM tools WHERE name = ANY($1)', [wymaganeToolType]);
+    const istniejaceTooly = await c.query('SELECT name FROM tools WHERE name = ANY($1)', [
+      wymaganeToolType,
+    ]);
     const istniejaceNazwy = new Set(istniejaceTooly.rows.map((r: { name: string }) => r.name));
     const brakujace = wymaganeToolType.filter((t) => !istniejaceNazwy.has(t));
     if (brakujace.length > 0) {
@@ -549,21 +650,31 @@ async function dryRun(c: PoolClient) {
   for (const w of WYWIADY) {
     const id = det('interview', w.slug);
     const istnieje = await c.query('SELECT 1 FROM interview_sessions WHERE id = $1', [id]);
-    console.log(`wywiad        ${w.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'} (${w.pytania.length} pytań)`);
+    console.log(
+      `wywiad        ${w.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'} (${w.pytania.length} pytań)`
+    );
   }
   for (const wn of WNIOSKI) {
     const id = det('insight', wn.slug);
     const istnieje = await c.query('SELECT 1 FROM interview_insights WHERE id = $1', [id]);
-    console.log(`wniosek       ${wn.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'}`);
+    console.log(
+      `wniosek       ${wn.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'}`
+    );
   }
   for (const n of NARZEDZIA) {
     const id = det('tool-session', n.slug);
     const istnieje = await c.query('SELECT 1 FROM tool_sessions WHERE id = $1', [id]);
-    console.log(`sesja narz.   ${n.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'} (tool_type=${n.toolType})`);
+    console.log(
+      `sesja narz.   ${n.slug.padEnd(38)} ${istnieje.rows.length ? 'bez zmian' : 'utworzy'} (tool_type=${n.toolType})`
+    );
   }
   const assessmentId = det('assessment', 'operational-maturity-2026');
-  const istniejeAssessment = await c.query('SELECT 1 FROM assessments WHERE id = $1', [assessmentId]);
-  console.log(`ocena         operational-maturity-2026              ${istniejeAssessment.rows.length ? 'bez zmian' : 'utworzy'}`);
+  const istniejeAssessment = await c.query('SELECT 1 FROM assessments WHERE id = $1', [
+    assessmentId,
+  ]);
+  console.log(
+    `ocena         operational-maturity-2026              ${istniejeAssessment.rows.length ? 'bez zmian' : 'utworzy'}`
+  );
 
   const drdSesja = await c.query(
     `SELECT 1 FROM method_sessions WHERE organization_id = $1 AND method_pack_id = $2 AND state = 'frozen' LIMIT 1`,
@@ -611,7 +722,12 @@ async function apply(c: PoolClient, databaseUrl: string) {
         JSON.stringify(w.pytania.slice(0, 3).map((p) => p.odpowiedz)),
         JSON.stringify(['No connected data foundation across production, quality and suppliers.']),
         JSON.stringify(['Floor space and change fatigue limit how fast a pilot can move.']),
-        JSON.stringify(w.pytania.filter((p) => p.kategoria !== 'wrapup').slice(0, 3).map((p) => p.odpowiedz)),
+        JSON.stringify(
+          w.pytania
+            .filter((p) => p.kategoria !== 'wrapup')
+            .slice(0, 3)
+            .map((p) => p.odpowiedz)
+        ),
         startedAt,
         startedAt,
         startedAt,
@@ -676,7 +792,16 @@ async function apply(c: PoolClient, databaseUrl: string) {
          status, source_session_count, created_by
        ) VALUES ($1,$2,$3,$4,$5,$6,'completed',$7,$8)
        ON CONFLICT (id) DO NOTHING`,
-      [insightId, ORG_ID, wn.title, wn.promptType, JSON.stringify(sourceSessionIds), wn.content, sourceSessionIds.length, JAMES]
+      [
+        insightId,
+        ORG_ID,
+        wn.title,
+        wn.promptType,
+        JSON.stringify(sourceSessionIds),
+        wn.content,
+        sourceSessionIds.length,
+        JAMES,
+      ]
     );
     insIns.rowCount ? lic.utworz() : lic.pomin();
   }
@@ -718,13 +843,27 @@ async function apply(c: PoolClient, databaseUrl: string) {
   const assessmentId = det('assessment', 'operational-maturity-2026');
   const answersJson = {
     drd: {
-      axes: OSIE_DRD.map((a) => ({ axisId: a.id, name: a.nazwa, achieved: a.poziom, target: Math.min(a.skala, a.poziom + 2), scale: a.skala })),
+      axes: OSIE_DRD.map((a) => ({
+        axisId: a.id,
+        name: a.nazwa,
+        achieved: a.poziom,
+        target: Math.min(a.skala, a.poziom + 2),
+        scale: a.skala,
+      })),
     },
   };
   const scoreSummary = {
     overall: { actual: 3.0, target: 5.0, gap: 2.0 },
-    topStrengths: ['Customer trust and technical precision', 'Two-site operating flexibility', 'Improving quality-production collaboration'],
-    topGaps: ['Real-time trustworthy production data', 'Connected quality/supplier data foundation', 'Predictive maintenance coverage'],
+    topStrengths: [
+      'Customer trust and technical precision',
+      'Two-site operating flexibility',
+      'Improving quality-production collaboration',
+    ],
+    topGaps: [
+      'Real-time trustworthy production data',
+      'Connected quality/supplier data foundation',
+      'Predictive maintenance coverage',
+    ],
     seeded: true,
   };
   const assessmentCreatedAt = new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString();
@@ -764,7 +903,12 @@ async function apply(c: PoolClient, databaseUrl: string) {
 
   const reportId = det('assessment-report', 'operational-maturity-2026');
   const axisData = {
-    axes: OSIE_DRD.map((a) => ({ axisId: a.id, name: a.nazwa, level: a.poziom, levelCount: a.skala })),
+    axes: OSIE_DRD.map((a) => ({
+      axisId: a.id,
+      name: a.nazwa,
+      level: a.poziom,
+      levelCount: a.skala,
+    })),
   };
   const rIns = await c.query(
     `INSERT INTO assessment_reports (
@@ -797,10 +941,14 @@ async function apply(c: PoolClient, databaseUrl: string) {
     [ORG_ID, DRD_METHOD_PACK_ID]
   );
   if (jużZamrożona.rows.length > 0) {
-    console.log('[odkrycie] method-core: sesja DRD już zamrożona dla northwind — pomijam (idempotentnie).');
+    console.log(
+      '[odkrycie] method-core: sesja DRD już zamrożona dla northwind — pomijam (idempotentnie).'
+    );
     lic.pomin();
   } else {
-    console.log('[odkrycie] method-core: tworzę sesję DRD przez prawdziwy HTTP router (39 obszarów)…');
+    console.log(
+      '[odkrycie] method-core: tworzę sesję DRD przez prawdziwy HTTP router (39 obszarów)…'
+    );
     await utworzZamrożonąSesjęDrd(c, databaseUrl);
     lic.utworz();
   }
@@ -859,7 +1007,9 @@ async function utworzZamrożonąSesjęDrd(c: PoolClient, databaseUrl: string): P
       projectId: PROJEKT_OEP,
     });
   if (createRes.status !== 201) {
-    throw new Error(`method-core create sesji nieudane: ${createRes.status} ${JSON.stringify(createRes.body)}`);
+    throw new Error(
+      `method-core create sesji nieudane: ${createRes.status} ${JSON.stringify(createRes.body)}`
+    );
   }
   const sessionId: string = createRes.body.session.id;
 
@@ -881,7 +1031,9 @@ async function utworzZamrożonąSesjęDrd(c: PoolClient, databaseUrl: string): P
       .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
       .send({ to });
     if (res.status !== 200) {
-      throw new Error(`method-core transition->${to} nieudane: ${res.status} ${JSON.stringify(res.body)}`);
+      throw new Error(
+        `method-core transition->${to} nieudane: ${res.status} ${JSON.stringify(res.body)}`
+      );
     }
   }
 
@@ -928,7 +1080,11 @@ async function utworzZamrożonąSesjęDrd(c: PoolClient, databaseUrl: string): P
       {
         type: 'EVIDENCE_ATTACHED',
         unitId,
-        payload: { evidenceId: `ev-${unitId}-${randomUUID()}`, evidenceType: 'document', strength: DRD_EVIDENCE_STRENGTH },
+        payload: {
+          evidenceId: `ev-${unitId}-${randomUUID()}`,
+          evidenceType: 'document',
+          strength: DRD_EVIDENCE_STRENGTH,
+        },
       },
       'evidence',
       unitId
@@ -973,7 +1129,10 @@ async function utworzZamrożonąSesjęDrd(c: PoolClient, databaseUrl: string): P
 type Asercja = { nazwa: string; oczekiwane: number; rzeczywiste: number };
 
 async function verify(c: PoolClient, pool: import('pg').Pool, url: string, oczekiwanyHost: string) {
-  const interviewSessions = await c.query('SELECT COUNT(*)::int AS n FROM interview_sessions WHERE organization_id = $1', [ORG_ID]);
+  const interviewSessions = await c.query(
+    'SELECT COUNT(*)::int AS n FROM interview_sessions WHERE organization_id = $1',
+    [ORG_ID]
+  );
   const interviewQuestions = await c.query(
     `SELECT COUNT(*)::int AS n FROM interview_questions q JOIN interview_sessions s ON s.id = q.session_id WHERE s.organization_id = $1`,
     [ORG_ID]
@@ -982,10 +1141,22 @@ async function verify(c: PoolClient, pool: import('pg').Pool, url: string, oczek
     `SELECT COUNT(*)::int AS n FROM interview_answers a JOIN interview_sessions s ON s.id = a.session_id WHERE s.organization_id = $1`,
     [ORG_ID]
   );
-  const insights = await c.query('SELECT COUNT(*)::int AS n FROM interview_insights WHERE organization_id = $1', [ORG_ID]);
-  const toolSessions = await c.query('SELECT COUNT(*)::int AS n FROM tool_sessions WHERE organization_id = $1', [ORG_ID]);
-  const assessments = await c.query('SELECT COUNT(*)::int AS n FROM assessments WHERE organization_id = $1', [ORG_ID]);
-  const assessmentReports = await c.query('SELECT COUNT(*)::int AS n FROM assessment_reports WHERE organization_id = $1', [ORG_ID]);
+  const insights = await c.query(
+    'SELECT COUNT(*)::int AS n FROM interview_insights WHERE organization_id = $1',
+    [ORG_ID]
+  );
+  const toolSessions = await c.query(
+    'SELECT COUNT(*)::int AS n FROM tool_sessions WHERE organization_id = $1',
+    [ORG_ID]
+  );
+  const assessments = await c.query(
+    'SELECT COUNT(*)::int AS n FROM assessments WHERE organization_id = $1',
+    [ORG_ID]
+  );
+  const assessmentReports = await c.query(
+    'SELECT COUNT(*)::int AS n FROM assessment_reports WHERE organization_id = $1',
+    [ORG_ID]
+  );
   const methodSessionsFrozen = await c.query(
     `SELECT COUNT(*)::int AS n FROM method_sessions WHERE organization_id = $1 AND method_pack_id = $2 AND state = 'frozen'`,
     [ORG_ID, DRD_METHOD_PACK_ID]
@@ -1014,15 +1185,51 @@ async function verify(c: PoolClient, pool: import('pg').Pool, url: string, oczek
   }
 
   const zestaw: Asercja[] = [
-    { nazwa: 'interview_sessions (northwind)', oczekiwane: oczekiwaneWywiady, rzeczywiste: interviewSessions.rows[0].n },
-    { nazwa: 'interview_questions (northwind)', oczekiwane: oczekiwanePytania, rzeczywiste: interviewQuestions.rows[0].n },
-    { nazwa: 'interview_answers (northwind, rollup)', oczekiwane: oczekiwaneWywiady, rzeczywiste: interviewAnswers.rows[0].n },
-    { nazwa: 'interview_insights (northwind)', oczekiwane: oczekiwaneWnioski, rzeczywiste: insights.rows[0].n },
-    { nazwa: 'tool_sessions (northwind)', oczekiwane: oczekiwaneNarzedzia, rzeczywiste: toolSessions.rows[0].n },
-    { nazwa: 'assessments (northwind)', oczekiwane: oczekiwaneJeden, rzeczywiste: assessments.rows[0].n },
-    { nazwa: 'assessment_reports (northwind)', oczekiwane: oczekiwaneJeden, rzeczywiste: assessmentReports.rows[0].n },
-    { nazwa: 'method_sessions frozen (northwind, drd)', oczekiwane: oczekiwaneJeden, rzeczywiste: methodSessionsFrozen.rows[0].n },
-    { nazwa: 'method_outputs (northwind, drd)', oczekiwane: oczekiwaneJeden, rzeczywiste: methodOutputs.rows[0].n },
+    {
+      nazwa: 'interview_sessions (northwind)',
+      oczekiwane: oczekiwaneWywiady,
+      rzeczywiste: interviewSessions.rows[0].n,
+    },
+    {
+      nazwa: 'interview_questions (northwind)',
+      oczekiwane: oczekiwanePytania,
+      rzeczywiste: interviewQuestions.rows[0].n,
+    },
+    {
+      nazwa: 'interview_answers (northwind, rollup)',
+      oczekiwane: oczekiwaneWywiady,
+      rzeczywiste: interviewAnswers.rows[0].n,
+    },
+    {
+      nazwa: 'interview_insights (northwind)',
+      oczekiwane: oczekiwaneWnioski,
+      rzeczywiste: insights.rows[0].n,
+    },
+    {
+      nazwa: 'tool_sessions (northwind)',
+      oczekiwane: oczekiwaneNarzedzia,
+      rzeczywiste: toolSessions.rows[0].n,
+    },
+    {
+      nazwa: 'assessments (northwind)',
+      oczekiwane: oczekiwaneJeden,
+      rzeczywiste: assessments.rows[0].n,
+    },
+    {
+      nazwa: 'assessment_reports (northwind)',
+      oczekiwane: oczekiwaneJeden,
+      rzeczywiste: assessmentReports.rows[0].n,
+    },
+    {
+      nazwa: 'method_sessions frozen (northwind, drd)',
+      oczekiwane: oczekiwaneJeden,
+      rzeczywiste: methodSessionsFrozen.rows[0].n,
+    },
+    {
+      nazwa: 'method_outputs (northwind, drd)',
+      oczekiwane: oczekiwaneJeden,
+      rzeczywiste: methodOutputs.rows[0].n,
+    },
   ];
 
   let ok = true;
@@ -1030,7 +1237,9 @@ async function verify(c: PoolClient, pool: import('pg').Pool, url: string, oczek
   for (const a of zestaw) {
     const pass = a.oczekiwane === a.rzeczywiste;
     if (!pass) ok = false;
-    console.log(`${pass ? 'OK  ' : 'FAIL'} ${a.nazwa.padEnd(42)} oczekiwano=${a.oczekiwane} rzeczywiste=${a.rzeczywiste}`);
+    console.log(
+      `${pass ? 'OK  ' : 'FAIL'} ${a.nazwa.padEnd(42)} oczekiwano=${a.oczekiwane} rzeczywiste=${a.rzeczywiste}`
+    );
   }
 
   if (!ok) {
@@ -1054,23 +1263,27 @@ async function reset(c: PoolClient) {
       `DELETE FROM method_findings WHERE output_id IN (SELECT id FROM method_outputs WHERE organization_id = $1)`,
       [ORG_ID]
     );
-    await c.query(
-      `DELETE FROM method_initiative_drafts WHERE organization_id = $1`,
-      [ORG_ID]
-    );
-    await c.query(
-      `DELETE FROM method_report_snapshots WHERE organization_id = $1`,
-      [ORG_ID]
-    );
+    await c.query(`DELETE FROM method_initiative_drafts WHERE organization_id = $1`, [ORG_ID]);
+    await c.query(`DELETE FROM method_report_snapshots WHERE organization_id = $1`, [ORG_ID]);
     await c.query(`DELETE FROM method_outputs WHERE organization_id = $1`, [ORG_ID]);
     await c.query(`DELETE FROM method_snapshots WHERE organization_id = $1`, [ORG_ID]);
     await c.query(`DELETE FROM method_session_roles WHERE organization_id = $1`, [ORG_ID]);
-    await c.query(`DELETE FROM method_session_role_events WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
-    await c.query(`DELETE FROM method_session_report_metadata WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
-    await c.query(`DELETE FROM method_session_create_idempotency WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
+    await c
+      .query(`DELETE FROM method_session_role_events WHERE organization_id = $1`, [ORG_ID])
+      .catch(() => {});
+    await c
+      .query(`DELETE FROM method_session_report_metadata WHERE organization_id = $1`, [ORG_ID])
+      .catch(() => {});
+    await c
+      .query(`DELETE FROM method_session_create_idempotency WHERE organization_id = $1`, [ORG_ID])
+      .catch(() => {});
     await c.query(`DELETE FROM method_events WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
-    await c.query(`DELETE FROM method_evidence WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
-    await c.query(`DELETE FROM method_approvals WHERE organization_id = $1`, [ORG_ID]).catch(() => {});
+    await c
+      .query(`DELETE FROM method_evidence WHERE organization_id = $1`, [ORG_ID])
+      .catch(() => {});
+    await c
+      .query(`DELETE FROM method_approvals WHERE organization_id = $1`, [ORG_ID])
+      .catch(() => {});
     await c.query(`DELETE FROM method_sessions WHERE organization_id = $1`, [ORG_ID]);
 
     // Assessment
@@ -1093,7 +1306,9 @@ async function reset(c: PoolClient) {
     await c.query(`DELETE FROM interview_sessions WHERE organization_id = $1`, [ORG_ID]);
 
     await c.query('COMMIT');
-    console.log('[odkrycie] reset: dane D2 dla northwind skasowane (tools katalog globalny nietknięty).');
+    console.log(
+      '[odkrycie] reset: dane D2 dla northwind skasowane (tools katalog globalny nietknięty).'
+    );
   } catch (err) {
     await c.query('ROLLBACK');
     throw err;

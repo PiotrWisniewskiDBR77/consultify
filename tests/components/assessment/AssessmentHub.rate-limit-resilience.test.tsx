@@ -84,9 +84,19 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
       {children}
     </div>
   ),
-  FilterableTable: ({ data, emptyMessage }: { data: Array<{ id: string; name: string }>; emptyMessage: string }) => (
+  FilterableTable: ({
+    data,
+    emptyMessage,
+  }: {
+    data: Array<{ id: string; name: string }>;
+    emptyMessage: string;
+  }) => (
     <div>
-      {data.length > 0 ? data.map((row) => <div key={row.id}>{row.name}</div>) : <div>{emptyMessage}</div>}
+      {data.length > 0 ? (
+        data.map((row) => <div key={row.id}>{row.name}</div>)
+      ) : (
+        <div>{emptyMessage}</div>
+      )}
     </div>
   ),
   GridView: ({ items }: { items: Array<{ id: string; name: string }> }) => (
@@ -204,13 +214,27 @@ describe('AssessmentHub rate limit resilience', () => {
 
   it('renders only the canonical contextual AI action in Menu 3', async () => {
     listMethodSessionsMock.mockResolvedValue({
-      sessions: [{
-        id: 'asm-method-1', organizationId: 'org-1', projectId: null,
-        module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
-        state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
-        createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
-        version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
-      }], total: 1,
+      sessions: [
+        {
+          id: 'asm-method-1',
+          organizationId: 'org-1',
+          projectId: null,
+          module: 'assessment',
+          methodPackId: 'drd',
+          methodPackVersion: '2.0.0-methodpack.2',
+          state: 'active',
+          domainStage: null,
+          mode: 'guided_manual',
+          ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z',
+          updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1,
+          frozenSnapshotId: null,
+          revisionOfSessionId: null,
+          hasFrozenOutput: false,
+        },
+      ],
+      total: 1,
     });
     apiMock.listAssessments.mockResolvedValue({ items: [] });
 

@@ -64,7 +64,7 @@ describe.skipIf(!REAL_DB)('Day 36 Metalpol seed DOCX — real router, JWT and Po
     await pool.query(
       `INSERT INTO method_sessions
        (id,organization_id,module,method_pack_id,method_pack_version,state,mode,owner_user_id)
-       VALUES ($1,$2,'assessment','drd','2.0.0-methodpack.1','active','guided_manual',$3)
+       VALUES ($1,$2,'assessment','drd','2.0.0-methodpack.2','active','guided_manual',$3)
        ON CONFLICT (id) DO NOTHING`,
       [emptySession, emptyOrg, emptyUser]
     );

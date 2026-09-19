@@ -5,7 +5,7 @@
  * na kopii danych stagingu). Paweł otworzył w zakładce „Ocena → Raporty" wiersz
  * podpisany `DBR77 Staging Assessment Executive Report` (status FINAL), a
  * dokument, który się otworzył, przedstawiał się jako
- * `DRD · 2.0.0-methodpack.1` / `Analiza gotowości AI` i raportował 0 z 39
+ * `DRD · 2.0.0-methodpack.2` / `Analiza gotowości AI` i raportował 0 z 39
  * obszarów. Wnioskiem właściciela było „raport otwiera obcą, pustą ocenę".
  *
  * ★ CO JEST NAPRAWDĘ (pomiar, nie hipoteza — `assessment_reports` na stagingu):
@@ -60,9 +60,7 @@ function tekstAlboNull(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function tozsamoscDokumentuRaportu(
-  wejscie: WejscieTozsamosciRaportu
-): TozsamoscRaportu {
+export function tozsamoscDokumentuRaportu(wejscie: WejscieTozsamosciRaportu): TozsamoscRaportu {
   const metodyka = `${wejscie.methodPackId.toUpperCase()}${
     wejscie.methodPackVersion ? ` · ${wejscie.methodPackVersion}` : ''
   }`;

@@ -27,10 +27,10 @@ function buildData(overrides: Partial<AssessmentReportData['output']> = {}): Ass
       snapshotId: 'snap-1',
       module: 'assessment',
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
       outputVersion: 1,
       revisionOfOutputId: null,
-      scope: 'Sesja sess-1 — drd@2.0.0-methodpack.1, zamrożona z event-store.',
+      scope: 'Sesja sess-1 — drd@2.0.0-methodpack.2, zamrożona z event-store.',
       current: { '1A': 4, '2A': null },
       target: { '1A': 6, '2A': 4 },
       gap: { '1A': 2, '2A': null },
@@ -58,7 +58,12 @@ function buildData(overrides: Partial<AssessmentReportData['output']> = {}): Ass
           targetLevel: 6,
           gap: 2,
           supportingEvidence: [
-            { evidenceId: 'ev-1', evidenceType: 'system_export', strength: 'E2', locator: 'vault://ev-1' },
+            {
+              evidenceId: 'ev-1',
+              evidenceType: 'system_export',
+              strength: 'E2',
+              locator: 'vault://ev-1',
+            },
           ],
           contradictingEvidence: [],
           businessMeaning: 'Sprzedaż rejestruje dane cyfrowo, brak automatyzacji kanału online.',
@@ -89,7 +94,7 @@ function buildData(overrides: Partial<AssessmentReportData['output']> = {}): Ass
       projectId: 'proj-1',
       module: 'assessment',
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
       state: 'frozen',
       domainStage: null,
       mode: 'guided_manual',
@@ -134,13 +139,17 @@ describe('AssessmentReportDocument', () => {
   it('renders the limitations block verbatim (never buried/omitted)', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     expect(
-      screen.getByText(/Output wygenerowany automatycznie z event-store — deterministyczne szablony\./)
+      screen.getByText(
+        /Output wygenerowany automatycznie z event-store — deterministyczne szablony\./
+      )
     ).toBeInTheDocument();
   });
 
   it('separates units without accepted evidence into their own "nie wiem" category, not a fabricated zero score', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    const section = screen.getByText(/Knowledge missing in the organisation/).closest('section') as HTMLElement;
+    const section = screen
+      .getByText(/Knowledge missing in the organisation/)
+      .closest('section') as HTMLElement;
     expect(section).toBeTruthy();
     // Chip is titled with the raw unit id even when a friendly structural
     // label resolves (DRD pack lookup) — assert on the stable `title`.
@@ -223,7 +232,9 @@ describe('AssessmentReportDocument', () => {
   });
 
   it('never leaks the crimson brand-accent class into signal/status markup', () => {
-    const { container } = render(<AssessmentReportDocument data={buildData({ demoBypassActive: true })} />);
+    const { container } = render(
+      <AssessmentReportDocument data={buildData({ demoBypassActive: true })} />
+    );
     // Built from parts on purpose — a literal crimson-token substring in
     // THIS file trips the repo's own triada-canon pre-commit guard, which
     // greps new file content for the banned pattern regardless of context.
@@ -237,8 +248,12 @@ describe('AssessmentReportDocument', () => {
   it('układa dokument w cztery numerowane rozdziały formuły właściciela', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     expect(screen.getByRole('heading', { name: /^1\. How the assessment was run$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^2\. The seven axes of the methodology$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^3\. Answers and the initial palette of conclusions$/ })).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: /^2\. The seven axes of the methodology$/ })
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: /^3\. Answers and the initial palette of conclusions$/ })
+    ).toBeTruthy();
     expect(screen.getByRole('heading', { name: /^4\. Summary$/ })).toBeTruthy();
   });
 
@@ -260,7 +275,9 @@ describe('AssessmentReportDocument', () => {
       expect(screen.getByRole('heading', { name: `${nr}. ${nazwa}` })).toBeTruthy();
     }
     // Oś bez ani jednego ocenionego obszaru zostaje w dokumencie i mówi to wprost.
-    expect(screen.getAllByText(/No area of this axis was covered by this assessment/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/No area of this axis was covered by this assessment/).length
+    ).toBeGreaterThan(0);
   });
 
   it('podpina definicję poziomu Z TEGO obszaru — nie z pierwszego obszaru osi', () => {
@@ -273,7 +290,12 @@ describe('AssessmentReportDocument', () => {
     // test (na danych z 1A, czyli areas[0], NIE wywracała — false green).
     render(
       <AssessmentReportDocument
-        data={buildData({ current: { '6C': 5 }, target: { '6C': 6 }, gap: { '6C': 1 }, findings: [] })}
+        data={buildData({
+          current: { '6C': 5 },
+          target: { '6C': 6 },
+          gap: { '6C': 1 },
+          findings: [],
+        })}
       />
     );
     // ★ FALA J3 (2026-09-14): oś 6 ma od dziś wariant angielski poziomu
@@ -342,7 +364,11 @@ describe('AssessmentReportDocument', () => {
   it('nie zostawia jednostki bez osi poza dokumentem', () => {
     render(
       <AssessmentReportDocument
-        data={buildData({ current: { '1A': 4, ZZ9: 2 }, target: { '1A': 6, ZZ9: 3 }, gap: { '1A': 2, ZZ9: 1 } })}
+        data={buildData({
+          current: { '1A': 4, ZZ9: 2 },
+          target: { '1A': 6, ZZ9: 3 },
+          gap: { '1A': 2, ZZ9: 1 },
+        })}
       />
     );
     expect(screen.getByRole('heading', { name: 'Units outside the axis structure' })).toBeTruthy();
