@@ -26,7 +26,7 @@
  * = 6 (liczba wierszy) zamiast 3 (liczba osób) -> test „chip Osoby liczy
  * OSOBY..." czerwony.
  */
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -299,6 +299,18 @@ describe('Zasoby — chipy liczą osoby, nie wiersze (P16-R0)', () => {
     await waitFor(() => expect(screen.getAllByText(/Anna Kowalska/).length).toBeGreaterThan(0));
     expect(screen.getAllByText(/Julia Zielińska/).length).toBeGreaterThan(0);
     expect(screen.queryAllByText(/Marek Nowak/).length).toBe(0);
+  });
+
+  it('preview przeciążonej osoby renderuje kanoniczny pill wykorzystania', async () => {
+    renderSurface({ activePreset: 'przeciazeni' });
+
+    await waitFor(() => expect(screen.getAllByText(/Anna Kowalska/).length).toBeGreaterThan(0));
+    fireEvent.click(screen.getAllByText(/Anna Kowalska/)[0]);
+
+    const workspace = screen.getByRole('region', { name: 'Table and preview workspace' });
+    await waitFor(() =>
+      expect(within(workspace).getAllByText(/Utilisation/).length).toBeGreaterThan(0)
+    );
   });
 
   it('preset "z-zalegloscia" filtruje wiersze do Marka (jedyna zaległość), bez Anny/Julii', async () => {
