@@ -90,7 +90,7 @@ import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { resolveTeresaWorkspaceContext } from '../../store/teresaEntityContext';
-import { useConversationStore } from '../../store/useConversationStore';
+import { useConversationStore, type ConversationMessage } from '../../store/useConversationStore';
 import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
 import { ROUTES } from '../../routes/routeConfig';
 import {
@@ -4854,7 +4854,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? [persistedConversationImage]
             : [];
 
-      const buildUserMessageMetadata = () =>
+      const buildUserMessageMetadata = (): ConversationMessage['metadata'] =>
         uploadedAttachments.length > 0 ||
         uploadedImages.length > 0 ||
         failedAttachments.length > 0 ||
@@ -4895,7 +4895,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'user',
             content,
             messageType: 'text',
-            metadata: buildUserMessageMetadata() as any,
+            metadata: buildUserMessageMetadata(),
           });
         } catch (err: any) {
           const status = err?.response?.status || err?.status;
@@ -4916,7 +4916,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 role: 'user',
                 content,
                 messageType: 'text',
-                metadata: buildUserMessageMetadata() as any,
+                metadata: buildUserMessageMetadata(),
               });
             } catch (recoveryErr) {
               console.error(

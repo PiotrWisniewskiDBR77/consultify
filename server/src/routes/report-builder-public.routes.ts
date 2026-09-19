@@ -12,7 +12,7 @@ import path from 'path';
 import PDFDocument from 'pdfkit';
 
 import config from '../config/Config.js';
-import ReportBuilderService from '../services/reportBuilderService.js';
+import ReportBuilderService, { type SectionRecord } from '../services/reportBuilderService.js';
 import { resolveReportExportLocale } from '../services/report/exportLocale.js';
 import { buildAttachmentContentDisposition } from '../utils/contentDisposition.js';
 import logger from '../utils/Logger.js';
@@ -403,9 +403,9 @@ router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction
     const fileName = `public-${token}-${Date.now()}.pdf`;
     const filePath = path.join(exportDir, fileName);
 
-    const enabledSections = result.sections
-      .filter((s) => s.enabled)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
+    const enabledSections: SectionRecord[] = result.sections
+      .filter((s: SectionRecord) => s.enabled)
+      .sort((a: SectionRecord, b: SectionRecord) => a.orderIndex - b.orderIndex);
 
     await writePublicReportPdf(
       result.report,
@@ -471,9 +471,9 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
     const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
     const pipeline = new PptxPipelineService();
 
-    const enabledSections = result.sections
-      .filter((s) => s.enabled)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
+    const enabledSections: SectionRecord[] = result.sections
+      .filter((s: SectionRecord) => s.enabled)
+      .sort((a: SectionRecord, b: SectionRecord) => a.orderIndex - b.orderIndex);
 
     const reportConfig =
       typeof result.report.config === 'string'
@@ -487,7 +487,7 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
     const exportLocale = await resolveReportExportLocale(req, {
       explicit: req.query.language,
       report: { language: reportConfig.language },
-      sections: enabledSections as any,
+      sections: enabledSections,
     });
 
     const pptxResult = await pipeline.generateFromLegacyReport(
@@ -568,9 +568,9 @@ router.get('/:token/docx', async (req: Request, res: Response, next: NextFunctio
 
     // For now, generate a basic DOCX using the same PDF approach but as DOCX
     // We delegate to the authenticated export endpoint pattern
-    const enabledSections = result.sections
-      .filter((s) => s.enabled)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
+    const enabledSections: SectionRecord[] = result.sections
+      .filter((s: SectionRecord) => s.enabled)
+      .sort((a: SectionRecord, b: SectionRecord) => a.orderIndex - b.orderIndex);
 
     // Generate DOCX (real .docx)
     const exportDir = await ensureExportDir();
