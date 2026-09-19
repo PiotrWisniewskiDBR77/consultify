@@ -1975,9 +1975,11 @@ describe('UnifiedChatPanel (L2)', () => {
         conversationId: 'conv-1',
         role: 'ai',
         content:
-          '⚠️ Teresa is temporarily unavailable. Please try again in a moment. If the problem persists, start a new chat or refresh the view.',
+          '⚠️ The assistant could not complete this request. Try again. If it keeps happening, contact your administrator.',
+        messageType: 'text',
         metadata: expect.objectContaining({
-          error: 'provider boot failed',
+          error: 'AI_ERROR',
+          aiProviderError: expect.objectContaining({ code: 'AI_ERROR' }),
         }),
       })
     );
