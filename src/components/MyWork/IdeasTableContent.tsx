@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
+import type { TableRow } from '@/components/shared/ModuleHub/FilterableTable';
 import {
   type TableSettingsColumn,
   TableSettingsPopover,
@@ -33,7 +35,11 @@ import {
 } from '@/components/shared/selectionTokens';
 import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { normalizeRowActionSections } from '@/components/standard/StandardTable';
+import {
+  type StandardTableColumn,
+  StandardTable,
+  normalizeRowActionSections,
+} from '@/components/standard/StandardTable';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import type {
   ColumnDef,
@@ -42,11 +48,12 @@ import type {
   TableFilters,
 } from '@/components/ui/ResizableTable';
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
+import { isListCanonV2Enabled } from '@/config/listCanonV2';
 
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
 import { IdeaPreviewBody, IdeaPreviewFooter } from './IdeaPreview';
 import { formatIdeaDate, getToolMeta } from './ideaPreviewMeta';
-import { IdeaStageSelectCell } from './IdeaStageSelectCell';
+import { IDEA_STAGE_ORDER, IdeaStageSelectCell } from './IdeaStageSelectCell';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
@@ -86,6 +93,18 @@ const IDEAS_RESIZE_BOUNDS: Record<IdeasResizableColumn, { min: number; max: numb
   tool: { min: 150, max: 260 },
   date: { min: 110, max: 150 },
 };
+
+/**
+ * Etykieta kolumny opcjonalnej z JEDNEGO słownika `IDEAS_TABLE_OPTIONAL_COLUMNS`
+ * — czytają ją nagłówek bespoke, pstryczek `TableSettingsPopover` i kolumny
+ * kanonicznego `StandardTable` (list-canon-v2), więc żaden z nich nie niesie
+ * własnego duplikatu tekstu PL/EN.
+ */
+function optionalIdeaColumnLabel(id: IdeasTableOptionalColumn, isPolish: boolean): string {
+  const entry = IDEAS_TABLE_OPTIONAL_COLUMNS.find((column) => column.id === id);
+  if (!entry) return '';
+  return isPolish ? entry.labelPl : entry.label;
+}
 
 function loadHiddenIdeaColumns(): IdeasTableOptionalColumn[] {
   try {
@@ -151,6 +170,38 @@ function persistIdeaPreviewDismissed(dismissed: boolean) {
   try {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem(IDEAS_TABLE_PREVIEW_DISMISSED_STORAGE_KEY, String(dismissed));
+  } catch {
+    /* ignore persistence errors */
+  }
+}
+
+// ── list-canon-v2 (Wpis 182, kanon TRIADA §2) ───────────────────────────────
+// Klucz persystencji układu kolumn = kanoniczny klucz powierzchni T01
+// (TABLE_SURFACE_REGISTER, My Work / Ideas). `surfaceId` celowo NIE jest
+// przekazywany do fasady: kontrakt T01 wymaga kolumn `status`/`owner`/
+// `updatedAt`, których lista pomysłów nie ma (etap idei to `stage`, właściciel
+// nie jest kolumną), więc `assertContractInDev` logowałby naruszenia kontraktu
+// na każdym renderze — a bramka zrzutów wymaga `bledyKonsoli=0`.
+const IDEAS_CANON_PERSIST_KEY = 'my-work.ideas';
+
+/** Klucz, pod którym `StandardTable` trzyma przełącznik „opis w wierszu". */
+const IDEAS_CANON_ROW_DESCRIPTION_KEY = `standardTable.rowDesc.${IDEAS_CANON_PERSIST_KEY}`;
+
+/**
+ * Fasada domyślnie NIE pokazuje opisu wiersza, ta tabela domyślnie pokazuje
+ * (`loadIdeaRowDescriptionSetting` → true). Bez jednokrotnego przeniesienia
+ * ustawienia wiersz PO straciłby drugą linię tytułu, którą właściciel ma
+ * włączoną od miesięcy. Zapis tylko gdy klucz jest pusty — późniejsze decyzje
+ * użytkownika (pstryczek fasady) nie są nadpisywane.
+ */
+function seedCanonRowDescriptionPreference() {
+  try {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem(IDEAS_CANON_ROW_DESCRIPTION_KEY) !== null) return;
+    window.localStorage.setItem(
+      IDEAS_CANON_ROW_DESCRIPTION_KEY,
+      loadIdeaRowDescriptionSetting() ? '1' : '0'
+    );
   } catch {
     /* ignore persistence errors */
   }
@@ -252,6 +303,23 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onDeleteIdea,
   onRefresh,
 }) => {
+  /**
+   * list-canon-v2 (Wpis 182): kanoniczna tabela `StandardTable` ZA FLAGĄ
+   * `ff_listCanonV2`, domyślnie OFF — bespoke tabela poniżej zostaje renderem
+   * domyślnym, dopóki właściciel nie zaakceptuje karty PRZED/PO. Odczyt raz na
+   * montowanie: flaga jest przełącznikiem operatora/builda, nie stanem UI.
+   */
+  const [canonV2] = useState<boolean>(() => {
+    const enabled = isListCanonV2Enabled('ideas');
+    if (enabled) seedCanonRowDescriptionPreference();
+    return enabled;
+  });
+
+  // Etykiety współdzielone przez obie gałęzie (stara tabela + kanon) — jedno
+  // źródło tekstu, zero duplikatów literałów PL/EN.
+  const titleLabel = isPolish ? 'Tytuł' : 'Title';
+  const showPanelLabel = isPolish ? 'Pokaż panel' : 'Show panel';
+
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
   /**
    * Uwaga właściciela 05.09 — panel prawy „powinien być zamykany jak nie jest
@@ -372,6 +440,489 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const ideaIds = useMemo(() => ideas.map((idea) => idea.id), [ideas]);
 
+  /**
+   * Sekcje kebaba wiersza — JEDNO źródło dla obu gałęzi renderu (bespoke
+   * tabela i kanoniczny `StandardTable`, list-canon-v2 Wpis 182). Bez tego
+   * wydzielenia kanon musiałby skopiować 180 linii deklaracji akcji, a każda
+   * przyszła pozycja menu rozjechałaby się między gałęziami.
+   */
+  const buildRowActionSections = useCallback(
+    (idea: MyIdea, index: number): RowActionSection[] => [
+      {
+        id: 'open',
+        kind: 'open',
+        actions: [
+          {
+            id: 'open',
+            label: isPolish ? 'Otwórz' : 'Open',
+            icon: ExternalLink,
+            onClick: () => onOpenIdea(idea),
+          },
+          {
+            id: 'flow',
+            label: isPolish ? 'Diagram procesu' : 'Process Flow',
+            icon: Workflow,
+            onClick: () => onOpenIdeaInProcessFlow(idea),
+          },
+        ],
+      },
+      {
+        id: 'ai',
+        kind: 'ai',
+        actions: [
+          {
+            id: 'ai_chat',
+            label: isPolish ? 'Czat AI' : 'AI Chat',
+            icon: MessageSquare,
+            onClick: () => onOpenIdeaAiChat?.(idea),
+            disabled: !onOpenIdeaAiChat,
+          },
+          {
+            id: 'ai_insights',
+            label: isPolish ? 'Wglądy AI' : 'AI Insights',
+            icon: Bot,
+            onClick: () => onOpenIdeaAiInsights?.(idea),
+            disabled: !onOpenIdeaAiInsights,
+          },
+        ],
+      },
+      {
+        id: 'convert',
+        kind: 'convert',
+        label: isPolish ? 'Konwertuj do' : 'Convert to',
+        actions: [
+          {
+            id: 'convert_initiative',
+            label: isPolish ? 'Inicjatywa' : 'Initiative',
+            icon: Rocket,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'initiative')
+                : onStartConvert(idea),
+          },
+          {
+            id: 'convert_tasks',
+            label: isPolish ? 'Zadania' : 'Tasks',
+            icon: CheckCircle2,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'task_set')
+                : onStartConvert(idea),
+          },
+          {
+            id: 'convert_decision',
+            label: isPolish ? 'Decyzja' : 'Decision',
+            icon: Star,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'decision')
+                : onStartConvert(idea),
+          },
+          {
+            id: 'convert_team_chat',
+            label: isPolish ? 'Czat zespołu' : 'Team Chat',
+            icon: MessageSquarePlus,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'team_chat')
+                : onStartConvert(idea),
+          },
+        ],
+      },
+      // Create output — przed strefami manage (canon §17: …Convert · Create output · Manage · Danger).
+      {
+        id: 'output',
+        kind: 'output',
+        actions: [
+          {
+            // Z3 audit (2026-07-24): 'presentation' jest `status: 'live'`
+            // w SSOT (ideaConvertTargets.ts) i ma realny handler na
+            // serwerze (server/src/routes/my-work.routes.ts, gałąź
+            // `target === 'presentation'` — tworzy rekord w `presentations`
+            // + link graph). Wcześniejszy `disabled: true` + „wkrótce" był
+            // atrapą obiecującą funkcję, która już działa — usunięte.
+            id: 'output_presentation',
+            label: isPolish ? 'Prezentacja' : 'Presentation',
+            icon: Presentation,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'presentation')
+                : onStartConvert(idea),
+          },
+          {
+            // Z3 audit (2026-07-24): 'report' jest `status: 'live'` w SSOT
+            // i ma realny handler na serwerze (`target === 'report'` —
+            // tworzy rekord w `reports` + link graph). Odblokowane z tego
+            // samego powodu co Prezentacja powyżej.
+            id: 'output_report',
+            label: isPolish ? 'Raport' : 'Report',
+            icon: FileText,
+            onClick: () =>
+              onConvertIdeaToTarget
+                ? onConvertIdeaToTarget(idea, 'report')
+                : onStartConvert(idea),
+          },
+        ],
+      },
+      ...(folders && onMoveToFolder
+        ? [
+            {
+              id: 'folder',
+              kind: 'manage' as const,
+              label: 'Folder',
+              actions: [
+                {
+                  id: 'folder-none',
+                  label: isPolish ? 'Bez folderu' : 'No folder',
+                  icon: FolderMinus,
+                  onClick: () => onMoveToFolder(idea, null),
+                  disabled: !(idea as any).folderId,
+                },
+                ...folders.map((f) => ({
+                  id: `folder-${f.id}`,
+                  label: f.name,
+                  icon: Folder,
+                  onClick: () => onMoveToFolder(idea, f.id),
+                  rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
+                })),
+              ],
+            },
+          ]
+        : []),
+      // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
+      // Ideas have no `due_date`, so the Delay slot (pos. 4) is N/A.
+      {
+        id: 'fixed',
+        kind: 'manage',
+        actions: [
+          {
+            id: 'open-preview',
+            label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+            icon: ChevronRight,
+            onClick: () => {
+              // Kebab = prośba wprost o podgląd — zdejmij zamknięcie,
+              // żeby zwykły klik w wiersz znów otwierał panel.
+              setPreviewDismissed(false);
+              persistIdeaPreviewDismissed(false);
+              setPreviewIdeaId(idea.id);
+              onFocusIndexChange(index);
+            },
+          },
+          {
+            id: 'edit',
+            label: isPolish ? 'Edytuj' : 'Edit',
+            icon: Edit2,
+            onClick: () => onOpenIdea(idea),
+          },
+        ],
+      },
+      {
+        id: 'danger',
+        kind: 'danger',
+        actions: [
+          {
+            id: 'delete',
+            label: isPolish ? 'Usuń' : 'Delete',
+            icon: Trash2,
+            variant: 'danger',
+            onClick: () => onDeleteIdea(idea),
+          },
+        ],
+      },
+    ],
+    [
+      isPolish,
+      folders,
+      onMoveToFolder,
+      onOpenIdea,
+      onOpenIdeaInProcessFlow,
+      onOpenIdeaAiChat,
+      onOpenIdeaAiInsights,
+      onConvertIdeaToTarget,
+      onStartConvert,
+      onDeleteIdea,
+      onFocusIndexChange,
+    ]
+  );
+
+  /**
+   * Komórka tytułu (gwiazdka + tytuł) — współdzielona przez bespoke tabelę i
+   * kanoniczny `StandardTable` (list-canon-v2), żeby etykiety/aria-labels miały
+   * JEDNO źródło.
+   */
+  const renderTitleCell = (idea: MyIdea) => (
+    <div className="flex items-center gap-1.5">
+      {onToggleFavorite ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(idea.id);
+          }}
+          aria-label={
+            isFavorite?.(idea.id)
+              ? isPolish
+                ? 'Usuń z oznaczonych'
+                : 'Remove from starred'
+              : isPolish
+                ? 'Oznacz gwiazdką'
+                : 'Star'
+          }
+          aria-pressed={isFavorite?.(idea.id) ?? false}
+          className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          <Star
+            size={14}
+            className={isFavorite?.(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+          />
+        </button>
+      ) : null}
+      <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
+        {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+      </div>
+    </div>
+  );
+
+  /** Komórka etapu — P-T14: zmiana etapu jednym otwarciem listy, bez kebaba. */
+  const renderStageCell = (idea: MyIdea) => (
+    <IdeaStageSelectCell
+      stage={idea.stage}
+      isPolish={isPolish}
+      ideaTitle={idea.title}
+      onChangeStage={onChangeStage ? (stage) => onChangeStage(idea, stage) : undefined}
+    />
+  );
+
+  /**
+   * „Pokaż panel" — wspólne dla obu gałęzi: bespoke chowa ten przycisk w
+   * przyklejonym nagłówku kolumny akcji, kanon wykłada go nad tabelą (nagłówek
+   * należy już do jądra). Zachowanie identyczne: zdejmij zamknięcie sesji i
+   * otwórz podgląd wiersza skupionego albo pierwszego.
+   */
+  const handleShowPanel = useCallback(() => {
+    setPreviewDismissed(false);
+    persistIdeaPreviewDismissed(false);
+    const target = (focusedIndex >= 0 ? ideas[focusedIndex] : undefined) ?? ideas[0];
+    if (target) setPreviewIdeaId(target.id);
+  }, [focusedIndex, ideas]);
+
+  /* ── list-canon-v2: deklaracje kanonicznej tabeli (czyta je `StandardTable`) ── */
+
+  const canonFilterableColumns = useMemo(
+    () => [
+      { id: 'stage' as const, options: availableStageOptions },
+      { id: 'tags' as const, options: availableTagOptions },
+      { id: 'tool' as const, options: availableToolOptions },
+    ],
+    [availableStageOptions, availableTagOptions, availableToolOptions]
+  );
+
+  /**
+   * Czipki filtrów w formacie jądra (`FilterableTable.handleColumnFilter` buduje
+   * dokładnie `${column.id}-${value}`), z etykietą i kolorem z tych samych opcji,
+   * które czyta lejek — stan „filtr aktywny" jest więc spójny w obu miejscach.
+   */
+  const canonActiveFilters = useMemo<FilterChip[]>(
+    () =>
+      canonFilterableColumns.flatMap(({ id, options }) =>
+        ((tableFilters[id] as string[] | undefined) ?? []).map((value) => {
+          const option = options.find((item) => item.value === value);
+          return {
+            id: `${id}-${value}`,
+            column: id,
+            value,
+            label: option?.label || value,
+            color: option?.color,
+          };
+        })
+      ),
+    [canonFilterableColumns, tableFilters]
+  );
+
+  /**
+   * Jądro oddaje PEŁNĄ listę czipków po zmianie któregokolwiek lejka; kontrakt
+   * rodzica (`onTableFilterChange`) jest per kolumna, więc tłumaczymy tylko te
+   * kolumny, których wartości realnie się zmieniły.
+   */
+  const handleCanonFilterChange = useCallback(
+    (nextFilters: FilterChip[]) => {
+      canonFilterableColumns.forEach(({ id }) => {
+        const nextValues = nextFilters
+          .filter((chip) => chip.column === id)
+          .map((chip) => chip.value);
+        const currentValues = (tableFilters[id] as string[] | undefined) ?? [];
+        const unchanged =
+          nextValues.length === currentValues.length &&
+          nextValues.every((value, position) => value === currentValues[position]);
+        if (unchanged) return;
+        onTableFilterChange(id, nextValues);
+      });
+    },
+    [canonFilterableColumns, onTableFilterChange, tableFilters]
+  );
+
+  /**
+   * Wartości kolumn są znormalizowane DOKŁADNIE tak, jak filtruje rodzic
+   * (`MyIdeasListContent.filteredIdeas`: `stage || 'spark'`,
+   * `preferredTool || 'mindmap'` lowercase, tagi lowercase). Jądro filtruje
+   * wiersze drugi raz po `activeFilters` — bez tej zgodności drugie sito
+   * gubiłoby wiersze, które rodzic zostawił. Pełna encja jedzie w `row.idea`
+   * (oryginalna wielkość liter tagów dla czipków).
+   */
+  const canonRows = useMemo<TableRow[]>(
+    () =>
+      ideas.map((idea, index) => ({
+        ...idea,
+        idea,
+        rowIndex: index,
+        title: idea.title || '',
+        stage: String(idea.stage || 'spark'),
+        tags: (idea.tags || []).map((tag) => String(tag).toLowerCase()),
+        tool: String(idea.preferredTool || 'mindmap').toLowerCase(),
+        date: idea.updatedAt || idea.createdAt || '',
+      })) as unknown as TableRow[],
+    [ideas]
+  );
+
+  /**
+   * Latest-ref dla dwóch rendererów, które zamykają propsy o nowych tożsamościach
+   * co render rodzica (`isFavorite`/`onToggleFavorite`/`onChangeStage`). Bez tego
+   * musiałyby trafić do zależności `canonColumns`, a jądro ma efekt spięty z
+   * tożsamością kolumn (`FilterableTable.tsx:1255` → `setColumnConfigs`/
+   * `setColumnWidths` z `defaultColumnConfigs`) — nowa tablica kolumn na każdy
+   * render rodzica nakręcałaby pętlę stanów. Ref czyta wartość z BIEŻĄCEGO
+   * renderu, więc świeżość zostaje, tożsamość kolumn nie.
+   */
+  const renderTitleCellRef = useRef(renderTitleCell);
+  renderTitleCellRef.current = renderTitleCell;
+  const renderStageCellRef = useRef(renderStageCell);
+  renderStageCellRef.current = renderStageCell;
+
+  const canonColumns = useMemo<StandardTableColumn[]>(
+    () => [
+      {
+        id: 'title',
+        label: titleLabel,
+        dataType: 'text',
+        primary: true,
+        sortable: true,
+        width: `${columnWidths.title}px`,
+        render: (row: TableRow) => renderTitleCellRef.current(row.idea as MyIdea),
+      },
+      {
+        id: 'stage',
+        label: optionalIdeaColumnLabel('stage', isPolish),
+        dataType: 'status',
+        filterable: true,
+        filterOptions: availableStageOptions,
+        sortable: true,
+        /* Kolejność cyklu życia idei (IDEA_STAGE_ORDER), nie alfabet — 1:1 z
+           komparatorem rodzica (`MyIdeasListContent.sortedIdeas`). */
+        sortAccessor: (row: TableRow) =>
+          Math.max(0, IDEA_STAGE_ORDER.indexOf(row.stage as IdeaStage)),
+        defaultVisible: isColumnVisible('stage'),
+        width: `${columnWidths.stage}px`,
+        render: (row: TableRow) => renderStageCellRef.current(row.idea as MyIdea),
+      },
+      {
+        id: 'tags',
+        label: optionalIdeaColumnLabel('tags', isPolish),
+        dataType: 'text',
+        filterable: true,
+        filterOptions: availableTagOptions,
+        sortable: true,
+        sortAccessor: (row: TableRow) => ((row.idea as MyIdea).tags || [])[0] || '',
+        defaultVisible: isColumnVisible('tags'),
+        width: `${columnWidths.tags}px`,
+        render: (row: TableRow) => renderTagBadges((row.idea as MyIdea).tags),
+      },
+      {
+        id: 'tool',
+        label: optionalIdeaColumnLabel('tool', isPolish),
+        dataType: 'text',
+        filterable: true,
+        filterOptions: availableToolOptions,
+        sortable: true,
+        defaultVisible: isColumnVisible('tool'),
+        width: `${columnWidths.tool}px`,
+        render: (row: TableRow) => renderToolBadge((row.idea as MyIdea).preferredTool),
+      },
+      {
+        id: 'date',
+        label: optionalIdeaColumnLabel('date', isPolish),
+        dataType: 'date',
+        sortable: true,
+        defaultVisible: isColumnVisible('date'),
+        width: `${columnWidths.date}px`,
+        render: (row: TableRow) => (
+          <span className="text-[11px] font-medium leading-5 text-c-text-muted">
+            {formatIdeaDate(row.idea as MyIdea)}
+          </span>
+        ),
+      },
+    ],
+    /* Renderery komórek (renderTitleCell/renderStageCell/renderTagBadges/
+       renderToolBadge) to zwykłe funkcje odtwarzane co render, więc nie mają
+       sensu jako zależności — kolumny i tak muszą się przeliczyć, gdy zmieni się
+       którakolwiek z czytanych tu wartości. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      availableStageOptions,
+      availableTagOptions,
+      availableToolOptions,
+      columnWidths.date,
+      columnWidths.stage,
+      columnWidths.tags,
+      columnWidths.title,
+      columnWidths.tool,
+      isColumnVisible,
+      isPolish,
+      titleLabel,
+    ]
+  );
+
+  /**
+   * Zaznaczenie: jądro oddaje pełny zbiór, rodzic ma trzy osobne callbacki.
+   * Pusty zbiór → `onClearSelection`, pełny → `onSelectAllVisible`, reszta →
+   * `onToggleSelect` dla każdego wiersza z różnicy symetrycznej (rodzic używa
+   * funkcyjnego `setState`, więc seria wywołań składa się poprawnie).
+   */
+  const handleCanonSelectionChange = useCallback(
+    (nextIds: Set<string>) => {
+      if (nextIds.size === 0) {
+        if (selectedIds.size > 0) onClearSelection();
+        return;
+      }
+      if (
+        ideas.length > 0 &&
+        nextIds.size === ideas.length &&
+        ideas.every((idea) => nextIds.has(idea.id)) &&
+        selectedIds.size < ideas.length
+      ) {
+        onSelectAllVisible();
+        return;
+      }
+      const toggled = [
+        ...[...nextIds].filter((id) => !selectedIds.has(id)),
+        ...[...selectedIds].filter((id) => !nextIds.has(id)),
+      ];
+      toggled.forEach((id) => onToggleSelect(id));
+    },
+    [ideas, onClearSelection, onSelectAllVisible, onToggleSelect, selectedIds]
+  );
+
+  /** Warstwy stanu wiersza — 1:1 z ternary bespoke `<tr>` (podgląd/zaznaczenie przed fokusem). */
+  const canonRowClassName = useCallback(
+    (row: TableRow): string => {
+      const idea = row.idea as MyIdea;
+      if (previewIdeaId === idea.id || selectedIds.has(idea.id)) return SELECTED_ROW_CLASS;
+      if (focusedIndex === (row.rowIndex as number)) return FOCUSED_ROW_CLASS;
+      return '';
+    },
+    [focusedIndex, previewIdeaId, selectedIds]
+  );
+
+
   // S18-NOOVERLAP (2026-08-12) — closes the Updated/actions column-overlap
   // regression the owner rejected. Two independent defects, both measured
   // in a real browser (dev-render/measure-idea-table-overlap.mjs against
@@ -480,7 +1031,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const stageColumn: ColumnDef = useMemo(
     () => ({
       id: 'stage',
-      label: isPolish ? 'Etap' : 'Stage',
+      label: optionalIdeaColumnLabel('stage', isPolish),
       width: columnWidths.stage,
       minWidth: 120,
       maxWidth: 180,
@@ -495,7 +1046,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const toolColumn: ColumnDef = useMemo(
     () => ({
       id: 'tool',
-      label: isPolish ? 'Narzędzie' : 'Tool',
+      label: optionalIdeaColumnLabel('tool', isPolish),
       width: columnWidths.tool,
       minWidth: 150,
       maxWidth: 220,
@@ -510,7 +1061,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const tagsColumn: ColumnDef = useMemo(
     () => ({
       id: 'tags',
-      label: isPolish ? 'Tagi' : 'Tags',
+      label: optionalIdeaColumnLabel('tags', isPolish),
       width: columnWidths.tags,
       minWidth: 140,
       maxWidth: 260,
@@ -541,8 +1092,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     }
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
+    // `flex-wrap`, nie `flex-nowrap overflow-hidden`: jądro kanonu dociska
+    // szerokość kolumny do POMIARU TEKSTU (każdy chip liczy jako osobna linia),
+    // więc przy dwóch chipach kolumna bywa węższa niż ich rząd — bez zawijania
+    // drugi chip ucinałby się w pół słowa, bez wielokropka.
     return (
-      <div className="flex min-w-0 flex-nowrap items-center justify-start gap-1 overflow-hidden">
+      <div className="flex min-w-0 flex-wrap items-center justify-start gap-1">
         {tags.slice(0, max).map((tag) => (
           <MetaChip key={tag} label={tag} />
         ))}
@@ -683,6 +1238,55 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
+        {canonV2 ? (
+          <div className="flex flex-col gap-2">
+            {/*
+              „Pokaż panel" w kanonie jedzie NAD tabelą, nie w przyklejonym
+              nagłówku kolumny akcji: nagłówek (i jego geometria) należy już do
+              jądra, a zachowanie przycisku jest wspólne (`handleShowPanel`).
+            */}
+            {previewDismissed ? (
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handleShowPanel}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-slate-900/[0.06] hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] dark:hover:bg-white/10"
+                  aria-label={showPanelLabel}
+                  title={showPanelLabel}
+                >
+                  <PanelRight size={14} />
+                  <span>{showPanelLabel}</span>
+                </button>
+              </div>
+            ) : null}
+            <StandardTable
+              columns={canonColumns}
+              data={canonRows}
+              selectedRowId={previewIdeaId}
+              onRowClick={(row) => {
+                onFocusIndexChange(row.rowIndex as number);
+                /* Panel świadomie zamknięty w tej sesji — zwykły klik go nie
+                   otwiera (uwaga właściciela 05.09); fokus wiersza działa dalej. */
+                if (!previewDismissed) setPreviewIdeaId(String(row.id));
+              }}
+              onRowDoubleClick={(row) => onOpenIdea(row.idea as MyIdea)}
+              rowActions={(row) =>
+                buildRowActionSections(row.idea as MyIdea, row.rowIndex as number)
+              }
+              rowDescription={(row) => (row.idea as MyIdea).body || null}
+              rowClassName={canonRowClassName}
+              selection={{ selectedIds, onChange: handleCanonSelectionChange }}
+              activeFilters={canonActiveFilters}
+              onFilterChange={handleCanonFilterChange}
+              defaultSort={{ columnId: sortField, direction: sortDir }}
+              persistKey={IDEAS_CANON_PERSIST_KEY}
+              /* Bez `p-4` fasady: `TableWithPreviewLayout` daje własny scroller
+                 (`overflow-auto pr-2`), a bespoke tabela siedzi w nim bez
+                 dodatkowego paddingu — PRZED/PO musi mieć tę samą geometrię. */
+              canvasClassName=""
+            />
+          </div>
+        ) : (
         <div
           ref={tableWrapperRef}
           className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl"
@@ -725,7 +1329,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     onClick={() => onSort('title')}
                     className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
-                    {isPolish ? 'Tytuł' : 'Title'}
+                    {titleLabel}
                     <SortIndicator active={sortField === 'title'} direction={sortDir} />
                   </button>
                   <ColumnResizer
@@ -867,7 +1471,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onClick={() => onSort('date')}
                       className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
-                      {isPolish ? 'Data' : 'Updated'}
+                      {optionalIdeaColumnLabel('date', isPolish)}
                       <SortIndicator active={sortField === 'date'} direction={sortDir} />
                     </button>
                     <ColumnResizer
@@ -939,28 +1543,20 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     {previewDismissed ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          setPreviewDismissed(false);
-                          persistIdeaPreviewDismissed(false);
-                          const target =
-                            (focusedIndex >= 0 ? ideas[focusedIndex] : undefined) ?? ideas[0];
-                          if (target) {
-                            setPreviewIdeaId(target.id);
-                          }
-                        }}
+                        onClick={handleShowPanel}
                         className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-slate-900/[0.06] hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] dark:hover:bg-white/10"
-                        aria-label={isPolish ? 'Pokaż panel' : 'Show panel'}
-                        title={isPolish ? 'Pokaż panel' : 'Show panel'}
+                        aria-label={showPanelLabel}
+                        title={showPanelLabel}
                       >
                         <PanelRight size={14} />
-                        <span>{isPolish ? 'Pokaż panel' : 'Show panel'}</span>
+                        <span>{showPanelLabel}</span>
                       </button>
                     ) : null}
                     <TableSettingsPopover
                       columns={[
                         {
                           id: 'title',
-                          label: isPolish ? 'Tytuł' : 'Title',
+                          label: titleLabel,
                           required: true,
                           visible: true,
                         },
@@ -1023,189 +1619,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       ? 'bg-slate-50/80 dark:bg-white/[0.04]'
                       : 'bg-c-surface group-hover:bg-slate-100/80 dark:group-hover:bg-white/[0.04]';
 
-                const rowActionSections: RowActionSection[] = [
-                  {
-                    id: 'open',
-                    kind: 'open',
-                    actions: [
-                      {
-                        id: 'open',
-                        label: isPolish ? 'Otwórz' : 'Open',
-                        icon: ExternalLink,
-                        onClick: () => onOpenIdea(idea),
-                      },
-                      {
-                        id: 'flow',
-                        label: isPolish ? 'Diagram procesu' : 'Process Flow',
-                        icon: Workflow,
-                        onClick: () => onOpenIdeaInProcessFlow(idea),
-                      },
-                    ],
-                  },
-                  {
-                    id: 'ai',
-                    kind: 'ai',
-                    actions: [
-                      {
-                        id: 'ai_chat',
-                        label: isPolish ? 'Czat AI' : 'AI Chat',
-                        icon: MessageSquare,
-                        onClick: () => onOpenIdeaAiChat?.(idea),
-                        disabled: !onOpenIdeaAiChat,
-                      },
-                      {
-                        id: 'ai_insights',
-                        label: isPolish ? 'Wglądy AI' : 'AI Insights',
-                        icon: Bot,
-                        onClick: () => onOpenIdeaAiInsights?.(idea),
-                        disabled: !onOpenIdeaAiInsights,
-                      },
-                    ],
-                  },
-                  {
-                    id: 'convert',
-                    kind: 'convert',
-                    label: isPolish ? 'Konwertuj do' : 'Convert to',
-                    actions: [
-                      {
-                        id: 'convert_initiative',
-                        label: isPolish ? 'Inicjatywa' : 'Initiative',
-                        icon: Rocket,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'initiative')
-                            : onStartConvert(idea),
-                      },
-                      {
-                        id: 'convert_tasks',
-                        label: isPolish ? 'Zadania' : 'Tasks',
-                        icon: CheckCircle2,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'task_set')
-                            : onStartConvert(idea),
-                      },
-                      {
-                        id: 'convert_decision',
-                        label: isPolish ? 'Decyzja' : 'Decision',
-                        icon: Star,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'decision')
-                            : onStartConvert(idea),
-                      },
-                      {
-                        id: 'convert_team_chat',
-                        label: isPolish ? 'Czat zespołu' : 'Team Chat',
-                        icon: MessageSquarePlus,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'team_chat')
-                            : onStartConvert(idea),
-                      },
-                    ],
-                  },
-                  // Create output — przed strefami manage (canon §17: …Convert · Create output · Manage · Danger).
-                  {
-                    id: 'output',
-                    kind: 'output',
-                    actions: [
-                      {
-                        // Z3 audit (2026-07-24): 'presentation' jest `status: 'live'`
-                        // w SSOT (ideaConvertTargets.ts) i ma realny handler na
-                        // serwerze (server/src/routes/my-work.routes.ts, gałąź
-                        // `target === 'presentation'` — tworzy rekord w `presentations`
-                        // + link graph). Wcześniejszy `disabled: true` + „wkrótce" był
-                        // atrapą obiecującą funkcję, która już działa — usunięte.
-                        id: 'output_presentation',
-                        label: isPolish ? 'Prezentacja' : 'Presentation',
-                        icon: Presentation,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'presentation')
-                            : onStartConvert(idea),
-                      },
-                      {
-                        // Z3 audit (2026-07-24): 'report' jest `status: 'live'` w SSOT
-                        // i ma realny handler na serwerze (`target === 'report'` —
-                        // tworzy rekord w `reports` + link graph). Odblokowane z tego
-                        // samego powodu co Prezentacja powyżej.
-                        id: 'output_report',
-                        label: isPolish ? 'Raport' : 'Report',
-                        icon: FileText,
-                        onClick: () =>
-                          onConvertIdeaToTarget
-                            ? onConvertIdeaToTarget(idea, 'report')
-                            : onStartConvert(idea),
-                      },
-                    ],
-                  },
-                  ...(folders && onMoveToFolder
-                    ? [
-                        {
-                          id: 'folder',
-                          kind: 'manage' as const,
-                          label: 'Folder',
-                          actions: [
-                            {
-                              id: 'folder-none',
-                              label: isPolish ? 'Bez folderu' : 'No folder',
-                              icon: FolderMinus,
-                              onClick: () => onMoveToFolder(idea, null),
-                              disabled: !(idea as any).folderId,
-                            },
-                            ...folders.map((f) => ({
-                              id: `folder-${f.id}`,
-                              label: f.name,
-                              icon: Folder,
-                              onClick: () => onMoveToFolder(idea, f.id),
-                              rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
-                            })),
-                          ],
-                        },
-                      ]
-                    : []),
-                  // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
-                  // Ideas have no `due_date`, so the Delay slot (pos. 4) is N/A.
-                  {
-                    id: 'fixed',
-                    kind: 'manage',
-                    actions: [
-                      {
-                        id: 'open-preview',
-                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                        icon: ChevronRight,
-                        onClick: () => {
-                          // Kebab = prośba wprost o podgląd — zdejmij zamknięcie,
-                          // żeby zwykły klik w wiersz znów otwierał panel.
-                          setPreviewDismissed(false);
-                          persistIdeaPreviewDismissed(false);
-                          setPreviewIdeaId(idea.id);
-                          onFocusIndexChange(index);
-                        },
-                      },
-                      {
-                        id: 'edit',
-                        label: isPolish ? 'Edytuj' : 'Edit',
-                        icon: Edit2,
-                        onClick: () => onOpenIdea(idea),
-                      },
-                    ],
-                  },
-                  {
-                    id: 'danger',
-                    kind: 'danger',
-                    actions: [
-                      {
-                        id: 'delete',
-                        label: isPolish ? 'Usuń' : 'Delete',
-                        icon: Trash2,
-                        variant: 'danger',
-                        onClick: () => onDeleteIdea(idea),
-                      },
-                    ],
-                  },
-                ];
+                const rowActionSections = buildRowActionSections(idea, index);
 
                 return (
                   <tr
@@ -1275,38 +1689,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       // S18-NOOVERLAP Fix A: mirrors the header <th> above.
                       style={{ width: renderedTitleWidth }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        {onToggleFavorite ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleFavorite(idea.id);
-                            }}
-                            aria-label={
-                              isFavorite?.(idea.id)
-                                ? isPolish
-                                  ? 'Usuń z oznaczonych'
-                                  : 'Remove from starred'
-                                : isPolish
-                                  ? 'Oznacz gwiazdką'
-                                  : 'Star'
-                            }
-                            aria-pressed={isFavorite?.(idea.id) ?? false}
-                            className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          >
-                            <Star
-                              size={14}
-                              className={
-                                isFavorite?.(idea.id) ? 'fill-amber-400 text-amber-400' : ''
-                              }
-                            />
-                          </button>
-                        ) : null}
-                        <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
-                          {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                        </div>
-                      </div>
+                      {renderTitleCell(idea)}
                       {showRowDescription && idea.body ? (
                         <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
                           {idea.body}
@@ -1318,14 +1701,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         className="px-3 py-2.5 text-left align-middle"
                         style={{ width: columnWidths.stage }}
                       >
-                        <IdeaStageSelectCell
-                          stage={idea.stage}
-                          isPolish={isPolish}
-                          ideaTitle={idea.title}
-                          onChangeStage={
-                            onChangeStage ? (stage) => onChangeStage(idea, stage) : undefined
-                          }
-                        />
+                        {renderStageCell(idea)}
                       </td>
                     ) : null}
                     {isColumnVisible('tags') ? (
@@ -1396,6 +1772,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             </tbody>
           </table>
         </div>
+        )}
       </TableWithPreviewLayout>
     </div>
   );
