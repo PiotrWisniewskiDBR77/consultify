@@ -47,6 +47,7 @@ import {
   DuplicateOrganizationNameError,
   isGenericOrganizationName,
 } from '../services/organizationIdentityService.js';
+import { seedOrganizationBaseArtifacts } from '../services/organizationBaseArtifactService.js';
 import {
   isPartnerEconomicsOperationAvailable,
   PARTNER_ECONOMICS_POLICY_DECISION,
@@ -1956,6 +1957,17 @@ router.post(
               logger.error('Register Org Error:', orgResult.error);
             return res.status(500).json({
               error: 'Failed to create a fully configured trial organization',
+            });
+          }
+
+          try {
+            await seedOrganizationBaseArtifacts(orgId);
+          } catch (seedError) {
+            logger.error('[Auth] ORGANIZATION_BASE_ARTIFACT_SEED_FAILED:', seedError);
+            await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+            return res.status(500).json({
+              error: 'ORGANIZATION_BASE_ARTIFACT_SEED_FAILED',
+              code: 'ORGANIZATION_BASE_ARTIFACT_SEED_FAILED',
             });
           }
 
