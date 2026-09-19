@@ -1248,15 +1248,20 @@ export function mapTemplateScope(scopeRaw: unknown): MaterialTemplateScope {
 export const BASE_TEMPLATE_FAMILIES = ['DOC-BASE', 'DECK-BASE', 'SHEET-BASE'] as const;
 
 /**
- * Predykat PINa biblioteki wzorców (Wpis 159 / DEC-655): baza systemowa =
- * scope 'system' ORAZ rodzina z `BASE_TEMPLATE_FAMILIES`. Sama rodzina bez
- * scope (albo odwrotnie) nie pinuje — obie połowy mierzone w KROK 0.
+ * Predykat PINa biblioteki wzorców (Wpis 159 / DEC-655, zawężony Wpis 242 /
+ * DEC-691): baza systemowa = scope 'system' ORAZ rodzina z
+ * `BASE_TEMPLATE_FAMILIES` ORAZ źródło kanoniczne (`source !== 'legacy'`).
+ * Sama rodzina nie wystarcza: 20 KEEP TPL-1b (legacy report templates) niesie
+ * `scope:'system'` + `family:'DOC-BASE'`, więc bez trzeciego warunku PIN
+ * renderował 21 kart DOC-BASE zamiast trzech kanonicznych baz (DOC/DECK/SHEET
+ * z migracji 20262271, które mapują się na `source:'canonical'`).
  */
 export function isPinnedBaseTemplate(item: TemplateItem): boolean {
   return (
     item.scope === 'system' &&
     typeof item.templateFamily === 'string' &&
-    (BASE_TEMPLATE_FAMILIES as readonly string[]).includes(item.templateFamily)
+    (BASE_TEMPLATE_FAMILIES as readonly string[]).includes(item.templateFamily) &&
+    item.source !== 'legacy'
   );
 }
 

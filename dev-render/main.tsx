@@ -783,6 +783,10 @@ const QoderW159TemplatePinScreen = React.lazy(
   () => import('./screens/qoder-w159-template-pin')
 );
 
+const QoderQb0fPinNarrowScreen = React.lazy(
+  () => import('./screens/qoder-qb0f-pin-narrow')
+);
+
 const S114bNarzedziaScreen = React.lazy(() => import('./screens/s114b-narzedzia'));
 
 const H1bSkrzynkaPrzejscScreen = React.lazy(() => import('./screens/h1b-skrzynka-przejsc'));
@@ -3062,6 +3066,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'W159 (DEC-655) — realny ReportsAndPresentationsHub, PIN 3 baz systemowych na górze biblioteki wzorców; &tab=templates &lang=pl|en &theme=light|dark',
     render: () => <QoderW159TemplatePinScreen />,
+  },
+  'qoder-qb0f-pin-narrow': {
+    label:
+      'QB0f (DEC-691) — realny ReportsAndPresentationsHub, PIN zawężony do kanonicznych baz (20 KEEP DOC-BASE nie pinuje); &tab=templates &lang=pl|en &theme=light|dark',
+    render: () => <QoderQb0fPinNarrowScreen />,
   },
   'auth-login': {
     label:

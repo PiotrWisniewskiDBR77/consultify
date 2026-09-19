@@ -1,0 +1,113 @@
+[
+  {
+    "artifactId": "template-1-docbase-b65e1077df2d3c5102c39a6ac26a5cbb",
+    "titleSnapshot": "[System] Client final report (EN)",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-16 19:59:01.141268+00",
+    "originSummary": {
+      "template": {
+        "system": true,
+        "family": "DOC-BASE",
+        "status": "approved"
+      }
+    }
+  },
+  {
+    "artifactId": "template-1-deckbase-2d33abc1e893a1724ff811bdbd57d377",
+    "titleSnapshot": "Board deck",
+    "outputType": "presentation",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-16 19:59:01.141268+00",
+    "originSummary": {
+      "template": {
+        "family": "DECK-BASE",
+        "status": "approved",
+        "language": "en",
+        "system": true,
+        "readOnly": true,
+        "duplicateAllowed": true,
+        "sourceRuntime": "presentation_template",
+        "sourceId": "dbr77-deck-board",
+        "contractVersion": "template-1-v1"
+      }
+    }
+  },
+  {
+    "artifactId": "template-1-sheetbase-cbdd6d1e9209b09e8cafbe29a68d7477",
+    "titleSnapshot": "Supplier scorecard workbook",
+    "outputType": "sheet",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-16 19:59:01.141268+00",
+    "originSummary": {
+      "template": {
+        "family": "SHEET-BASE",
+        "status": "approved",
+        "language": "en",
+        "system": true,
+        "readOnly": true,
+        "duplicateAllowed": true,
+        "sourceRuntime": "sheet_template",
+        "sourceId": "2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1",
+        "contractVersion": "template-1-v1"
+      }
+    }
+  },
+  {
+    "artifactId": "a1154710-2607-4a8e-be06-2d74fa1606c6",
+    "titleSnapshot": "DRD Full Diagnostic Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.291Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "ASSESSMENT_DRD",
+        "canonicalTemplateId": "tpl-drd-full-diagnostic-v2",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "5da66163-3b8c-4561-924a-04fa79e30fdc",
+    "titleSnapshot": "Interview Summary Report",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.300Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "interview_summary",
+        "canonicalTemplateId": "tpl-interview-summary",
+        "originRuntime": "report_template"
+      }
+    }
+  },
+  {
+    "artifactId": "ade6002f-99fc-4d08-ac9d-c822aaec0c9e",
+    "titleSnapshot": "Interview Detailed Analysis",
+    "outputType": "report",
+    "lastTransitionAt": "2026-09-16 00:00:00",
+    "createdAt": "2026-09-09T09:44:26.307Z",
+    "originSummary": {
+      "template": {
+        "scope": "system",
+        "family": "DOC-BASE",
+        "legacy": true,
+        "source": "legacy",
+        "status": "approved",
+        "reportType": "interview_detailed",
+        "canonicalTemplateId": "tpl-interview-detailed",
+        "originRuntime": "report_template"
+      }
+    }
+  }
+]
