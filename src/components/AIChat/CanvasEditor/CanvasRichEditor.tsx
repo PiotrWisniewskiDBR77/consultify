@@ -124,6 +124,10 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   provenanceScope,
 }) => {
   const { t, i18n } = useTranslation();
+  const quickT = useCallback<CanvasQuickT>(
+    (key, defaultValue) => String(t(key, { defaultValue: defaultValue ?? key })),
+    [t]
+  );
   const effectivePlaceholder =
     placeholder ??
     t('canvas.editor.startTypingPlaceholder', 'Start typing or press / for commands...');
@@ -331,7 +335,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         : selectedText;
 
       try {
-        const result = await requestCanvasQuickAI({ prompt, selectedText: effectiveText, t });
+        const result = await requestCanvasQuickAI({ prompt, selectedText: effectiveText, t: quickT });
         if (!result.ok) {
           setAiErrorLine(result.errorLine);
           return null;
@@ -384,7 +388,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         setAiProcessing(false);
       }
     },
-    [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff, t]
+    [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff, quickT]
   );
 
   // E1 — "Wyjaśnij" handler: same /api/ai/chat/quick pipeline as
@@ -405,7 +409,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         const result = await requestCanvasQuickAI({
           prompt,
           selectedText,
-          t,
+          t: quickT,
           intent: 'explain',
           language: i18n.language,
         });
@@ -418,7 +422,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         setAiProcessing(false);
       }
     },
-    [editor, selection, isStreaming, hasPendingDiff, i18n.language, t]
+    [editor, selection, isStreaming, hasPendingDiff, i18n.language, quickT]
   );
 
   // Accept AI suggestion: delete the original (aiRemoved) text, keep the
