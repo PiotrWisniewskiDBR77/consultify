@@ -344,17 +344,6 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     return match.status;
   };
 
-  // Calculate progress through workflow (REVIEW -> APPROVED -> PLANNING)
-  const workflowProgress = initiative
-    ? initiative.status === 'REVIEW'
-      ? 33
-      : initiative.status === 'APPROVED'
-        ? 66
-        : initiative.status === 'PLANNING'
-          ? 100
-          : 0
-    : 0;
-
   const renderOverview = () => {
     if (!initiative) return null;
 
