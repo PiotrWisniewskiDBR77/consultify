@@ -16,7 +16,7 @@ import {
 } from './demo-seed/metalpolDrdDataset.js';
 
 const REMOTE_CONFIRMATION = 'I_UNDERSTAND_THIS_IS_A_REMOTE_DATABASE';
-const PACK_VERSION = '2.0.0-methodpack.1';
+const PACK_VERSION = '2.0.0-methodpack.2';
 const EVENT_COUNT = METALPOL_DRD_AREAS.length + 1;
 
 export type SeedMode = 'dry-run' | 'apply' | 'purge' | 'verify';

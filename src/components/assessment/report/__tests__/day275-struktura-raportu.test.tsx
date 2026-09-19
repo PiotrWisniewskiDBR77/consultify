@@ -16,7 +16,7 @@ const output = {
   snapshotId: 'snap-275',
   module: 'assessment',
   methodPackId: 'drd',
-  methodPackVersion: '2.0.0-methodpack.1',
+  methodPackVersion: '2.0.0-methodpack.2',
   outputVersion: 1,
   revisionOfOutputId: null,
   scope: 'Dyżur 275',

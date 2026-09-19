@@ -990,7 +990,7 @@ test.describe.serial('STG-JOURNEY-16 deployed business journeys', () => {
     const payload = {
       module: 'assessment',
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
       mode: 'guided_manual',
       projectId: null,
     };

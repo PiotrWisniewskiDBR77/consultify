@@ -82,13 +82,25 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
     listMethodSessionsMock.mockResolvedValue({
       sessions: [
         {
-          id: 'asm-method-1', organizationId: 'org-1', projectId: null,
-          module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
-          state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
-          createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
-          version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+          id: 'asm-method-1',
+          organizationId: 'org-1',
+          projectId: null,
+          module: 'assessment',
+          methodPackId: 'drd',
+          methodPackVersion: '2.0.0-methodpack.2',
+          state: 'active',
+          domainStage: null,
+          mode: 'guided_manual',
+          ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z',
+          updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1,
+          frozenSnapshotId: null,
+          revisionOfSessionId: null,
+          hasFrozenOutput: false,
         },
-      ], total: 1,
+      ],
+      total: 1,
     });
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);

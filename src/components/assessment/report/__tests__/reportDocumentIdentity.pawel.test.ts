@@ -18,11 +18,11 @@ describe('tozsamoscDokumentuRaportu', () => {
       reportStatus: 'FINAL',
       scope: 'Analiza gotowości AI',
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
     });
 
     expect(t.title).toBe('DBR77 Staging Assessment Executive Report');
-    expect(t.subtitle).toBe('DRD · 2.0.0-methodpack.1');
+    expect(t.subtitle).toBe('DRD · 2.0.0-methodpack.2');
     expect(t.sourceAssessmentName).toBe('Analiza gotowości AI');
     expect(t.reportStatusLabel).toBe('FINAL');
   });
@@ -33,10 +33,10 @@ describe('tozsamoscDokumentuRaportu', () => {
       reportStatus: null,
       scope: 'DRD Manufacturing',
       methodPackId: 'drd',
-      methodPackVersion: '2.0.0-methodpack.1',
+      methodPackVersion: '2.0.0-methodpack.2',
     });
 
-    expect(t.title).toBe('DRD · 2.0.0-methodpack.1');
+    expect(t.title).toBe('DRD · 2.0.0-methodpack.2');
     expect(t.subtitle).toBeNull();
     expect(t.sourceAssessmentName).toBe('DRD Manufacturing');
     expect(t.reportStatusLabel).toBeNull();

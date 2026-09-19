@@ -89,11 +89,22 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
     listMethodSessionsMock.mockResolvedValue({
       sessions: [
         {
-          id: 'asm-method-1', organizationId: 'org-1', projectId: null,
-          module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
-          state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
-          createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
-          version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+          id: 'asm-method-1',
+          organizationId: 'org-1',
+          projectId: null,
+          module: 'assessment',
+          methodPackId: 'drd',
+          methodPackVersion: '2.0.0-methodpack.2',
+          state: 'active',
+          domainStage: null,
+          mode: 'guided_manual',
+          ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z',
+          updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1,
+          frozenSnapshotId: null,
+          revisionOfSessionId: null,
+          hasFrozenOutput: false,
         },
       ],
       total: 1,
@@ -164,10 +175,7 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
     await waitFor(() => {
       expect(screen.getByTestId('location-probe')).toHaveTextContent('tab=reports');
     });
-    expect(screen.getByRole('tab', { name: /Reports/i })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    );
+    expect(screen.getByRole('tab', { name: /Reports/i })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('a fresh mount with ?tab=reports starts on the Reports tab (refresh/back-forward)', async () => {

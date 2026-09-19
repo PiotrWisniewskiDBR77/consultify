@@ -49,7 +49,10 @@ describe('projekcja ocen zastanych — lista Outputów', () => {
   });
 
   it('scalanie: przy PUSTYM magazynie kanonicznym lista i tak ma 4 wiersze (to jest naprawa)', () => {
-    const scalone = scalOcenyZastaneZOutputami([], wierszeZastane.map(projektujOceneZastanaNaWierszListy));
+    const scalone = scalOcenyZastaneZOutputami(
+      [],
+      wierszeZastane.map(projektujOceneZastanaNaWierszListy)
+    );
     // ★ ASERCJA MUTACYJNA: `return kanoniczne` zamiast scalania → 0, test pada.
     expect(scalone).toHaveLength(4);
   });
@@ -104,7 +107,7 @@ describe('projekcja ocen zastanych — treść raportu', () => {
   it('Output z projekcji ma luki policzone i NIE udaje zamrożonego', () => {
     const { output, notatkiObszarow } = projektujOceneZastanaNaOutput(ocena);
     expect(output.methodPackId).toBe('drd');
-    expect(output.methodPackVersion).toBe('2.0.0-methodpack.1');
+    expect(output.methodPackVersion).toBe('2.0.0-methodpack.2');
     expect(output.gap['1A']).toBe(3);
     expect(output.frozenAt).toBe('');
     expect(output.contentHash).toBe('');
