@@ -332,6 +332,11 @@ function deckFromUnifiedJson(params: {
 
 const DeckBuilderForDeck: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const simpleT = useCallback(
+    (key: string, defaultValue?: string) =>
+      t(key, defaultValue === undefined ? undefined : { defaultValue }),
+    [t]
+  );
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
   // J12-S1 — back navigation for the builder. Mirrors the legacy
@@ -996,7 +1001,7 @@ const DeckBuilderForDeck: React.FC = () => {
         block_id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         card_id: activeCard.card_id,
         type: blockType as CardBlock['type'],
-        content: content || getDefaultContent(blockType, t),
+        content: content || getDefaultContent(blockType, simpleT),
         is_refreshable: false,
         position: { area: 'full', order: activeCard.blocks.length },
         ai_editable: true,
@@ -1005,7 +1010,7 @@ const DeckBuilderForDeck: React.FC = () => {
         blocks: [...activeCard.blocks, newBlock],
       });
     },
-    [activeCard, updateCard, t]
+    [activeCard, updateCard, simpleT]
   );
 
   const handleInsertMediaImage = useCallback(
