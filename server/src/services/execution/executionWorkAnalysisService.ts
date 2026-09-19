@@ -22,6 +22,11 @@ type WorkRow = {
   project_title: string | null;
 };
 
+type IndependentSourceCounts = {
+  taskCount: number | string;
+  decisionCount: number | string;
+};
+
 export interface ExecutionWorkAnalysisGeneration {
   id: string;
   created: boolean;
@@ -162,6 +167,39 @@ export async function generateExecutionWorkAnalysis(args: {
       ORDER BY t.id`,
     [args.organizationId]
   );
+  // D-31: this count deliberately does NOT reuse the exact equality from the
+  // materialization queries above. If stored text differs only by casing or
+  // surrounding whitespace, those queries can silently return no rows. The
+  // normalized count remains non-zero and turns that false-empty report into
+  // an explicit 409 instead of persisting it as a legitimate empty snapshot.
+  const independentSourceCounts = await dbGet<IndependentSourceCounts>(
+    `SELECT
+       (SELECT COUNT(*)::int
+          FROM tasks t
+         WHERE t.organization_id = ?
+           AND t.initiative_id IS NOT NULL
+           AND EXISTS (
+             SELECT 1
+               FROM ie_aggregate_state ec
+              WHERE ec.organization_id = t.organization_id
+                AND ec.aggregate_type = 'execution_case'
+                AND LOWER(BTRIM(ec.payload_json->>'initiativeId')) =
+                    LOWER(BTRIM(t.initiative_id))
+           )) AS "taskCount",
+       (SELECT COUNT(*)::int
+          FROM ie_aggregate_state work
+         WHERE work.organization_id = ?
+           AND work.aggregate_type = 'execution_decision'
+           AND EXISTS (
+             SELECT 1
+               FROM ie_aggregate_state ec
+              WHERE ec.organization_id = work.organization_id
+                AND ec.aggregate_type = 'execution_case'
+                AND LOWER(BTRIM(ec.aggregate_id)) =
+                    LOWER(BTRIM(work.payload_json->>'executionCaseId'))
+           )) AS "decisionCount"`,
+    [args.organizationId, args.organizationId]
+  );
   const taskItems = buildExecutionWorkTaskItems({
     runtimeRows: rows
       .filter((row) => row.aggregate_type === 'execution_task')
@@ -201,8 +239,8 @@ export async function generateExecutionWorkAnalysis(args: {
   assertNonEmptyExecutionWorkSnapshot({
     taskItems,
     decisionItems: decisionSourceItems,
-    sourceTaskRows: taskRows,
-    sourceDecisionRows: rows.filter((row) => row.aggregate_type === 'execution_decision'),
+    sourceTaskCount: Number(independentSourceCounts?.taskCount ?? 0),
+    sourceDecisionCount: Number(independentSourceCounts?.decisionCount ?? 0),
   });
   const workTabCounts = countExecutionWorkTasks(taskSourceItems);
   const rowShape = (item: (typeof items)[number]) => ({
