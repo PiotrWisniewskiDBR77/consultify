@@ -10,6 +10,7 @@
  */
 
 import { EditorContent, useEditor } from '@tiptap/react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -50,32 +51,47 @@ interface CanvasRichEditorProps {
 const SAVE_DEBOUNCE_MS = 300;
 export const CANVAS_AI_MESSAGE_MAX_LENGTH = 8000;
 
-type CanvasQuickT = (key: string, defaultValue?: string) => string;
+type CanvasSimpleT = (key: string, defaultValue?: string) => string;
+type CanvasQuickT = TFunction | CanvasSimpleT;
+
+type RequestCanvasQuickAIInput = {
+  prompt: string;
+  selectedText: string;
+  language?: string;
+  intent?: 'modify' | 'explain';
+};
+
+const translateCanvasQuick = (t: CanvasQuickT, key: string, defaultValue: string): string => {
+  const translate = t as CanvasSimpleT;
+  const value = translate(key, defaultValue);
+  return typeof value === 'string' ? value : String(value ?? defaultValue);
+};
 
 export type CanvasQuickAIResult =
   | { ok: true; text: string }
   | { ok: false; errorLine: string; reason: 'too_long' | 'provider' };
 
 /** One request boundary shared by the floating editor menu and the canvas kebab. */
+export function requestCanvasQuickAI(
+  input: RequestCanvasQuickAIInput & { t: CanvasSimpleT }
+): Promise<CanvasQuickAIResult>;
+export function requestCanvasQuickAI(
+  input: RequestCanvasQuickAIInput & { t: TFunction }
+): Promise<CanvasQuickAIResult>;
 export async function requestCanvasQuickAI({
   prompt,
   selectedText,
   t,
   language,
   intent = 'modify',
-}: {
-  prompt: string;
-  selectedText: string;
-  t: CanvasQuickT;
-  language?: string;
-  intent?: 'modify' | 'explain';
-}): Promise<CanvasQuickAIResult> {
+}: RequestCanvasQuickAIInput & { t: CanvasQuickT }): Promise<CanvasQuickAIResult> {
   const message = `${prompt}\n\nText to ${intent}:\n${selectedText}`;
   if (message.length > CANVAS_AI_MESSAGE_MAX_LENGTH) {
     return {
       ok: false,
       reason: 'too_long',
-      errorLine: t(
+      errorLine: translateCanvasQuick(
+        t,
         'canvas.aiMenu.tooLong',
         'The selected text is too long for this AI action. Shorten the selection and try again.'
       ),
@@ -98,16 +114,37 @@ export async function requestCanvasQuickAI({
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, data) };
+      return {
+        ok: false,
+        reason: 'provider',
+        errorLine: getAiErrorLine(
+          (key, fallback) => translateCanvasQuick(t, key, fallback ?? key),
+          data
+        ),
+      };
     }
     const raw = data?.response ?? data?.content ?? data?.text;
     const text = typeof raw === 'string' ? raw.trim() : '';
     if (!text) {
-      return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, 'AI_EMPTY') };
+      return {
+        ok: false,
+        reason: 'provider',
+        errorLine: getAiErrorLine(
+          (key, fallback) => translateCanvasQuick(t, key, fallback ?? key),
+          'AI_EMPTY'
+        ),
+      };
     }
     return { ok: true, text };
   } catch {
-    return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, 'AI_ERROR') };
+    return {
+      ok: false,
+      reason: 'provider',
+      errorLine: getAiErrorLine(
+        (key, fallback) => translateCanvasQuick(t, key, fallback ?? key),
+        'AI_ERROR'
+      ),
+    };
   }
 }
 
