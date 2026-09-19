@@ -135,7 +135,7 @@ export async function generateExecutionWorkAnalysis(args: {
     [args.organizationId]
   );
   const taskRows = await dbAll<WorkTabTaskRow>(
-    `SELECT t.id AS aggregate_id, t.title, t.status, t.assignee_id, t.due_date,
+    `SELECT t.id AS aggregate_id, t.title, t.status, t.assignee_id, t.owner_id, t.due_date,
             t.completed_at, t.priority, t.initiative_id,
             COALESCE(t.project_id, i.project_id, initiative.payload_json->>'projectId') AS project_id,
             project.name AS project_title

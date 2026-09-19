@@ -53,6 +53,7 @@ describe('execution work analysis Work task source', () => {
           title: 'Blocked Work task',
           status: 'BLOCKED',
           assignee_id: null,
+          owner_id: 'owner-fallback',
           due_date: '2026-09-20T09:00:00.000Z',
           completed_at: null,
           priority: 'CRITICAL',
@@ -91,6 +92,7 @@ describe('execution work analysis Work task source', () => {
     expect(JSON.stringify(result.payload)).toContain('Overdue Work task');
     expect(JSON.stringify(result.payload)).toContain('Blocked Work task');
     expect(JSON.stringify(result.payload)).toContain('"source":"tasks"');
+    expect(JSON.stringify(result.payload)).not.toContain('BLOCKED, UNASSIGNED');
     expect(dbRun).toHaveBeenCalledTimes(1);
   });
 
