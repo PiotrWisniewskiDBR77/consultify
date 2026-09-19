@@ -32,6 +32,7 @@ describe('execution work analysis Work task source', () => {
     const persisted: Record<string, unknown>[] = [];
     dbGet
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ taskCount: 3, decisionCount: 0 })
       .mockImplementationOnce(async () => persistedFrom(persisted[0] as Record<string, unknown>));
     dbAll
       .mockResolvedValueOnce([])
@@ -100,6 +101,7 @@ describe('execution work analysis Work task source', () => {
     const persisted: Record<string, unknown>[] = [];
     dbGet
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ taskCount: 1, decisionCount: 0 })
       .mockImplementationOnce(async () => persistedFrom(persisted[0] as Record<string, unknown>));
     dbAll
       .mockResolvedValueOnce([
@@ -156,8 +158,8 @@ describe('execution work analysis Work task source', () => {
       assertNonEmptyExecutionWorkSnapshot({
         taskItems: [],
         decisionItems: [],
-        sourceTaskRows: [{ aggregate_id: 'task-from-work-tab' }],
-        sourceDecisionRows: [],
+        sourceTaskCount: 1,
+        sourceDecisionCount: 0,
       })
     ).toThrow('EXECUTION_WORK_ANALYSIS_EMPTY_SNAPSHOT');
   });
