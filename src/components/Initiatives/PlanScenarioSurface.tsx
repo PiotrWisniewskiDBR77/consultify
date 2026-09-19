@@ -38,6 +38,7 @@ import {
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 import { isInitiativesPlanEnabled } from '@/utils/initiativesPlanFlag';
+import { tlumaczPozaHookiem } from '@/utils/tlumaczPozaHookiem';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
 import { PlanCard } from './cards/PlanCard';
@@ -214,10 +215,18 @@ const toDateInput = (value: string) => value.slice(0, 10);
 const toDateIso = (value: string) => `${value}T00:00:00.000Z`;
 /**
  * P15-K2 (DEC-421): horyzont z PARAMETRÓW generatora, nie z seedu. Jednostka
- * decyduje o kroku okresu; identyfikator okresu jest DANĄ zapisywaną w planie
- * (tak samo jak przed tą paczką), nie napisem tłumaczonym per użytkownik.
+ * decyduje o kroku okresu; identyfikator okresu jest DANĄ zapisywaną w planie.
+ * D-97: słowo okresu pochodzi z klucza i18n (język UI w chwili tworzenia,
+ * awaryjnie angielski literał) — nigdy z zaszytego polskiego literału.
  */
-const createPeriods = (
+const periodLabel = (unit: 'WEEK' | 'MONTH', index: number): string =>
+  tlumaczPozaHookiem(
+    unit === 'MONTH' ? 'initiatives.plan.period.month' : 'initiatives.plan.period.week',
+    `${unit === 'MONTH' ? 'Month' : 'Week'} ${index + 1}`,
+    { n: index + 1 }
+  );
+
+export const createPeriods = (
   start: string,
   count: number,
   unit: 'WEEK' | 'MONTH' = 'WEEK'
@@ -232,7 +241,7 @@ const createPeriods = (
     if (unit === 'MONTH') periodEnd.setUTCMonth(periodStart.getUTCMonth() + 1);
     else periodEnd.setUTCDate(periodStart.getUTCDate() + 7);
     return {
-      periodId: `${unit === 'MONTH' ? 'Miesiąc' : 'Tydzień'} ${index + 1}`,
+      periodId: periodLabel(unit, index),
       start: periodStart.toISOString(),
       end: periodEnd.toISOString(),
     };
@@ -1480,7 +1489,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         periods: [
           ...current.periods,
           {
-            periodId: `Tydzień ${current.periods.length + 1}`,
+            periodId: periodLabel('WEEK', current.periods.length),
             start: start.toISOString(),
             end: end.toISOString(),
           },

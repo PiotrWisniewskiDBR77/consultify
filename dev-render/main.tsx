@@ -689,6 +689,7 @@ const Z29InicjatywyRaportPracyScreen = React.lazy(
 );
 const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
+const Qd7D97PeriodLabelsScreen = React.lazy(() => import('./screens/qd7-d97-period-labels'));
 const ExecutionRiskSignalE0Screen = React.lazy(() => import('./screens/execution-risk-signal-e0'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
@@ -1044,6 +1045,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day 49 A.3 — real CapacityScenarioSurface demoMode=false, transport capacity-options intercepted; &phase=before|after &state=default|empty',
     render: () => <CapacityAdvisorA3Screen />,
+  },
+  'qd7-d97-period-labels': {
+    label:
+      'QD7/D-97 — REALNY createPeriods (PlanScenarioSurface) → REALNY CapacityScenarioSurface: periodId okresu z klucza i18n; &lang=en → „Week n", &lang=pl → „Tydzień n". &theme=light|dark',
+    render: () => <Qd7D97PeriodLabelsScreen />,
   },
   'plan-scenario-d1': {
     label:

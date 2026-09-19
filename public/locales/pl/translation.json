@@ -13030,6 +13030,10 @@
     },
     "plan": {
       "label": "Plan działania",
+      "period": {
+        "week": "Tydzień {{n}}",
+        "month": "Miesiąc {{n}}"
+      },
       "portfolioFallback": "Portfel źródłowy",
       "listAria": "Lista planów",
       "newPlan": "Nowy plan",

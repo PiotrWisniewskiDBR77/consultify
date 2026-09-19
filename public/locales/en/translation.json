@@ -13780,6 +13780,10 @@
     },
     "plan": {
       "label": "Plan",
+      "period": {
+        "week": "Week {{n}}",
+        "month": "Month {{n}}"
+      },
       "portfolioFallback": "Source portfolio",
       "listAria": "Plans list",
       "newPlan": "New plan",
