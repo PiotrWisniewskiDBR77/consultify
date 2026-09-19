@@ -552,7 +552,7 @@ describe('tenant isolation', () => {
 });
 
 describe('no foreign-owner writes', () => {
-  it('approving a note never creates rows in tasks/decisions/materials', async () => {
+  it('approving a note writes only the owned meeting registers', async () => {
     const meetingId = await makeMeeting();
     const proposed = await proposeMeetingNote({
       organizationId: ORG_A,
@@ -589,16 +589,20 @@ describe('no foreign-owner writes', () => {
       }
     }
 
-    // Meeting's OWN legacy tables must also be untouched by the governed
-    // (non-legacy-compat) path.
+    // The legacy JSON column stays untouched; governed meeting registers are
+    // the only additional projection owned by this boundary.
     const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [
       meetingId,
     ]);
     expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
-    const followUpRows = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`,
+    const registerRows = await pool.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM meeting_decisions
+           WHERE meeting_id = $1 AND source_kind = 'note') AS decisions,
+         (SELECT COUNT(*)::int FROM meeting_follow_ups
+           WHERE meeting_id = $1 AND source_kind = 'note') AS follow_ups`,
       [meetingId]
     );
-    expect(followUpRows.rows[0].n).toBe(0);
+    expect(registerRows.rows[0]).toEqual({ decisions: 1, follow_ups: 1 });
   });
 });
