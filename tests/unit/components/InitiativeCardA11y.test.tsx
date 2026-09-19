@@ -86,6 +86,26 @@ describe('InitiativeCard — golden-path a11y', () => {
     expect(screen.getByRole('button', { name: 'Assign owners' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Flag for attention' })).toBeTruthy();
   });
+
+  it('renders one canonical label for each current initiative status', () => {
+    const statuses: Array<[InitiativeStatus, string]> = [
+      [InitiativeStatus.PROPOSED, 'Proposed'],
+      [InitiativeStatus.DRAFT, 'Draft'],
+      [InitiativeStatus.PENDING_APPROVAL, 'In Review'],
+      [InitiativeStatus.APPROVED, 'Approved'],
+      [InitiativeStatus.IN_EXECUTION, 'Executing'],
+      [InitiativeStatus.CLOSED, 'Closed'],
+      [InitiativeStatus.REJECTED, 'Rejected'],
+    ];
+
+    for (const [status, label] of statuses) {
+      const { unmount } = render(
+        <InitiativeCard initiative={{ ...initiative, status, id: `init-${status}` }} onClick={onClick} />
+      );
+      expect(screen.getByText(label)).toBeInTheDocument();
+      unmount();
+    }
+  });
 });
 
 describe('InitiativeGridCard — golden-path a11y', () => {
