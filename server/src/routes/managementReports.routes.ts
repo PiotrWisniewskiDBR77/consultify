@@ -10,6 +10,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { resolveLocale } from '../services/ai/languagePolicy.js';
 import managementReportsService from '../services/managementReportsService.js';
+import { adaptManagementReportToReportBuilderDocument } from '../services/reportBuilder/reportDocumentAdapter.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -113,7 +114,14 @@ router.post(
       language: resolvedLanguage,
     });
 
-    return res.json({ success: true, report });
+    const reportBuilderDocument = adaptManagementReportToReportBuilderDocument(report);
+
+    return res.json({
+      success: true,
+      report,
+      sections: reportBuilderDocument.sections,
+      reportBuilderDocument,
+    });
   })
 );
 
@@ -219,7 +227,14 @@ router.get(
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
-    return res.json({ success: true, report });
+    const reportBuilderDocument = adaptManagementReportToReportBuilderDocument(report);
+
+    return res.json({
+      success: true,
+      report,
+      sections: reportBuilderDocument.sections,
+      reportBuilderDocument,
+    });
   })
 );
 

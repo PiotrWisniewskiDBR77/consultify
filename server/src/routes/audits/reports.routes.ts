@@ -12,6 +12,7 @@ import { buildAuditReportDocumentSchema } from '../../services/audits/auditRepor
 import { auditGet, AuditDomainError } from '../../services/audits/auditsDb.js';
 import type { AuditReportDocument } from '../../services/audits/reportRenderer.js';
 import * as reportService from '../../services/audits/reportService.js';
+import { adaptAuditReportToReportBuilderDocument } from '../../services/reportBuilder/reportDocumentAdapter.js';
 import {
   buildAuditReportConclusion,
   safePersistAuditReportConclusion,
@@ -84,7 +85,13 @@ router.get(
     const programId = typeof req.query.programId === 'string' ? req.query.programId : undefined;
     const reportKind = typeof req.query.reportKind === 'string' ? (req.query.reportKind as ReportKind) : undefined;
     const reports = await reportService.listReports(actor.organizationId, { programId, reportKind });
-    res.json({ success: true, data: reports });
+    res.json({
+      success: true,
+      data: reports.map((report) => ({
+        ...report,
+        reportBuilderDocument: adaptAuditReportToReportBuilderDocument(report),
+      })),
+    });
   }),
 );
 
@@ -174,7 +181,14 @@ router.get(
       res.status(404).json({ success: false, error: 'AUDIT_NOT_FOUND', code: 'AUDIT_NOT_FOUND' });
       return;
     }
-    res.json({ success: true, data: report });
+    const reportBuilderDocument = adaptAuditReportToReportBuilderDocument(report);
+    res.json({
+      success: true,
+      data: { ...report, reportBuilderDocument },
+      report: reportBuilderDocument.report,
+      sections: reportBuilderDocument.sections,
+      reportBuilderDocument,
+    });
   }),
 );
 
@@ -213,7 +227,14 @@ router.post(
       templateKey: body.templateKey ?? null,
       asOfDate: body.asOfDate ?? null,
     });
-    res.status(201).json({ success: true, data: report });
+    const reportBuilderDocument = adaptAuditReportToReportBuilderDocument(report);
+    res.status(201).json({
+      success: true,
+      data: { ...report, reportBuilderDocument },
+      report: reportBuilderDocument.report,
+      sections: reportBuilderDocument.sections,
+      reportBuilderDocument,
+    });
   }),
 );
 
