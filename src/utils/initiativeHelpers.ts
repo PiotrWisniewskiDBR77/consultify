@@ -12,11 +12,8 @@ import {
   getRoleLabel,
 } from '@/components/Initiatives/sections/types';
 import {
-  getStatusMeta,
   getValidNextStatuses,
   isTerminalStatus,
-  STATUS_METADATA,
-  type StatusMeta,
 } from '@/services/initiativeLifecycle';
 import { InitiativeStatus as InitiativeStatusCodes } from '../../packages/shared/src/constants/initiativeStatuses.generated';
 
@@ -58,14 +55,12 @@ export function getNextStep(status: string, isPolish = false): NextStepInfo | nu
   }
 
   // Fallback: use lifecycle valid transitions
-  const validNext = getValidNextStatuses(status as InitiativeStatus);
-  const forward = validNext.filter((s) => s !== 'CANCELLED' && s !== 'ARCHIVED');
+  const forward = getValidNextStatuses(status as InitiativeStatus);
   if (forward.length === 0) return null;
 
   const target = forward[0];
-  const meta = STATUS_METADATA[target as InitiativeStatus];
   return {
-    label: meta?.label || target,
+    label: target,
     gate: null,
     role: null,
     targetStatus: target,
