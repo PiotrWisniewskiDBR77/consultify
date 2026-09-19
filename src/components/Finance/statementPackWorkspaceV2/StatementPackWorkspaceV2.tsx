@@ -102,6 +102,7 @@ import { useFinanceStatementPackWorkspaceV2Flag } from '../../../hooks/useFinanc
 import {
   CanonicalStatementTableV2,
   type CanonicalStatementCellSelection,
+  type CanonicalStatementTableV2Props,
 } from './CanonicalStatementTableV2';
 import { canonicalLineIdFromRowKey, findReconciliationDetailRowForCell } from './deriveStatementTable';
 import { NamedCollapsibleSection } from './NamedCollapsibleSection';
@@ -202,7 +203,7 @@ export interface StatementPackWorkspaceV2Props {
   businessVersionId: string;
   /** Human-readable pack label from the canonical list/legacy bridge. */
   displayName?: string;
-  resolveLineLabel: (rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string;
+  resolveLineLabel: CanonicalStatementTableV2Props['resolveLineLabel'];
   fetchers?: Partial<StatementPackWorkspaceV2Fetchers>;
   onOpenArtifact: (edge: LineageEdgeDto) => void;
   onCreateNew: (artifactType: FinanceArtifactType, sourceBusinessVersionId: string) => void;
