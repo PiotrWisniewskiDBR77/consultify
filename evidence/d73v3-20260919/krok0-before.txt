@@ -1,0 +1,37 @@
+D-73 v3 (DEC-680) — KROK 0 harness reproduction, BEFORE fix
+Component under test: src/components/assessment/AssessmentOutputsTab.tsx (the REAL component the live /assessment?tab=outputs route renders — AppRoutes.tsx:2558 → AssessmentHub.tsx:2498).
+Harness: dev-render/screens/d73v3-insights-width-details.tsx, port 5423, 1440x900.
+v2 (206f0e797a) changed OutputsAggregateTabContent.tsx — the Materials hub, a DIFFERENT surface this route never mounts. Confirmed via `git show --stat 206f0e797a`.
+
+=== LIST ONLY (preview CLOSED), lang=pl ===
+chips: all cw==sw (untruncated). Columns wide:
+  th typWiersza   w=221px minw=140px
+  th outputVersion w=231px minw=140px
+(No dataType on either column → text floor 140px.)
+
+=== PREVIEW OPEN, lang=pl (click Conclusion row) ===
+FilterableTable compresses columns toward the no-dataType fit floor:
+  th typWiersza    w=120px minw=120px   (was 221px)
+  th outputVersion w=131px minw=131px   (was 231px)
+chips TRUNCATED:
+  "Wynik zamrożony" cw=58 sw=94 trunc  (Frozen output badge)
+  "Do przeglądu"    cw=69 sw=71 trunc  (Needs review badge)
+DETAILS of the Conclusion row = 6x "—":
+  Sesja — | Pakiet metody — | Ustalenia — | Ograniczenia — | Skrót treści — | Zastąpiony przez —
+
+=== PREVIEW OPEN, lang=en (matches QC12 live staging-29 measurement) ===
+  th typWiersza    w=117px minw=117px
+  th outputVersion w=131px minw=131px
+chips TRUNCATED:
+  "Conclusion"     cw=55 sw=60 -> "Conc…"   (QC12: "Co…")
+  "Needs review"   cw=69 sw=72 -> "Need…"   (QC12: "Need…" EXACT)
+  "Frozen output"  cw=55 sw=75 -> "Froz…"   (QC12: "Fro…")
+  "Session record" cw=55 sw=80 -> "Sess…"   (QC12: "Se…")
+  "Session record" cw=69 sw=80 -> "Sess…"
+DETAILS = 6x "—":
+  Session — | Method pack — | Findings — | Limitations — | Content hash — | Superseded by —
+
+VERDICT: CODE, not DATA. The screen renders the v2-UNTOUCHED AssessmentOutputsTab.
+ConclusionsApi.list()/.get() DO return the full Conclusion record (evidenceRefs, sourceArtifactRefs, status, dates);
+the front-end projection (projektujWniosekNaWierszListy) drops those fields and the DETAILS panel renders
+kernel-snapshot fields a conclusion never carries → 6x "—". Neither STOP condition holds.

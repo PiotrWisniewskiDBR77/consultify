@@ -43791,6 +43791,10 @@
       "low": "Low",
       "insufficient": "Insufficient",
       "contradicted": "Contradicted"
+    },
+    "prop": {
+      "confidence": "Confidence",
+      "created": "Created"
     }
   },
   "superAdmin": {

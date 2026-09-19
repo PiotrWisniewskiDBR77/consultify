@@ -44106,6 +44106,10 @@
       "low": "Niska",
       "insufficient": "Niewystarczające",
       "contradicted": "Podważony"
+    },
+    "prop": {
+      "confidence": "Pewność",
+      "created": "Utworzono"
     }
   },
   "superAdmin": {

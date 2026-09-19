@@ -39,6 +39,29 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
   };
 });
 
+// D-73 v3 (DEC-680): the Conclusions layer feeds BOTH the conclusion rows
+// (`ConclusionsApi.list` → pobierzWnioskiOceny) and the DETAILS record fetched
+// on open (`ConclusionsApi.get`). Mocked so the real component can be exercised
+// against a real-shaped Conclusion without a backend.
+const conclusionsHoisted = vi.hoisted(() => ({
+  list: vi.fn(),
+  get: vi.fn(),
+}));
+
+vi.mock('@/services/api/conclusions.api', async () => {
+  const actual = await vi.importActual<typeof import('@/services/api/conclusions.api')>(
+    '@/services/api/conclusions.api'
+  );
+  return {
+    ...actual,
+    ConclusionsApi: {
+      ...actual.ConclusionsApi,
+      list: conclusionsHoisted.list,
+      get: conclusionsHoisted.get,
+    },
+  };
+});
+
 import { MethodCoreApiError } from '@/method-core/api/methodCoreApi';
 
 import { AssessmentOutputsTab } from '../AssessmentOutputsTab';
@@ -99,12 +122,47 @@ function outputDetail(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// D-73 v3 (DEC-680): a real-shaped Conclusion record, exactly as
+// `ConclusionsApi.get` returns it. The DETAILS panel must read THESE fields —
+// a conclusion carries no session/method-pack/findings/content-hash, which is
+// why the kernel-shaped properties all rendered "—" before the fix.
+function conclusionRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'concl-1',
+    organizationId: 'org-1',
+    projectId: null,
+    title: 'Quality and Compliance Maturity — assessment report',
+    statement: 'Compliance maturity is partial and needs a remediation owner.',
+    sourceModule: 'assessment',
+    sourceArtifactRefs: [
+      { type: 'assessment_report', id: 'rep-1', title: 'DRD report' },
+    ],
+    sourcePackId: null,
+    confidenceLevel: 'high',
+    limits: 'Sample limited to 3 interviews',
+    evidenceRefs: [
+      { type: 'assessment_report', ref: 'rep-1#exec' },
+      { type: 'assessment_report', ref: 'rep-1#gap' },
+    ],
+    recommendedNextAction: null,
+    status: 'needs_review',
+    ownerId: null,
+    reviewerId: null,
+    sponsorId: null,
+    createdBy: 'user-1',
+    createdAt: '2026-09-15T10:00:00.000Z',
+    updatedAt: '2026-09-16T10:00:00.000Z',
+    ...overrides,
+  };
+}
+
 describe('AssessmentOutputsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hoisted.getOutput.mockResolvedValue(outputDetail());
     hoisted.listReports.mockResolvedValue([]);
     hoisted.listInitiativeDrafts.mockResolvedValue([]);
+    conclusionsHoisted.list.mockResolvedValue({ conclusions: [] });
   });
 
   it('renders the kernel Outputs list via StandardTable, not the legacy artifacts registry', async () => {
@@ -320,5 +378,62 @@ describe('AssessmentOutputsTab', () => {
     await waitFor(() => {
       expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
     });
+  });
+
+  it('D-73 v3 (DEC-680): TYPE and VERSION columns keep a fixed width ≥ the 160px status floor, so the badge never truncates (MUTACJA: przywróć starą szerokość 132px/160px bez dataType → RED)', async () => {
+    hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow()], total: 1 });
+
+    const { container } = renderTab(<AssessmentOutputsTab />);
+    await screen.findByText('Digital Readiness — Area A');
+
+    const typTh = container.querySelector<HTMLElement>('th[data-column-id="typWiersza"]');
+    const versionTh = container.querySelector<HTMLElement>('th[data-column-id="outputVersion"]');
+    expect(typTh).not.toBeNull();
+    expect(versionTh).not.toBeNull();
+    // `getColumnTypeFloor` gives a status column a 160px floor; the declared
+    // width must be ≥160 for that floor to survive preview-open compression.
+    expect(typTh!.style.minWidth).toBe('160px');
+    expect(versionTh!.style.minWidth).toBe('160px');
+  });
+
+  it('D-73 v3 (DEC-680): opening a conclusion row fetches ITS record (ConclusionsApi.get) and DETAILS reads 6 real fields, never 6× "—" (MUTACJA: cofnij gałąź wniosku w efekcie otwarcia → RED)', async () => {
+    const record = conclusionRecord();
+    hoisted.listOutputs.mockResolvedValue({ outputs: [], total: 0 });
+    conclusionsHoisted.list.mockResolvedValue({ conclusions: [record] });
+    conclusionsHoisted.get.mockResolvedValue({
+      conclusion: record,
+      sourcePack: null,
+      conversions: [],
+    });
+    const user = userEvent.setup();
+
+    const { container } = renderTab(<AssessmentOutputsTab />);
+    await user.click(
+      await screen.findByText('Quality and Compliance Maturity — assessment report')
+    );
+
+    await waitFor(() => {
+      expect(conclusionsHoisted.get).toHaveBeenCalledWith('concl-1');
+    });
+
+    const panel = await waitFor(() => {
+      const p = container.querySelector('[data-right-panel]') as HTMLElement | null;
+      expect(p).not.toBeNull();
+      return p!;
+    });
+
+    // The 6 DETAILS properties read the real Conclusion record. Values may
+    // appear twice (status chip in the panel header + the Property/Value row),
+    // so assert presence via getAllByText.
+    await waitFor(() => {
+      expect(within(panel).getAllByText('Needs review').length).toBeGreaterThan(0);
+    });
+    expect(within(panel).getAllByText('Assessment').length).toBeGreaterThan(0);
+    expect(within(panel).getAllByText('High').length).toBeGreaterThan(0);
+    expect(within(panel).getAllByText('2').length).toBeGreaterThan(0);
+    expect(within(panel).getAllByText('15/09/2026').length).toBeGreaterThan(0);
+    expect(within(panel).getAllByText('16/09/2026').length).toBeGreaterThan(0);
+    // No property cell falls back to the "—" placeholder.
+    expect(within(panel).queryAllByText('—')).toHaveLength(0);
   });
 });

@@ -50,9 +50,15 @@ import {
   type MethodOutputSummary,
 } from '@/method-core/api/methodCoreApi';
 import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
-import { ConclusionsApi } from '@/services/api/conclusions.api';
+import { ConclusionsApi, type Conclusion } from '@/services/api/conclusions.api';
 import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { formatListDate } from '@/utils/listDateFormat';
+
+import {
+  confidenceShortLabel,
+  sourceLabel as conclusionSourceLabel,
+  statusLabel as conclusionStatusLabel,
+} from '../Conclusions/conclusionMeta';
 
 import {
   idOcenyZWierszaZastanego,
@@ -197,6 +203,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
     superseded: boolean;
     supersededByOutputId: string | null;
   } | null>(null);
+  // D-73 v3 (DEC-680): a conclusion row lives in the Conclusions layer, not the
+  // method-core kernel — opening one fetches ITS authoritative record so the
+  // DETAILS panel reads real fields instead of kernel-snapshot fields a
+  // conclusion never carries (which all rendered "—").
+  const [selectedConclusion, setSelectedConclusion] = useState<Conclusion | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [lineageSessionId, setLineageSessionId] = useState<string | null>(null);
@@ -268,19 +279,42 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   useEffect(() => {
     if (!selectedOutputId) {
       setSelectedDetail(null);
-      return;
-    }
-    // Wiersz zastany (`ocena~<id>`) nie istnieje w jądrze — pytanie o niego
-    // dałoby pewne 404 i wpis w konsoli. Podgląd korzysta wtedy z danych
-    // wiersza listy, a pełną treść pokazuje dopiero raport.
-    // To samo dotyczy WNIOSKU (`wniosek~<id>`) — żyje w warstwie Wniosków,
-    // nie w jądrze metodycznym; pytanie jądra dałoby pewne 404.
-    if (idOcenyZWierszaZastanego(selectedOutputId) || idWnioskuZWiersza(selectedOutputId)) {
-      setSelectedDetail(null);
-      setDetailLoading(false);
+      setSelectedConclusion(null);
       return;
     }
     let cancelled = false;
+    // Wiersz zastany (`ocena~<id>`) nie istnieje ani w jądrze, ani w warstwie
+    // Wniosków — pytanie o niego dałoby pewne 404 i wpis w konsoli. Podgląd
+    // korzysta wtedy z danych wiersza listy, a pełną treść pokazuje raport.
+    if (idOcenyZWierszaZastanego(selectedOutputId)) {
+      setSelectedDetail(null);
+      setSelectedConclusion(null);
+      setDetailLoading(false);
+      return;
+    }
+    // WNIOSA (`wniosek~<id>`) nie ma w jądrze metodycznym, ale ma WŁASNY
+    // autorytatywny zapis w warstwie Wniosków. D-73 v3 (DEC-680): otwarcie
+    // pobiera ten zapis (`ConclusionsApi.get`), żeby DETAILS czytał realne pola
+    // wniosku zamiast pól snapshotu jądra, których wniosek nigdy nie niesie
+    // (wszystkie renderowały „—").
+    const conclusionId = idWnioskuZWiersza(selectedOutputId);
+    if (conclusionId) {
+      setSelectedDetail(null);
+      setDetailLoading(true);
+      ConclusionsApi.get(conclusionId)
+        .then((res) => {
+          if (!cancelled) setSelectedConclusion(res.conclusion ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setSelectedConclusion(null);
+        })
+        .finally(() => {
+          if (!cancelled) setDetailLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
     setDetailLoading(true);
     getOutput(selectedOutputId)
       .then((res) => {
@@ -344,7 +378,13 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         // wierszu, jedną regułą (`typWierszaWnioskow`), nie po tytule.
         id: 'typWiersza',
         label: isPolish ? 'Typ' : 'Type',
-        width: '132px',
+        // D-73 v3 (DEC-680): `dataType:'status'` podnosi podłogę dopasowania
+        // (getColumnFitFloor) do 160 px, więc otwarcie podglądu nie ściska już
+        // plakietki TYP do ucięcia („Conclusion"→„Conc…", „Frozen output"→
+        // „Froz…"). Szerokość zadeklarowana musi być >= podłogi statusu (160),
+        // bo podłoga jest ograniczana szerokością zadeklarowaną.
+        width: '176px',
+        dataType: 'status',
         sortable: true,
         render: (row) => {
           const typ = typWierszaWnioskow(String(row.id));
@@ -405,7 +445,12 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
       {
         id: 'outputVersion',
         label: isPolish ? 'Wersja' : 'Version',
-        width: '160px',
+        // D-73 v3 (DEC-680): komórka wersji niesie span mono („v1"/„—") ORAZ
+        // plakietkę stanu, więc potrzebuje więcej miejsca niż TYP. Bez
+        // `dataType` otwarcie podglądu ściskało ją do ucięcia plakietki
+        // („Needs review"→„Need…", „Session record"→„Sess…").
+        width: '200px',
+        dataType: 'status',
         sortable: true,
         render: (row) => {
           const version = row.outputVersion as number | null;
@@ -504,6 +549,96 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         : isPolish
           ? 'To jest zamrożony, niezmienny snapshot zatwierdzony podczas sesji assessmentu. Pobrany bezpośrednio z serwera.'
           : 'This is the frozen, immutable snapshot approved during the assessment session. Fetched directly from the server.';
+
+  // D-73 v3 (DEC-680): DETAILS musi czytać REALNY rekord. Dla wniosku jest nim
+  // `selectedConclusion` (pobrany przy otwarciu przez `ConclusionsApi.get`), nie
+  // snapshot jądra — wniosek nie niesie sesji/pakietu/ustaleń/skrótu, więc tamte
+  // pola renderowały 6× „—". „—" zostaje TYLKO gdy rekord jeszcze się ładuje
+  // (null) albo pole naprawdę jest puste.
+  const detailProperties = useMemo(() => {
+    if (typWybranego === 'wniosek') {
+      const c = selectedConclusion;
+      return [
+        {
+          id: 'status',
+          label: t('common.status', 'Status'),
+          value: c ? conclusionStatusLabel(t, c.status) : '—',
+        },
+        {
+          id: 'source',
+          label: t('common.source', 'Source'),
+          value: c ? conclusionSourceLabel(t, c.sourceModule) : '—',
+        },
+        {
+          id: 'confidence',
+          label: t('conclusions.prop.confidence', 'Confidence'),
+          value: c ? confidenceShortLabel(t, c.confidenceLevel) : '—',
+        },
+        {
+          id: 'evidence',
+          label: t('conclusions.evidence', 'Evidence'),
+          value: c ? c.evidenceRefs.length : '—',
+        },
+        {
+          id: 'created',
+          label: t('conclusions.prop.created', 'Created'),
+          value: c?.createdAt ? formatListDate(c.createdAt) : '—',
+        },
+        {
+          id: 'updated',
+          label: t('common.updated', 'Updated'),
+          value: c?.updatedAt ? formatListDate(c.updatedAt) : '—',
+          mono: true,
+        },
+      ];
+    }
+    return [
+      {
+        id: 'sessionId',
+        label: isPolish ? 'Sesja' : 'Session',
+        value: selectedRow?.sessionId ?? '—',
+        mono: true,
+      },
+      {
+        id: 'methodPack',
+        label: isPolish ? 'Pakiet metody' : 'Method pack',
+        value:
+          selectedRow?.methodPackId && selectedRow?.methodPackVersion
+            ? `${selectedRow.methodPackId}@${selectedRow.methodPackVersion}`
+            : '—',
+        mono: true,
+      },
+      {
+        id: 'findings',
+        label: isPolish ? 'Ustalenia' : 'Findings',
+        value: selectedDetail
+          ? selectedDetail.output.findings.length
+          : (selectedRow?.findingsCount ?? '—'),
+      },
+      {
+        id: 'limitations',
+        label: isPolish ? 'Ograniczenia' : 'Limitations',
+        value: selectedDetail
+          ? selectedDetail.output.limitations.length
+          : (selectedRow?.limitationsCount ?? '—'),
+      },
+      {
+        id: 'contentHash',
+        label: isPolish ? 'Skrót treści' : 'Content hash',
+        value: selectedRow?.contentHash
+          ? `${String(selectedRow.contentHash).slice(0, 12)}…`
+          : '—',
+        mono: true,
+      },
+      {
+        id: 'supersededBy',
+        label: isPolish ? 'Zastąpiony przez' : 'Superseded by',
+        value:
+          (selectedDetail?.supersededByOutputId ?? selectedRow?.supersededByOutputId) || '—',
+        mono: true,
+      },
+    ];
+  }, [typWybranego, selectedConclusion, selectedRow, selectedDetail, t, isPolish]);
 
   const rowMenu = useCallback(
     (row: TableRow): StandardRowMenu => {
@@ -679,53 +814,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
               details={{
                 text: previewDetailsText,
                 showWordCount: false,
-                properties: [
-                  {
-                    id: 'sessionId',
-                    label: isPolish ? 'Sesja' : 'Session',
-                    value: selectedRow.sessionId ?? '—',
-                    mono: true,
-                  },
-                  {
-                    id: 'methodPack',
-                    label: isPolish ? 'Pakiet metody' : 'Method pack',
-                    value:
-                      selectedRow.methodPackId && selectedRow.methodPackVersion
-                        ? `${selectedRow.methodPackId}@${selectedRow.methodPackVersion}`
-                        : '—',
-                    mono: true,
-                  },
-                  {
-                    id: 'findings',
-                    label: isPolish ? 'Ustalenia' : 'Findings',
-                    value: selectedDetail
-                      ? selectedDetail.output.findings.length
-                      : (selectedRow.findingsCount ?? '—'),
-                  },
-                  {
-                    id: 'limitations',
-                    label: isPolish ? 'Ograniczenia' : 'Limitations',
-                    value: selectedDetail
-                      ? selectedDetail.output.limitations.length
-                      : (selectedRow.limitationsCount ?? '—'),
-                  },
-                  {
-                    id: 'contentHash',
-                    label: isPolish ? 'Skrót treści' : 'Content hash',
-                    value: selectedRow.contentHash
-                      ? `${String(selectedRow.contentHash).slice(0, 12)}…`
-                      : '—',
-                    mono: true,
-                  },
-                  {
-                    id: 'supersededBy',
-                    label: isPolish ? 'Zastąpiony przez' : 'Superseded by',
-                    value:
-                      (selectedDetail?.supersededByOutputId ?? selectedRow.supersededByOutputId) ||
-                      '—',
-                    mono: true,
-                  },
-                ],
+                properties: detailProperties,
                 propertyLabel: isPolish ? 'Właściwość' : 'Property',
                 valueLabel: isPolish ? 'Wartość' : 'Value',
                 onCopy: () => {
