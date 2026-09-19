@@ -1,4 +1,8 @@
 import { unifiedExportService } from './UnifiedExportService.js';
+import type {
+  BoardDeckDecisionOption,
+  BoardDeckTable,
+} from './pptx/BoardDeckRenderer.js';
 
 export type CanvasDeckSection = {
   title: string;
@@ -96,7 +100,7 @@ export function contentStringsFrom(value: unknown, parentKey = ''): string[] {
 
 function tableFromBlocks(
   blocks: Array<{ type?: string; content?: Record<string, unknown> }>
-): { headers: string[]; rows: Array<Array<string | number>> } | null {
+): BoardDeckTable | null {
   const table = blocks.find((block) => block.type === 'table')?.content;
   if (!table || !Array.isArray(table.headers) || !Array.isArray(table.rows)) return null;
   const headers = table.headers.map((value) => String(value ?? ''));
@@ -104,6 +108,121 @@ function tableFromBlocks(
     .filter((row): row is unknown[] => Array.isArray(row))
     .map((row) => row.map((value) => (typeof value === 'number' ? value : String(value ?? ''))));
   return headers.length > 0 ? { headers, rows } : null;
+}
+
+const DECISION_TITLE_HEADERS = new Set([
+  'alternative',
+  'alternatywa',
+  'choice',
+  'name',
+  'nazwa',
+  'opcja',
+  'option',
+  'scenario',
+  'title',
+  'variant',
+  'wariant',
+]);
+const DECISION_META_HEADERS = new Set([
+  'budget',
+  'budzet',
+  'cost',
+  'czas',
+  'due',
+  'impact',
+  'koszt',
+  'owner',
+  'termin',
+  'time',
+  'timing',
+]);
+const DECISION_BODY_HEADERS = new Set([
+  'consequence',
+  'consequences',
+  'description',
+  'detail',
+  'details',
+  'konsekwencja',
+  'konsekwencje',
+  'notes',
+  'opis',
+  'rationale',
+  'reason',
+  'trade_off',
+  'tradeoff',
+  'uzasadnienie',
+]);
+const DECISION_RECOMMENDED_HEADERS = new Set([
+  'decision',
+  'decyzja',
+  'preferred',
+  'preferowany',
+  'recommendation',
+  'recommended',
+  'rekomendacja',
+  'rekomendowany',
+  'selected',
+  'wybrany',
+]);
+
+function normalizeDecisionHeader(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function decisionFlag(value: string): boolean {
+  return /^(1|true|yes|y|tak|recommended|rekomendowany|selected|wybrany|preferred)$/i.test(
+    value.trim()
+  );
+}
+
+/** Project a decision comparison table onto the renderer's option-card contract. */
+export function decisionOptionsFromTable(table: BoardDeckTable | null): BoardDeckDecisionOption[] {
+  if (!table) return [];
+  const headers = table.headers.map(normalizeDecisionHeader);
+  const findColumn = (candidates: Set<string>): number =>
+    headers.findIndex((header) => candidates.has(header));
+  const titleColumn = Math.max(findColumn(DECISION_TITLE_HEADERS), 0);
+  const metaColumn = findColumn(DECISION_META_HEADERS);
+  const bodyColumn = findColumn(DECISION_BODY_HEADERS);
+  const recommendedColumn = findColumn(DECISION_RECOMMENDED_HEADERS);
+
+  return table.rows
+    .map((row, index): BoardDeckDecisionOption | null => {
+      const values = row.map((cell) => String(cell ?? '').trim());
+      const title = values[titleColumn] || values.find(Boolean) || '';
+      if (!title) return null;
+      const explicitBody = bodyColumn >= 0 ? values[bodyColumn] : '';
+      const remainingBody = values
+        .map((value, columnIndex) => ({ value, columnIndex }))
+        .filter(
+          ({ value, columnIndex }) =>
+            Boolean(value) &&
+            columnIndex !== titleColumn &&
+            columnIndex !== metaColumn &&
+            columnIndex !== recommendedColumn
+        )
+        .map(({ value, columnIndex }) => {
+          const header = table.headers[columnIndex]?.trim();
+          return header ? `${header}: ${value}` : value;
+        })
+        .join(' · ');
+      return {
+        label: `Option ${String.fromCharCode(65 + index)}`,
+        title,
+        meta: metaColumn >= 0 && values[metaColumn] ? values[metaColumn] : undefined,
+        body: explicitBody || remainingBody,
+        recommended:
+          recommendedColumn >= 0 ? decisionFlag(values[recommendedColumn] || '') : undefined,
+      };
+    })
+    .filter((option): option is BoardDeckDecisionOption => option !== null)
+    .slice(0, 2);
 }
 
 class BoardDeckExportService {
@@ -163,7 +282,9 @@ class BoardDeckExportService {
             kicker: 'Decision',
             title: card.title || `Slide ${index + 1}`,
             keyMessage: card.key_message,
-            recommendation: body || card.key_message || 'Decision details are pending.',
+            options: decisionOptionsFromTable(table),
+            recommendation:
+              card.key_message || nonTableBody || body || 'Decision details are pending.',
             source,
           };
         }

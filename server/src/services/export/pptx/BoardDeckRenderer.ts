@@ -631,11 +631,13 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
   addHeader(slide, item);
   const options = (item.options || []).slice(0, 2);
   options.forEach((option, i) => {
-    const x = 0.95 + i * 5.85;
+    const singleOption = options.length === 1;
+    const x = singleOption ? 0.95 : 0.95 + i * 5.85;
+    const width = singleOption ? 11.35 : 5.5;
     slide.addShape('rect', {
       x,
       y: 1.55,
-      w: 5.5,
+      w: width,
       h: 2.55,
       fill: { color: option.recommended ? C.accentSoft : C.white },
       line: { color: option.recommended ? C.blue : C.line, width: option.recommended ? 1.5 : 0.8 },
@@ -653,7 +655,7 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
     addText(slide, option.title, {
       x: x + 0.28,
       y: 2.2,
-      w: 4.9,
+      w: width - 0.6,
       h: 0.38,
       fontSize: 13,
       bold: true,
@@ -663,7 +665,7 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
     addText(slide, option.body, {
       x: x + 0.28,
       y: option.meta ? 2.96 : 2.78,
-      w: 4.9,
+      w: width - 0.6,
       h: option.meta ? 0.62 : 0.82,
       fontSize: 9,
       color: C.text,
@@ -673,14 +675,14 @@ function renderDecision(slide: any, item: BoardDeckSlide): void {
       addText(slide, option.meta, {
         x: x + 0.28,
         y: 2.66,
-        w: 4.9,
+        w: width - 0.6,
         h: 0.2,
         fontSize: 9,
         color: C.muted,
       });
     if (option.recommended)
       addText(slide, 'RECOMMENDED', {
-        x: x + 3.85,
+        x: x + width - 1.65,
         y: 1.77,
         w: 1.3,
         h: 0.28,
