@@ -1,0 +1,88 @@
+=== QUESTION COUNT ===
+4
+=== QUESTIONS (id, sort, status, answered_by, answered_at, category, is_template) ===
+    id    | so |   status    |  ans_by  |        answered_at         |  category  | tmpl 
+----------+----+-------------+----------+----------------------------+------------+------
+ 60cf1a88 |  1 | not_started |          |                            | operations | t
+ 20c3ff6d |  3 | answered    | 75f25357 | 2026-09-16 12:20:03.021+00 | operations | t
+ 74871891 |  5 | answered    | 75f25357 | 2026-09-16 11:05:57.69+00  | operations | t
+ 538921ad |  6 | in_progress | 75f25357 | 2026-09-16 11:06:05.557+00 | operations | t
+(4 rows)
+
+=== QUESTIONS full text (question_text | answer_text) ===
+-[ RECORD 1 ]--+-----------------------------------------------------------------------------------------------------
+id             | 60cf1a88
+sort_order     | 1
+status         | not_started
+question_text  | Which process do you spend the most time on that you feel adds the least value?
+answer_text    | 
+context_note   | 
+answer_payload | {}
+-[ RECORD 2 ]--+-----------------------------------------------------------------------------------------------------
+id             | 20c3ff6d
+sort_order     | 3
+status         | answered
+question_text  | How many different systems or tools do you use in a typical day to complete your work?
+answer_text    | 10
+context_note   | 
+answer_payload | {"type":"number","value":"10"}
+-[ RECORD 3 ]--+-----------------------------------------------------------------------------------------------------
+id             | 74871891
+sort_order     | 5
+status         | answered
+question_text  | How much of your working time is spent on manual data entry, copy-pasting, or re-keying information?
+answer_text    | 10-25%
+context_note   | 
+answer_payload | {"type":"single_choice","value":"10-25%"}
+-[ RECORD 4 ]--+-----------------------------------------------------------------------------------------------------
+id             | 538921ad
+sort_order     | 6
+status         | in_progress
+question_text  | If you could fix one thing about how work flows through your area, what would it be?
+answer_text    | 
+context_note   | 
+answer_payload | {}
+
+=== EVIDENCE COUNT ===
+3
+=== EVIDENCE rows ===
+-[ RECORD 1 ]-+-------------------------------------
+id            | 92859ebd
+q_id          | 74871891
+evidence_type | text
+evidence_role | answer_text
+title         | Answer – Q 74871891
+description   | 
+file_name     | 
+url           | 
+transcript    | 
+uploaded_by   | 75f25357-2f33-48b8-9638-ad67ff65bcef
+created_at    | 2026-09-16 11:05:57.862+00
+category      | operations
+-[ RECORD 2 ]-+-------------------------------------
+id            | 5fd2a7ce
+q_id          | 538921ad
+evidence_type | text
+evidence_role | answer_text
+title         | Answer – Q 538921ad
+description   | 
+file_name     | 
+url           | 
+transcript    | 
+uploaded_by   | 75f25357-2f33-48b8-9638-ad67ff65bcef
+created_at    | 2026-09-16 11:06:05.608+00
+category      | operations
+-[ RECORD 3 ]-+-------------------------------------
+id            | b50c496e
+q_id          | 20c3ff6d
+evidence_type | text
+evidence_role | answer_text
+title         | Answer – Q 20c3ff6d
+description   | 
+file_name     | 
+url           | 
+transcript    | 
+uploaded_by   | 75f25357-2f33-48b8-9638-ad67ff65bcef
+created_at    | 2026-09-16 12:19:52.779+00
+category      | operations
+

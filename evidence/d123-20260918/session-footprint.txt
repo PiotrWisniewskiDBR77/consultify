@@ -1,0 +1,8 @@
+=== footprint: row count per session_id-bearing table (non-zero only) ===
+interview_assignments = 1
+interview_evidence = 3
+=== interview_answers detail (if any) ===
+ERROR:  column "question_id" does not exist
+LINE 1: select left(id,8) id, left(question_id,8) q, answer_value, s...
+                                   ^
+HINT:  Perhaps you meant to reference the column "interview_answers.session_id".

@@ -1,0 +1,100 @@
+=== interview_sessions columns ===
+id text
+organization_id text
+project_id text
+name text
+owner_id text
+status text
+progress_json text
+total_questions integer
+answered_questions integer
+summary_facts text
+summary_gaps text
+summary_constraints text
+summary_pain_points text
+template_id text
+template_version integer
+assignment_id text
+started_at timestamp with time zone
+completed_at timestamp with time zone
+last_activity_at timestamp with time zone
+created_at timestamp with time zone
+updated_at timestamp with time zone
+anonymity_mode text
+min_cohort_size integer
+redaction_rules text
+export_gating text
+runtime_mode_default text
+archived_at timestamp without time zone
+archived_by text
+trashed_at timestamp without time zone
+trashed_by text
+is_anonymous boolean
+=== interview_questions columns ===
+id text
+session_id text
+organization_id text
+category text
+question_text text
+answer_text text
+status text
+confidence_score integer
+answered_by text
+answered_at timestamp with time zone
+tags text
+sort_order integer
+is_template boolean
+created_at timestamp with time zone
+updated_at timestamp with time zone
+description text
+evidence_prompt text
+answer_options text
+question_config text
+branching_rules text
+is_repeatable integer
+answer_type text
+is_required integer
+expected_answer_shape text
+allow_voice integer
+allow_file_upload integer
+allow_url integer
+allow_context_note integer
+answer_mode text
+answer_payload text
+context_note text
+voice_transcript text
+voice_transcript_status text
+voice_audio_evidence_id text
+source_template_question_id text
+answer_knowledge_doc_id text
+context_note_knowledge_doc_id text
+guidance text
+example_answer text
+answered_via_distribution_id text
+=== interview_evidence columns ===
+id text
+session_id text
+organization_id text
+question_id text
+evidence_type text
+title text
+description text
+file_path text
+file_name text
+file_size integer
+file_type text
+url text
+uploaded_by text
+created_at timestamp with time zone
+storage_backend text
+storage_key text
+file_size_bytes integer
+content_hash text
+virus_scan_status text
+virus_scan_at timestamp with time zone
+retention_until timestamp with time zone
+evidence_role text
+transcript_text text
+ingest_to_knowledge boolean
+knowledge_document_id text
+category text

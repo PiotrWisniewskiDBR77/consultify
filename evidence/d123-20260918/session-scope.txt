@@ -1,0 +1,117 @@
+=== tables with a session_id column ===
+ai_decision_audit_log
+ai_decision_outcomes
+ai_deep_thinking_metrics
+ai_partial_responses
+assessment_skip_reasons
+collab_session_events
+content_analytics
+conversation_messages
+demo_session_tenants
+help_analytics
+interview_ai_parse_log
+interview_ai_suggestion_audit
+interview_answer_decision_commands
+interview_answer_decisions
+interview_answer_history
+interview_answers
+interview_assignments
+interview_diagnostics_snapshots
+interview_distributions
+interview_evidence
+interview_findings
+interview_insight_exports
+interview_insights
+interview_messages
+interview_notes
+interview_public_answer_receipts
+interview_questions
+interview_quotas
+interview_reminder_schedules
+interview_respondent_segments
+interview_transcript_messages
+kb_article_views
+method_approvals
+method_events
+method_evidence
+method_initiative_drafts
+method_outputs
+method_report_snapshots
+method_session_create_idempotency
+method_session_report_metadata
+method_session_role_events
+method_session_roles
+method_snapshots
+method_teresa_previews
+partner_referral_clicks
+project_insights
+research_evidence_graph
+research_report_artifacts
+research_session_events
+research_sessions
+siri_dimension_scores
+siri_prioritisation_snapshots
+teresa_proposals
+v10_connector_auth_challenges
+v10_connector_sessions
+v10_connector_token_vault
+v8_activity_feed
+v8_ai_suggestions
+v8_collaborative_decisions
+v8_compliance_checks
+v8_content_governance
+v8_cross_module_activity
+v8_facilitation_sessions
+v8_session_insights
+v8_session_module_links
+v8_tool_action_governance
+v8_tool_session_governance
+v8_workspace_sessions
+virtual_worker_conversations
+z139_backup_919_interview_insights
+z_bloker_justyna_20260916_backup
+=== interview_assignments ia_19f0ea57 ===
+-[ RECORD 1 ]---------------+--------------------------------------------------------------------------------
+id                          | ia_19f0ea57-fd3d-47f8-b286-a563828df148
+organization_id             | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+assignee_user_id            | 75f25357-2f33-48b8-9638-ad67ff65bcef
+template_id                 | v6_t06_process_pain_mapping
+template_version            | 1
+process_ref                 | Northwind 2027 transformation discovery
+status                      | in_progress
+session_id                  | 13c932b0-e750-410c-996b-66a98f8fb234
+task_id                     | t_interview_32a0a257-3b7d-4a2d-8c15-397a5eed47b1
+due_at                      | 2026-10-20 16:00:00+00
+started_at                  | 2026-09-16 09:31:10.131+00
+submitted_at                | 
+sent_back_at                | 
+sent_back_reason            | 
+created_by                  | 75f25357-2f33-48b8-9638-ad67ff65bcef
+created_at                  | 2026-09-15 02:14:20.046+00
+updated_at                  | 2026-09-16 09:31:10.131+00
+missing_items_json          | 
+ai_review_snapshot_json     | 
+ai_reviewed_at              | 
+review_decision_memory_json | 
+project_id                  | ac3c5d4c-2c4c-4af6-9516-314e0d962402
+priority                    | medium
+reminder_sent_at            | 
+reminder_count              | 0
+last_reminder_type          | 
+escalated_at                | 
+escalation_count            | 0
+is_team_assignment          | 0
+notes                       | Goods-in and changeover pain points across the three sites.
+escalate_to                 | 75f25357-2f33-48b8-9638-ad67ff65bcef
+is_active                   | 1
+archived_at                 | 
+archived_by                 | 
+archived_via_session        | f
+is_anonymous                | f
+create_request_key          | nw-iv-v6_t06_process_pain_mapping-75f25357:75f25357-2f33-48b8-9638-ad67ff65bcef
+create_request_fingerprint  | 2c98de851f90dc1bc42bbb5e401ee7fada0c3e50d384e16e80c83b29fd1bc8d2
+
+=== any method_outputs / snapshots referencing this session ===
+ERROR:  relation "interview_answer_distributions" does not exist
+LINE 1: ...t 'interview_answer_distributions', count(*) from interview_...
+                                                             ^

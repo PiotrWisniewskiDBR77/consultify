@@ -1,0 +1,32 @@
+=== SESSION 13c932b0 (full row, vertical) ===
+-[ RECORD 1 ]--------+----------------------------------------
+id                   | 13c932b0-e750-410c-996b-66a98f8fb234
+organization_id      | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+project_id           | ac3c5d4c-2c4c-4af6-9516-314e0d962402
+name                 | Interview 9/16/2026
+owner_id             | 75f25357-2f33-48b8-9638-ad67ff65bcef
+status               | active
+total_questions      | 6
+answered_questions   | 4
+template_id          | v6_t06_process_pain_mapping
+template_version     | 1
+assignment_id        | ia_19f0ea57-fd3d-47f8-b286-a563828df148
+started_at           | 2026-09-16 09:31:10.131+00
+completed_at         | 
+last_activity_at     | 2026-09-16 12:20:03.066+00
+created_at           | 2026-09-16 09:31:10.131+00
+updated_at           | 2026-09-16 09:31:10.131+00
+archived_at          | 
+trashed_at           | 
+is_anonymous         | f
+anonymity_mode       | identified
+runtime_mode_default | single_question
+
+=== ORG name for this session ===
+ERROR:  column o.slug does not exist
+LINE 1: select o.id, o.name, o.slug from organizations o join interv...
+                             ^
+=== OWNER user ===
+ERROR:  column u.full_name does not exist
+LINE 1: select u.id, u.email, u.full_name, u.role from users u join ...
+                              ^

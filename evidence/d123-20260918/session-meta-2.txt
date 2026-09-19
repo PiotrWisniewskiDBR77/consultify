@@ -1,0 +1,35 @@
+=== organizations columns (name-ish) ===
+name
+=== users columns (name-ish) ===
+email
+first_name
+last_name
+role
+mfa_recovery_email
+display_name
+company_name
+email_change_requested_at
+email_change_token
+email_verification_expires_at
+email_verification_sent_at
+email_verification_token
+email_verified
+pending_email
+=== ORG row ===
+-[ RECORD 1 ]------------------------------
+id   | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+name | Northwind Manufacturing Ltd.
+
+=== OWNER user row ===
+-[ RECORD 1 ]---+-------------------------------------
+id              | 75f25357-2f33-48b8-9638-ad67ff65bcef
+email           | irina.lebedjuk@dbr77.com
+role            | ADMIN
+organization_id | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+
+=== PROJECT row ===
+-[ RECORD 1 ]---+-------------------------------------
+id              | ac3c5d4c-2c4c-4af6-9516-314e0d962402
+name            | Portfolio — direct initiatives
+organization_id | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+
