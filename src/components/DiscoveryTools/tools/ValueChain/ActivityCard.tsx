@@ -274,7 +274,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveDriver(index)}
-                  className="rounded p-1 text-slate-600 transition-colors hover:bg-danger-100 hover:text-danger-500 dark:hover:bg-danger-900/30"
+                  className="rounded p-1 text-slate-600 transition-colors hover:bg-danger-100 hover:text-danger-500 dark:hover:bg-danger-900/30" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

@@ -56,7 +56,7 @@ function BulletListEditor(props: {
               <div className="text-sm text-slate-700 dark:text-slate-200">{v}</div>
               <button
                 onClick={() => remove(idx)}
-                className="text-xs text-slate-500 hover:text-danger-600"
+                className="text-xs text-slate-500 hover:text-danger-600" /* danger-ok: destructive delete/remove action */
               >
                 {removeLabel}
               </button>

@@ -124,7 +124,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
             <button
               type="button"
               onClick={removeTheme}
-              className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+              className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30" /* danger-ok: destructive delete/remove action */
               title={translate('discoveryToolsTools.ambitionDecomposer.card.removeTheme')}
             >
               <Trash2 className="h-4 w-4" />
@@ -228,7 +228,7 @@ export const ThemeCard: React.FC<ThemeCardProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveDriver(index)}
-                  className="rounded p-1 text-slate-600 transition-colors hover:bg-danger-100 hover:text-danger-500 dark:hover:bg-danger-900/30"
+                  className="rounded p-1 text-slate-600 transition-colors hover:bg-danger-100 hover:text-danger-500 dark:hover:bg-danger-900/30" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

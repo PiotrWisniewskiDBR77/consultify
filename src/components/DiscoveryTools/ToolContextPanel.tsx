@@ -44,7 +44,7 @@ const getReadinessTone = (readiness: 'blocked' | 'needs-work' | 'ready') =>
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
     : readiness === 'needs-work'
       ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-      : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300';
+      : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'; // danger-ok: blocked readiness state — error-like
 
 const getDynamicSwotCoach = (currentStepId: string | undefined, t: (key: string) => string) => {
   const ns = 'discoveryToolsMain.toolContextPanel.coach';

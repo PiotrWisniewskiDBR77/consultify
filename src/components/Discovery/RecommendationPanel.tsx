@@ -188,11 +188,11 @@ export const RecommendationPanel: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-danger-600 dark:text-danger-400">
+          <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg" /* danger-ok: open pain points count — risk semantic */>
+            <div className="text-2xl font-bold text-danger-600 dark:text-danger-400" /* danger-ok: open pain points count — risk semantic */>
               {painPointsCount}
             </div>
-            <div className="text-xs text-danger-500 dark:text-danger-400">
+            <div className="text-xs text-danger-500 dark:text-danger-400" /* danger-ok: open pain points count — risk semantic */>
               {t('discovery.conversion.painPointsCount', { count: painPointsCount })}
             </div>
           </div>

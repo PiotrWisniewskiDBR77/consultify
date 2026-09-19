@@ -20,7 +20,7 @@ const SeverityDots: React.FC<{ level: 1 | 2 | 3 | 4 | 5 }> = ({ level }) => {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i <= level ? 'bg-danger-400 dark:bg-danger-400' : 'bg-slate-300 dark:bg-danger-800'
+            i <= level ? 'bg-danger-400 dark:bg-danger-400' : 'bg-slate-300 dark:bg-danger-800' // danger-ok: pain point severity dots — problem/risk semantic
           }`}
         />
       ))}
@@ -75,7 +75,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
       <div
         className={`
                 group relative
-                bg-danger-50 dark:bg-danger-900/20
+                ${/* danger-ok: pain point node body — problem/risk semantic */ 'bg-danger-50 dark:bg-danger-900/20'}
                 border-2 ${selected ? 'border-danger-500 ring-2 ring-danger-500/30' : 'border-danger-300 dark:border-danger-700'}
                 rounded-xl p-3
                 min-w-[180px] max-w-[220px]
@@ -88,14 +88,14 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-2.5 !h-2.5 !bg-danger-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-danger-400 !border-2 !border-white dark:!border-navy-900" /* danger-ok: pain point node connector — problem/risk semantic */
         />
 
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5">
             <span className="text-base">🔴</span>
-            <span className="text-[10px] font-semibold text-danger-600 dark:text-danger-400 uppercase tracking-wide">
+            <span className="text-[10px] font-semibold text-danger-600 dark:text-danger-400 uppercase tracking-wide" /* danger-ok: pain point node title — problem/risk semantic */>
               {t('discovery.nodes.painPoint.title', 'Pain Point')}
             </span>
           </div>
@@ -103,7 +103,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         </div>
 
         {/* Content */}
-        <p className="text-sm font-medium text-danger-900 dark:text-danger-100 line-clamp-3 mb-2">
+        <p className="text-sm font-medium text-danger-900 dark:text-danger-100 line-clamp-3 mb-2" /* danger-ok: pain point node text — problem/risk semantic */>
           {text}
         </p>
 
@@ -111,7 +111,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <div className="flex items-center justify-between gap-2">
           <AreaBadge area={area} />
           {source === 'ai' && (
-            <span className="text-[9px] text-danger-400 dark:text-danger-500 flex items-center gap-0.5">
+            <span className="text-[9px] text-danger-400 dark:text-danger-500 flex items-center gap-0.5" /* danger-ok: pain point AI-source marker — problem/risk semantic */>
               <AlertCircle size={10} />
               AI
             </span>
@@ -121,7 +121,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         {/* Impact (if provided) */}
         {impact && (
           <div className="mt-2 pt-2 border-t border-danger-200 dark:border-danger-800">
-            <span className="text-xs text-danger-600 dark:text-danger-400">
+            <span className="text-xs text-danger-600 dark:text-danger-400" /* danger-ok: pain point impact label — problem/risk semantic */>
               <strong>{t('discovery.nodes.painPoint.impact', 'Impact')}:</strong> {impact}
             </span>
           </div>
@@ -129,16 +129,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
 
         {/* Delete button (on hover) */}
         <button
-          className="
-                    absolute -top-2 -right-2
-                    w-5 h-5 rounded-full
-                    bg-danger-500 text-white
-                    flex items-center justify-center
-                    opacity-0 group-hover:opacity-100
-                    hover:bg-danger-600
-                    transition-all duration-200
-                    shadow-md
-                "
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-danger-600 transition-all duration-200 shadow-md" /* danger-ok: destructive delete action */
           onClick={(e) => {
             e.stopPropagation();
             // Delete will be handled by parent via onNodeDelete
@@ -152,7 +143,7 @@ export const PainPointNode: React.FC<NodeProps<PainPointNodeData>> = memo(
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-2.5 !h-2.5 !bg-danger-400 !border-2 !border-white dark:!border-navy-900"
+          className="!w-2.5 !h-2.5 !bg-danger-400 !border-2 !border-white dark:!border-navy-900" /* danger-ok: pain point node connector — problem/risk semantic */
         />
       </div>
     );

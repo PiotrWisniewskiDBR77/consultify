@@ -182,7 +182,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                   </select>
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
+                    className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500" /* danger-ok: destructive delete/remove action */
                     aria-label={t('discoveryToolsTools.common.remove')}
                   >
                     <Trash2 className="w-4 h-4" />

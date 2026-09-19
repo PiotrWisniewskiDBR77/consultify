@@ -342,7 +342,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                       <td className="px-2 py-1.5">
                         <button
                           onClick={() => handleRemoveStep(step.id)}
-                          className="p-1.5 rounded text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors"
+                          className="p-1.5 rounded text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 transition-colors" /* danger-ok: destructive delete/remove action */
                           title={t('processFlow.workSurface.remove', 'Remove')}
                         >
                           <Trash2 size={14} />

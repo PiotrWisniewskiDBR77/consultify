@@ -84,7 +84,7 @@ export function ProposalCardActions({
         <button
           type="button"
           onClick={() => onRejectCard?.(cardType, cardId)}
-          className="rounded-lg bg-danger-50 p-1.5 text-danger-700 hover:bg-danger-100 dark:bg-danger-900/30 dark:text-danger-300"
+          className="rounded-lg bg-danger-50 p-1.5 text-danger-700 hover:bg-danger-100 dark:bg-danger-900/30 dark:text-danger-300" /* danger-ok: destructive reject/dismiss action */
           aria-label={t('discoveryToolsSteps.proposalCardGovernance.reject')}
           title={t('discoveryToolsSteps.proposalCardGovernance.rejectAiCard')}
         >

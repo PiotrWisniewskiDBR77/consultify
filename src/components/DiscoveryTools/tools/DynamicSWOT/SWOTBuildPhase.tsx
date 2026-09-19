@@ -57,7 +57,7 @@ const QUADRANT_META: Record<
   threats: {
     title: { en: 'Threats', pl: 'Zagrożenia' },
     subtitle: { en: 'External risk', pl: 'Zewnętrzne ryzyko' },
-    accent: 'text-danger-700 dark:text-danger-300',
+    accent: 'text-danger-700 dark:text-danger-300', // danger-ok: SWOT Threats quadrant accent — external risk
     surface: 'border-danger-500/30 bg-c-surface',
   },
 };
@@ -199,7 +199,7 @@ function QuadrantCard({
                   <button
                     type="button"
                     onClick={() => removeSWOTItem(item.id)}
-                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30" /* danger-ok: destructive delete/remove action */
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -271,7 +271,7 @@ function QuadrantCard({
               {acceptErrorByProposalId[proposal.id] ? (
                 <div
                   role="alert"
-                  className="mt-2 rounded-lg bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:bg-danger-900/20 dark:text-danger-300"
+                  className="mt-2 rounded-lg bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:bg-danger-900/20 dark:text-danger-300" /* danger-ok: accept-proposal error alert — real error */
                 >
                   {acceptErrorByProposalId[proposal.id]}
                 </div>

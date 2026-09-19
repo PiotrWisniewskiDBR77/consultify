@@ -72,7 +72,7 @@ export function EvidenceEditor({ item, isPolish, onChange }: EvidenceEditorProps
       // honest if the item was mutated after acceptance (e.g. classification
       // changed to an unvalidated one post-hoc).
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-[10px] font-semibold text-danger-700 dark:bg-danger-900/30 dark:text-danger-300">
+        <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-[10px] font-semibold text-danger-700 dark:bg-danger-900/30 dark:text-danger-300" /* danger-ok: evidence gate failed — needs re-accept (real error) */>
           <AlertTriangle className="h-3 w-3" />
           {isPolish ? 'Wymaga ponownej akceptacji' : 'Needs re-accept'}
         </span>
@@ -200,7 +200,7 @@ export function EvidenceEditor({ item, isPolish, onChange }: EvidenceEditorProps
           ) : null}
 
           {!gate.ok ? (
-            <div className="flex items-start gap-1.5 rounded-lg bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:bg-danger-900/20 dark:text-danger-300">
+            <div className="flex items-start gap-1.5 rounded-lg bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:bg-danger-900/20 dark:text-danger-300" /* danger-ok: evidence gate message — real error */>
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
               <span>{isPolish ? gate.message.pl : gate.message.en}</span>
             </div>

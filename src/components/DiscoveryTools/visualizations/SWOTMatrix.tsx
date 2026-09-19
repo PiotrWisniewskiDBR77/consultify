@@ -32,9 +32,9 @@ const QUADRANT_CONFIG = {
   weaknesses: {
     label: { en: 'Weaknesses', pl: 'Słabe strony' },
     color: 'red',
-    bgClass: 'bg-danger-50 dark:bg-danger-900/20',
+    bgClass: 'bg-danger-50 dark:bg-danger-900/20', // danger-ok: SWOT Weaknesses quadrant bg — negative category
     borderClass: 'border-danger-200 dark:border-danger-800',
-    textClass: 'text-danger-700 dark:text-danger-300',
+    textClass: 'text-danger-700 dark:text-danger-300', // danger-ok: SWOT Weaknesses quadrant text — negative category
     icon: 'W',
   },
   opportunities: {

@@ -47,7 +47,7 @@ const CategoryHeader: React.FC<{ category: (typeof CANVAS_CATEGORIES)[0]; nodeCo
   const isPolish = i18n.language === 'pl';
 
   const colorClasses: Record<string, string> = {
-    red: 'border-danger-300 bg-danger-50/80 text-danger-700 dark:border-danger-700 dark:bg-danger-900/20 dark:text-danger-300',
+    red: 'border-danger-300 bg-danger-50/80 text-danger-700 dark:border-danger-700 dark:bg-danger-900/20 dark:text-danger-300', // danger-ok: Pain Points canvas category — problem/risk semantic
     amber:
       'border-amber-300 bg-amber-50/80 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
     green:

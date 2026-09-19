@@ -214,7 +214,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
               flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-colors
               ${
                 force.trend === 'increasing'
-                  ? 'border-danger-500 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300'
+                  ? 'border-danger-500 bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-300' // danger-ok: rising market force selected state — risk semantic
                   : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
               }
             `}
@@ -290,7 +290,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
                 <span className="text-sm text-slate-700 dark:text-slate-300">{driver}</span>
                 <button
                   onClick={() => handleRemoveDriver(index)}
-                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500 transition-colors"
+                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500 transition-colors" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

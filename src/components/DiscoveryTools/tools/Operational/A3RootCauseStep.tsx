@@ -101,7 +101,7 @@ export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPol
                 <div className="text-slate-800 dark:text-slate-200">{item.title}</div>
                 <button
                   onClick={() => handleRemove(item.id)}
-                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
+                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

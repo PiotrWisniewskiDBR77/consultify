@@ -114,9 +114,9 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
               {t('discovery.conversion.whatWillBeTransferred', 'What will be transferred')}
             </h3>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
-                <AlertCircle size={18} className="text-danger-500" />
-                <span className="text-sm text-danger-700 dark:text-danger-300">
+              <div className="flex items-center gap-3 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg" /* danger-ok: pain points carried into project — risk semantic */>
+                <AlertCircle size={18} className="text-danger-500" /* danger-ok: pain points carried into project — risk semantic */ />
+                <span className="text-sm text-danger-700 dark:text-danger-300" /* danger-ok: pain points carried into project — risk semantic */>
                   {t('discovery.conversion.painPointsCount', '{{count}} pain points', {
                     count: painPointsCount,
                   })}
@@ -190,7 +190,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-600 dark:text-danger-400 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-600 dark:text-danger-400 text-sm" /* danger-ok: conversion error banner — real error */>
               <AlertCircle size={16} />
               {error}
             </div>

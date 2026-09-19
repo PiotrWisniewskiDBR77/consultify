@@ -72,7 +72,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
               px-1.5 py-0.5 text-xs rounded
               ${
                 force.trend === 'increasing'
-                  ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300'
+                  ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300' // danger-ok: rising competitive force — risk semantic
                   : force.trend === 'decreasing'
                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
@@ -155,7 +155,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
             <span>3: {t('discoveryToolsSteps.porterRadar.moderate')}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-danger-500" />
+            <span className="w-3 h-3 rounded bg-danger-500" /* danger-ok: high competitive force (4-5) legend — risk semantic */ />
             <span>4-5: {t('discoveryToolsSteps.porterRadar.highForce')}</span>
           </div>
         </div>

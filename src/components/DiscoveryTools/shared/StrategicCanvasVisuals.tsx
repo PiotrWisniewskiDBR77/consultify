@@ -52,7 +52,7 @@ export function SwotMatrixVisual({
     [
       'threats',
       t('discoveryToolsSteps.strategicCanvasVisuals.swotMatrix.threats'),
-      'border-danger-200 bg-danger-50/80 text-danger-800 dark:border-danger-900/50 dark:bg-danger-950/25 dark:text-danger-200',
+      'border-danger-200 bg-danger-50/80 text-danger-800 dark:border-danger-900/50 dark:bg-danger-950/25 dark:text-danger-200', // danger-ok: SWOT Threats row — external risk category
     ],
   ] as const;
   return (

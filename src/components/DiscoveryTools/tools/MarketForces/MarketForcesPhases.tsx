@@ -168,7 +168,7 @@ export function MarketForcesInputPhase({
                 <button
                   type="button"
                   onClick={() => removeSignal(signal.id)}
-                  className="rounded-lg p-1.5 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                  className="rounded-lg p-1.5 text-slate-600 hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

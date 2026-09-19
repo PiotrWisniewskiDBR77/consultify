@@ -171,8 +171,8 @@ export function DynamicSwotLibraryGraphic({
       hint: labels.threatsHint,
       items: labels.threatItems,
       className:
-        'border-danger-200/70 bg-danger-50/80 text-danger-900 dark:border-danger-900/40 dark:bg-danger-900/30 dark:text-danger-100',
-      titleClassName: 'text-danger-800 dark:text-danger-300',
+        'border-danger-200/70 bg-danger-50/80 text-danger-900 dark:border-danger-900/40 dark:bg-danger-900/30 dark:text-danger-100', // danger-ok: SWOT Threats quadrant — external risk category
+      titleClassName: 'text-danger-800 dark:text-danger-300', // danger-ok: SWOT Threats quadrant — external risk category
     },
   ];
 

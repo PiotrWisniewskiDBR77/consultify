@@ -135,7 +135,7 @@ export const A3CountermeasuresStep: React.FC<A3CountermeasuresStepProps> = ({
                 </div>
                 <button
                   onClick={() => handleRemove(item.id)}
-                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500"
+                  className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 hover:text-danger-500" /* danger-ok: destructive delete/remove action */
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

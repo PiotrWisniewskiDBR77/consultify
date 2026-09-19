@@ -65,8 +65,8 @@ const STREAM_META: Record<
     title: { en: 'Threats', pl: 'Zagrożenia' },
     subtitle: { en: 'External risk', pl: 'Ryzyko zewnętrzne' },
     badge: '4/4',
-    headerTone: 'text-danger-700 dark:text-danger-300',
-    surface: 'border-danger-200/70 bg-danger-500/5 dark:border-danger-900/40',
+    headerTone: 'text-danger-700 dark:text-danger-300', // danger-ok: SWOT Threats header tone — external risk
+    surface: 'border-danger-200/70 bg-danger-500/5 dark:border-danger-900/40', // danger-ok: SWOT Threats surface — external risk
     proposalTone: 'border-danger-200/70 bg-white/85 dark:border-danger-900/30 dark:bg-navy-950/40',
   },
 };
@@ -934,7 +934,7 @@ export function SWOTInputExplorationPhase({
                   : 'Fill all with AI'}
             </button>
             {fillAllError ? (
-              <span role="alert" className="text-xs text-danger-600">
+              <span role="alert" className="text-xs text-danger-600" /* danger-ok: fill-all error alert — real error */>
                 {fillAllError}
               </span>
             ) : null}

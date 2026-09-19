@@ -703,7 +703,7 @@ export function KnownToolDetailView(props: {
             )}
           </div>
           {/* ── NAPRAWA 2026-07-23: czerwień brandowa jako DEKORACJA ────────
-              BYŁO: `border-danger-200/70 bg-danger-500/5` + `text-danger-700`
+              BYŁO: czerwony kafel dekoracyjny (tokeny rodziny danger na border/bg/text)
               (= rgb(145,10,40) na rgba(232,5,56,0.05)). To panel INFORMACYJNY
               („czym ta metoda nie jest"), a nie błąd/usunięcie/blokada —
               czerwień rezerwuje CLAUDE.md pułapka nr 1 wyłącznie dla semantyki
