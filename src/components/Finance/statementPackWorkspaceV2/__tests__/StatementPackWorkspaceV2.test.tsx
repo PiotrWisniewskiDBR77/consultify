@@ -85,8 +85,9 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
 const resolveLineLabel = (
   rowKey: string,
   canonicalLineId: string | null,
-  lineCode: string | null
-) => lineCode || canonicalLineId || rowKey;
+  lineCode: string | null,
+  taxonomyNames?: { lineName: string | null; lineNamePl: string | null }
+) => taxonomyNames?.lineNamePl || taxonomyNames?.lineName || lineCode || canonicalLineId || rowKey;
 
 function makeFetchers(
   overrides: Partial<StatementPackWorkspaceV2Fetchers> = {}
@@ -148,6 +149,37 @@ describe('StatementPackWorkspaceV2 — assembly renders real data via injected f
     );
     fireEvent.click(screen.getByRole('button', { name: /Źródła i założenia|Sources and assumptions/i }));
     expect(screen.getByTestId('source-evidence-panel-empty')).toBeInTheDocument();
+  });
+
+  it('passes taxonomy names through the workspace contract so unmapped lines keep their readable label', async () => {
+    const fetchers = makeFetchers({
+      listLines: vi.fn(async () => [
+        line({
+          stmtLineId: 'l-taxonomy-only',
+          canonicalLineId: null,
+          lineCode: 'SUBSCRIPTION_REVENUE_MISC',
+          lineName: 'Revenue from subscriptions',
+          lineNamePl: 'Przychody z subskrypcji',
+        }),
+      ]),
+    });
+
+    render(
+      <StatementPackWorkspaceV2
+        businessVersionId="bv-1"
+        resolveLineLabel={resolveLineLabel}
+        fetchers={fetchers}
+        onOpenArtifact={() => {}}
+        onCreateNew={() => {}}
+        onOpenReportResult={() => {}}
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
+    expect(screen.getByText('Przychody Z Subskrypcji')).toBeInTheDocument();
+    expect(screen.queryByText('SUBSCRIPTION_REVENUE_MISC')).not.toBeInTheDocument();
   });
 });
 
