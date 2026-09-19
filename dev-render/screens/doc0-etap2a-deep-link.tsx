@@ -68,9 +68,39 @@ const TITLE = ARTIFACT.resolvedTitle;
  * deep-link screen renders its honest cards instead of the viewer.
  *   doc0_state=not-found → 404 → "link is dead" card (Back to list, no retry)
  *   doc0_state=error     → 503 → retryable "could not be loaded" card (Try again)
+ * D-125 (DEC-681):
+ *   doc0_state=context-document → artifact 404 BUT `/api/documents/:id` 200 →
+ *     the honest "Context file — not an artifact" view (a context upload whose id
+ *     is absent from the artifact registry yet really exists).
  * Absent/any other value → the captured 200 row (the settled viewer).
  */
 const DOC0_STATE = new URLSearchParams(window.location.search).get('doc0_state');
+
+/**
+ * D-125: a realistic context-upload record, shaped exactly like the body of
+ * `GET /api/documents/:id` (`ContextDocumentService.normalizeRecord`) — the id
+ * space disjoint from the artifact registry that made the deep link 404.
+ */
+const CONTEXT_DOC = {
+  id: ARTIFACT_ID,
+  organizationId: ARTIFACT.organizationId,
+  ownerId: 'owner-doc0-ctx',
+  ownerName: 'Consultify Team',
+  projectId: null,
+  scope: 'organization',
+  filename: 'upload_990d3e0f.pdf',
+  originalName: 'Northwind onboarding deck.pdf',
+  filePath: '/var/uploads/990d3e0f.pdf',
+  mimeType: 'application/pdf',
+  fileSizeBytes: 284_113,
+  sourceUpload: 'documents.library',
+  status: 'ready',
+  processingError: null,
+  chunkCount: 12,
+  version: 1,
+  createdAt: '2026-09-16T08:00:00.000Z',
+  updatedAt: '2026-09-16T08:30:00.000Z',
+};
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -90,13 +120,20 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   if (url.includes(`/api/artifacts/${ARTIFACT_ID}`)) {
     // D-102: the existence read drives the page phase. Content/action-target are
     // matched above, so this branch is the bare registry read only.
-    if (DOC0_STATE === 'not-found') {
+    // D-125: `context-document` also 404s HERE — the id then resolves in the
+    // disjoint context-document read model below, not in the artifact registry.
+    if (DOC0_STATE === 'not-found' || DOC0_STATE === 'context-document') {
       return jsonResponse({ error: { code: 'ARTIFACT_NOT_FOUND' } }, 404);
     }
     if (DOC0_STATE === 'error') {
       return jsonResponse({ error: 'upstream unavailable' }, 503);
     }
     return jsonResponse(REGISTRY.artifactEnvelope);
+  }
+  // D-125: `GET /api/documents/:id` — the second existence authority. Body is the
+  // bare record (no `{ data }` envelope), exactly as `res.json(document)` sends it.
+  if (url.includes(`/api/documents/${ARTIFACT_ID}`)) {
+    return jsonResponse(CONTEXT_DOC);
   }
   // `useArtifactOutputsForOrigins` (NotebookContextPanel) reads ONE artifact per
   // origin: `/api/artifacts/origin/<runtime>/<id>` → `{ data: <item> }`.

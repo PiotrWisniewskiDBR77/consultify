@@ -37,7 +37,7 @@ const apiGet = vi.hoisted(() => vi.fn());
 const navigateSpy = vi.hoisted(() => vi.fn());
 const viewerProps = vi.hoisted(() => ({ current: null as any }));
 
-vi.mock('@/services/api', () => ({ Api: { get: apiGet } }));
+vi.mock('@/services/api', () => ({ Api: { get: apiGet }, API_URL: '/api' }));
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigateSpy }));
 
@@ -253,5 +253,121 @@ describe('DocumentViewerPage — Edit and Close targets', () => {
     expect(navigateSpy).toHaveBeenCalledWith(
       `/presentations?tab=documents&artifactId=${ARTIFACT_ID}`
     );
+  });
+});
+
+/**
+ * D-125 (DEC-681) — the artifact registry is not the only home for an id that can
+ * reach `/documents/:id`. A context upload 404s in the registry yet exists behind
+ * `GET /api/documents/:id`; before this the viewer lied "no longer exists". Now an
+ * artifact 404 falls through to the document read model.
+ *
+ * MUTACJE: (a) drop `loadContextDocument` (artifact 404 → `{ kind: 'not-found' }`
+ * directly) → the context-document test RED (not-found renders instead); (b) remove
+ * the `doc0-context-badge` label span → the badge assertion RED.
+ */
+describe('DocumentViewerPage — D-125 context-document fallback', () => {
+  const CONTEXT_ID = 'ctx-doc-990d3e0f';
+
+  function contextBody(overrides: Record<string, unknown> = {}) {
+    // The HTTP body of `GET /api/documents/:id` is the bare record (no `{ data }`
+    // envelope); `Api.get` hands it back as the axios response `{ data: record }`,
+    // which `unwrapBody` passes through untouched.
+    return {
+      originalName: 'Northwind onboarding deck.pdf',
+      filename: 'upload_123.pdf',
+      mimeType: 'application/pdf',
+      ownerName: 'Consultify Team',
+      updatedAt: '2026-09-16T08:30:00.000Z',
+      createdAt: '2026-09-16T08:00:00.000Z',
+      ...overrides,
+    };
+  }
+
+  it('(1) an artifact 200 renders the artifact viewer and NEVER queries /documents', async () => {
+    await renderPage();
+    expect(screen.getByTestId('doc0-viewer-stub')).toBeInTheDocument();
+    expect(screen.queryByTestId('doc0-page-context-document')).toBeNull();
+    const docCalls = apiGet.mock.calls.filter(([url]) => String(url).startsWith('/documents/'));
+    expect(docCalls).toHaveLength(0);
+  });
+
+  it('(2) artifact 404 + document 200 renders the honest context-file view with the label', async () => {
+    apiGet.mockImplementation((url: string) => {
+      if (url.startsWith('/artifacts/')) {
+        return Promise.reject(Object.assign(new Error('gone'), { status: 404 }));
+      }
+      if (url.startsWith('/documents/')) return Promise.resolve({ data: contextBody() });
+      return Promise.resolve({ data: {} });
+    });
+    render(<DocumentViewerPage artifactId={CONTEXT_ID} />);
+    await screen.findByTestId('doc0-page-context-document');
+
+    // The artifact viewer must NOT render — this is a distinct, honest surface.
+    expect(screen.queryByTestId('doc0-viewer-stub')).toBeNull();
+    expect(screen.queryByTestId('doc0-page-not-found')).toBeNull();
+
+    // Explicit label (the whole point of the honest view).
+    expect(screen.getByTestId('doc0-context-badge').textContent).toBe(
+      'documents.viewer.contextFileBadge'
+    );
+    // Metadata off the real record: name (originalName), MIME type, owner, date.
+    expect(screen.getByTestId('doc0-context-name').textContent).toContain(
+      'Northwind onboarding deck.pdf'
+    );
+    expect(screen.getByTestId('doc0-context-type').textContent).toBe('application/pdf');
+    expect(screen.getByTestId('doc0-context-owner').textContent).toBe('Consultify Team');
+    // formatDateTime is stubbed to identity in this suite.
+    expect(screen.getByTestId('doc0-context-updated').textContent).toBe(
+      '2026-09-16T08:30:00.000Z'
+    );
+    // Download points at the existing endpoint (no new server surface).
+    expect(screen.getByTestId('doc0-context-download').getAttribute('href')).toBe(
+      `/api/documents/${CONTEXT_ID}/download`
+    );
+  });
+
+  it('(2b) a genuinely empty field renders "—", never a made-up value', async () => {
+    apiGet.mockImplementation((url: string) => {
+      if (url.startsWith('/artifacts/')) {
+        return Promise.reject(Object.assign(new Error('gone'), { status: 404 }));
+      }
+      if (url.startsWith('/documents/')) {
+        return Promise.resolve({ data: contextBody({ mimeType: null, ownerName: null }) });
+      }
+      return Promise.resolve({ data: {} });
+    });
+    render(<DocumentViewerPage artifactId={CONTEXT_ID} />);
+    await screen.findByTestId('doc0-page-context-document');
+    expect(screen.getByTestId('doc0-context-type').textContent).toBe('—');
+    expect(screen.getByTestId('doc0-context-owner').textContent).toBe('—');
+  });
+
+  it('(3) artifact 404 + document 404 keeps the dead-link authority ("no longer exists")', async () => {
+    apiGet.mockImplementation(() =>
+      Promise.reject(Object.assign(new Error('gone'), { status: 404 }))
+    );
+    render(<DocumentViewerPage artifactId={CONTEXT_ID} />);
+    await screen.findByTestId('doc0-page-not-found');
+    expect(screen.queryByTestId('doc0-page-context-document')).toBeNull();
+    expect(screen.getByText('documents.viewer.pageNotFound')).toBeInTheDocument();
+    // The second read fired and also 404d.
+    expect(apiGet).toHaveBeenCalledWith(`/documents/${CONTEXT_ID}`);
+  });
+
+  it('a transient document failure (404 artifact + 5xx document) stays RETRYABLE, not not-found', async () => {
+    apiGet.mockImplementation((url: string) => {
+      if (url.startsWith('/artifacts/')) {
+        return Promise.reject(Object.assign(new Error('gone'), { status: 404 }));
+      }
+      if (url.startsWith('/documents/')) {
+        return Promise.reject(Object.assign(new Error('boom'), { status: 503 }));
+      }
+      return Promise.resolve({ data: {} });
+    });
+    render(<DocumentViewerPage artifactId={CONTEXT_ID} />);
+    await screen.findByTestId('doc0-page-error');
+    expect(screen.queryByTestId('doc0-page-not-found')).toBeNull();
+    expect(screen.getByTestId('doc0-page-retry')).toBeInTheDocument();
   });
 });
