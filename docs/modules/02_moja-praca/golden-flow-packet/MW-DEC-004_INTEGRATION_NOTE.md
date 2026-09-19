@@ -96,8 +96,8 @@ and rename the JSX tag in the `case 'decision':` branch — or, for a safer
 gradual rollout, mount it behind a feature flag as an alternate branch first
 (per this repo's own visual-acceptance doctrine: "Piotr never the first
 visual tester" — the new view must go behind a default-OFF flag until Piotr
-accepts a clean screenshot, exactly like the
-`m03TasksStandardTableEnabled` pattern already used elsewhere in this hub).
+accepts a clean screenshot, exactly like the StandardTable migration
+pattern already used elsewhere in this hub).
 
 ## One functional gap Codex must account for before swapping
 

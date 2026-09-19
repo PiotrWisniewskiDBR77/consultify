@@ -2111,7 +2111,6 @@
     "src/utils/ideaTopBarOneLineFlag.ts",
     "src/utils/ideasPreviewOverlayFlag.ts",
     "src/utils/lazyWithRetry.ts",
-    "src/utils/m03TasksStandardTableFlag.ts",
     "src/utils/myWorkCalendarV2Flag.ts",
     "src/utils/mywork/ideaTablePresenceErrorMessage.ts",
     "src/utils/navDeclutterFlag.ts",

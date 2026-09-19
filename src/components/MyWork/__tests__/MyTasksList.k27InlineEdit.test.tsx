@@ -13,8 +13,8 @@
  * z optimistic update + undo + rollback. Premisa „nie da się" = FAŁSZ na
  * poziomie kodu; realna luka = BRAK testu, który to wpięcie zamraża.
  *
- * Ten test renderuje REALNY `MyTasksListContent` (domyślna ścieżka
- * `useStandardTable`, flaga ON od 2026-07-15) i przepuszcza prawdziwe rendery
+ * Ten test renderuje REALNY `MyTasksListContent` (StandardTable to jedyna
+ * ścieżka renderu od 2026-07-15) i przepuszcza prawdziwe rendery
  * kolumn (`column.render(row)`), więc wykonują się genuine komórki inline.
  * Asertuje ARGUMENT zapisu (payload + expectedVersionToken) — nie tekst na
  * ekranie i nie lokalne lustro (reguła „Testy wpięcia, nie obecności").
@@ -127,9 +127,6 @@ vi.mock('@/components/ui/ResizableTable/FilterDropdown', () => ({ FilterDropdown
 vi.mock('@/utils/artifactLinks', () => ({ getArtifactPath: () => '#' }));
 vi.mock('@/utils/clipboard', () => ({ copyAsMarkdown: vi.fn(), copyForSlack: vi.fn() }));
 vi.mock('@/utils/listDateFormat', () => ({ formatListDate: (d: unknown) => String(d ?? '') }));
-vi.mock('@/utils/m03TasksStandardTableFlag', () => ({
-  isM03TasksStandardTableEnabled: () => true,
-}));
 vi.mock('../hooks/useKeyboardShortcuts', () => ({
   useKeyboardShortcuts: () => ({ showHelp: false, setShowHelp: vi.fn() }),
 }));
