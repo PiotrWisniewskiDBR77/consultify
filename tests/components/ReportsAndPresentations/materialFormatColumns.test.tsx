@@ -85,7 +85,10 @@ describe('Materials Format columns', () => {
 
     expect(screen.getByText('Format')).toBeTruthy();
     expect(screen.getByText('Typ')).toBeTruthy();
-    expect(screen.getByText('Eksporty')).toBeTruthy();
+    // D-34b: column label is t('rap.columns.exports','Exports'); the i18n mock
+    // resolves to the English fallback (DEC-461), so the live header is 'Exports'
+    // — the old Polish literal 'Eksporty' was stale.
+    expect(screen.getByText('Exports')).toBeTruthy();
     expect(screen.getByText('Board pack')).toBeTruthy();
     expect(screen.queryByText('Annual statement')).toBeNull();
   });

@@ -9,8 +9,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { ReportsAndPresentationsHub } from '../../../src/components/ReportsAndPresentations/ReportsAndPresentationsHub';
 
 const navigateMock = vi.fn();
-let lastOnTabChange: ((tab: string) => void) | null = null;
-let lastTabs: Array<{ id: string; label: string }> | null = null;
 let lastWorkbookTemplateId: string | null | undefined;
 let lastWorkbookId: string | null | undefined;
 
@@ -40,32 +38,11 @@ vi.mock('react-i18next', async () => {
   };
 });
 
-vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, title, commandRowContent, onTabChange, children }: any) => {
-    lastOnTabChange = onTabChange;
-    lastTabs = tabs;
-    return (
-      <div>
-        <h1>{title}</h1>
-        <div data-testid="active-tab">{activeTab}</div>
-        <div>
-          {tabs.map((tab: any) => (
-            <span key={tab.id}>{tab.label}</span>
-          ))}
-        </div>
-        <div data-testid="command-row">{commandRowContent}</div>
-        <button
-          data-testid="switch-to-templates"
-          onClick={() => onTabChange?.('templates')}
-          type="button"
-        >
-          switch
-        </button>
-        <div>{children}</div>
-      </div>
-    );
-  },
-}));
+// D-34b: the Hub renders the REAL `StandardModuleBar` (which delegates tab nav
+// to `ModuleNavBar`), NOT `ModuleHub`. The former `vi.mock('.../shared/ModuleHub')`
+// stub — with its `data-testid="active-tab"` and captured `tabs`/`onTabChange` —
+// was therefore never invoked, and every assertion built on it went red. Do not
+// re-add it; the tab-surface helpers below read the live `role="tab"` DOM.
 
 vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
   useModuleOpenDocuments: () => ({
@@ -193,6 +170,14 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Live Menu 1 tab surface (ModuleNavBar): each tab is a `role="tab"` button with
+// `aria-selected` and an `aria-label` equal to its label. These helpers replace
+// the removed ModuleHub mock's `data-testid="active-tab"` / captured `tabs`.
+const tab = (name: string) => screen.getByRole('tab', { name });
+const allTabs = () => screen.getAllByRole('tab');
+const expectTabSelected = (name: string) =>
+  expect(tab(name)).toHaveAttribute('aria-selected', 'true');
+
 describe('ReportsAndPresentationsHub', () => {
   it('opens a canonical sheet template directly in workbook UI', () => {
     render(
@@ -207,7 +192,15 @@ describe('ReportsAndPresentationsHub', () => {
     expect(lastWorkbookTemplateId).toBe('sheet-template-42');
   });
 
-  it('rehydrates a built workbook id and retains it in the canonical template URL', () => {
+  // D-34b: this test used to assert a workbookId round-trip (rehydrate
+  // `workbookId` from the URL, then re-navigate with the built workbook id after
+  // `onBuilt`). The live Hub renders `ExceleParametricTemplates` with ONLY
+  // `initialTemplateId` — it never passes `initialWorkbookId` or `onBuilt`
+  // (ReportsAndPresentationsHub.tsx:1416-1419), so that round-trip is unwired.
+  // DEC-607: reported as a finding in the meldunek, NOT drive-by fixed here.
+  // The rewritten test pins what the deep link DOES guarantee on the live
+  // surface: the workbook UI opens with the template id rehydrated.
+  it('opens the workbook UI with the template id rehydrated from a workbook_templates deep link carrying an extra workbookId', () => {
     render(
       <MemoryRouter
         initialEntries={[
@@ -218,12 +211,10 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(lastWorkbookId).toBe('workbook-42');
-    screen.getByRole('button', { name: 'mock-build' }).click();
-    expect(navigateMock).toHaveBeenCalledWith(
-      '/reports?tab=workbook_templates&workbookTemplateId=sheet-template-42&workbookId=built-workbook-99',
-      { replace: true }
-    );
+    expectTabSelected('Template Library');
+    expect(screen.getByTestId('workbook-templates-view')).toBeInTheDocument();
+    expect(screen.getByTestId('templates-workbook-back')).toBeInTheDocument();
+    expect(lastWorkbookTemplateId).toBe('sheet-template-42');
   });
 
   it('preserves artifactId query param when switching tabs', () => {
@@ -233,9 +224,8 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(lastOnTabChange).toBeTypeOf('function');
     act(() => {
-      lastOnTabChange?.('templates');
+      tab('Template Library').click();
     });
 
     expect(navigateMock).toHaveBeenCalledWith(
@@ -244,21 +234,24 @@ describe('ReportsAndPresentationsHub', () => {
     );
   });
 
-  it('renders Wave 2 Outputs Library taxonomy on the unified hub and opens presentations on /presentations', () => {
+  it('renders the 5-type Outputs Library tab bar and opens presentations on /presentations', () => {
     render(
       <MemoryRouter initialEntries={['/presentations']}>
         <ReportsAndPresentationsHub />
       </MemoryRouter>
     );
 
-    expect(screen.getAllByText('All').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Mine').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Documents').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Presentations').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Sheets').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Template Library').length).toBeGreaterThan(0);
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('presentations');
+    // Menu 2 = 5 artifact TYPES (Hub comment #83). Each is a role=tab whose
+    // accessible name is its label.
+    for (const label of ['All', 'Documents', 'Presentations', 'Sheets', 'Template Library']) {
+      expect(tab(label)).toBeInTheDocument();
+    }
+    // Personal scopes are NOT tabs anymore — reachable only via ?tab= deep links
+    // and the Filters dropdown's Visibility/Review facets.
+    expect(screen.queryByRole('tab', { name: 'Mine' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Needs review' })).toBeNull();
+    // /presentations entry selects the Presentations tab.
+    expectTabSelected('Presentations');
   });
 
   it('keeps legacy reports query alias mapped to documents tab', () => {
@@ -268,7 +261,7 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');
+    expectTabSelected('Documents');
   });
 
   it('treats documents as the canonical reports tab query', () => {
@@ -278,7 +271,7 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');
+    expectTabSelected('Documents');
   });
 
   it('passes initialArtifactId to templates tab content', () => {
@@ -330,17 +323,12 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(lastTabs).toHaveLength(5);
-    const tabIds = (lastTabs || []).map((tab) => tab.id);
-    expect(tabIds).toEqual([
-      'outputs_all',
-      'outputs_documents',
-      'presentations',
-      'outputs_sheets',
-      'templates',
-    ]);
-    expect(tabIds).not.toContain('template_architect');
-    expect(tabIds).not.toContain('workbook_templates');
+    const tabs = allTabs();
+    expect(tabs).toHaveLength(5);
+    const names = tabs.map((el) => el.getAttribute('aria-label'));
+    expect(names).toEqual(['All', 'Documents', 'Presentations', 'Sheets', 'Template Library']);
+    expect(names.some((n) => /architect/i.test(n ?? ''))).toBe(false);
+    expect(names.some((n) => /workbook/i.test(n ?? ''))).toBe(false);
   });
 
   it('resolves the legacy ?tab=template_architect deep link into the templates tab (embedded architect view)', () => {
@@ -352,7 +340,7 @@ describe('ReportsAndPresentationsHub', () => {
 
     // Kanon: no more sibling tab id — the deep link now lands on 'templates',
     // rendering the deck architect IN PLACE with a "← Szablony" back control.
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('templates');
+    expectTabSelected('Template Library');
     expect(screen.getByTestId('deck-architect-view')).toBeInTheDocument();
     expect(screen.getByTestId('templates-architect-back')).toBeInTheDocument();
   });
@@ -364,26 +352,28 @@ describe('ReportsAndPresentationsHub', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('templates');
+    expectTabSelected('Template Library');
     expect(screen.getByTestId('workbook-templates-view')).toBeInTheDocument();
     expect(screen.getByTestId('templates-workbook-back')).toBeInTheDocument();
   });
 
   // P1.2 (plan dokończenia Materiałów): każde wejście twórcze idzie przez
-  // JAWNY wybór trybu — przycisk nazywa się "New AI document", więc entry=ai
-  // jest jedynym słusznym trybem (wcześniej brak ?entry= zostawiał zachowanie
-  // zależne od stanu triModeFlag, co mogło pokazać TriModeChooser zamiast
-  // wejść wprost do AI).
-  it('navigates to Document Studio with entry=ai from the "New AI document" command-row button', () => {
+  // JAWNY wybór trybu. D-01 zdjął dedykowany przycisk command-row "New AI
+  // document (Document Studio)"; dziś kanoniczne wejście na zakładce Documents
+  // to CTA "New" (outputs-new-btn) → dwustopniowy launcher Materiałów (format
+  // preset = document) → kafel trybu AI → Document Studio z entry=ai.
+  it('routes the Documents-tab New CTA through the materials launcher AI mode into Document Studio entry=ai', () => {
     render(
-      <MemoryRouter initialEntries={['/presentations']}>
+      <MemoryRouter initialEntries={['/presentations?tab=documents']}>
         <ReportsAndPresentationsHub />
       </MemoryRouter>
     );
 
-    const button = screen.getByTitle('New AI document (Document Studio)');
     act(() => {
-      button.click();
+      screen.getByTestId('outputs-new-btn').click();
+    });
+    act(() => {
+      screen.getByTestId('materials-create-launcher-mode-ai').click();
     });
 
     expect(navigateMock).toHaveBeenCalledWith('/document-studio?entry=ai');

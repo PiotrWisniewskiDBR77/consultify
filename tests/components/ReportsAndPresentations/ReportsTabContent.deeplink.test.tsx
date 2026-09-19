@@ -26,27 +26,17 @@ vi.mock('../../../src/components/ReportsAndPresentations/useTrustState', () => (
   useTrustState: (_artifactId?: string, governance?: any) => governance,
 }));
 
+// D-34b: ReportsTabContent's table view is the Triada standard — the REAL
+// StandardTable (which pulls FilterableTable from the DIRECT submodule path
+// '../shared/ModuleHub/FilterableTable', NOT this barrel) + a REAL StandardPreview
+// in a plain flex split. The former mocks here were dead:
+//   • barrel `FilterableTable` — never hit (StandardTable bypasses the barrel);
+//   • `TableWithPreviewLayout` — no longer used (ReportsTabContent.tsx:504-507:
+//     "plain flex split, NOT TableWithPreviewLayout").
+// Only `GridView` stays stubbed (imported from the barrel, unused in table view).
+// Deep-link selection is asserted on the LIVE row `aria-selected`.
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  FilterableTable: ({ data, selectedRowId, onRowClick }: any) => (
-    <div data-testid="filterable-table">
-      {data.map((row: any) => (
-        <button key={row.id} onClick={() => onRowClick(row)} data-testid={`row-${row.id}`}>
-          {row.title}
-        </button>
-      ))}
-      <div data-testid="selected-row">{selectedRowId || 'none'}</div>
-    </div>
-  ),
   GridView: () => <div data-testid="grid-view" />,
-}));
-
-vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
-  TableWithPreviewLayout: ({ children, selectedId }: any) => (
-    <div data-testid="table-layout">
-      <div data-testid="selected-id">{selectedId || 'none'}</div>
-      {children}
-    </div>
-  ),
 }));
 
 const actions = {
@@ -97,6 +87,16 @@ describe('ReportsTabContent deep-link selection', () => {
       />
     );
 
-    expect(screen.getByTestId('selected-id').textContent).toBe('report-2');
+    // Live surface: initialArtifactId 'art-r2' → selectedId 'report-2' →
+    // StandardTable selectedRowId → FilterableTable marks that row aria-selected
+    // (FilterableTable.tsx:2403). The non-matching sibling stays false.
+    expect(screen.getByRole('row', { name: /Report Two/ })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(screen.getByRole('row', { name: /Report One/ })).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
   });
 });

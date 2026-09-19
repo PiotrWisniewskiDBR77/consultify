@@ -8,6 +8,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { SheetsTabContent } from '../../../src/components/ReportsAndPresentations/SheetsTabContent';
 
 vi.mock('react-i18next', () => ({
+  // D-34b: łańcuch importów SheetsTabContent → materialData → api → src/i18n.ts
+  // woła `initReactI18next`; sam `useTranslation` w moku to za mało (vitest rzucał
+  // „No initReactI18next export is defined" i cały plik nie zbierał testów).
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({
     t: (_k: string, fallback?: string) => fallback || _k,
   }),
