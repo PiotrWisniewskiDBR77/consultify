@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Controller
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -160,7 +159,7 @@ export class UserController {
       } catch (error: unknown) {
         logger.error('[users] Error fetching users', {
           error,
-          correlationId: (req as any).correlationId,
+          correlationId: req.correlationId,
         });
         res.status(500).json({ error: 'Failed to fetch users', code: 'USERS_LIST_FAILED' });
       }
@@ -208,7 +207,7 @@ export class UserController {
           createdAt: user.created_at,
           organizationId: user.organization_id,
         },
-        getRequestAccessRole(req as any)
+        getRequestAccessRole(req)
       );
 
       res.json(shaped);
