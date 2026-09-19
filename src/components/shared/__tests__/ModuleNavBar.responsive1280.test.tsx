@@ -45,9 +45,9 @@ describe('ModuleNavBar responsive Menu 2', () => {
     const right = screen.getByTestId('module-nav-right-cluster');
     const tablist = screen.getByRole('tablist', { name: 'Module sections' });
 
-    expect(row).toHaveClass('flex-wrap', 'min-[1360px]:flex-nowrap');
-    expect(left).toHaveClass('basis-full', 'min-[1360px]:basis-auto');
-    expect(right).toHaveClass('basis-full', 'flex-wrap', 'min-[1360px]:flex-nowrap');
+    expect(row).toHaveClass('flex-wrap', 'xl:flex-nowrap');
+    expect(left).toHaveClass('basis-full', 'xl:basis-auto');
+    expect(right).toHaveClass('basis-full', 'flex-wrap', 'xl:flex-nowrap');
     expect(tablist).toHaveClass('overflow-x-auto');
     expect(within(tablist).getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
       'Initiatives',

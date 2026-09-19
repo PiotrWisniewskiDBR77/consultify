@@ -387,12 +387,36 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   // z prawej).
   const hasTabs = tabs.length > 0;
 
+  // ★ QB00 / Wpis 157 (DEC-653, DEC-664, właściciel po raz TRZECI: „masz złe
+  // menu 2 ... z tego powodu dodawane jest kolejne menu, które nie powinno
+  // istnieć"). Przyczyna wspólna WSZYSTKICH ekranów listowych: poniżej progu
+  // breakpointu prawy klaster Menu 2 (filtry→widoki→CTA→AI) ma `basis-full` i
+  // ZAWIJA SIĘ do własnego pełnoszerokiego paska POD rzędem lupy. Użytkownik
+  // widzi wtedy trzy paski (lupa+pigułki / odseparowany prawy klaster / Command
+  // Row) i czyta środkowy jako „menu 3 z przyciskami po prawej", a Command Row
+  // jako „dodatkowe menu". Próg single-row obniżony 1360→1280: Menu 2 zostaje
+  // w JEDNYM wierszu od 1280 px wzwyż (lupa+pigułki z lewej, CTA/filtry z
+  // prawej — dokładnie to, czego chce kanon §A2 i właściciel), a `min-w-0` +
+  // `overflow-x-auto` na pasku pigułek (F9 poniżej) wciąż chroni primaryCta
+  // przed wypchnięciem, gdy pigułek jest dużo. Poniżej 1280 px stack mobilny
+  // zostaje bez zmian. SWEEP-MENU.md (akcepty-odbior-html-20260918) mierzy ten
+  // sam defekt na każdym hubie.
+  //
+  // PRÓG WYRAŻONY NAZWANYM breakpointem `xl:` (1280 px, tailwind.config.js:33),
+  // NIE wariantem dowolnym `min-[1280px]:`. Pomiar w dev-render (18.09): reguła
+  // `min-[1280px]:basis-auto` NIE powstała w żadnym media query (`flex-basis:auto`
+  // = 0 wystąpień w całym wygenerowanym CSS), choć nazwane `xl:gap-*` w bloku
+  // `(min-width:1280px)` istnieją — czyli potok Tailwind tego projektu nie
+  // kompiluje wariantów `min-[...]` (żaden inny plik w `src/` ich nie używa).
+  // Dotyczy to też starego progu `min-[1360px]:` — ten sam mechanizm, więc
+  // poprzednia wartość także była w przeglądarce martwa. `xl:` jest generowane
+  // zawsze, więc to jedyna postać, która realnie przełącza układ w jednym wierszu.
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
       {/* Main Navigation Row */}
       <div
         data-testid="module-nav-main-row"
-        className={`flex flex-wrap min-[1360px]:flex-nowrap items-center px-4 py-3 gap-2 min-[1360px]:gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
+        className={`flex flex-wrap xl:flex-nowrap items-center px-4 py-3 gap-2 xl:gap-3 ${hasTabs ? 'justify-between' : 'justify-end'}`}
       >
         {/* Left: Search + Tabs + Status Filters
          *
@@ -406,7 +430,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
          * nadmiar do przewijania pigulek, zamiast do wypychania CTA. */}
         <div
           data-testid="module-nav-left-cluster"
-          className="flex min-w-0 basis-full items-center gap-2 min-[1360px]:basis-auto min-[1360px]:gap-3"
+          className="flex min-w-0 basis-full items-center gap-2 xl:basis-auto xl:gap-3"
         >
           {/* Search Toggle */}
           <button
@@ -475,7 +499,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
         <div
           data-testid="module-nav-right-cluster"
-          className={`flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end min-[1360px]:basis-auto min-[1360px]:flex-nowrap min-[1360px]:gap-3 ${hasTabs ? 'ml-auto' : ''}`}
+          className={`flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end xl:basis-auto xl:flex-nowrap xl:gap-3 ${hasTabs ? 'ml-auto' : ''}`}
         >
           {/* Filters / compact controls (leftmost in the right cluster) */}
           {rightControls}

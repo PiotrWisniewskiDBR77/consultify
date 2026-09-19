@@ -217,7 +217,7 @@ describe('Inicjatywy · Menu 2 przy WSZYSTKICH flagach ON [F9 DEC-507]', () => {
  * naprawa faktycznie siedzi. Pomiar wizualny robia zrzuty 1280/1440/1920.
  */
 describe('ModuleNavBar · rzad Menu 2 nie moze wypchnac primary CTA [F9]', () => {
-  it('lewy klaster i pigułki są kurczliwe, a przy 1280 oba klastry zawijają się bez utraty CTA', async () => {
+  it('lewy klaster i pigułki są kurczliwe, a od 1280 oba klastry zostają w jednym wierszu bez utraty CTA', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const zrodlo = fs.readFileSync(
@@ -227,15 +227,21 @@ describe('ModuleNavBar · rzad Menu 2 nie moze wypchnac primary CTA [F9]', () =>
 
     // MUTACJA: skasowanie dowolnej części kontraktu znów pozwala wypchnąć
     // Load albo CTA poza widoczny obszar przy szerokości 1280 px.
-    expect(zrodlo).toContain('flex flex-wrap min-[1360px]:flex-nowrap items-center');
+    // QB00/Wpis 157 (DEC-653/664): próg single-row obniżony 1360→1280, żeby
+    // prawy klaster Menu 2 nie zawijał się do osobnego paska (objaw „kolejne
+    // menu"). Próg wyrażony NAZWANYM `xl:` (1280 px), NIE `min-[1280px]:` —
+    // potok Tailwind tego projektu nie kompiluje wariantów `min-[...]` (pomiar
+    // dev-render 18.09: zero reguł `flex-basis:auto` w jakimkolwiek media
+    // query). Strażnik SSOT wspólnego komponentu — synchronizacja mechaniczna.
+    expect(zrodlo).toContain('flex flex-wrap xl:flex-nowrap items-center');
     expect(zrodlo).toContain(
-      'className="flex min-w-0 basis-full items-center gap-2 min-[1360px]:basis-auto min-[1360px]:gap-3"'
+      'className="flex min-w-0 basis-full items-center gap-2 xl:basis-auto xl:gap-3"'
     );
     expect(zrodlo).toContain(
       'className="app-table-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto whitespace-nowrap"'
     );
     expect(zrodlo).toContain(
-      'flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end min-[1360px]:basis-auto min-[1360px]:flex-nowrap'
+      'flex min-w-0 basis-full flex-wrap items-center gap-2 justify-end xl:basis-auto xl:flex-nowrap'
     );
   });
 });
