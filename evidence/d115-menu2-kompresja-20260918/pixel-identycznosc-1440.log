@@ -1,0 +1,14 @@
+D-115 / DEC-675 — warunek "@1440 bez zmian": PRZED vs PO bajt w bajt
+Data: 2026-09-18 23:54 CDT
+
+cmp PRZED-inicjatywy-menu2-1440-light-en.png PO-inicjatywy-menu2-1440-light-en.png -> IDENTYCZNE (0 bajtów różnicy)
+  sha256 PRZED=8e9ee3f72d2e3b06  PO=8e9ee3f72d2e3b06  bytes=150557/150557
+cmp PRZED-inicjatywy-menu2-1440-dark-en.png PO-inicjatywy-menu2-1440-dark-en.png -> IDENTYCZNE (0 bajtów różnicy)
+  sha256 PRZED=fb76572754c9880d  PO=fb76572754c9880d  bytes=153421/153421
+
+Kontrola przeciwna (że przyrząd nie kłamie — te pary MUSZĄ się różnić):
+cmp 1280 light -> różnią się (oczekiwane: kompresja etykiet)
+cmp 1280 dark -> różnią się (oczekiwane: kompresja etykiet)
+
+Konsola/sieć: shot.mjs drukuje KONSOLA-BLEDY i SIEC-4XX5XX tylko gdy niepuste.
+  logów zrzutów/pomiarów (bez tego pliku): 17  z błędami konsoli/sieci: 0  => bledyKonsoli=0

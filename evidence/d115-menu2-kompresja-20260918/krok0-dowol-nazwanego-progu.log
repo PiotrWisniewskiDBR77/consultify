@@ -1,0 +1,30 @@
+D-115 / DEC-675 — KROK 0: dowód, że nazwany próg xl2:1440px SIĘ KOMPILUJE
+Data pomiaru: 2026-09-18 23:54 CDT
+
+A) CSS zbudowany z tailwind.config.js NA BAZIE (HEAD 52d5274dde, bez xl2):
+   plik: /tmp/d115/przed-all.css  bytes=736775
+   @media(min-width:1440px) = 0
+   @media(min-width:1280px) = 2
+   @media(min-width:1536px) = 2
+
+B) CSS zbudowany z tailwind.config.js PO (dodane xl2:'1440px'):
+   plik: /tmp/d115/po-all.css  bytes=736949
+   @media(min-width:1440px) = 2
+   @media(min-width:1280px) = 2
+   @media(min-width:1536px) = 2
+
+   Reguły w bloku 1440 (PO):
+     .xl2\:inline{display:inline}
+     .xl2\:hidden{display:none}
+
+C) Potwierdzenie na produkcyjnym buildzie PO (npm run build, exit 0):
+   CustomersModule-6l_ljEDD.css bytes=4210 1440=0 xl2reguly=0
+   IdeaMapWorkspace-YNiKBcyn.css bytes=4874 1440=0 xl2reguly=0
+   MyWorkView-0gX6Yo6k.css bytes=3856 1440=0 xl2reguly=0
+   creatorShell-C-g45F-B.css bytes=952 1440=0 xl2reguly=0
+   index-n-G1Md9H.css bytes=716013 1440=2 xl2reguly=2
+   style-Fd0xVSp_.css bytes=7044 1440=0 xl2reguly=0
+
+D) Wniosek: 0 -> 2 bloki @media(min-width:1440px); liczniki 1280 i 1536 bez zmian
+   (2 i 2), bajty rosna addytywnie -> próg nazwany kompiluje się i nic nie usunął.
+   Odtworzenie PRZED: git show HEAD:tailwind.config.js > tailwind.config.js && npm run build

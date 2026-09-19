@@ -465,6 +465,13 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
+              // D-115 / DEC-675: poniżej `xl2` (1440) pigułka z ikoną zostaje SAMĄ
+              // IKONĄ, a pełna etykieta idzie do `title`/`aria-label`. Powód: rząd
+              // Menu 2 (lupa + 3 pigułki + filtry + widoki + CTA) nie mieści się
+              // w 1280, a `overflow-x-auto` tablisty UCINAŁ etykietę w pół słowa
+              // („Lo" na zrzucie wdrożenia 29). Od `xl2:` pełna etykieta = wygląd
+              // 1440 bez zmiany. Bez ikony nie ma czego pokazać → etykieta zostaje.
+              const compress = Boolean(tab.icon);
               return (
                 <button
                   type="button"
@@ -473,9 +480,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                   className={isActive ? TAB_ACTIVE : TAB_INACTIVE}
                   role="tab"
                   aria-selected={isActive}
+                  title={compress ? tab.label : undefined}
+                  aria-label={compress ? tab.label : undefined}
                 >
                   {tab.icon}
-                  <span>{tab.label}</span>
+                  <span className={compress ? 'hidden xl2:inline' : undefined}>{tab.label}</span>
                   {showTabCounts && tab.count !== undefined && (
                     <span
                       className={`

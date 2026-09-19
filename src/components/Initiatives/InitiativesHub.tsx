@@ -2681,24 +2681,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       aria-label={t('initiatives.archiveScope.label', 'Register scope')}
       data-testid="initiatives-archive-scope"
     >
-      {(['current', 'archive'] as const).map((value) => (
-        <button
-          key={value}
-          type="button"
-          role="radio"
-          aria-checked={fourButtonsArchiveScope === value}
-          onClick={() => setFourButtonsArchiveScope(value)}
-          className={
-            fourButtonsArchiveScope === value
-              ? MENU_2_SEGMENT_ITEM_ACTIVE
-              : MENU_2_SEGMENT_ITEM_INACTIVE
-          }
-        >
-          {value === 'current'
+      {(['current', 'archive'] as const).map((value) => {
+        const label =
+          value === 'current'
             ? t('initiatives.archiveScope.current', 'Current')
-            : t('initiatives.archiveScope.archive', 'Archive')}
-        </button>
-      ))}
+            : t('initiatives.archiveScope.archive', 'Archive');
+        // D-115 / DEC-675: drugi element ucinany w Menu 2 przy 1280–1439 („Ar"
+        // na zrzucie wdrożenia 29) — poniżej `xl2` (1440) zostaje sama ikona,
+        // pełna etykieta idzie do `title`/`aria-label`; od `xl2:` tekst jak
+        // dotąd, więc 1440 jest bez zmiany.
+        const Icon = value === 'current' ? Clock : Archive;
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={fourButtonsArchiveScope === value}
+            onClick={() => setFourButtonsArchiveScope(value)}
+            title={label}
+            aria-label={label}
+            className={
+              fourButtonsArchiveScope === value
+                ? MENU_2_SEGMENT_ITEM_ACTIVE
+                : MENU_2_SEGMENT_ITEM_INACTIVE
+            }
+          >
+            <Icon size={12} className="xl2:hidden" aria-hidden="true" />
+            <span className="hidden xl2:inline">{label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 

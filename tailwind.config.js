@@ -31,6 +31,11 @@ export default {
       md: '768px', // Tablet portrait
       lg: '1024px', // Tablet landscape / Desktop
       xl: '1280px', // Desktop
+      // D-115 / DEC-675: Menu 2 compresses labels in 1280–1439 and shows them in
+      // full from 1440 (the design width). Named screen, NOT `min-[1440px]:` —
+      // arbitrary min-width variants do not compile in this pipeline (W158
+      // measured 0 `flex-basis:auto` rules inside any media query).
+      xl2: '1440px', // Full-label desktop
       '2xl': '1536px', // Large desktop
       // Custom aliases for semantic usage
       mobile: { max: '767px' }, // Mobile only

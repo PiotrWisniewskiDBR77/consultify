@@ -93,3 +93,71 @@ describe('ModuleNavBar responsive Menu 2', () => {
     expect(container.querySelector('.no-scrollbar')).toBeNull();
   });
 });
+
+// D-115 / DEC-675 (Wpis 176+180): kształt zakładek z Inicjatyw — każda MA ikonę
+// (`List`/`CalendarClock`/`Users`), więc poniżej progu `xl2` pigułka może zostać
+// samą ikoną. Ta sama lista par co `TABS` (bramka językowa `--staged`).
+const ICON_TABS = [
+  ['initiatives', 'Initiatives'],
+  ['plan', 'Plan'],
+  ['load', 'Load'],
+].map(([id, label]) => ({ id, label, icon: <span data-testid={`tab-icon-${id}`} /> }));
+
+const renderBar = (tabs: typeof ICON_TABS | typeof TABS) =>
+  render(
+    <ModuleNavBar
+      tabs={tabs}
+      activeTab={tabs[0]?.id ?? ''}
+      onTabChange={noop}
+      viewMode="table"
+      onViewModeChange={noop}
+      onSearch={noop}
+      openDocuments={[]}
+      activeDocumentId={null}
+      onSelectDocument={noop}
+      onCloseDocument={noop}
+      onShowList={noop}
+      activeFilters={[]}
+      onRemoveFilter={noop}
+      onClearFilters={noop}
+    />,
+  );
+
+describe('ModuleNavBar Menu 2 label compression below xl2 (D-115)', () => {
+  // Przy 1280–1439 rząd Menu 2 (lupa + 3 pigułki + filtry + widoki + CTA) nie
+  // mieści się, a `overflow-x-auto` tablisty UCINAŁ etykietę w pół słowa („Lo"
+  // na zrzucie wdrożenia 29). Kompresja = ikona + pełna etykieta w tooltipie;
+  // od `xl2:` (1440) etykieta wraca, więc 1440 jest bez zmiany.
+  // Mutacje: `hidden xl2:inline` → `hidden` (etykieta znika też przy 1440) RED;
+  // brak `title` RED; `compress` zawsze true RED (test bez ikony).
+  it('keeps the full label of every icon tab in title/aria-label and hides the text below 1440', () => {
+    renderBar(ICON_TABS);
+
+    const tablist = screen.getByRole('tablist', { name: 'Module sections' });
+    const tabs = within(tablist).getAllByRole('tab');
+    expect(tabs).toHaveLength(3);
+
+    tabs.forEach((tab, index) => {
+      const label = ICON_TABS[index].label;
+      expect(tab).toHaveAttribute('title', label);
+      expect(tab).toHaveAttribute('aria-label', label);
+      expect(within(tab).getByTestId(`tab-icon-${ICON_TABS[index].id}`)).toBeInTheDocument();
+      expect(within(tab).getByText(label)).toHaveClass('hidden', 'xl2:inline');
+    });
+  });
+
+  it('keeps a fully visible label on a tab that has no icon to fall back to', () => {
+    renderBar(TABS);
+
+    const tablist = screen.getByRole('tablist', { name: 'Module sections' });
+    within(tablist)
+      .getAllByRole('tab')
+      .forEach((tab) => {
+        expect(tab).not.toHaveAttribute('title');
+        const labelSpan = tab.querySelector('span');
+        expect(labelSpan).not.toBeNull();
+        expect(labelSpan?.getAttribute('class')).toBeNull();
+        expect(labelSpan?.textContent).toBe(tab.textContent);
+      });
+  });
+});

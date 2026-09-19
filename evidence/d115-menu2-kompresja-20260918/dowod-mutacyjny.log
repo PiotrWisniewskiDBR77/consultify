@@ -1,0 +1,58 @@
+D-115 / DEC-675 — DOWÓD MUTACYJNY
+Data: 2026-09-18 23:56 CDT
+Zasada: mutacja produktu -> test CZERWONY; cofnięcie -> ZIELONY. --retry=0.
+
+M0 (bez mutacji) ModuleNavBar.responsive1280:
+     Test Files  1 passed (1)
+          Tests  4 passed (4)
+    exit=0
+M0 (bez mutacji) InitiativesHub.fourButtonsE1:
+     Test Files  1 passed (1)
+          Tests  11 passed (11)
+    exit=0
+
+M1: span etykiety 'hidden xl2:inline' -> 'hidden' (tekst nigdy nie wraca od 1440)
+     Test Files  1 failed (1)
+          Tests  1 failed | 3 passed (4)
+    exit=1 (oczekiwane !=0)
+    przywrócone: TAK (diff -q pusty)
+
+M2: usunięty title pigułki (etykieta nieosiągalna po najechaniu)
+     Test Files  1 failed (1)
+          Tests  1 failed | 3 passed (4)
+    exit=1 (oczekiwane !=0)
+    przywrócone: TAK (diff -q pusty)
+
+M3: compress = true zawsze (kompresja także tam, gdzie nie ma ikony)
+     Test Files  1 failed (1)
+          Tests  1 failed | 3 passed (4)
+    exit=1 (oczekiwane !=0)
+    przywrócone: TAK (diff -q pusty)
+
+M4: ikona segmentu bez 'xl2:hidden' (od 1440 ikona + tekst = dublet)
+     Test Files  1 failed (1)
+          Tests  1 failed | 10 passed (11)
+    exit=1 (oczekiwane !=0)
+    przywrócone: TAK (diff -q pusty)
+
+M5: usunięty title segmentu [Current|Archive]
+     Test Files  1 failed (1)
+          Tests  1 failed | 10 passed (11)
+    exit=1 (oczekiwane !=0)
+    przywrócone: TAK (diff -q pusty)
+
+M6 (przywrócenie, kontrola): oba pliki po cofnięciu wszystkich mutacji
+     Test Files  1 passed (1)
+          Tests  4 passed (4)
+    exit=0
+     Test Files  1 passed (1)
+          Tests  11 passed (11)
+    exit=0
+
+Stan końcowy drzewa (git diff --stat):
+   src/components/Initiatives/InitiativesHub.tsx      | 46 +++++++++------
+   .../InitiativesHub.fourButtonsE1.test.tsx          | 29 +++++++++
+   src/components/shared/ModuleHub/ModuleNavBar.tsx   | 11 +++-
+   .../__tests__/ModuleNavBar.responsive1280.test.tsx | 68 ++++++++++++++++++++++
+   tailwind.config.js                                 |  5 ++
+   5 files changed, 141 insertions(+), 18 deletions(-)

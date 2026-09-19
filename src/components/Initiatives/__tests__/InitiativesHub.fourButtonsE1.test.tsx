@@ -447,4 +447,33 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
     await Promise.resolve();
     expect(screen.queryByText('Organization A initiative')).toBeNull();
   });
+
+  // D-115 / DEC-675 (Wpis 176+180): segment [Current|Archive] to DRUGI element
+  // ucinany w Menu 2 przy 1280–1439 („Ar" na zrzucie wdrożenia 29). Poniżej
+  // nazwanego progu `xl2` (1440) zostaje sama ikona, pełna etykieta idzie do
+  // `title`/`aria-label`; od `xl2:` tekst jak dotąd, więc 1440 jest bez zmiany.
+  // Etykiety brane Z DOM (aria-label), nie z literałów: bramka językowa w trybie
+  // `--staged` skanuje także `src/**/__tests__`.
+  // Mutacje: `xl2:hidden` na ikonie → RED; brak `title` → RED;
+  // `hidden xl2:inline` → `hidden` (tekst znika też przy 1440) → RED.
+  it('compresses the register-scope segment to icons below 1440 and keeps both labels reachable', async () => {
+    renderHubAt('/initiatives?lens=list');
+    await screen.findByTestId('initiatives-hub');
+
+    const segment = screen.getByTestId('initiatives-archive-scope');
+    const radios = within(segment).getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+    const labels = radios.map((radio) => radio.getAttribute('aria-label'));
+    expect(labels[0]).toBeTruthy();
+    expect(labels[0]).not.toBe(labels[1]);
+
+    radios.forEach((radio) => {
+      const label = radio.getAttribute('aria-label') as string;
+      expect(radio).toHaveAttribute('title', label);
+      const icon = radio.querySelector('svg');
+      expect(icon).not.toBeNull();
+      expect(icon?.getAttribute('class')).toContain('xl2:hidden');
+      expect(within(radio).getByText(label)).toHaveClass('hidden', 'xl2:inline');
+    });
+  });
 });
