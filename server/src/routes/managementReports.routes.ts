@@ -342,10 +342,9 @@ router.patch(
         error,
         correlationId: (req as any).correlationId,
       });
-      return res.status(400).json({
-        error: 'Nie udało się zaktualizować raportu',
-        code: 'MANAGEMENT_REPORT_UPDATE_FAILED',
-      });
+      // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+      // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
+      return res.status(400).json({ code: 'MANAGEMENT_REPORT_UPDATE_FAILED' });
     }
     return res.json({ success: true, report });
   })
