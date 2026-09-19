@@ -1092,12 +1092,17 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     }
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
-    // `flex-wrap`, nie `flex-nowrap overflow-hidden`: jądro kanonu dociska
+    // `flex-nowrap overflow-hidden`, nie `flex-wrap`: jądro kanonu dociska
     // szerokość kolumny do POMIARU TEKSTU (każdy chip liczy jako osobna linia),
-    // więc przy dwóch chipach kolumna bywa węższa niż ich rząd — bez zawijania
-    // drugi chip ucinałby się w pół słowa, bez wielokropka.
+    // więc przy dwóch chipach kolumna bywa węższa niż ich rząd — z `flex-wrap`
+    // rząd łamał się do drugiej linii i wiersz rósł ponad sąsiadów (odbiór
+    // właściciela: nierówne wysokości). Jedna niełamliwa linia trzyma kanoniczną
+    // wysokość wiersza (§3.4); `title` oddaje pełną listę, gdyby chip się przyciął.
     return (
-      <div className="flex min-w-0 flex-wrap items-center justify-start gap-1">
+      <div
+        className="flex min-w-0 flex-nowrap items-center justify-start gap-1 overflow-hidden"
+        title={tags.join(', ')}
+      >
         {tags.slice(0, max).map((tag) => (
           <MetaChip key={tag} label={tag} />
         ))}

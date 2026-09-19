@@ -211,6 +211,21 @@ describe('IdeasTableContent — list-canon-v2 PO (flaga ON, kanoniczny StandardT
     expect(screen.queryByTitle('Select visible')).toBeNull();
   });
 
+  it('a row with two tags keeps both chips on ONE line (no wrap → equal row heights)', () => {
+    // Odbiór właściciela (Wpis 201): wiersz z dwoma tagami łamał je do drugiej
+    // linii i rósł ponad sąsiadów. Gwarancja jednej linii to `flex-nowrap` +
+    // `overflow-hidden` na pojemniku chipów; `title` oddaje pełną listę, gdyby
+    // chip się przyciął. Mutacja dowodowa: powrót do `flex-wrap` → RED.
+    const { container } = renderTable({});
+    const tagsBox = container.querySelector('div[title="rynek, DE"]');
+    expect(tagsBox).not.toBeNull();
+    expect(tagsBox!.className).toContain('flex-nowrap');
+    expect(tagsBox!.className).toContain('overflow-hidden');
+    expect(tagsBox!.className).not.toContain('flex-wrap');
+    expect(within(tagsBox as HTMLElement).getByText('rynek')).toBeInTheDocument();
+    expect(within(tagsBox as HTMLElement).getByText('DE')).toBeInTheDocument();
+  });
+
   it('row click gives the parent the SAME index argument as PRZED and marks the preview row', () => {
     const { spies } = renderTable({});
     const row = getRow('Automatyzacja raportowania OEE');
