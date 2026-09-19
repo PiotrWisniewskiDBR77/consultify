@@ -232,3 +232,87 @@ describe('canonical-to-TP migration ledger reconciliation', () => {
     expect(pendingReadAt).toBeGreaterThan(reconcileAt);
   });
 });
+
+describe('attested TP ledger reconciliation', () => {
+  const file = '20260412_seed_business_templates.sql';
+  let dir: string;
+  let content: string;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tp-attested-reconcile-'));
+    content = 'INSERT INTO v8_output_artifacts(artifact_id) VALUES (\'bt-doc-weekly\');\n';
+    fs.writeFileSync(path.join(dir, file), content);
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  function fakeAttestedDb(options?: { artifactCount?: number; linkCount?: number; conflictingInsertChecksum?: string }) {
+    const tp = new Map<string, string | null>();
+    const query = vi.fn(async (sql: string, params?: unknown[]) => {
+      if (sql.startsWith('SELECT filename, checksum FROM tp_migration_history')) {
+        return { rows: [...tp].map(([filename, checksum]) => ({ filename, checksum })) };
+      }
+      if (sql === 'SELECT to_regclass($1) IS NOT NULL AS present') {
+        return { rows: [{ present: true }] };
+      }
+      if (sql.includes('FROM pg_constraint')) {
+        return {
+          rows: [
+            {
+              definition:
+                "CHECK ((origin_runtime = ANY (ARRAY['report_template'::text, 'presentation_template'::text, 'sheet_template'::text])))",
+            },
+          ],
+        };
+      }
+      if (sql.includes('WITH expected AS')) {
+        return {
+          rows: [
+            {
+              artifact_count: options?.artifactCount ?? 24,
+              link_count: options?.linkCount ?? 24,
+            },
+          ],
+        };
+      }
+      if (sql.startsWith('INSERT INTO tp_migration_history')) {
+        const filename = String(params?.[0]);
+        if (!tp.has(filename)) tp.set(filename, options?.conflictingInsertChecksum ?? String(params?.[1]));
+        return { rows: [] };
+      }
+      if (sql.startsWith('SELECT checksum FROM tp_migration_history WHERE filename')) {
+        const checksum = tp.get(String(params?.[0]));
+        return { rows: checksum === undefined ? [] : [{ checksum }] };
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    });
+    return { db: { query }, tp, query };
+  }
+
+  it('copies a reviewed seed into TP history when its data postcondition is already present', async () => {
+    const { reconcileTablePlatformLedgerFromAttestedPresence } = await import('../migrationRunner.js');
+    const { db, tp } = fakeAttestedDb();
+
+    await expect(reconcileTablePlatformLedgerFromAttestedPresence(db, [file], dir)).resolves.toBe(1);
+    expect(tp.get(file)).toBe(crypto.createHash('sha256').update(content).digest('hex').slice(0, 16));
+  });
+
+  it('keeps the seed pending when the data postcondition is incomplete', async () => {
+    const { reconcileTablePlatformLedgerFromAttestedPresence } = await import('../migrationRunner.js');
+    const { db, tp } = fakeAttestedDb({ linkCount: 23 });
+
+    await expect(reconcileTablePlatformLedgerFromAttestedPresence(db, [file], dir)).resolves.toBe(0);
+    expect(tp.size).toBe(0);
+  });
+
+  it('fails closed when an attested reconciliation loses an insert race', async () => {
+    const { reconcileTablePlatformLedgerFromAttestedPresence } = await import('../migrationRunner.js');
+    const { db } = fakeAttestedDb({ conflictingInsertChecksum: 'badbadbadbadbadb' });
+
+    await expect(reconcileTablePlatformLedgerFromAttestedPresence(db, [file], dir)).rejects.toThrow(
+      /attested-presence reconciliation/
+    );
+  });
+});
