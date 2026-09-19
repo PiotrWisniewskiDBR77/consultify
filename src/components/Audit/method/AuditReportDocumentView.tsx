@@ -142,6 +142,7 @@ import {
   publishReport,
   type AuditCriterionSummary,
   type AuditEvidenceSummary,
+  type AuditReportBuilderDocument,
   type AuditReportDocument,
   type AuditReportDocumentSection,
   type AuditReportStatus,
@@ -446,6 +447,39 @@ function formatGenericPrimitive(value: unknown): React.ReactNode {
   return String(value);
 }
 
+
+function reportKindFromBuilderDocument(report: AuditReportSummary): AuditReportDocument['reportKind'] {
+  return report.reportKind === 'remediation_progress' ? 'remediation_progress' : 'audit_report';
+}
+
+function auditDocumentFromReportBuilderDocument(
+  report: AuditReportSummary,
+  document: AuditReportBuilderDocument | undefined
+): AuditReportDocument | null {
+  const sections = document?.sections ?? [];
+  if (!sections.length) return null;
+  return {
+    reportKind: reportKindFromBuilderDocument(report),
+    generatedAt: document?.report?.generatedAt ?? null,
+    sections: [...sections]
+      .filter((section) => section.enabled !== false)
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((section) => ({
+        id: `report_builder_${section.sectionKey || section.id}`,
+        title: section.title,
+        kind: 'text',
+        content: section.editedContent || section.generatedContent || '',
+      })),
+  };
+}
+
+function canonicalAuditDocument(report: AuditReportSummary): AuditReportDocument | null {
+  const builderDocument = auditDocumentFromReportBuilderDocument(report, report.reportBuilderDocument);
+  if (builderDocument?.sections.length) return builderDocument;
+  const payload = report.payload as unknown as AuditReportDocument | undefined;
+  return payload && Array.isArray(payload.sections) ? payload : null;
+}
+
 function renderGenericKeyValue(content: unknown): React.ReactNode {
   const entries = content && typeof content === 'object' ? Object.entries(content as Record<string, unknown>) : [];
   if (!entries.length) return <p className="text-sm text-c-text-muted">—</p>;
@@ -696,7 +730,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       .then(async (reportResult) => {
         if (!reportResult)
           throw new Error(t('audit.report.notFound', 'The audit report was not found.'));
-        const payload = reportResult.payload as unknown as AuditReportDocument | undefined;
+        const payload = canonicalAuditDocument(reportResult);
         if (!payload || !Array.isArray(payload.sections)) {
           throw new Error(
             isPolish
