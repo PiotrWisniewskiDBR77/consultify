@@ -109,7 +109,8 @@ router.post(
         correlationId: (req as any).correlationId,
       });
       res.status(500).json({
-        error: 'Nie udało się utworzyć wniosku o eksport danych',
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+        // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
         code: 'DATA_EXPORT_CREATE_REQUEST_FAILED',
       });
     }
@@ -149,7 +150,8 @@ router.get(
         correlationId: (req as any).correlationId,
       });
       res.status(500).json({
-        error: 'Nie udało się pobrać statusu eksportu',
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+        // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
         code: 'DATA_EXPORT_STATUS_FAILED',
       });
     }
@@ -182,7 +184,8 @@ router.get('/requests', verifyToken, isAuthenticated, async (req: Request, res: 
       correlationId: (req as any).correlationId,
     });
     res.status(500).json({
-      error: 'Nie udało się pobrać wniosków o eksport',
+      // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+      // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
       code: 'DATA_EXPORT_LIST_REQUESTS_FAILED',
     });
   }
@@ -247,7 +250,8 @@ router.get(
       });
       res
         .status(500)
-        .json({ error: 'Nie udało się pobrać eksportu', code: 'DATA_EXPORT_DOWNLOAD_FAILED' });
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — redundant Polish `error:` removed.
+        .json({ code: 'DATA_EXPORT_DOWNLOAD_FAILED' });
     }
   }
 );
@@ -314,7 +318,8 @@ router.delete(
         correlationId: (req as any).correlationId,
       });
       res.status(500).json({
-        error: 'Nie udało się anulować wniosku o usunięcie danych',
+        // K5pl-229 (Wpis 231 pkt 3, DEC-690): stable `code` only — the client localizes it
+        // via apiErrorFallbacks/errors.*; the redundant Polish `error:` was never rendered.
         code: 'DATA_EXPORT_CANCEL_DELETION_FAILED',
       });
     }
