@@ -23,6 +23,7 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
   const initiative = randomUUID();
   const executionCase = randomUUID();
   const task = randomUUID();
+  const ownerOnlyTask = randomUUID();
   let db: Client;
   let app: express.Express;
   let authorization: string;
@@ -44,6 +45,11 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
       `INSERT INTO tasks(id,organization_id,project_id,initiative_id,title,status,due_date,assignee_id,estimated_hours)
        VALUES($1,$2,$3,$4,'Blocked commissioning','BLOCKED','2026-09-01',$5,NULL)`,
       [task, org, project, initiative, owner]
+    );
+    await db.query(
+      `INSERT INTO tasks(id,organization_id,project_id,initiative_id,title,status,due_date,assignee_id,owner_id,estimated_hours)
+       VALUES($1,$2,$3,$4,'Owner fallback commissioning','TODO','2026-09-22',NULL,$5,NULL)`,
+      [ownerOnlyTask, org, project, initiative, owner]
     );
     await db.query(
       `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json)
@@ -112,6 +118,15 @@ describe.skipIf(!REAL_PG)('F2-2 E2 weekly analysis + manager actions through Gat
     expect(replay.status, JSON.stringify(replay.body)).toBe(200);
     expect(replay.body.id).toBe(first.body.id);
     expect(JSON.stringify(first.body.payload)).toContain('North plant transformation');
+    expect(JSON.stringify(first.body.payload)).toContain('Owner fallback commissioning');
+    const attentionRows = first.body.payload.sections.find(
+      (section: any) => section.id === 'attention'
+    ).table.rows;
+    expect(attentionRows).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ record: 'Owner fallback commissioning' }),
+      ])
+    );
     const count = await db.query(`SELECT count(*)::int count FROM execution_report_snapshots WHERE organization_id=$1 AND definition_key='weekly-exec'`, [org]);
     expect(count.rows[0].count).toBe(2);
 

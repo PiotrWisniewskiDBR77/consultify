@@ -14,6 +14,7 @@ export type WorkTabTaskRow = {
   title: string | null;
   status: string | null;
   assignee_id: string | null;
+  owner_id: string | null;
   due_date: string | Date | null;
   completed_at: string | Date | null;
   priority: string | null;
@@ -75,14 +76,15 @@ function runtimeTaskItem(row: RuntimeExecutionTaskRow): ExecutionWorkTaskItem {
 
 function workTabTaskItem(row: WorkTabTaskRow): ExecutionWorkTaskItem {
   const taskId = row.aggregate_id;
+  const ownerId = stringValue(row.assignee_id) ?? stringValue(row.owner_id);
   return {
     id: taskId,
     taskId,
     kind: 'TASK',
     title: stringValue(row.title) ?? taskId,
     status: stringValue(row.status) ?? 'UNKNOWN',
-    ownerId: stringValue(row.assignee_id),
-    assigneeId: stringValue(row.assignee_id),
+    ownerId,
+    assigneeId: ownerId,
     dueAt: isoValue(row.due_date),
     completedAt: isoValue(row.completed_at),
     priority: stringValue(row.priority) ?? 'UNKNOWN',
