@@ -45,6 +45,7 @@ import {
 } from '../services/materials/creationIntent.js';
 import notificationService from '../services/notificationService.js';
 import { computeRagForReport } from '../services/ragLogicService.js';
+import { resolveReportExportLocale } from '../services/report/exportLocale.js';
 import ReportContract from '../services/report/reportContract.js';
 import {
   applyAgentAction,
@@ -3889,6 +3890,14 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
 
     await applyQualityWarningsForExport(organizationId, id, res);
 
+    // D-46: both PPTX renderers default to Polish, so the locale is decided once
+    // here (explicit ?language= → report → section → DEC-510 profile → 'en').
+    const exportLocale = await resolveReportExportLocale(req, {
+      explicit: language,
+      report: reportData.report as any,
+      sections: reportData.sections as any,
+    });
+
     let buffer: Buffer;
 
     if (useV2) {
@@ -3971,7 +3980,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
         },
         {
           template: (template as any) || 'corporate',
-          language: (language as any) || 'pl',
+          language: exportLocale,
           confidentiality: (confidentiality as any) || 'confidential',
         }
       );
@@ -4020,7 +4029,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
 
       buffer = await pptxService.generatePresentation(pptxReportData, {
         template: (template as any) || 'corporate',
-        language: (language as any) || 'pl',
+        language: exportLocale,
         includeCharts: true,
         includeToc: true,
       });
@@ -4044,7 +4053,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       format: 'pptx',
       filePath,
       fileSize: stats.size,
-      language: (language as string) || 'pl',
+      language: exportLocale,
       exportedBy: userId,
     });
     res.setHeader(
@@ -4115,6 +4124,9 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       .slice(0, 64);
     const fileName = `${safeTitle}-${id}-${Date.now()}.${format}`;
     const filePath = path.join(exportDir, fileName);
+    // D-46: the pptx renderers default to Polish, so the cloud publish resolves
+    // the locale the same way GET /:id/export/pptx does.
+    let cloudExportLocale: 'en' | 'pl' | undefined;
 
     if (format === 'pdf') {
       await writeReportBuilderPdf(reportData.report, reportData.sections, filePath);
@@ -4128,6 +4140,13 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     } else if (format === 'pptx') {
       // Reuse the same v1/v2 logic as export endpoint, but save to disk and upload.
       let buffer: Buffer;
+      // D-46: same single-locale rule as GET /:id/export/pptx — without it both
+      // renderers fall back to their own Polish default.
+      cloudExportLocale = await resolveReportExportLocale(req, {
+        explicit: req.body?.language ?? req.query?.language,
+        report: reportData.report as any,
+        sections: reportData.sections as any,
+      });
       if (useV2) {
         const { PptxPipelineService } =
           await import('../services/report/pptx/PptxPipelineService.js');
@@ -4189,7 +4208,10 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
             organizationName: rpt.organizationName || rpt.organization_name,
             projectName: rpt.projectName || rpt.project_name,
           },
-          { confidentiality: req.body?.confidentiality || req.query?.confidentiality } as any
+          {
+            language: cloudExportLocale,
+            confidentiality: req.body?.confidentiality || req.query?.confidentiality,
+          } as any
         );
         buffer = pipelineResult.buffer;
       } else {
@@ -4215,7 +4237,7 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
           } as any,
           {
             template: req.body?.template || req.query?.template,
-            language: req.body?.language || req.query?.language,
+            language: cloudExportLocale,
           }
         );
       }
@@ -4314,7 +4336,7 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       format: `cloud_${format}` as any,
       filePath: uploaded.url || uploaded.fileId,
       fileSize: stats.size,
-      language: 'en',
+      language: cloudExportLocale ?? 'en',
       exportedBy: userId,
     }).catch(() => null);
     await recordCanonicalExportTrace({
