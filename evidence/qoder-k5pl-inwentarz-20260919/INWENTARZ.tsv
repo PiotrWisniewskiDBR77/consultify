@@ -1,0 +1,238 @@
+plik:linia	modul	kod	klasa	tekst_pl
+server/src/routes/artifactApprovals.routes.ts:74	02 My Work	ARTIFACT_APPROVALS_UNEXPECTED_FAILED	LOKALIZOWANY	Wystąpił błąd serwera
+server/src/routes/knowledge.routes.ts:128	04 Tools	VAULT_DOCUMENT_EDIT_FORBIDDEN	LOKALIZOWANY	Brak uprawnień do edycji dokumentu
+server/src/routes/knowledge.routes.ts:136	04 Tools	VAULT_DOCUMENT_DELETE_FORBIDDEN	LOKALIZOWANY	Brak uprawnień do usunięcia dokumentu
+server/src/routes/knowledge.routes.ts:292	04 Tools	KNOWLEDGE_CANDIDATES_LIST_FAILED	LOKALIZOWANY	Nie udało się pobrać kandydatów wiedzy
+server/src/routes/knowledge.routes.ts:327	04 Tools	KNOWLEDGE_CANDIDATE_CREATE_FAILED	LOKALIZOWANY	Nie udało się zgłosić kandydata
+server/src/routes/knowledge.routes.ts:357	04 Tools	KNOWLEDGE_CANDIDATE_STATUS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować statusu kandydata
+server/src/routes/knowledge.routes.ts:396	04 Tools	KNOWLEDGE_CANDIDATE_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować kandydata
+server/src/routes/knowledge.routes.ts:435	04 Tools	KNOWLEDGE_CANDIDATE_LINK_PROJECT_FAILED	LOKALIZOWANY	Nie udało się powiązać pomysłu z projektem
+server/src/routes/knowledge.routes.ts:467	04 Tools	KNOWLEDGE_CANDIDATES_APPROVED_FAILED	LOKALIZOWANY	Nie udało się pobrać zatwierdzonych pomysłów
+server/src/routes/knowledge.routes.ts:496	04 Tools	KNOWLEDGE_CANDIDATES_BY_CATEGORY_FAILED	LOKALIZOWANY	Nie udało się pobrać pomysłów wg kategorii
+server/src/routes/knowledge.routes.ts:525	04 Tools	KNOWLEDGE_CANDIDATES_BY_PROJECT_FAILED	LOKALIZOWANY	Nie udało się pobrać pomysłów wg projektu
+server/src/routes/knowledge.routes.ts:557	04 Tools	KNOWLEDGE_STRATEGIES_LIST_FAILED	LOKALIZOWANY	Nie udało się pobrać strategii
+server/src/routes/knowledge.routes.ts:599	04 Tools	KNOWLEDGE_STRATEGY_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć strategii
+server/src/routes/knowledge.routes.ts:642	04 Tools	KNOWLEDGE_STRATEGY_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować strategii
+server/src/routes/knowledge.routes.ts:677	04 Tools	KNOWLEDGE_STRATEGY_LINK_DOCUMENT_FAILED	LOKALIZOWANY	Nie udało się powiązać dokumentu ze strategią
+server/src/routes/knowledge.routes.ts:712	04 Tools	KNOWLEDGE_STRATEGY_LINK_IDEA_FAILED	LOKALIZOWANY	Nie udało się powiązać pomysłu ze strategią
+server/src/routes/knowledge.routes.ts:744	04 Tools	KNOWLEDGE_STRATEGY_UNLINK_DOCUMENT_FAILED	LOKALIZOWANY	Nie udało się odłączyć dokumentu od strategii
+server/src/routes/knowledge.routes.ts:776	04 Tools	KNOWLEDGE_STRATEGY_UNLINK_IDEA_FAILED	LOKALIZOWANY	Nie udało się odłączyć pomysłu od strategii
+server/src/routes/knowledge.routes.ts:814	04 Tools	KNOWLEDGE_STRATEGY_PROGRESS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować postępu strategii
+server/src/routes/knowledge.routes.ts:847	04 Tools	KNOWLEDGE_STRATEGY_RELATED_FAILED	LOKALIZOWANY	Nie udało się pobrać strategii z powiązaniami
+server/src/routes/knowledge.routes.ts:877	04 Tools	KNOWLEDGE_STRATEGY_TOGGLE_FAILED	LOKALIZOWANY	Nie udało się przełączyć strategii
+server/src/routes/knowledge.routes.ts:936	04 Tools	VAULT_PROJECT_ID_REQUIRED	LOKALIZOWANY	project_id wymagany dla scope=project
+server/src/routes/knowledge.routes.ts:949	04 Tools	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/knowledge.routes.ts:1051	04 Tools	KNOWLEDGE_DOCUMENT_UPLOAD_FAILED	LOKALIZOWANY	Nie udało się przesłać dokumentu
+server/src/routes/knowledge.routes.ts:1107	04 Tools	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/knowledge.routes.ts:1139	04 Tools	KNOWLEDGE_DOCUMENTS_LIST_FAILED	LOKALIZOWANY	Nie udało się pobrać dokumentów wiedzy
+server/src/routes/knowledge.routes.ts:1342	04 Tools	KNOWLEDGE_VAULT_SAFES_FAILED	LOKALIZOWANY	Nie udało się pobrać listy sejfów
+server/src/routes/knowledge.routes.ts:1385	04 Tools	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/knowledge.routes.ts:1417	04 Tools	KNOWLEDGE_VAULT_FOLDERS_FAILED	LOKALIZOWANY	Nie udało się pobrać folderów
+server/src/routes/knowledge.routes.ts:1451	04 Tools	VAULT_PROJECT_ID_REQUIRED	LOKALIZOWANY	projectId wymagany dla scope=project
+server/src/routes/knowledge.routes.ts:1463	04 Tools	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/knowledge.routes.ts:1483	04 Tools	KNOWLEDGE_VAULT_FOLDER_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć folderu
+server/src/routes/knowledge.routes.ts:1515	04 Tools	KNOWLEDGE_VAULT_FOLDER_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować folderu
+server/src/routes/knowledge.routes.ts:1541	04 Tools	KNOWLEDGE_VAULT_FOLDER_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć folderu
+server/src/routes/knowledge.routes.ts:1627	04 Tools	VAULT_VERSION_NUMBER_INVALID	LOKALIZOWANY	versionNumber musi być dodatnią liczbą całkowitą
+server/src/routes/knowledge.routes.ts:1683	04 Tools	VAULT_EXPECTED_VERSION_INVALID	LOKALIZOWANY	expectedVersion musi być liczbą całkowitą
+server/src/routes/knowledge.routes.ts:1699	04 Tools	VAULT_VERSION_CONFLICT	LOKALIZOWANY	Dokument zmienił się w międzyczasie — odśwież i spróbuj ponownie
+server/src/routes/knowledge.routes.ts:1779	04 Tools	VAULT_VERSION_CREATE_FAILED	LOKALIZOWANY	Nie udało się zapisać nowej wersji dokumentu
+server/src/routes/knowledge.routes.ts:1806	04 Tools	VAULT_VERSION_NUMBER_INVALID	LOKALIZOWANY	versionNumber musi być dodatnią liczbą całkowitą
+server/src/routes/knowledge.routes.ts:1824	04 Tools	VAULT_EXPECTED_VERSION_INVALID	LOKALIZOWANY	expectedVersion musi być liczbą całkowitą
+server/src/routes/knowledge.routes.ts:1839	04 Tools	VAULT_VERSION_CONFLICT	LOKALIZOWANY	Dokument zmienił się w międzyczasie — odśwież i spróbuj ponownie
+server/src/routes/knowledge.routes.ts:1900	04 Tools	VAULT_VERSION_RESTORE_FAILED	LOKALIZOWANY	Nie udało się przywrócić wersji dokumentu
+server/src/routes/knowledge.routes.ts:1958	04 Tools	VAULT_FOLDER_SCOPE_MISMATCH	LOKALIZOWANY	Folder należy do innego poziomu sejfu
+server/src/routes/knowledge.routes.ts:1968	04 Tools	VAULT_FOLDER_PROJECT_MISMATCH	LOKALIZOWANY	Folder należy do innego projektu
+server/src/routes/knowledge.routes.ts:2014	04 Tools	VAULT_SCOPE_INVALID	LOKALIZOWANY	scope musi być jednym z: user, project, organization
+server/src/routes/knowledge.routes.ts:2059	04 Tools	VAULT_SCOPE_INVALID	LOKALIZOWANY	scope musi być jednym z: user, project, organization
+server/src/routes/knowledge.routes.ts:2076	04 Tools	VAULT_PROJECT_ID_REQUIRED	LOKALIZOWANY	project_id wymagany dla scope=project
+server/src/routes/knowledge.routes.ts:2089	04 Tools	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/megatrend.routes.ts:78	04 Tools	MEGATREND_BASELINE_FAILED	LOKALIZOWANY	Nie udało się pobrać megatrendów
+server/src/routes/megatrend.routes.ts:107	04 Tools	MEGATREND_RADAR_FAILED	LOKALIZOWANY	Nie udało się pobrać danych radaru
+server/src/routes/megatrend.routes.ts:138	04 Tools	MEGATREND_DETAIL_FAILED	LOKALIZOWANY	Nie udało się pobrać szczegółów trendu
+server/src/routes/megatrend.routes.ts:172	04 Tools	MEGATREND_CUSTOM_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć trendu
+server/src/routes/megatrend.routes.ts:208	04 Tools	MEGATREND_CUSTOM_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować trendu
+server/src/routes/assessment-reports.routes.ts:696	05 Assessment	ASSESSMENT_REPORTS_FETCH_REPORTS_FAILED	LOKALIZOWANY	Nie udało się pobrać raportów
+server/src/routes/assessment-reports.routes.ts:743	05 Assessment	ASSESSMENT_REPORTS_FETCH_TEMPLATES_FAILED	LOKALIZOWANY	Nie udało się pobrać szablonów
+server/src/routes/assessment-reports.routes.ts:851	05 Assessment	ASSESSMENT_REPORTS_START_GENERATION_FAILED	LOKALIZOWANY	Nie udało się rozpocząć generowania
+server/src/routes/assessment-reports.routes.ts:959	05 Assessment	ASSESSMENT_REPORTS_CREATE_REPORT_FAILED	LOKALIZOWANY	Nie udało się utworzyć raportu
+server/src/routes/assessment-reports.routes.ts:1049	05 Assessment	ASSESSMENT_REPORTS_FETCH_REPORT_FAILED	LOKALIZOWANY	Nie udało się pobrać raportu
+server/src/routes/assessment-reports.routes.ts:1214	05 Assessment	ASSESSMENT_REPORTS_GENERATE_DRD_REPORT_FAILED	LOKALIZOWANY	Nie udało się wygenerować raportu DRD
+server/src/routes/assessment-reports.routes.ts:1329	05 Assessment	ASSESSMENT_CONCLUSION_NO_EXECUTIVE_SUMMARY	LOKALIZOWANY	Ten raport nie ma jeszcze streszczenia wykonawczego — nie ma z czego zbudowac wniosku.
+server/src/routes/assessment-reports.routes.ts:1346	05 Assessment	ASSESSMENT_CONCLUSION_PERSIST_FAILED	LOKALIZOWANY	Nie udalo sie zapisac wniosku
+server/src/routes/assessment-reports.routes.ts:1381	05 Assessment	ASSESSMENT_REPORTS_GENERATE_CONCLUSION_FAILED	LOKALIZOWANY	Nie udalo sie wygenerowac wniosku z oceny
+server/src/routes/assessment-reports.routes.ts:1654	05 Assessment	ASSESSMENT_REPORTS_FETCH_SECTIONS_FAILED	LOKALIZOWANY	Nie udało się pobrać sekcji
+server/src/routes/assessment-reports.routes.ts:1730	05 Assessment	ASSESSMENT_REPORTS_CREATE_SECTION_FAILED	LOKALIZOWANY	Nie udało się utworzyć sekcji
+server/src/routes/assessment-reports.routes.ts:1800	05 Assessment	ASSESSMENT_REPORTS_UPDATE_SECTION_FAILED	LOKALIZOWANY	Nie udało się zaktualizować sekcji
+server/src/routes/assessment-reports.routes.ts:1831	05 Assessment	ASSESSMENT_REPORTS_DELETE_SECTION_FAILED	LOKALIZOWANY	Nie udało się usunąć sekcji
+server/src/routes/assessment-reports.routes.ts:1872	05 Assessment	ASSESSMENT_REPORTS_REORDER_SECTIONS_FAILED	LOKALIZOWANY	Nie udało się zmienić kolejności sekcji
+server/src/routes/assessment-reports.routes.ts:2037	05 Assessment	ASSESSMENT_REPORTS_FETCH_HISTORY_FAILED	LOKALIZOWANY	Nie udało się pobrać historii
+server/src/routes/assessment-reports.routes.ts:2198	05 Assessment	ASSESSMENT_REPORTS_FETCH_REPORT_FAILED	LOKALIZOWANY	Nie udało się pobrać raportu
+server/src/routes/assessment-reports.routes.ts:2253	05 Assessment	ASSESSMENT_REPORTS_UPDATE_REPORT_FAILED	LOKALIZOWANY	Nie udało się zaktualizować raportu
+server/src/routes/assessment-reports.routes.ts:2309	05 Assessment	ASSESSMENT_REPORTS_DELETE_REPORT_FAILED	LOKALIZOWANY	Nie udało się usunąć raportu
+server/src/routes/assessment-reports.routes.ts:2347	05 Assessment	ASSESSMENT_REPORTS_FINALIZE_REPORT_FAILED	LOKALIZOWANY	Nie udało się sfinalizować raportu
+server/src/routes/assessment-reports.routes.ts:2461	05 Assessment	ASSESSMENT_REPORTS_APPROVE_REPORT_FAILED	LOKALIZOWANY	Nie udało się zatwierdzić raportu
+server/src/routes/assessment-reports.routes.ts:2534	05 Assessment	ASSESSMENT_REPORTS_REJECT_REPORT_FAILED	LOKALIZOWANY	Nie udało się odrzucić raportu
+server/src/routes/assessment-reports.routes.ts:2581	05 Assessment	ASSESSMENT_REPORTS_SEND_BACK_REPORT_FAILED	LOKALIZOWANY	Nie udało się odesłać raportu
+server/src/routes/assessment-reports.routes.ts:2639	05 Assessment	ASSESSMENT_REPORTS_UTILIZE_REPORT_FAILED	LOKALIZOWANY	Nie udało się wykorzystać raportu
+server/src/routes/assessment-reports.routes.ts:2686	05 Assessment	ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED	LOKALIZOWANY	Nie udało się wyeksportować raportu
+server/src/routes/assessment-reports.routes.ts:2733	05 Assessment	ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED	LOKALIZOWANY	Nie udało się wyeksportować raportu
+server/src/routes/assessment-reports.routes.ts:2796	05 Assessment	ASSESSMENT_REPORTS_EXPORT_REPORT_FAILED	LOKALIZOWANY	Nie udało się wyeksportować raportu
+server/src/routes/assessment-reports.routes.ts:3070	05 Assessment	ASSESSMENT_REPORTS_GENERATE_DECK_FAILED	LOKALIZOWANY	Nie udało się wygenerować prezentacji
+server/src/routes/assessment-reports.routes.ts:3184	05 Assessment	ASSESSMENT_NOT_FOUND	LOKALIZOWANY	Nie znaleziono oceny
+server/src/routes/assessment-reports.routes.ts:3193	05 Assessment	ASSESSMENT_EXPORT_FAILED	LOKALIZOWANY	Nie udało się wygenerować pliku z oceny
+server/src/routes/assessment-workflow-v2.routes.ts:129	05 Assessment	ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED	LOKALIZOWANY	Nie udało się ocenić uprawnień
+server/src/routes/assessment-workflow-v2.routes.ts:172	05 Assessment	ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED	LOKALIZOWANY	Nie udało się ocenić uprawnień
+server/src/routes/assessment-workflow-v2.routes.ts:248	05 Assessment	ASSESSMENT_WORKFLOW_V2_SEARCH_USERS_FAILED	LOKALIZOWANY	Nie udało się wyszukać użytkowników
+server/src/routes/assessment-workflow-v2.routes.ts:418	05 Assessment	ASSESSMENT_WORKFLOW_V2_LIST_REPORT_VERSIONS_FAILED	LOKALIZOWANY	Nie udało się pobrać listy wersji raportu
+server/src/routes/assessment-workflow-v2.routes.ts:473	05 Assessment	ASSESSMENT_WORKFLOW_V2_GET_USER_ROLE_FAILED	LOKALIZOWANY	Nie udało się pobrać roli użytkownika
+server/src/routes/assessment-workflow-v2.routes.ts:511	05 Assessment	ASSESSMENT_WORKFLOW_V2_GET_ROLES_FAILED	LOKALIZOWANY	Nie udało się pobrać ról
+server/src/routes/assessment-workflow-v2.routes.ts:656	05 Assessment	ASSESSMENT_WORKFLOW_V2_BUILD_ELIGIBILITY_FAILED	LOKALIZOWANY	Nie udało się obliczyć kwalifikowalności
+server/src/routes/assessment-workflow-v2.routes.ts:760	05 Assessment	ASSESSMENT_WORKFLOW_V2_GET_ACCESS_REQUESTS_FAILED	LOKALIZOWANY	Nie udało się pobrać wniosków o dostęp
+server/src/routes/assessment-workflow-v2.routes.ts:1159	05 Assessment	ASSESSMENT_WORKFLOW_V2_LIST_RUNS_FAILED	LOKALIZOWANY	Nie udało się pobrać listy przebiegów
+server/src/routes/assessment-workflow-v2.routes.ts:1195	05 Assessment	ASSESSMENT_WORKFLOW_V2_FETCH_RUN_FAILED	LOKALIZOWANY	Nie udało się pobrać przebiegu
+server/src/routes/assessment-workflow-v2.routes.ts:1237	05 Assessment	ASSESSMENT_WORKFLOW_V2_LIST_RUN_INITIATIVES_FAILED	LOKALIZOWANY	Nie udało się pobrać listy inicjatyw przebiegu
+server/src/routes/assessment-workflow-v2.routes.ts:1270	05 Assessment	ASSESSMENT_WORKFLOW_V2_SUBMIT_DRAFTS_FAILED	LOKALIZOWANY	Nie udało się przesłać szkiców
+server/src/routes/assessment-workflow-v2.routes.ts:1328	05 Assessment	ASSESSMENT_WORKFLOW_V2_LIST_BATCHES_FAILED	LOKALIZOWANY	Nie udało się pobrać listy partii
+server/src/routes/assessment-workflow-v2.routes.ts:1581	05 Assessment	ASSESSMENT_WORKFLOW_V2_FETCH_GATE_DECISIONS_FAILED	LOKALIZOWANY	Nie udało się pobrać decyzji bramkowych
+server/src/routes/assessment-workflow-v2.routes.ts:1702	05 Assessment	ASSESSMENT_WORKFLOW_V2_UPDATE_GATE_DECISION_FAILED	LOKALIZOWANY	Nie udało się zaktualizować decyzji bramkowej
+server/src/routes/assessment-workflow-v2.routes.ts:1873	05 Assessment	ASSESSMENT_WORKFLOW_V2_FETCH_BENCHMARK_COMPARISON_FAILED	LOKALIZOWANY	Nie udało się pobrać porównania benchmarkowego
+server/src/routes/assessment/assessment-ai.routes.ts:39	05 Assessment	ASSESSMENT_NOT_FOUND	LOKALIZOWANY	Nie znaleziono oceny o podanym identyfikatorze.
+server/src/routes/assessment/assessment-ai.routes.ts:184	05 Assessment	ASSESSMENT_AI_GENERATE_SUGGESTION_FAILED	LOKALIZOWANY	Nie udało się wygenerować sugestii
+server/src/routes/assessment/assessment-ai.routes.ts:210	05 Assessment	ASSESSMENT_AI_GENERATE_EVIDENCE_SUGGESTIONS_FAILED	LOKALIZOWANY	Nie udało się wygenerować sugestii dowodów
+server/src/routes/assessment/assessment-ai.routes.ts:240	05 Assessment	ASSESSMENT_AI_GENERATE_TARGET_SUGGESTION_FAILED	LOKALIZOWANY	Nie udało się wygenerować sugestii celu
+server/src/routes/assessment/assessment-ai.routes.ts:271	05 Assessment	ASSESSMENT_AI_CORRECT_TEXT_FAILED	LOKALIZOWANY	Nie udało się poprawić tekstu
+server/src/routes/assessment/assessment-ai.routes.ts:301	05 Assessment	ASSESSMENT_AI_AUTOCOMPLETE_FAILED	LOKALIZOWANY	Nie udało się uzupełnić automatycznie
+server/src/routes/assessment/assessment-ai.routes.ts:335	05 Assessment	ASSESSMENT_AI_VALIDATE_FIELD_FAILED	LOKALIZOWANY	Nie udało się zweryfikować pola
+server/src/routes/assessment/assessment-ai.routes.ts:365	05 Assessment	ASSESSMENT_AI_VALIDATE_CONSISTENCY_FAILED	LOKALIZOWANY	Nie udało się zweryfikować spójności
+server/src/routes/assessment/assessment-ai.routes.ts:400	05 Assessment	ASSESSMENT_AI_GET_GUIDANCE_FAILED	LOKALIZOWANY	Nie udało się pobrać wskazówek
+server/src/routes/assessment/assessment-ai.routes.ts:429	05 Assessment	ASSESSMENT_AI_GENERATE_GAP_ANALYSIS_FAILED	LOKALIZOWANY	Nie udało się wygenerować analizy luk
+server/src/routes/assessment/assessment-ai.routes.ts:459	05 Assessment	ASSESSMENT_AI_GENERATE_INSIGHTS_FAILED	LOKALIZOWANY	Nie udało się wygenerować wniosków
+server/src/routes/assessment/assessment-ai.routes.ts:485	05 Assessment	ASSESSMENT_AI_GET_CLARIFYING_QUESTION_FAILED	LOKALIZOWANY	Nie udało się pobrać pytania doprecyzowującego
+server/src/routes/assessment/assessment-ai.routes.ts:524	05 Assessment	ASSESSMENT_AI_GENERATE_EXECUTIVE_SUMMARY_FAILED	LOKALIZOWANY	Nie udało się wygenerować podsumowania zarządczego
+server/src/routes/assessment/assessment-ai.routes.ts:562	05 Assessment	ASSESSMENT_AI_GENERATE_STAKEHOLDER_VIEW_FAILED	LOKALIZOWANY	Nie udało się wygenerować widoku dla interesariuszy
+server/src/routes/assessment/assessment-ai.routes.ts:600	05 Assessment	ASSESSMENT_AI_GENERATE_BENCHMARK_COMMENTARY_FAILED	LOKALIZOWANY	Nie udało się wygenerować komentarza benchmarkowego
+server/src/routes/assessment/assessment-ai.routes.ts:638	05 Assessment	ASSESSMENT_AI_GENERATE_INITIATIVES_FAILED	LOKALIZOWANY	Nie udało się wygenerować inicjatyw
+server/src/routes/assessment/assessment-ai.routes.ts:668	05 Assessment	ASSESSMENT_AI_PRIORITIZE_INITIATIVES_FAILED	LOKALIZOWANY	Nie udało się ustalić priorytetów inicjatyw
+server/src/routes/assessment/assessment-ai.routes.ts:703	05 Assessment	ASSESSMENT_AI_ESTIMATE_ROI_FAILED	LOKALIZOWANY	Nie udało się oszacować ROI
+server/src/routes/assessment/assessment-ai.routes.ts:731	05 Assessment	ASSESSMENT_AI_GET_QUICK_ACTIONS_FAILED	LOKALIZOWANY	Nie udało się pobrać szybkich akcji
+server/src/routes/assessment/assessment-ai.routes.ts:757	05 Assessment	ASSESSMENT_AI_GET_CONTEXTUAL_HELP_FAILED	LOKALIZOWANY	Nie udało się pobrać pomocy kontekstowej
+server/src/routes/assessment/assessment-ai.routes.ts:788	05 Assessment	ASSESSMENT_AI_FILL_MISSING_FIELDS_FAILED	LOKALIZOWANY	Nie udało się uzupełnić brakujących pól
+server/src/routes/assessment/assessment-ai.routes.ts:819	05 Assessment	ASSESSMENT_AI_REVIEW_JUSTIFICATIONS_FAILED	LOKALIZOWANY	Nie udało się zweryfikować uzasadnień
+server/src/routes/assessment/assessment-ai.routes.ts:858	05 Assessment	ASSESSMENT_AI_GENERATE_FULL_REPORT_FAILED	LOKALIZOWANY	Nie udało się wygenerować pełnego raportu
+server/src/routes/assessment/assessment-ai.routes.ts:900	05 Assessment	ASSESSMENT_AI_GENERATE_STAKEHOLDER_REPORT_FAILED	LOKALIZOWANY	Nie udało się wygenerować raportu dla interesariuszy
+server/src/routes/assessment/assessment-ai.routes.ts:938	05 Assessment	ASSESSMENT_AI_GENERATE_BENCHMARK_REPORT_FAILED	LOKALIZOWANY	Nie udało się wygenerować raportu benchmarkowego
+server/src/routes/assessment/assessment-ai.routes.ts:976	05 Assessment	ASSESSMENT_AI_GENERATE_INITIATIVE_PLAN_FAILED	LOKALIZOWANY	Nie udało się wygenerować planu inicjatywy
+server/src/routes/assessment/assessment-ai.routes.ts:1017	05 Assessment	ASSESSMENT_AI_GET_REPORT_TYPES_FAILED	LOKALIZOWANY	Nie udało się pobrać typów raportów
+server/src/routes/assessment/assessment-hub.routes.ts:175	05 Assessment	ASSESSMENT_HUB_FETCH_ASSESSMENTS_FAILED	LOKALIZOWANY	Nie udało się pobrać ocen
+server/src/routes/assessment/assessment-hub.routes.ts:252	05 Assessment	ASSESSMENT_HUB_FETCH_ASSESSMENTS_FAILED	LOKALIZOWANY	Nie udało się pobrać ocen
+server/src/routes/assessment/assessment-hub.routes.ts:366	05 Assessment	ASSESSMENT_HUB_FETCH_ASSESSMENT_FAILED	LOKALIZOWANY	Nie udało się pobrać oceny
+server/src/routes/assessment/assessment-hub.routes.ts:415	05 Assessment	ASSESSMENT_HUB_CREATE_ASSESSMENT_FAILED	LOKALIZOWANY	Nie udało się utworzyć oceny
+server/src/routes/assessment/assessment-hub.routes.ts:452	05 Assessment	ASSESSMENT_HUB_UPDATE_STATUS_FAILED	LOKALIZOWANY	Nie udało się zaktualizować statusu
+server/src/routes/assessment/assessment-hub.routes.ts:518	05 Assessment	ASSESSMENT_HUB_DELETE_ASSESSMENT_FAILED	LOKALIZOWANY	Nie udało się usunąć oceny
+server/src/routes/assessment/assessment-workflow.routes.ts:242	05 Assessment	ASSESSMENT_WORKFLOW_GET_WORKFLOW_STATUS_FAILED	LOKALIZOWANY	Nie udało się pobrać statusu przepływu pracy
+server/src/routes/assessment/assessment-workflow.routes.ts:314	05 Assessment	ASSESSMENT_WORKFLOW_INITIALIZE_WORKFLOW_FAILED	LOKALIZOWANY	Nie udało się zainicjować przepływu pracy
+server/src/routes/assessment/assessment-workflow.routes.ts:413	05 Assessment	ASSESSMENT_WORKFLOW_SUBMIT_FOR_REVIEW_FAILED	LOKALIZOWANY	Nie udało się przesłać do recenzji
+server/src/routes/assessment/assessment-workflow.routes.ts:501	05 Assessment	ASSESSMENT_WORKFLOW_APPROVE_FAILED	LOKALIZOWANY	Nie udało się zatwierdzić
+server/src/routes/assessment/assessment-workflow.routes.ts:576	05 Assessment	ASSESSMENT_WORKFLOW_REJECT_FAILED	LOKALIZOWANY	Nie udało się odrzucić
+server/src/routes/assessment/assessment-workflow.routes.ts:630	05 Assessment	ASSESSMENT_WORKFLOW_GET_VERSIONS_FAILED	LOKALIZOWANY	Nie udało się pobrać wersji
+server/src/routes/assessment/assessment-workflow.routes.ts:739	05 Assessment	ASSESSMENT_WORKFLOW_CREATE_ASSESSMENT_VERSION_FAILED	LOKALIZOWANY	Nie udało się utworzyć wersji oceny
+server/src/routes/assessment/assessment-workflow.routes.ts:793	05 Assessment	ASSESSMENT_WORKFLOW_DIFF_ASSESSMENT_VERSIONS_FAILED	LOKALIZOWANY	Nie udało się porównać wersji oceny
+server/src/routes/assessment/assessment-workflow.routes.ts:856	05 Assessment	ASSESSMENT_WORKFLOW_GET_HISTORY_FAILED	LOKALIZOWANY	Nie udało się pobrać historii
+server/src/routes/assessment/assessment-workflow.routes.ts:936	05 Assessment	ASSESSMENT_WORKFLOW_RESTORE_VERSION_FAILED	LOKALIZOWANY	Nie udało się przywrócić wersji
+server/src/routes/assessment/assessment-workflow.routes.ts:1002	05 Assessment	ASSESSMENT_WORKFLOW_GET_PENDING_REVIEWS_FAILED	LOKALIZOWANY	Nie udało się pobrać oczekujących recenzji
+server/src/routes/assessment/assessment-workflow.routes.ts:1039	05 Assessment	ASSESSMENT_WORKFLOW_START_REVIEW_FAILED	LOKALIZOWANY	Nie udało się rozpocząć recenzji
+server/src/routes/assessment/assessment-workflow.routes.ts:1119	05 Assessment	ASSESSMENT_WORKFLOW_SUBMIT_REVIEW_FAILED	LOKALIZOWANY	Nie udało się przesłać recenzji
+server/src/routes/assessment/assessment-workflow.routes.ts:1228	05 Assessment	ASSESSMENT_WORKFLOW_GET_ACTIVITY_LOGS_FAILED	LOKALIZOWANY	Nie udało się pobrać dziennika aktywności
+server/src/routes/assessment/assessment-workflow.routes.ts:1283	05 Assessment	ASSESSMENT_WORKFLOW_LOG_ACTIVITY_FAILED	LOKALIZOWANY	Nie udało się zapisać aktywności
+server/src/routes/assessment/assessment-workflow.routes.ts:1931	05 Assessment	ASSESSMENT_WORKFLOW_GET_ACCESS_REQUESTS_FAILED	LOKALIZOWANY	Nie udało się pobrać wniosków o dostęp
+server/src/routes/assessment/assessment-workflow.routes.ts:2160	05 Assessment	ASSESSMENT_WORKFLOW_CANCEL_ACCESS_REQUEST_FAILED	LOKALIZOWANY	Nie udało się anulować wniosku o dostęp
+server/src/routes/initiativeMaterialize.routes.ts:73	06 Initiatives	INITIATIVE_MATERIALIZE_EMPTY_PORTFOLIO	LOKALIZOWANY	Portfel jest pusty lub generacja materiału nie powiodła się.
+server/src/routes/initiativeMaterialize.routes.ts:110	06 Initiatives	INITIATIVE_MATERIALIZE_FAILED	LOKALIZOWANY	Nie udało się wygenerować materiału (brak inicjatywy lub dane niewystarczające).
+server/src/routes/economics.routes.ts:118	09 Finance	FINANCE_STORAGE_UNAVAILABLE	LOKALIZOWANY	Ta część Finance nie ma jeszcze zaplecza w tej bazie. Nic nie zostało zapisane — spróbuj ponownie po udostępnieniu magaz
+server/src/routes/economics.routes.ts:633	09 Finance	ANALYSES_READ_FAILED	LOKALIZOWANY	Nie udało się wczytać listy analiz. To błąd odczytu, nie pusta lista.
+server/src/routes/economics.routes.ts:1660	09 Finance	ROI_RECONCILIATION_STORAGE_UNAVAILABLE	LOKALIZOWANY	Nie udało się sprawdzić powiązanego ROI Case — nic nie zostało zapisane, 
+server/src/routes/economics.routes.ts:1698	09 Finance	RESULTS_ACTUAL_SOURCE_REQUIRED	LOKALIZOWANY	Wartość rzeczywista pozostaje niezmieniona. Opublikuj snapshot Actual w Results 
+server/src/routes/economics.routes.ts:1774	09 Finance	BENEFIT_ACTUAL_APPEND_ONLY	LOKALIZOWANY	Zarejestrowana wartość rzeczywista zmieniła się równolegle — nic nie nadpisano. 
+server/src/routes/economics.routes.ts:1891	09 Finance	BUSINESS_CASE_ENDPOINT_RETIRED	LOKALIZOWANY	Ten endpoint był stubem (BUG-07) i nie generuje już fałszywego pustego dokumentu. 
+server/src/routes/managementReports.routes.ts:346	10 Materials	MANAGEMENT_REPORT_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować raportu
+server/src/routes/presentations.routes.ts:2173	10 Materials	PRESENTATION_GENERATION_IN_PROGRESS	LOKALIZOWANY	Generacja ${deckId} już trwa — odpytuj status zamiast startować ponownie
+server/src/routes/report-builder-public.routes.ts:438	10 Materials	REPORT_BUILDER_PUBLIC_GENERATE_PDF_FAILED	LOKALIZOWANY	Nie udało się wygenerować PDF
+server/src/routes/report-builder-public.routes.ts:537	10 Materials	REPORT_BUILDER_PUBLIC_GENERATE_PPTX_FAILED	LOKALIZOWANY	Nie udało się wygenerować PPTX
+server/src/routes/report-builder-public.routes.ts:617	10 Materials	REPORT_BUILDER_PUBLIC_GENERATE_DOCX_FAILED	LOKALIZOWANY	Nie udało się wygenerować DOCX
+server/src/routes/table-platform.routes.ts:4462	10 Materials	ADMIN_ACCESS_REQUIRED	LOKALIZOWANY	Uprawnienia administratora organizacji są wymagane.
+server/src/routes/table-platform.routes.ts:4477	10 Materials	INVALID_ORGANIZATION_IDENTIFIER	LOKALIZOWANY	Identyfikator organizacji nie jest prawidłowym UUID, więc nie można zapisać tej konfiguracji.
+server/src/routes/organization/organization-limits.routes.ts:49	13 Organization	ORG_POLICY_SNAPSHOT_FAILED	LOKALIZOWANY	Nie udało się pobrać ustawień dostępu organizacji
+server/src/routes/adminP32.routes.ts:2814	14 Admin Panel	BILLING_ALERTS_UNAVAILABLE	LOKALIZOWANY	Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.
+server/src/routes/superadmin.routes.ts:3764	14 Admin Panel	SUPERADMIN_LIFECYCLE_STAGES_FETCH_FAILED	LOKALIZOWANY	Nie udało się pobrać etapów cyklu życia klienta
+server/src/routes/superadmin.routes.ts:3799	14 Admin Panel	SUPERADMIN_LIFECYCLE_STAGE_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć etapu cyklu życia
+server/src/routes/superadmin.routes.ts:3832	14 Admin Panel	SUPERADMIN_LIFECYCLE_STAGE_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować etapu cyklu życia
+server/src/routes/superadmin.routes.ts:3857	14 Admin Panel	SUPERADMIN_LIFECYCLE_STAGE_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć etapu cyklu życia
+server/src/routes/superadmin.routes.ts:3942	14 Admin Panel	SUPERADMIN_LIFECYCLE_TRANSITION_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć przejścia cyklu życia
+server/src/routes/superadmin.routes.ts:4110	14 Admin Panel	SUPERADMIN_PLAYBOOK_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć playbooka
+server/src/routes/superadmin.routes.ts:4154	14 Admin Panel	SUPERADMIN_PLAYBOOK_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować playbooka
+server/src/routes/superadmin.routes.ts:4179	14 Admin Panel	SUPERADMIN_PLAYBOOK_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć playbooka
+server/src/routes/superadmin.routes.ts:4224	14 Admin Panel	SUPERADMIN_PLAYBOOK_EXECUTE_FAILED	LOKALIZOWANY	Nie udało się wykonać playbooka
+server/src/routes/superadmin.routes.ts:4396	14 Admin Panel	SUPERADMIN_CONTRACT_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć kontraktu
+server/src/routes/superadmin.routes.ts:4461	14 Admin Panel	SUPERADMIN_CONTRACT_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować kontraktu
+server/src/routes/superadmin.routes.ts:4486	14 Admin Panel	SUPERADMIN_CONTRACT_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć kontraktu
+server/src/routes/mfa.routes.ts:143	15 Settings	MFA_STATUS_FAILED	LOKALIZOWANY	Nie udało się pobrać statusu MFA
+server/src/routes/mfa.routes.ts:188	15 Settings	MFA_SETUP_NOT_PERSISTED	LOKALIZOWANY	Nie udało się skonfigurować MFA
+server/src/routes/mfa.routes.ts:209	15 Settings	MFA_SETUP_FAILED	LOKALIZOWANY	Nie udało się skonfigurować MFA
+server/src/routes/mfa.routes.ts:275	15 Settings	MFA_ENABLE_NOT_PERSISTED	LOKALIZOWANY	Nie udało się włączyć MFA
+server/src/routes/mfa.routes.ts:296	15 Settings	MFA_VERIFY_SETUP_FAILED	LOKALIZOWANY	Nie udało się zweryfikować konfiguracji MFA
+server/src/routes/mfa.routes.ts:363	15 Settings	MFA_BACKUP_CODE_NOT_CONSUMED	LOKALIZOWANY	Weryfikacja nie powiodła się
+server/src/routes/mfa.routes.ts:418	15 Settings	MFA_VERIFY_FAILED	LOKALIZOWANY	Weryfikacja nie powiodła się
+server/src/routes/mfa.routes.ts:484	15 Settings	MFA_DISABLE_NOT_PERSISTED	LOKALIZOWANY	Nie udało się wyłączyć MFA
+server/src/routes/mfa.routes.ts:500	15 Settings	MFA_DISABLE_FAILED	LOKALIZOWANY	Nie udało się wyłączyć MFA
+server/src/routes/mfa.routes.ts:560	15 Settings	MFA_BACKUP_CODES_NOT_PERSISTED	LOKALIZOWANY	Nie udało się wygenerować nowych kodów zapasowych
+server/src/routes/mfa.routes.ts:578	15 Settings	MFA_REGENERATE_CODES_FAILED	LOKALIZOWANY	Nie udało się wygenerować nowych kodów zapasowych
+server/src/routes/settings.routes.ts:515	15 Settings	SETTINGS_SCHEMA_NOT_MIGRATED	LOKALIZOWANY	Baza danych nie ma wymaganego schematu ustawień
+server/src/routes/settings.routes.ts:638	15 Settings	SETTINGS_NOTIFICATIONS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji powiadomień
+server/src/routes/settings.routes.ts:765	15 Settings	SETTINGS_QUIET_HOURS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać godzin ciszy
+server/src/routes/settings.routes.ts:893	15 Settings	SETTINGS_INBOX_AI_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji AI dla skrzynki
+server/src/routes/settings.routes.ts:969	15 Settings	SETTINGS_AI_PROVIDERS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać dostawców AI
+server/src/routes/settings.routes.ts:1053	15 Settings	SETTINGS_DND_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać trybu nie przeszkadzać
+server/src/routes/settings.routes.ts:1196	15 Settings	SETTINGS_NOTIFICATIONS_SAVE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji powiadomień
+server/src/routes/settings.routes.ts:1296	15 Settings	SETTINGS_EMAIL_NOTIFICATIONS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji powiadomień e-mail
+server/src/routes/settings.routes.ts:1386	15 Settings	SETTINGS_SOUND_PREFERENCES_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać dźwięków powiadomień
+server/src/routes/settings.routes.ts:1475	15 Settings	SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać podsumowania powiadomień
+server/src/routes/settings.routes.ts:1934	15 Settings	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/settings.routes.ts:2465	15 Settings	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/settings.routes.ts:2557	15 Settings	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/settings.routes.ts:3654	15 Settings	SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji pulpitu
+server/src/routes/settings.routes.ts:3778	15 Settings	SETTINGS_WORK_PREFERENCES_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać preferencji pracy
+server/src/routes/settings.routes.ts:3887	15 Settings	SETTINGS_WORKING_HOURS_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać godzin pracy
+server/src/routes/settings.routes.ts:3995	15 Settings	SETTINGS_SIGNATURE_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć podpisu
+server/src/routes/settings.routes.ts:4052	15 Settings	SETTINGS_SIGNATURE_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zapisać podpisu
+server/src/routes/settings.routes.ts:4109	15 Settings	SETTINGS_SIGNATURE_SET_DEFAULT_FAILED	LOKALIZOWANY	Nie udało się ustawić domyślnego podpisu
+server/src/routes/settings.routes.ts:4149	15 Settings	SETTINGS_SIGNATURE_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć podpisu
+server/src/middleware/trialEntryGuard.middleware.ts:277	16 Partner Portal	TRIAL_ENTRY_RESTRICTION	LOKALIZOWANY	Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.
+server/src/middleware/trialEntryGuard.middleware.ts:315	16 Partner Portal	TRIAL_ENTRY_ORGANIZATION_REQUIRED	LOKALIZOWANY	Ta funkcja wymaga organizacji. Jesteś w fazie Trial Entry.
+server/src/middleware/trialEntryGuard.middleware.ts:329	16 Partner Portal	ORGANIZATION_CONTEXT_MISSING	LOKALIZOWANY	Brak kontekstu organizacji.
+server/src/routes/ai.routes.ts:1387	ZZ wspólne	AI_CLARIFY_TIMEOUT	LOKALIZOWANY	Generowanie pytań doprecyzowujących przekroczyło limit czasu
+server/src/routes/ai.routes.ts:9607	ZZ wspólne	AI_NOTIFICATION_TRIGGER_FAILED	LOKALIZOWANY	Nie udało się utworzyć powiadomienia AI
+server/src/routes/ai/agent-plan.routes.ts:593	ZZ wspólne	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/ai/agent-plan.routes.ts:625	ZZ wspólne	KNOWLEDGE_VAULT_FOLDERS_FAILED	LOKALIZOWANY	Nie udało się pobrać folderów
+server/src/routes/ai/agent-plan.routes.ts:661	ZZ wspólne	VAULT_PROJECT_ID_REQUIRED	LOKALIZOWANY	projectId wymagany dla scope=project
+server/src/routes/ai/agent-plan.routes.ts:675	ZZ wspólne	PROJECT_ACCESS_FORBIDDEN	LOKALIZOWANY	Brak dostępu do projektu
+server/src/routes/ai/agent-plan.routes.ts:707	ZZ wspólne	KNOWLEDGE_VAULT_FOLDER_CREATE_FAILED	LOKALIZOWANY	Nie udało się utworzyć folderu
+server/src/routes/ai/agent-plan.routes.ts:736	ZZ wspólne	KNOWLEDGE_VAULT_FOLDER_UPDATE_FAILED	LOKALIZOWANY	Nie udało się zaktualizować folderu
+server/src/routes/ai/agent-plan.routes.ts:759	ZZ wspólne	KNOWLEDGE_VAULT_FOLDER_DELETE_FAILED	LOKALIZOWANY	Nie udało się usunąć folderu
+server/src/routes/dataExport.routes.ts:112	ZZ wspólne	DATA_EXPORT_CREATE_REQUEST_FAILED	LOKALIZOWANY	Nie udało się utworzyć wniosku o eksport danych
+server/src/routes/dataExport.routes.ts:152	ZZ wspólne	DATA_EXPORT_STATUS_FAILED	LOKALIZOWANY	Nie udało się pobrać statusu eksportu
+server/src/routes/dataExport.routes.ts:185	ZZ wspólne	DATA_EXPORT_LIST_REQUESTS_FAILED	LOKALIZOWANY	Nie udało się pobrać wniosków o eksport
+server/src/routes/dataExport.routes.ts:250	ZZ wspólne	DATA_EXPORT_DOWNLOAD_FAILED	LOKALIZOWANY	Nie udało się pobrać eksportu
+server/src/routes/dataExport.routes.ts:317	ZZ wspólne	DATA_EXPORT_CANCEL_DELETION_FAILED	LOKALIZOWANY	Nie udało się anulować wniosku o usunięcie danych
+server/src/routes/integrations/integrations.routes.ts:758	ZZ wspólne	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/integrations/integrations.routes.ts:821	ZZ wspólne	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/v8/sync.routes.ts:1070	ZZ wspólne	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/v8/sync.routes.ts:1258	ZZ wspólne	GOVERNED_CONNECTOR_NOT_APPROVED	LOKALIZOWANY	Integracja nie jest dostępna w tej wersji
+server/src/routes/assessment-reports.routes.ts:1363	05 Assessment	ASSESSMENT_CONCLUSION_LINEAGE_MISSING	MUTE	Wniosek zapisany bez rodowodu do oceny — przerwane
+server/src/routes/assessment-workflow-v2.routes.ts:1126	05 Assessment	ASSESSMENT_WORKFLOW_V2_CREATE_RUN_FAILED	MUTE	Nie udało się utworzyć przebiegu
+server/src/routes/assessment/assessment-ai.routes.ts:44	05 Assessment	ASSESSMENT_SOURCE_UNAVAILABLE	MUTE	Źródło danych oceny jest chwilowo niedostępne.
+server/src/routes/settings.routes.ts:520	15 Settings	SETTINGS_REGIONAL_UPDATE_FAILED	MUTE	Nie udało się zapisać preferencji regionalnych
+server/src/routes/ai.routes.ts:7189	ZZ wspólne	AI_CHAT_FAILED	MUTE	Nie udało się wygenerować odpowiedzi asystenta
+server/src/routes/ai/pinned-insights.routes.ts:101	ZZ wspólne	PINNED_INSIGHTS_PIN_FAILED	MUTE	Nie udało się przypiąć insightu
+server/src/routes/ai/pinned-insights.routes.ts:175	ZZ wspólne	PINNED_INSIGHTS_UPDATE_FAILED	MUTE	Nie udało się zaktualizować insightu
+server/src/routes/ai/pinned-insights.routes.ts:202	ZZ wspólne	PINNED_INSIGHTS_UNPIN_FAILED	MUTE	Nie udało się odpiąć insightu
