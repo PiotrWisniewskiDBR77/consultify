@@ -27,7 +27,11 @@ import {
   mapCanonicalTemplateArtifact,
 } from '../useRapData';
 
-const FIXTURE_DIR = path.resolve(process.cwd(), 'evidence/qb0f-pin-narrow-20260919');
+// Wpis 247: fixtures live beside the test (`__tests__/fixtures/`), resolved
+// from `__dirname` — NEVER `process.cwd()+'evidence/…'`. Merge-window and CI
+// worktrees are sparse WITHOUT `evidence/`, so an evidence-relative read fails
+// to collect there and blocks the window.
+const FIXTURE_DIR = path.resolve(__dirname, 'fixtures');
 
 function loadFixture(name: string): unknown[] {
   return JSON.parse(readFileSync(path.join(FIXTURE_DIR, name), 'utf8')) as unknown[];
