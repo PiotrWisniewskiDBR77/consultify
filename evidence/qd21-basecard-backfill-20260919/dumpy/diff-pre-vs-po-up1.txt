@@ -1,0 +1,119 @@
+7231c7231
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+15987c15987
+<     created_at text DEFAULT to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text),
+---
+>     created_at timestamp with time zone DEFAULT now(),
+16219c16219
+<     created_at text NOT NULL,
+---
+>     created_at timestamp with time zone NOT NULL,
+17033c17033
+<     created_at text,
+---
+>     created_at timestamp with time zone,
+29031c29031
+<     created_at text DEFAULT (now())::text,
+---
+>     created_at timestamp with time zone DEFAULT now(),
+29160c29160
+<     created_at text,
+---
+>     created_at timestamp with time zone,
+30725c30725
+<     created_at text NOT NULL,
+---
+>     created_at timestamp with time zone NOT NULL,
+36923c36923
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+36943c36943
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+36968c36968
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+36995c36995
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+41172c41172
+<     created_at text DEFAULT to_char((now() AT TIME ZONE 'UTC'::text), 'YYYY-MM-DD HH24:MI:SS'::text),
+---
+>     created_at timestamp with time zone DEFAULT now(),
+43761c43761
+<     created_at text DEFAULT '2026-03-03 18:30:11.358808+00'::timestamp with time zone,
+---
+>     created_at timestamp with time zone DEFAULT '2026-03-03 18:30:11.358808+00'::timestamp with time zone,
+44892c44892,44895
+<     availability_percent integer
+---
+>     availability_percent integer,
+>     scim_external_id text,
+>     scim_provisioned boolean DEFAULT false,
+>     scim_last_sync_at timestamp with time zone
+47498c47501
+<     created_at text DEFAULT now() NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT now() NOT NULL,
+49138c49141
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+49228c49231
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+49250c49253
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+49276c49279
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+49294c49297
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+49344c49347
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+49394c49397
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+49418c49421
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+49562c49565
+<     created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+---
+>     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+49952c49955
+<     created_at text NOT NULL,
+---
+>     created_at timestamp with time zone NOT NULL,
+92727a92731,92737
+> 
+> 
+> --
+> -- Name: idx_scim_conflicts_org; Type: INDEX; Schema: public; Owner: postgres
+> --
+> 
+> CREATE INDEX idx_scim_conflicts_org ON public.scim_conflict_log USING btree (organization_id);
+96265a96276,96282
+> -- Name: idx_users_scim_external_id; Type: INDEX; Schema: public; Owner: postgres
+> --
+> 
+> CREATE UNIQUE INDEX idx_users_scim_external_id ON public.users USING btree (scim_external_id) WHERE (scim_external_id IS NOT NULL);
+> 
+> 
+> --

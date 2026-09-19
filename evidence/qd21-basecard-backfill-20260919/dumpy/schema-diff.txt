@@ -1,0 +1,31 @@
+5c5
+< \restrict Cvy8qtzpFrOJQbgx1XxOSQ2oaExQR7iFXwn5xSjrxf1ms8wlqIebSUTtkBrcf77
+---
+> \restrict nXJ1ZTKPUeKQVjWg3GaPTMsaMuwXlvrq2SEWQnBb37ld22kVAC9PVGJYnrI16Fh
+44893c44893,44896
+<     availability_percent integer
+---
+>     availability_percent integer,
+>     scim_external_id text,
+>     scim_provisioned boolean DEFAULT false,
+>     scim_last_sync_at timestamp with time zone
+92731a92735,92741
+> -- Name: idx_scim_conflicts_org; Type: INDEX; Schema: public; Owner: postgres
+> --
+> 
+> CREATE INDEX idx_scim_conflicts_org ON public.scim_conflict_log USING btree (organization_id);
+> 
+> 
+> --
+96266a96277,96283
+> -- Name: idx_users_scim_external_id; Type: INDEX; Schema: public; Owner: postgres
+> --
+> 
+> CREATE UNIQUE INDEX idx_users_scim_external_id ON public.users USING btree (scim_external_id) WHERE (scim_external_id IS NOT NULL);
+> 
+> 
+> --
+119708c119725
+< \unrestrict Cvy8qtzpFrOJQbgx1XxOSQ2oaExQR7iFXwn5xSjrxf1ms8wlqIebSUTtkBrcf77
+---
+> \unrestrict nXJ1ZTKPUeKQVjWg3GaPTMsaMuwXlvrq2SEWQnBb37ld22kVAC9PVGJYnrI16Fh

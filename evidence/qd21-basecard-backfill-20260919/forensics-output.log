@@ -1,0 +1,406 @@
+=== [1] org_count i stan 3 kanonicznych kart bazowych per org ===
+ org_count 
+-----------
+        13
+(1 row)
+
+                org_id                |           org_name           |        org_created         | canonical_links | canonical_snapshots |           families            
+--------------------------------------+------------------------------+----------------------------+-----------------+---------------------+-------------------------------
+ ateliertoys-demo                     | Atelier Toys                 | 2026-09-18 01:37:32.293952 |               0 |                   0 | 
+ b8dbb6e9-e855-4245-9748-21e5186390d2 | CTO Service (staging)        | 2026-09-16 17:56:05.804369 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77                        | 2026-02-19 07:58:37.065762 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ dbr77                                | DBR77 Digital Consulting     | 2026-04-03 18:27:54.727074 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ 9151ee70-0141-43fd-9614-8ea609a7e5aa | My Company                   | 2026-09-09 10:01:51.566333 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ 468b234c-66c4-54e1-b626-5e0fb3a92f6a | Northwind Manufacturing Ltd. | 2026-09-08 14:46:45.821584 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ 3af18124-275e-484c-8ca1-b512915423c9 | QA Fable 13.09               | 2026-09-13 12:58:07.766758 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ c56e8bd5-3295-4366-b150-72e978fb8f18 | QA Fable 13.09               | 2026-09-13 13:56:22.035    |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ system                               | System                       | 2026-03-03 18:29:48.561246 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ a6b81efe-98b8-426d-bac6-03340e1ea4f6 | TT22TT                       | 2026-09-09 10:05:22.133    |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ 3935603f-e81c-4fc3-a154-623394e7cc32 | TT22TT                       | 2026-09-09 09:39:04.493853 |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ be953b47-1dba-469c-98cb-414806f36276 | TT22TT                       | 2026-09-09 09:45:38.106    |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+ 8bed87c6-a77e-4d7b-a2b7-bffedfb89c02 | TT22TT 2                     | 2026-09-10 13:16:36.982    |               3 |                   3 | DECK-BASE,DOC-BASE,SHEET-BASE
+(13 rows)
+
+=== [2] orgi, którym brakuje KTÓREJKOLWIEK z 3 kanonicznych kart (zbiór do backfillu) ===
+      org_id      |   org_name   |   family   |        runtime        |                 source_id                  | links_teraz 
+------------------+--------------+------------+-----------------------+--------------------------------------------+-------------
+ ateliertoys-demo | Atelier Toys | DECK-BASE  | presentation_template | dbr77-deck-board                           |           0
+ ateliertoys-demo | Atelier Toys | DOC-BASE   | document_template     | doc-template-system-en-client_final_report |           0
+ ateliertoys-demo | Atelier Toys | SHEET-BASE | sheet_template        | 2ccf6ff1-258e-4509-a163-6cd1a1fdfcd1       |           0
+(3 rows)
+
+=== [3] globalne liczniki readbacku 20262271: snapshot_count / link_count vs org_count*3 ===
+ org_count | oczekiwane | snapshot_count | link_count 
+-----------+------------+----------------+------------
+        13 |         39 |             36 |         36
+(1 row)
+
+=== [4] org bez kart (ateliertoys-demo): czy ma JAKIEKOLWIEK artefakty/linki? ===
+        id        |     name     |         created_at         | artefakty_org | linki_org | szablony_org 
+------------------+--------------+----------------------------+---------------+-----------+--------------
+ ateliertoys-demo | Atelier Toys | 2026-09-18 01:37:32.293952 |             2 |         0 |            0
+(1 row)
+
+=== [5] kolumny organizations (czy jest status/deleted do wykluczeń) ===
+            column_name            |          data_type          | is_nullable |       default        
+-----------------------------------+-----------------------------+-------------+----------------------
+ id                                | text                        | NO          | -
+ name                              | text                        | YES         | -
+ plan                              | text                        | YES         | 'free'::text
+ status                            | text                        | YES         | 'active'::text
+ billing_status                    | text                        | YES         | 'PENDING'::text
+ organization_type                 | text                        | YES         | 'TRIAL'::text
+ token_balance                     | integer                     | YES         | 0
+ is_active                         | integer                     | YES         | 1
+ created_at                        | timestamp without time zone | YES         | CURRENT_TIMESTAMP
+ valid_until                       | timestamp without time zone | YES         | -
+ discount_percent                  | integer                     | YES         | 0
+ monthly_budget_usd                | real                        | YES         | -
+ budget_spent_current_period       | real                        | YES         | 0
+ budget_alert_threshold            | real                        | YES         | 0.8
+ budget_period_start               | timestamp without time zone | YES         | -
+ memory_usage_mb_current           | integer                     | YES         | 0
+ cpu_usage_percent_avg             | real                        | YES         | 0
+ mfa_required                      | integer                     | YES         | 0
+ mfa_grace_period_days             | integer                     | YES         | 7
+ trial_started_at                  | timestamp without time zone | YES         | -
+ trial_expires_at                  | timestamp without time zone | YES         | -
+ trial_extension_count             | integer                     | YES         | 0
+ trial_warning_sent_at             | timestamp without time zone | YES         | -
+ trial_tokens_used                 | integer                     | YES         | 0
+ attribution_data                  | text                        | YES         | -
+ transformation_context            | text                        | YES         | '{}'::text
+ onboarding_status                 | text                        | YES         | 'NOT_STARTED'::text
+ onboarding_plan_snapshot          | text                        | YES         | -
+ onboarding_plan_version           | integer                     | YES         | 0
+ onboarding_accepted_at            | timestamp without time zone | YES         | -
+ onboarding_accept_idempotency_key | text                        | YES         | -
+ ai_assertiveness_level            | text                        | YES         | 'MEDIUM'::text
+ ai_autonomy_level                 | text                        | YES         | 'SUGGEST_ONLY'::text
+ created_by_user_id                | text                        | YES         | -
+ logo_url                          | text                        | YES         | -
+ branding_primary_color            | text                        | YES         | -
+ branding_accent_color             | text                        | YES         | -
+ default_timezone                  | text                        | YES         | -
+ default_language                  | text                        | YES         | -
+ updated_at                        | text                        | YES         | -
+ industry                          | text                        | YES         | -
+ domain                            | text                        | YES         | -
+ vat_number                        | text                        | YES         | -
+ payment_status                    | text                        | YES         | 'current'::text
+ dunning_stage                     | integer                     | YES         | 0
+ dunning_started_at                | timestamp with time zone    | YES         | -
+ suspension_scheduled_at           | timestamp with time zone    | YES         | -
+ suspension_reason                 | text                        | YES         | -
+ stripe_customer_id                | text                        | YES         | -
+ last_payment_attempt_at           | timestamp with time zone    | YES         | -
+ last_successful_payment_at        | timestamp with time zone    | YES         | -
+ owner_id                          | text                        | YES         | -
+ trial_exports_used                | integer                     | YES         | 0
+ trial_share_links_used            | integer                     | YES         | 0
+ active_llm_provider_id            | text                        | YES         | -
+ billing_currency                  | text                        | YES         | 'USD'::text
+ billing_country                   | text                        | YES         | -
+ tax_exempt                        | boolean                     | YES         | false
+ mfa_required_since                | timestamp without time zone | YES         | -
+(59 rows)
+
+=== [6] kolumny v8_output_artifacts + v8_artifact_origin_links (typy, NULL-e, domyślne) ===
+        table_name        |       column_name        | data_type | is_nullable |         default         
+--------------------------+--------------------------+-----------+-------------+-------------------------
+ v8_artifact_origin_links | link_id                  | text      | NO          | -
+ v8_artifact_origin_links | artifact_id              | text      | NO          | -
+ v8_artifact_origin_links | organization_id          | text      | NO          | -
+ v8_artifact_origin_links | origin_runtime           | text      | NO          | -
+ v8_artifact_origin_links | origin_record_id         | text      | NO          | -
+ v8_artifact_origin_links | is_primary_origin        | integer   | NO          | 1
+ v8_artifact_origin_links | created_at               | text      | NO          | now()
+ v8_output_artifacts      | artifact_id              | text      | NO          | -
+ v8_output_artifacts      | organization_id          | text      | NO          | -
+ v8_output_artifacts      | output_type              | text      | NO          | -
+ v8_output_artifacts      | delivery_state           | text      | NO          | 'draft'::text
+ v8_output_artifacts      | template_family_ref      | text      | YES         | -
+ v8_output_artifacts      | source_initiative_id     | text      | YES         | -
+ v8_output_artifacts      | ai_governance_preset_ref | text      | YES         | -
+ v8_output_artifacts      | created_by               | text      | NO          | -
+ v8_output_artifacts      | created_at               | text      | NO          | now()
+ v8_output_artifacts      | last_transition_at       | text      | NO          | now()
+ v8_output_artifacts      | artifact_family          | text      | YES         | -
+ v8_output_artifacts      | title_snapshot           | text      | YES         | -
+ v8_output_artifacts      | owner_user_id            | text      | YES         | -
+ v8_output_artifacts      | canonical_home           | text      | NO          | 'outputs_library'::text
+ v8_output_artifacts      | visibility_scope         | text      | NO          | 'organization'::text
+ v8_output_artifacts      | project_id               | text      | YES         | -
+ v8_output_artifacts      | context_snapshot_id      | text      | YES         | -
+ v8_output_artifacts      | execution_run_id         | text      | YES         | -
+ v8_output_artifacts      | origin_summary_json      | text      | YES         | -
+ v8_output_artifacts      | is_draft                 | integer   | NO          | 0
+ v8_output_artifacts      | quality_scores           | text      | YES         | -
+(28 rows)
+
+=== [7] cele ON CONFLICT: indeksy unikatowe i ograniczenia obu tabel ===
+        tablename         |             indexname              |                                                                         indexdef                                                                          
+--------------------------+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ v8_artifact_origin_links | idx_v81_origin_artifact            | CREATE INDEX idx_v81_origin_artifact ON public.v8_artifact_origin_links USING btree (artifact_id, organization_id)
+ v8_artifact_origin_links | idx_v81_origin_unique              | CREATE UNIQUE INDEX idx_v81_origin_unique ON public.v8_artifact_origin_links USING btree (organization_id, origin_runtime, origin_record_id)
+ v8_artifact_origin_links | v8_artifact_origin_links_pkey      | CREATE UNIQUE INDEX v8_artifact_origin_links_pkey ON public.v8_artifact_origin_links USING btree (link_id)
+ v8_output_artifacts      | idx_v81_artifacts_org_is_draft     | CREATE INDEX idx_v81_artifacts_org_is_draft ON public.v8_output_artifacts USING btree (organization_id, is_draft)
+ v8_output_artifacts      | idx_v81_artifacts_org_visibility   | CREATE INDEX idx_v81_artifacts_org_visibility ON public.v8_output_artifacts USING btree (organization_id, visibility_scope)
+ v8_output_artifacts      | idx_v81_artifacts_owner            | CREATE INDEX idx_v81_artifacts_owner ON public.v8_output_artifacts USING btree (owner_user_id) WHERE (owner_user_id IS NOT NULL)
+ v8_output_artifacts      | idx_v81_artifacts_project          | CREATE INDEX idx_v81_artifacts_project ON public.v8_output_artifacts USING btree (project_id) WHERE (project_id IS NOT NULL)
+ v8_output_artifacts      | idx_v8_artifacts_org_type          | CREATE INDEX idx_v8_artifacts_org_type ON v8.v8_output_artifacts USING btree (organization_id, output_type)
+ v8_output_artifacts      | idx_v8_artifacts_org_type          | CREATE INDEX idx_v8_artifacts_org_type ON public.v8_output_artifacts USING btree (organization_id, output_type)
+ v8_output_artifacts      | idx_v8_output_artifacts_initiative | CREATE INDEX idx_v8_output_artifacts_initiative ON public.v8_output_artifacts USING btree (source_initiative_id) WHERE (source_initiative_id IS NOT NULL)
+ v8_output_artifacts      | idx_v8_output_artifacts_initiative | CREATE INDEX idx_v8_output_artifacts_initiative ON v8.v8_output_artifacts USING btree (source_initiative_id) WHERE (source_initiative_id IS NOT NULL)
+ v8_output_artifacts      | idx_v8_output_artifacts_org        | CREATE INDEX idx_v8_output_artifacts_org ON v8.v8_output_artifacts USING btree (organization_id)
+ v8_output_artifacts      | idx_v8_output_artifacts_org        | CREATE INDEX idx_v8_output_artifacts_org ON public.v8_output_artifacts USING btree (organization_id)
+ v8_output_artifacts      | idx_v8_output_artifacts_org_type   | CREATE INDEX idx_v8_output_artifacts_org_type ON public.v8_output_artifacts USING btree (organization_id, output_type)
+ v8_output_artifacts      | idx_v8_output_artifacts_org_type   | CREATE INDEX idx_v8_output_artifacts_org_type ON v8.v8_output_artifacts USING btree (organization_id, output_type)
+ v8_output_artifacts      | idx_v8_output_artifacts_state      | CREATE INDEX idx_v8_output_artifacts_state ON v8.v8_output_artifacts USING btree (organization_id, delivery_state)
+ v8_output_artifacts      | idx_v8_output_artifacts_state      | CREATE INDEX idx_v8_output_artifacts_state ON public.v8_output_artifacts USING btree (organization_id, delivery_state)
+ v8_output_artifacts      | v8_output_artifacts_pkey           | CREATE UNIQUE INDEX v8_output_artifacts_pkey ON v8.v8_output_artifacts USING btree (artifact_id)
+ v8_output_artifacts      | v8_output_artifacts_pkey           | CREATE UNIQUE INDEX v8_output_artifacts_pkey ON public.v8_output_artifacts USING btree (artifact_id)
+(19 rows)
+
+          tabela          |                       conname                       | contype |                                                                                                                                    definicja                                                                                                                                    
+--------------------------+-----------------------------------------------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ v8_artifact_origin_links | v8_artifact_origin_links_artifact_id_not_null       | n       | NOT NULL artifact_id
+ v8_artifact_origin_links | v8_artifact_origin_links_created_at_not_null        | n       | NOT NULL created_at
+ v8_artifact_origin_links | v8_artifact_origin_links_is_primary_origin_not_null | n       | NOT NULL is_primary_origin
+ v8_artifact_origin_links | v8_artifact_origin_links_link_id_not_null           | n       | NOT NULL link_id
+ v8_artifact_origin_links | v8_artifact_origin_links_organization_id_not_null   | n       | NOT NULL organization_id
+ v8_artifact_origin_links | v8_artifact_origin_links_origin_record_id_not_null  | n       | NOT NULL origin_record_id
+ v8_artifact_origin_links | v8_artifact_origin_links_origin_runtime_check       | c       | CHECK ((origin_runtime = ANY (ARRAY['report'::text, 'presentation'::text, 'sheet'::text, 'native_artifact'::text, 'report_template'::text, 'presentation_template'::text, 'sheet_template'::text, 'document_template'::text, 'work_canvas'::text, 'assessment_report'::text])))
+ v8_artifact_origin_links | v8_artifact_origin_links_origin_runtime_not_null    | n       | NOT NULL origin_runtime
+ v8_artifact_origin_links | v8_artifact_origin_links_pkey                       | p       | PRIMARY KEY (link_id)
+ v8_output_artifacts      | v8_output_artifacts_artifact_family_check           | c       | CHECK ((artifact_family = ANY (ARRAY['document'::text, 'presentation'::text, 'sheet'::text, 'template'::text])))
+ v8_output_artifacts      | v8_output_artifacts_artifact_id_not_null            | n       | NOT NULL artifact_id
+ v8_output_artifacts      | v8_output_artifacts_canonical_home_not_null         | n       | NOT NULL canonical_home
+ v8_output_artifacts      | v8_output_artifacts_created_at_not_null             | n       | NOT NULL created_at
+ v8_output_artifacts      | v8_output_artifacts_created_by_not_null             | n       | NOT NULL created_by
+ v8_output_artifacts      | v8_output_artifacts_delivery_state_check            | c       | CHECK ((delivery_state = ANY (ARRAY['draft'::text, 'generated'::text, 'editing'::text, 'in_review'::text, 'ready'::text, 'shared'::text, 'archived'::text])))
+ v8_output_artifacts      | v8_output_artifacts_delivery_state_not_null         | n       | NOT NULL delivery_state
+ v8_output_artifacts      | v8_output_artifacts_is_draft_not_null               | n       | NOT NULL is_draft
+ v8_output_artifacts      | v8_output_artifacts_last_transition_at_not_null     | n       | NOT NULL last_transition_at
+ v8_output_artifacts      | v8_output_artifacts_organization_id_not_null        | n       | NOT NULL organization_id
+ v8_output_artifacts      | v8_output_artifacts_output_type_check               | c       | CHECK ((output_type = ANY (ARRAY['report'::text, 'presentation'::text, 'sheet'::text])))
+ v8_output_artifacts      | v8_output_artifacts_output_type_not_null            | n       | NOT NULL output_type
+ v8_output_artifacts      | v8_output_artifacts_pkey                            | p       | PRIMARY KEY (artifact_id)
+ v8_output_artifacts      | v8_output_artifacts_visibility_scope_check          | c       | CHECK ((visibility_scope = ANY (ARRAY['private'::text, 'project'::text, 'organization'::text, 'review_shared'::text, 'demo'::text])))
+ v8_output_artifacts      | v8_output_artifacts_visibility_scope_not_null       | n       | NOT NULL visibility_scope
+(24 rows)
+
+=== [8] czy deterministyczne artifact_id/link_id dla brakujących orgów kolidują z istniejącymi? ===
+      org_id      |   family   |                   nowe_artifact_id                    | kolizja_artifact |                   nowe_link_id                   | kolizja_link 
+------------------+------------+-------------------------------------------------------+------------------+--------------------------------------------------+--------------
+ ateliertoys-demo | DECK-BASE  | template-1-deckbase-9165a795aa6cee069903513512316ce2  |                0 | template-1-link-f5ee1c06f2923f3f6d24c87088d1d7bd |            0
+ ateliertoys-demo | DOC-BASE   | template-1-docbase-dbe36314c896d1721f89ba349dec6bdd   |                0 | template-1-link-abea4a2b0b31e9804065e1725ab649e3 |            0
+ ateliertoys-demo | SHEET-BASE | template-1-sheetbase-6dbf21b25f2e19a22d352e558a6cd59c |                0 | template-1-link-5602d301072e153abe54df38ad9ff80c |            0
+(3 rows)
+
+=== [9] created_by na istniejących kanonicznych kartach (znacznik dla .down.sql) ===
+               created_by                | ile 
+-----------------------------------------+-----
+ migration:20262271_template_base_family |  29
+ system                                  |   7
+(2 rows)
+
+=== [10] ile AKTYWNYCH kart DOC-BASE/DECK-BASE/SHEET-BASE ma każda org (musi się NIE zmienić) ===
+           org_name           | doc_base_aktywne | deck_base_aktywne | sheet_base_aktywne | wszystkie_base 
+------------------------------+------------------+-------------------+--------------------+----------------
+ Northwind Manufacturing Ltd. |               21 |                 1 |                  1 |             97
+ QA Fable 13.09               |               22 |                 2 |                  2 |             94
+ DBR77                        |               21 |                 0 |                  1 |             91
+ TT22TT                       |               23 |                 3 |                  3 |             54
+ CTO Service (staging)        |                1 |                 1 |                  1 |              3
+ DBR77 Digital Consulting     |                1 |                 1 |                  1 |              3
+ My Company                   |                1 |                 1 |                  1 |              3
+ System                       |                1 |                 1 |                  1 |              3
+ TT22TT 2                     |                1 |                 1 |                  1 |              3
+ Atelier Toys                 |                0 |                 0 |                  0 |              1
+(10 rows)
+
+=== [11] czy 3 ŹRÓDŁA kanoniczne istnieją (kontrakt 20262271:434-476) ===
+ doc_source | deck_source | sheet_source 
+------------+-------------+--------------
+          1 |           1 |            1
+(1 row)
+
+=== [12] kształt wiersza kanonicznej karty (wzór dla INSERT) ===
+                     artifact_id                      |           organization_id            | output_type  | delivery_state | template_family_ref |               created_by                |          created_at           | last_transition_at  | artifact_family | title_snapshot | canonical_home  | visibility_scope |                                                                                    origin_summary                                                                                    | is_draft 
+------------------------------------------------------+--------------------------------------+--------------+----------------+---------------------+-----------------------------------------+-------------------------------+---------------------+-----------------+----------------+-----------------+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------
+ b0e39a41-a8d4-4829-8ab5-462828d2450f                 | 3935603f-e81c-4fc3-a154-623394e7cc32 | presentation | ready          | DECK-BASE           | system                                  | 2026-09-09T09:44:26.351Z      | 2026-09-16 00:00:00 | template        | Board deck     | outputs_library | organization     | {"template": {"family": "DECK-BASE", "status": "approved", "system": true, "language": "en", "readOnly": true, "sourceId": "dbr77-deck-board", "inventoryRow": 81, "sourceRuntime":  |        0
+ template-1-deckbase-bd0c66afc5eab05ca66f9235f0784e3b | dbr77                                | presentation | ready          | DECK-BASE           | migration:20262271_template_base_family | 2026-09-16 19:59:01.141268+00 | 2026-09-16 00:00:00 | template        | Board deck     | outputs_library | organization     | {"template": {"family": "DECK-BASE", "status": "approved", "system": true, "language": "en", "readOnly": true, "sourceId": "dbr77-deck-board", "inventoryRow": 81, "sourceRuntime":  |        0
+ 09b7e011-c7d5-438d-97ee-85244a4d6fe9                 | a3e05d4a-5397-419d-b486-8e44366c0063 | presentation | draft          | DECK-BASE           | system                                  | 2026-06-23T11:25:21.749Z      | 2026-09-16 00:00:00 | template        | Board deck     | outputs_library | organization     | {"template": {"family": "DECK-BASE", "status": "approved", "system": true, "language": "en", "readOnly": true, "sourceId": "dbr77-deck-board", "inventoryRow": 81, "sourceRuntime":  |        1
+(3 rows)
+
+=== [13] czym jest v8.v8_output_artifacts (r=table, v=view, m=matview) ===
+ nspname |         relname          | relkind 
+---------+--------------------------+---------
+ public  | v8_artifact_origin_links | r
+ public  | v8_output_artifacts      | r
+ v8      | v8_output_artifacts      | r
+(3 rows)
+
+=== [14] liczniki public vs v8 ===
+ public_artifacts | public_links 
+------------------+--------------
+             1031 |          956
+(1 row)
+
+=== [15] search_path sesji (runner i psql) ===
+   search_path   
+-----------------
+ "$user", public
+(1 row)
+
+=== [16] populacja organizations: status / is_active / organization_type ===
+ status  | is_active | org_type | count 
+---------+-----------+----------+-------
+ expired |         1 | TRIAL    |     5
+ active  |         1 | TRIAL    |     4
+ active  |         1 | PAID     |     3
+ active  |         1 | DEMO     |     1
+(4 rows)
+
+=== [17] co JUŻ ma ateliertoys-demo (te 2 artefakty) ===
+                          artifact_id                          | output_type  | delivery_state |   template_family_ref    |               created_by                |        created_at        | artifact_family | title_snapshot | canonical_home  | visibility_scope | is_draft 
+---------------------------------------------------------------+--------------+----------------+--------------------------+-----------------------------------------+--------------------------+-----------------+----------------+-----------------+------------------+----------
+ ateliertoys-demo--output-artifact--forward-2015-board-readout | presentation | ready          | executive-board-readout  | ateliertoys-demo--user--antoine-laurent | 2026-09-18T01:41:11.706Z |                 |                | outputs_library | organization     |        0
+ ateliertoys-demo--output-artifact--forward-2015-roi-report    | report       | shared         | value-realization-report | ateliertoys-demo--user--hugo-bernard    | 2026-09-18T01:41:11.706Z |                 |                | outputs_library | organization     |        0
+(2 rows)
+
+=== [18] czy w public.v8_output_artifacts istnieje juz jakis wiersz o ID z wzorca 20262271 dla ateliertoys-demo ===
+ istniejace_template1_dla_atelier 
+----------------------------------
+                                0
+(1 row)
+
+=== [19] readback SCOPED (jak w opcji A): duplikaty wyłącznie wśród 3 kanonicznych źródeł ===
+ grupy_z_duplikatem 
+--------------------
+                  0
+(1 row)
+
+=== [20] NIESCOPED readback 20262271:502-511 (ile org/rodzin ma >1 aktywną kartę bazową) ===
+ grupy_z_duplikatem_niescoped 
+------------------------------
+                            4
+(1 row)
+
+=== [21] v8.v8_output_artifacts: licznik + kolumny (czy to relikt?) ===
+ v8_artifacts 
+--------------
+            0
+(1 row)
+
+                                                                                    v8_kolumny                                                                                    
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ artifact_id,organization_id,output_type,delivery_state,template_family_ref,source_initiative_id,ai_governance_preset_ref,created_by,created_at,last_transition_at,quality_scores
+(1 row)
+
+ v8_z_family 
+-------------
+           0
+(1 row)
+
+=== [22] do ktorej tabeli pisal 20262271 (created_by marker) ===
+ schemat | count 
+---------+-------
+ public  |    29
+ v8      |     0
+(2 rows)
+
+=== [23] ateliertoys-demo: status/org_type/created_at + czy to ten DEMO ===
+psql:/tmp/f3.sql:13: ERROR:  column "slug" does not exist
+LINE 1: SELECT id, name, slug, status, is_active, organization_type,...
+                         ^
+=== [24] rozklad created_by na kartach bazowych (public) ===
+                   created_by                   | count 
+------------------------------------------------+-------
+ system                                         |   312
+ migration:20262271_template_base_family        |    29
+ 75f25357-2f33-48b8-9638-ad67ff65bcef           |     6
+ migration:20262272_template_library_cleanup_96 |     4
+(4 rows)
+
+=== [25] ile org ma 0/1/2/3 kanonicznych kart (wg 3 zrodel) ===
+ ile | org 
+-----+-----
+   0 |   1
+   3 |  12
+(2 rows)
+
+=== [26] czy ateliertoys-demo ma users (created_by musi istniec?) ===
+psql:/tmp/f3.sql:34: ERROR:  column o.slug does not exist
+LINE 2: ...c.organizations o ON o.id=u.organization_id WHERE o.slug ILI...
+                                                             ^
+=== [23b] kolumny public.organizations ===
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                kolumny                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ id,name,plan,status,billing_status,organization_type,token_balance,is_active,created_at,valid_until,discount_percent,monthly_budget_usd,budget_spent_current_period,budget_alert_threshold,budget_period_start,memory_usage_mb_current,cpu_usage_percent_avg,mfa_required,mfa_grace_period_days,trial_started_at,trial_expires_at,trial_extension_count,trial_warning_sent_at,trial_tokens_used,attribution_data,transformation_context,onboarding_status,onboarding_plan_snapshot,onboarding_plan_version,onboarding_accepted_at,onboarding_accept_idempotency_key,ai_assertiveness_level,ai_autonomy_level,created_by_user_id,logo_url,branding_primary_color,branding_accent_color,default_timezone,default_language,updated_at,industry,domain,vat_number,payment_status,dunning_stage,dunning_started_at,suspension_scheduled_at,suspension_reason,stripe_customer_id,last_payment_attempt_at,last_successful_payment_at,owner_id,trial_exports_used,trial_share_links_used,active_llm_provider_id,billing_currency,billing_country,tax_exempt,mfa_required_since
+(1 row)
+
+=== [23c] org bez kart kanonicznych (pelny wiersz kluczowych pol) ===
+        id        |     name     | status | is_active | organization_type |         created_at         
+------------------+--------------+--------+-----------+-------------------+----------------------------
+ ateliertoys-demo | Atelier Toys | active |         1 | DEMO              | 2026-09-18 01:37:32.293952
+(1 row)
+
+=== [26b] uzytkownicy tej org (czy created_by moze byc markerem migracji) ===
+ uzytkownicy |        role        
+-------------+--------------------
+          18 | ADMIN,MANAGER,USER
+(1 row)
+
+=== [27] czy users.organization_id ma FK / czy created_by na karcie ma FK ===
+ tabela | conname | definicja 
+--------+---------+-----------
+(0 rows)
+
+=== [28] NOT NULL w obu tabelach (kolumny bez defaulta, ktore INSERT musi podac) ===
+        table_name        |    column_name     | data_type | is_nullable |     column_default      
+--------------------------+--------------------+-----------+-------------+-------------------------
+ v8_artifact_origin_links | link_id            | text      | NO          | 
+ v8_artifact_origin_links | artifact_id        | text      | NO          | 
+ v8_artifact_origin_links | organization_id    | text      | NO          | 
+ v8_artifact_origin_links | origin_runtime     | text      | NO          | 
+ v8_artifact_origin_links | origin_record_id   | text      | NO          | 
+ v8_artifact_origin_links | is_primary_origin  | integer   | NO          | 1
+ v8_artifact_origin_links | created_at         | text      | NO          | now()
+ v8_output_artifacts      | artifact_id        | text      | NO          | 
+ v8_output_artifacts      | organization_id    | text      | NO          | 
+ v8_output_artifacts      | output_type        | text      | NO          | 
+ v8_output_artifacts      | delivery_state     | text      | NO          | 'draft'::text
+ v8_output_artifacts      | created_by         | text      | NO          | 
+ v8_output_artifacts      | created_at         | text      | NO          | now()
+ v8_output_artifacts      | last_transition_at | text      | NO          | now()
+ v8_output_artifacts      | canonical_home     | text      | NO          | 'outputs_library'::text
+ v8_output_artifacts      | visibility_scope   | text      | NO          | 'organization'::text
+ v8_output_artifacts      | is_draft           | integer   | NO          | 0
+(17 rows)
+
+=== [29] BAZA per ORG ID: aktywne karty bazowe (to ma sie NIE zmienic po 20262306) ===
+                org_id                | doc | deck | sheet | base_razem | wszystkie_arty 
+--------------------------------------+-----+------+-------+------------+----------------
+ 3935603f-e81c-4fc3-a154-623394e7cc32 |  21 |    1 |     1 |         48 |             50
+ 3af18124-275e-484c-8ca1-b512915423c9 |  21 |    1 |     1 |         91 |             94
+ 468b234c-66c4-54e1-b626-5e0fb3a92f6a |  21 |    1 |     1 |         97 |            129
+ 8bed87c6-a77e-4d7b-a2b7-bffedfb89c02 |   1 |    1 |     1 |          3 |              3
+ 9151ee70-0141-43fd-9614-8ea609a7e5aa |   1 |    1 |     1 |          3 |              3
+ a3e05d4a-5397-419d-b486-8e44366c0063 |  21 |    0 |     1 |         91 |            708
+ a6b81efe-98b8-426d-bac6-03340e1ea4f6 |   1 |    1 |     1 |          3 |              3
+ ateliertoys-demo                     |   0 |    0 |     0 |          0 |              2
+ b8dbb6e9-e855-4245-9748-21e5186390d2 |   1 |    1 |     1 |          3 |              3
+ be953b47-1dba-469c-98cb-414806f36276 |   1 |    1 |     1 |          3 |              3
+ c56e8bd5-3295-4366-b150-72e978fb8f18 |   1 |    1 |     1 |          3 |              3
+ dbr77                                |   1 |    1 |     1 |          3 |              3
+ system                               |   1 |    1 |     1 |          3 |              3
+(13 rows)
+
+=== [30] odcisk calosci PRZED (suma licznikow obu tabel + md5 zbioru ID) ===
+ arty | linki |             md5_arty             
+------+-------+----------------------------------
+ 1031 |   956 | 93ab6abbff7818896ecdbdced2e1bad0
+(1 row)
+
