@@ -30,6 +30,7 @@ import {
   ORG_SUSPENDED_CODE,
 } from './organizationSuspensionGuard.js';
 import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
+import { seedOrganizationBaseArtifacts } from './organizationBaseArtifactService.js';
 
 // Dynamic imports
 let AccessPolicyService: any = null;
@@ -569,6 +570,8 @@ export class InvitationServiceClass {
       );
       throw new Error('Invitation has expired');
     }
+
+    await seedOrganizationBaseArtifacts(invitation.organization_id, this.deps.db);
 
     // Email binding (skipped for shared/open invitations — each user enters their own email)
     if (!isOpen && email.toLowerCase() !== invitation.email.toLowerCase()) {
