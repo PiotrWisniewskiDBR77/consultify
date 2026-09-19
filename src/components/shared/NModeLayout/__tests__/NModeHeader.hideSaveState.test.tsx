@@ -90,4 +90,10 @@ describe('NModeHeader — hideSaveState (FIX-4, additive)', () => {
     expect(screen.getByText('Testowy artefakt')).toBeInTheDocument();
     expect(screen.getByText('Zatwierdzona')).toBeInTheDocument();
   });
+
+  it('renders a tool session artifact header without casting the artifact type', () => {
+    renderHeader({ artifactId: 'tool-session-1', artifactType: 'tool_session' });
+    expect(screen.getByText('Testowy artefakt')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'sharedComponents.nModeHeader.moreActions' })).toBeInTheDocument();
+  });
 });
