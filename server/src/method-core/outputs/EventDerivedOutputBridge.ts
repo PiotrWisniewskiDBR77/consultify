@@ -150,12 +150,20 @@ export function deriveFindingsFromEvents(
         | { evidenceId?: string; evidenceType?: string; strength?: string }
         | undefined;
       if (payload?.evidenceId) {
+        bucket.evidence = bucket.evidence.filter((item) => item.evidenceId !== payload.evidenceId);
         bucket.evidence.push({
           evidenceId: payload.evidenceId,
           evidenceType: payload.evidenceType ?? 'observation',
           strength: (payload.strength as EvidenceLocatorInput['strength']) ?? 'E1',
           locator: `method-event://${event.id}`,
         });
+      }
+    }
+
+    if (event.type === 'EVIDENCE_REMOVED') {
+      const payload = event.payload as { evidenceId?: string } | undefined;
+      if (payload?.evidenceId) {
+        bucket.evidence = bucket.evidence.filter((item) => item.evidenceId !== payload.evidenceId);
       }
     }
 

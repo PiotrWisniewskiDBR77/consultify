@@ -539,12 +539,20 @@ export class DrdSessionRuntime {
       if (event.type === 'EVIDENCE_ATTACHED') {
         const payload = event.payload as { evidenceId?: string; evidenceType?: string; strength?: string };
         if (payload?.evidenceId) {
+          b.evidence = b.evidence.filter((item) => item.evidenceId !== payload.evidenceId);
           b.evidence.push({
             evidenceId: payload.evidenceId,
             evidenceType: (payload.evidenceType as EvidenceLocator['evidenceType']) ?? 'observation',
             strength: (payload.strength as EvidenceLocator['strength']) ?? 'E1',
             locator: `method-event://${event.id}`,
           });
+        }
+      }
+
+      if (event.type === 'EVIDENCE_REMOVED') {
+        const payload = event.payload as { evidenceId?: string };
+        if (payload?.evidenceId) {
+          b.evidence = b.evidence.filter((item) => item.evidenceId !== payload.evidenceId);
         }
       }
       if (

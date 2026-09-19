@@ -12,7 +12,7 @@
  * Harness (mocki `methodCoreApi` + `useOpenChatWithContext`) jest ten sam, co
  * w `DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx`.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -182,6 +182,37 @@ describe('K-24a — read-only lista dowodów DRD (nazwa / data / kto)', () => {
     expect(list.textContent).toContain('Name');
     expect(list.textContent).toContain('Date');
     expect(list.textContent).toContain('By');
+  });
+
+
+
+  it('K-24b: kliknięcie usuń zapisuje EVIDENCE_REMOVED i projekcja ukrywa wiersz', async () => {
+    vi.stubEnv('VITE_DRD_EVIDENCE_LIST', 'true');
+    await renderAtInterviewWithEvidence();
+
+    const row = await screen.findByText('polityka-bezpieczenstwa-2026.pdf');
+    expect(row).toBeInTheDocument();
+
+    const removeButtons = await screen.findAllByTestId('evidence-remove-button');
+    fireEvent.click(removeButtons[0]);
+
+    await waitFor(() =>
+      expect(hoisted.appendEvent).toHaveBeenCalledWith(
+        'sess-http-1',
+        expect.objectContaining({
+          type: 'EVIDENCE_REMOVED',
+          unitId: AREA_1A.id,
+          payload: expect.objectContaining({
+            evidenceId: 'polityka-bezpieczenstwa-2026.pdf',
+            removedEventId: 'evt-evidence-1',
+          }),
+        }),
+        expect.stringMatching(/^evidence-removed:polityka-bezpieczenstwa-2026\.pdf:/)
+      )
+    );
+    await waitFor(() =>
+      expect(screen.queryByText('polityka-bezpieczenstwa-2026.pdf')).not.toBeInTheDocument()
+    );
   });
 
   it('flaga OFF (domyślnie): lista dowodów NIE renderuje — wizualia za flagą (DEC-650)', async () => {

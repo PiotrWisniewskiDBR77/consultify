@@ -361,6 +361,32 @@ export class DrdHttpSessionRuntime {
     );
   }
 
+  async removeEvidence(input: {
+    unitId: string;
+    level?: number;
+    evidenceId: string;
+    removedEventId?: string;
+    reason?: string;
+  }): Promise<void> {
+    const idemKey = `evidence-removed:${input.evidenceId}:${newIdempotencyKey()}`;
+    const payload = {
+      evidenceId: input.evidenceId,
+      removedEventId: input.removedEventId,
+      reason: input.reason,
+    };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type: 'EVIDENCE_REMOVED', unitId: input.unitId, level: input.level, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          { type: 'EVIDENCE_REMOVED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          idemKey
+        ).then(() => undefined)
+    );
+  }
+
   async recordTargetDecision(input: { unitId: string; level: number; rationale: string }): Promise<void> {
     const idemKey = `target-decision:${input.unitId}:${input.level}:${newIdempotencyKey()}`;
     const payload = { decisionId: newIdempotencyKey(), subject: 'target_level' as const, decidedValue: input.level, rationale: input.rationale };

@@ -21,6 +21,7 @@ import { DRD_STRUCTURE } from '@/services/drdStructure';
 import {
   buildMatrixRowsForAxis,
   confirmedLevelsFor,
+  evidenceEventsFor,
   evidenceItemsFor,
   evidenceStrengthFor,
 } from '../drdWorkspaceViewModel';
@@ -76,6 +77,39 @@ describe('evidenceStrengthFor — strength is its own axis, independent of evide
       makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' } }),
     ];
     expect(evidenceStrengthFor(events, UNIT)).toBe('E2');
+  });
+
+
+
+  it('K-24b: EVIDENCE_REMOVED hides the matching attached evidence without mutating history', () => {
+    const attached = makeEvent({
+      id: 'evt-attached-1',
+      type: 'EVIDENCE_ATTACHED',
+      level: 1,
+      payload: { evidenceId: 'polityka.pdf', evidenceType: 'document', strength: 'E2' },
+    });
+    const removed = makeEvent({
+      id: 'evt-removed-1',
+      type: 'EVIDENCE_REMOVED',
+      level: 1,
+      payload: { evidenceId: 'polityka.pdf', removedEventId: 'evt-attached-1' },
+    });
+    const events = [attached, removed];
+
+    expect(events).toHaveLength(2);
+    expect(evidenceEventsFor(events, UNIT)).toEqual([]);
+    expect(evidenceItemsFor(events, UNIT)).toEqual([]);
+  });
+
+  it('K-24b: removing one evidence item keeps other evidence visible', () => {
+    const events: MethodEvent[] = [
+      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'a.pdf', evidenceType: 'document', strength: 'E2' } }),
+      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'b.pdf', evidenceType: 'document', strength: 'E1' } }),
+      makeEvent({ type: 'EVIDENCE_REMOVED', level: 1, payload: { evidenceId: 'a.pdf' } }),
+    ];
+
+    expect(evidenceItemsFor(events, UNIT).map((item) => item.name)).toEqual(['b.pdf']);
+    expect(evidenceStrengthFor(events, UNIT)).toBe('E1');
   });
 
   it('returns the STRONGEST of several recorded strengths, not the first or last', () => {

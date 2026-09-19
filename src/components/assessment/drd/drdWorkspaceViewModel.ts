@@ -93,8 +93,23 @@ export function targetLevelFor(events: readonly MethodEvent[], unitId: string): 
   return target;
 }
 
+function evidenceIdFrom(event: MethodEvent): string | null {
+  const evidenceId = (event.payload as { evidenceId?: unknown } | undefined)?.evidenceId;
+  return typeof evidenceId === 'string' && evidenceId.trim().length > 0 ? evidenceId : null;
+}
+
 export function evidenceEventsFor(events: readonly MethodEvent[], unitId: string): MethodEvent[] {
-  return events.filter((e) => e.type === 'EVIDENCE_ATTACHED' && e.unitId === unitId);
+  const removedEvidenceIds = new Set<string>();
+  for (const event of events) {
+    if (event.type !== 'EVIDENCE_REMOVED' || event.unitId !== unitId) continue;
+    const evidenceId = evidenceIdFrom(event);
+    if (evidenceId) removedEvidenceIds.add(evidenceId);
+  }
+  return events.filter((event) => {
+    if (event.type !== 'EVIDENCE_ATTACHED' || event.unitId !== unitId) return false;
+    const evidenceId = evidenceIdFrom(event);
+    return !evidenceId || !removedEvidenceIds.has(evidenceId);
+  });
 }
 
 /**
@@ -110,6 +125,7 @@ export function evidenceItemsFor(
     const payload = (e.payload ?? {}) as { evidenceId?: string; strength?: EvidenceStrength };
     return {
       eventId: e.id,
+      evidenceId: payload.evidenceId ?? e.id,
       name: payload.evidenceId ?? e.id,
       occurredAt: e.occurredAt,
       actorUserId: e.actorUserId,
