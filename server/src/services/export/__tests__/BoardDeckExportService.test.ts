@@ -3,7 +3,11 @@ import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
 import { generatePartnerToolkitResourceFile } from '../../partnerToolkitResources.js';
-import { boardDeckExportService, contentStringsFrom } from '../BoardDeckExportService.js';
+import {
+  boardDeckExportService,
+  contentStringsFrom,
+  decisionOptionsFromTable,
+} from '../BoardDeckExportService.js';
 
 async function inspectPptx(
   buffer: Buffer
@@ -94,8 +98,11 @@ describe('BoardDeckExportService production callers', () => {
                 {
                   type: 'table',
                   content: {
-                    headers: ['Option', 'Cost'],
-                    rows: [['Controlled', '£410k']],
+                    headers: ['Option', 'Cost', 'Rationale', 'Recommended'],
+                    rows: [
+                      ['Controlled', '£410k', 'Limits delivery risk.', 'yes'],
+                      ['Parallel', '£680k', 'Moves faster with more rework.', 'no'],
+                    ],
                   },
                 },
               ],
@@ -115,7 +122,14 @@ describe('BoardDeckExportService production callers', () => {
     expect(result.slides[2]).toContain('SO WHAT');
     expect(result.slides[2]).toContain('KEY-MESSAGE-RYZYKA-MUSI-ZOSTAC');
     expect(result.slides[3]).toContain('DECISION');
+    expect(result.slides[3]).toContain('OPTION A');
+    expect(result.slides[3]).toContain('OPTION B');
+    expect(result.slides[3]).toContain('Controlled');
+    expect(result.slides[3]).toContain('Parallel');
+    expect(result.slides[3]).toContain('Limits delivery risk.');
+    expect(result.slides[3]).toContain('RECOMMENDED');
     expect(result.slides[3]).toContain('RECOMMENDATION');
+    expect(result.slides[3].match(/Approve the controlled option\./g)).toHaveLength(1);
     expect(result.xml).toContain('Q3 Steering Deck');
     expect(result.xml).toContain('Cycle time fell by 18%.');
     expect(result.xml.match(/Quality held/g)).toHaveLength(1);
@@ -143,6 +157,33 @@ describe('BoardDeckExportService production callers', () => {
         count: 12,
       })
     ).toEqual(['Board text', 'Priority', 'Protect margin']);
+  });
+
+  it('maps decision table rows to option cards without inventing content', () => {
+    expect(
+      decisionOptionsFromTable({
+        headers: ['Wariant', 'Koszt', 'Uzasadnienie', 'Wybrany'],
+        rows: [
+          ['Fundacja danych', '£410k', 'Najpierw porządkuje dane.', 'tak'],
+          ['Równolegle', '£680k', 'Akceptuje ryzyko poprawek.', 'nie'],
+        ],
+      })
+    ).toEqual([
+      {
+        label: 'Option A',
+        title: 'Fundacja danych',
+        meta: '£410k',
+        body: 'Najpierw porządkuje dane.',
+        recommended: true,
+      },
+      {
+        label: 'Option B',
+        title: 'Równolegle',
+        meta: '£680k',
+        body: 'Akceptuje ryzyko poprawek.',
+        recommended: false,
+      },
+    ]);
   });
 
   it('projects Work Canvas sections onto the approved board-deck family', async () => {
